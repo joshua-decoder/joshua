@@ -1,0 +1,5 @@
+The examples in this directory are in various states of functionality.
+
+If you want to see working code and examples of usage, please consult the
+online documentation at joshua-decoder.org.  You should also find
+some useful examples in the pipeline script (the recommended way to use Joshua).

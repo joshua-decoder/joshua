@@ -1,0 +1,58 @@
+Running the Joshua Decoder:
+---------------------------
+
+If you wish to run the complete machine translation pipeline, Joshua includes a
+black-box implementation.  See the documentation at:
+
+   - web:           http://joshua-decoder.org/4.0/pipeline.html 
+   - local mirror:  ./joshua-decoder.org/4.0/pipeline.html
+
+Manually Running the Joshua Decoder:
+------------------------------------
+
+First, make sure you have compiled the code.  You can do this by typing:
+
+    ant jar
+
+The basic decoder invocation is:
+
+    cat SOURCE | JOSHUA -c CONFIG > OUTPUT
+
+Example invocations can be found within the example/ directory.  To run them,
+first setup some environment variables:
+
+    export JOSHUA=/path/to/joshua
+    export LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8
+
+Then type:
+
+    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config
+
+The decoder output will load the language model and translation models defined
+in the configuration file, and will then decode the five sentences in the
+example file.
+
+You can enable multithreaded decoding with the -threads N flag:
+
+    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -threads 5
+
+The configuration file defines many additional parameters, all of which can be
+overridden on the command line by using the format -PARAMETER value.  For
+example, to output the top 10 hypotheses instead of just the top 1 specified in
+the configuration file, use -top-n N:
+
+    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -top_n 10
+
+Parameters, whether in the configuration file or on the command line, are
+converted to a canonical internal representation that ignores hyphens,
+underscores, and case.  So, for example, the following parameters are all
+equivalent:
+
+  {top-n, topN, top_n, TOP_N, t-o-p-N}
+  {poplimit, pop-limit, pop-limit, popLimit}
+
+and so on.  For an example of parameters, see the Joshua configuration file
+template in $JOSHUA/scripts/training/templates/mert/joshua.config or the online
+documentation at joshua-decoder.org/4.0/decoder.html.  There is a wealth of
+information in the online documentation.

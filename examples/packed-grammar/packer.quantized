@@ -1,0 +1,3 @@
+slice_size	400000
+
+quantizer		8bit		p(e|f) lex(e|f) lex(f|e)

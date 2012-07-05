@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# This script takes Joshua's nbest output and extracts the 1-best
+# output.
+
+set -u
+
+java -Xmx500m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand - -
+

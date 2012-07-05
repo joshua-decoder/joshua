@@ -1,389 +1,334 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="Joshua Machine Translation Toolkit" default="compile" basedir=".">
-	
-<!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<property environment="env" />
-	
-	<property name="src"    value="./src" />
-	<property name="test"   value="./test" />
-	<property name="build"  value="./bin" />
-	<property name="lib"    value="./lib" />
-	<property name="thraxlib"  value="./thrax/bin" />
-	<property name="doc"    value="./javadoc" />
-	<property name="pmd"    value="./pmd" />
-	<property name="pmdOUT" value="${pmd}-output" />
-	
-	<!-- TODO: should these be made into 'path's instead of 'property's? -->
-	<property name="testng" value="${lib}/testng-5.8-jdk15.jar"/>
-	<!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
-	<property name="cli"    value="commons-cli-2.0-SNAPSHOT.jar"/>
-	
-	<path id="compile.all.classpath">
-		<fileset dir="${lib}">
-			<include name="${cli}"/>
-			<!-- Jung uses a BSD-like license,
-				see ./lib/LICENSES/LICENSE-jung.txt -->
-			<include name="jung-api-2.0.jar"/>
-			<include name="jung-graph-impl-2.0.jar"/>
-			<include name="jung-algorithms-2.0.jar"/>
-			<include name="jung-visualization-2.0.jar"/>
-			<include name="collections-generic-4.01.jar"/>
-			<include name="berkeleylm.jar"/>
-		</fileset>
-		<fileset dir="${thraxlib}">
-			<include name="thrax.jar"/>
-		</fileset>
-	</path>
-	
-	<path id="pmd.classpath">
-		<fileset dir="${lib}">
-			<!-- PMD uses a BSD-like license,
-				see ./lib/LICENSES/LICENSE-pmd.txt -->
-			<include name="pmd-4.2.5.jar"/>
-			<include name="jaxen-1.1.1.jar"/>
-			<include name="asm-3.1.jar "/>
-		</fileset>
-	</path>
-	
-	
-<!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
+  
+  <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  
+  <property environment="env" />
+  
+  <property name="src"    value="./src" />
+  <property name="test"   value="./test" />
+  <property name="build"  value="./bin" />
+  <property name="lib"    value="./lib" />
+  <property name="thraxlib"  value="./thrax/bin" />
+  <property name="doc"    value="./doc" />
+  <property name="pmd"    value="./pmd" />
+  <property name="pmdOUT" value="${pmd}-output" />
+  
+  <!-- TODO: should these be made into 'path's instead of 'property's? -->
+  <property name="testng" value="${lib}/testng-5.8-jdk15.jar"/>
+  <!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
+  <property name="cli"    value="commons-cli-2.0-SNAPSHOT.jar"/>
+  
+  <path id="compile.all.classpath">
+	<fileset dir="${lib}">
+	  <include name="${cli}"/>
+	  <!-- Jung uses a BSD-like license,
+		   see ./lib/LICENSES/LICENSE-jung.txt -->
+	  <include name="jung-api-2.0.jar"/>
+	  <include name="jung-graph-impl-2.0.jar"/>
+	  <include name="jung-algorithms-2.0.jar"/>
+	  <include name="jung-visualization-2.0.jar"/>
+	  <include name="collections-generic-4.01.jar"/>
+	  <include name="berkeleylm.jar"/>
+	</fileset>
+	<fileset dir="${thraxlib}">
+	  <include name="thrax.jar"/>
+	</fileset>
+  </path>
+  
+  <path id="pmd.classpath">
+	<fileset dir="${lib}">
+	  <!-- PMD uses a BSD-like license,
+		   see ./lib/LICENSES/LICENSE-pmd.txt -->
+	  <include name="pmd-4.2.5.jar"/>
+	  <include name="jaxen-1.1.1.jar"/>
+	  <include name="asm-3.1.jar "/>
+	</fileset>
+  </path>
+  
+  
+  <!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-	<!-- Create the build directory for compiled class files -->
-	<target name="init" depends="set-joshua-home">
-		<tstamp/>
-		<mkdir dir="${build}"/>
-		<mkdir dir="${lib}"/>
-	</target>
-	
-	<!-- Check for environment variables -->
-	<target name="set-joshua-home" unless="env.JOSHUA">
-		<fail message="Please set the $JOSHUA environment variable." />
-	</target>
-	
-	<!-- Check for environment variables -->
-	<target name="set-java-home" unless="env.JAVA_HOME">
-		<fail message="Please set the $JAVA_HOME environment variable." />
-		<!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX --> 
-	</target>
-	
-	<target name="kenlm" depends="init, set-joshua-home">
-		<exec executable="make">
-			<arg value="-j" />
-			<arg value="4" />
-			<arg value="-e" /> 
-			<arg value="libdir=${env.JOSHUA}/${lib}" />
-			<arg value="-C" />
-			<arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
-		</exec>
-	</target>
-		
-	<target name="giza" depends="init, set-joshua-home">
-	  <exec executable="make">
-			<arg value="-j" />
-			<arg value="4" />
-		<arg value="-C" />
-		<arg value="scripts/training/giza-pp/" />
-		<arg value="all" />
-		<arg value="install" />
-	  </exec>
-	  <exec executable="make">
-		<arg value="-C" />
-		<arg value="scripts/training/symal/" />
-		<arg value="all" />
-	  </exec>
-<!-- 	  <exec executable="./configure" dir="scripts/training/MGIZA" /> -->
-<!-- 	  <exec executable="make"> -->
-<!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
-<!--       </exec> -->
-<!-- 	  <exec executable="cp"> -->
-<!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
-<!--       </exec> -->
-	</target>
+  <!-- Create the build directory for compiled class files -->
+  <target name="init" depends="set-joshua-home">
+	<tstamp/>
+	<mkdir dir="${build}"/>
+	<mkdir dir="${lib}"/>
+  </target>
+  
+  <!-- Check for environment variables -->
+  <target name="set-joshua-home" unless="env.JOSHUA">
+	<fail message="Please set the $JOSHUA environment variable." />
+  </target>
 
-	<target name="parallelize" depends="set-joshua-home">
-		<exec executable="make">
-			<arg value="-j" />
-			<arg value="4" />
-			<arg value="-C" />
-            <arg value="scripts/training/parallelize/" />
-		</exec>
-	</target>
+  <target name="set-joshua-version" unless="env.JOSHUA_VERSION">
+	<fail message="Please set the $JOSHUA_VERSION environment variable." />
+  </target>
+  
+  <!-- Check for environment variables -->
+  <target name="set-java-home" unless="env.JAVA_HOME">
+	<fail message="Please set the $JAVA_HOME environment variable." />
+	<!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX --> 
+  </target>
+  
+  <target name="kenlm" depends="init, set-joshua-home">
+	<exec executable="make">
+	  <arg value="-j" />
+	  <arg value="4" />
+	  <arg value="-e" /> 
+	  <arg value="libdir=${env.JOSHUA}/${lib}" />
+	  <arg value="-C" />
+	  <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
+	</exec>
+  </target>
+  
+  <target name="giza" depends="init, set-joshua-home">
+	<exec executable="make">
+	  <arg value="-j" />
+	  <arg value="4" />
+	  <arg value="-C" />
+	  <arg value="scripts/training/giza-pp/" />
+	  <arg value="all" />
+	  <arg value="install" />
+	</exec>
+	<exec executable="make">
+	  <arg value="-C" />
+	  <arg value="scripts/training/symal/" />
+	  <arg value="all" />
+	</exec>
+    <!-- 	  <exec executable="./configure" dir="scripts/training/MGIZA" /> -->
+    <!-- 	  <exec executable="make"> -->
+    <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
+    <!--       </exec> -->
+    <!-- 	  <exec executable="cp"> -->
+    <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
+    <!--       </exec> -->
+  </target>
 
-	<target name="thrax" depends="set-joshua-home">
-	  <exec executable="git">
-	    <arg value="submodule" />
-	    <arg value="init" />
-	  </exec>
-	  <exec executable="git">
-	    <arg value="submodule" />
-	    <arg value="update" />
-	  </exec>
-	  <subant buildpath="thrax">
-		<property name="env.HADOOP" value="../lib/" />
-		<property name="env.HADOOP_VERSION" value="0.20.203.0" />
-		<property name="env.AWS_SDK" value="../lib/" />
-	  </subant>
-	</target>
+  <target name="parallelize" depends="set-joshua-home">
+	<exec executable="make">
+	  <arg value="-j" />
+	  <arg value="4" />
+	  <arg value="-C" />
+      <arg value="scripts/training/parallelize/" />
+	</exec>
+  </target>
 
-<!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Compile the Java code. -->
-	<target name="compile" depends="init, thrax, giza, kenlm, parallelize">
-		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
-			classpathref="compile.all.classpath" debug="on" encoding="utf8" 
-            sourcepath="" includeantruntime="false">
-			<!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
-			<include name="**/*.java"/>
-			
-			<!-- This should be on, so people see it.
-				But it can be quite verbose...
-			<compilerarg value="-deprecation"/>
-			-->
-		</javac>
-	</target>
-	<!-- Create a JAR file -->
-	<target name="jar" depends="compile,set-joshua-home">
-		<jar destfile="${build}/joshua.jar" index="true">
-			<fileset dir="${build}">
-				<include name="**/*.class"/>
-			</fileset>
-			<indexjars>
-			  <fileset dir="${lib}"/>
-			</indexjars>
-			<manifest>
-			  <attribute name="Class-Path" value="thrax.jar"/>
-			  <attribute name="Main-Class" value="joshua.decoder.JoshuaDecoder"/>
-			</manifest>
-			<fileset dir="${thraxlib}">
-				<include name="thrax.jar"/>
-			</fileset>
-		</jar>
-	</target>
-	
-	<target name="tree_visualizer" depends="compile,set-joshua-home">
-		<jar destfile="tree_visualizer/tree_visualizer.jar" index="true">
-		        <zipgroupfileset dir="lib" includes="*.jar"/>
-			<fileset dir="${build}">
-				<include name="**/*.class"/>
-			</fileset>
-			<indexjars>
-			  <fileset dir="${lib}"/>
-			</indexjars>
-			<manifest>
-			  <attribute name="Class-Path" value="tree_visualizer.jar"/>
-			  <attribute name="Main-Class" value="joshua.ui.tree_visualizer.browser.Browser"/>
-			</manifest>
-		</jar>
-	</target>
-	
-	<!-- Create a JAR file of the source code -->
-	<target name="source-jar">
-		<jar destfile="${build}/joshua-src.jar">
-			<fileset dir="${build}">
-				<include name="**/*.java"/>
-			</fileset>
-		</jar>
-	</target>
-	
-	
-<!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Delete the compiled files -->
-	<target name="clean" depends="clean-java">
-		<exec executable="make">
-			<arg value="-C" />
-			<arg value="scripts/training/giza-pp" />
-			<arg value="clean" />
-		</exec>
-		<exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
-			<arg value="clean.sh" />
-		</exec>
-	</target>
+  <target name="thrax" depends="set-joshua-home">
+	<exec executable="git">
+	  <arg value="submodule" />
+	  <arg value="init" />
+	</exec>
+	<exec executable="git">
+	  <arg value="submodule" />
+	  <arg value="update" />
+	</exec>
+	<subant buildpath="thrax">
+	  <property name="env.HADOOP" value="${env.JOSHUA}/${lib}" />
+	  <property name="env.HADOOP_VERSION" value="0.20.203.0" />
+	  <property name="env.AWS_SDK" value="${env.JOSHUA}" />
+	  <property name="env.AWS_VERSION" value="1.1.3" />
+	</subant>
+  </target>
 
-	<!-- Delete just the java files -->
-	<target name="clean-java">
-		<delete verbose="true" quiet="true">
-			<fileset dir="${build}">
-				<include name="**/*.class"/>
-			</fileset>
-		</delete>
-	</target>
-	
-	<!-- EXPERIMENTAL: Delete *all* generated files -->
-	<target name="distclean" depends="clean">
-		<!-- BUG: this doesn't delete empty folders (neither ${build} itself, nor the class dirs (the latter makes sense since we don't traverse them)) -->
-		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="${build}">
-				<include name="joshua.jar"/>
-				<include name="joshua-ui.jar"/>
-			</fileset>
-		</delete>
-		
-		<!-- BUG: this doesn't delete ${pmdOUT} when it's empty. But I'm wary of doing what I do for ${test}-output and ${doc} in case someone resets ${pmdOUT} to somewhere else (e.g. the same as ${pmd}) -->
-		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="${pmdOUT}">
-				<include name="report.html"/>
-			</fileset>
-		</delete>
-		
-		<!-- HACK: these two work perfectly, but maybe problematic if people reset ${test} or ${doc} -->
-		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="${test}-output" />
-		</delete>
-		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="${doc}" />
-		</delete>
-		
-		<delete verbose="true" quiet="true" file="joshua-fb.xml" />
+  <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  
+  <target name="all" depends="init,java,giza,kenlm,parallelize">
+  </target>
 
-		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="tree_visualizer">
-				<include name="tree_visualizer.jar"/>
-			</fileset>
-		</delete>
-	</target>
-	
-	
-<!-- ~~~~~ Javadoc ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Compile the Javadocs into web pages -->
-	<target name="javadoc">
-		<mkdir dir="${doc}"/>
-		<javadoc packagenames="joshua.*"
-			classpath="${cli}"
-        	sourcepath="${src}"
-			destdir="${doc}"
-			author="true"
-			version="true"
-			charset="utf-8"
-			overview="src/overview.html"
-		>
-			<link href="http://java.sun.com/j2se/1.5.0/docs/api" />
-			<link href="http://commons.apache.org/cli/api-release" />
-		</javadoc>
-	</target>
-	
+  <!-- Compile the Java code. -->
+  <target name="java" depends="init">
+	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
+		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
+           sourcepath="" includeantruntime="false">
+	  <!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
+	  <include name="**/*.java"/>
+	  
+	  <!-- This should be on, so people see it.
+		   But it can be quite verbose...
+		   <compilerarg value="-deprecation"/>
+		   -->
+	</javac>
+  </target>
 
-<!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  <!-- Create a JAR file -->
+  <target name="jar" depends="java,set-joshua-home">
+	<jar destfile="${build}/joshua.jar" index="true">
+	  <fileset dir="${build}">
+		<include name="**/*.class"/>
+	  </fileset>
+	  <indexjars>
+		<fileset dir="${lib}"/>
+	  </indexjars>
+	  <manifest>
+		<attribute name="Class-Path" value="thrax.jar"/>
+		<attribute name="Main-Class" value="joshua.decoder.JoshuaDecoder"/>
+	  </manifest>
+	  <fileset dir="${thraxlib}">
+		<include name="thrax.jar"/>
+	  </fileset>
+	</jar>
+  </target>
+  
+  <target name="tree_visualizer" depends="java,set-joshua-home">
+	<jar destfile="examples/tree_visualizer/tree_visualizer.jar" index="true">
+	  <zipgroupfileset dir="lib" includes="*.jar"/>
+	  <fileset dir="${build}">
+		<include name="**/*.class"/>
+	  </fileset>
+	  <indexjars>
+		<fileset dir="${lib}"/>
+	  </indexjars>
+	  <manifest>
+		<attribute name="Class-Path" value="tree_visualizer.jar"/>
+		<attribute name="Main-Class" value="joshua.ui.tree_visualizer.browser.Browser"/>
+	  </manifest>
+	</jar>
+  </target>
+  
+  <!-- Create a versioned release -->
+  <target name="release" depends="set-joshua-version">
+    <exec executable="./scripts/support/make-release.sh">
+      <arg value="${env.JOSHUA_VERSION}" />
+    </exec>
+  </target>
 
-    <target name="test" depends="compile">
-	  <exec dir="test" executable="/bin/bash" failonerror="true">
-		<arg line="test-all.sh" />
-	  </exec>
-	</target>
-	
-<!-- ~~~~~ TestNG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Define the unit testing task -->
-	<taskdef resource="testngtasks" classpath="${testng}"/>
-	
-	
-	<!-- Compile the unit test code -->
-	<!-- FIXME: why is this broken out from the 'test' target? -->
-	<target name="compile-tests" depends="init"> 
-		<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
-			classpath="${testng}" debug="on" encoding="utf8"/> 
-	</target>
-	
-	
-	<!-- Run the unit tests -->
-	<target name="testng" depends="compile,compile-tests">
-		<testng classpath="${build}" sourcedir="${test}">
-			<jvmarg value="-Dfile.encoding=UTF8"/>
-			<jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
-			<jvmarg value="-Xms256m" />
-			<jvmarg value="-Xmx256m" />
-			<xmlfileset dir="." includes="testng.xml"/>
-		</testng>
-	</target>
-	
-	
-<!-- ~~~~~ PMD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Run the PMD tool for linting the source code.
-		http://pmd.sourceforge.net/ant-task.html
-	-->
-	<target name="pmd">
-		<taskdef
-			name="pmd"
-			classname="net.sourceforge.pmd.ant.PMDTask"
-			classpathref="pmd.classpath"
-			/>
-		
-		
-		<mkdir dir="${pmdOUT}"/>
-		
-		<echo message="Starting analysis, this will take a few seconds..."/>
-		
-		<!-- TODO: define a set of XSLT filters for searching and grepping through the output (which can be verbose) in type=xml format. -->
-		<!-- N.B. PMD is run in the same process as Ant and therefore produces no visible output by default. -->
-		<pmd shortFilenames="true" rulesetfiles="${pmd}/default-ruleset.xml">
-			<!-- BUG: the links to class files also go to pmd.sourceforge.net -->
-			<formatter
-				type="summaryhtml"
-				toFile="${pmdOUT}/report.html"
-				toConsole="false"
-				linkPrefix="http://pmd.sourceforge.net/xref/"
-				/>
-			<fileset dir="${src}">
-				<include name="**/*.java"/>
-			</fileset>
-		</pmd>
-		
-		<!-- Here's how to post-edit with XSLT
-		<xslt
-			in="${pmdOUT}/report.xml"
-			style="${pmd}/report.xslt"
-			out="${pmdOUT}/report.html"
-			/>
-		-->
-		
-		<!-- TODO: this should use a property to avoid duplication -->
-		<echo message="Report created at ${pmdOUT}/report.html"/>
-	</target>
-	
-	
-<!-- ~~~~~ FindBugs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  <!-- Create a JAR file of the source code -->
+  <target name="source-jar">
+	<jar destfile="${build}/joshua-src.jar">
+	  <fileset dir="${build}">
+		<include name="**/*.java"/>
+	  </fileset>
+	</jar>
+  </target>
+  
+  <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  
+  <!-- Delete the compiled files -->
+  <target name="clean" depends="clean-java">
+	<exec executable="make">
+	  <arg value="-C" />
+	  <arg value="scripts/training/giza-pp" />
+	  <arg value="clean" />
+	</exec>
+	<exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
+	  <arg value="clean.sh" />
+	</exec>
+    <delete dir="bin/" />
+    <delete file="tree_visualizer/tree_visualizer.jar"/>
+    <delete dir="doc/html"/>
+    <delete dir="doc/latex"/>
+  </target>
 
-	<!-- Check for environment variables -->
-	<target name="set-findbugs" unless="env.FINDBUGS_HOME">
-	<!-- Note the use of spaces instead of hard tabs, to get it to display nice -->
-		<fail>.
-    Please set the $FINDBUGS_HOME environment variable to
-    point to the directory where you have FindBugs installed.
-    
-    You can download the tool from http://findbugs.sourceforge.net/</fail>
-	</target>
+  <!-- Delete just the java files -->
+  <target name="clean-java">
+	<delete verbose="true" quiet="true">
+	  <fileset dir="${build}">
+		<include name="**/*.class"/>
+	  </fileset>
+	</delete>
+  </target>
+  
+  <!-- EXPERIMENTAL: Delete *all* generated files -->
+  <target name="distclean" depends="clean">
+	<!-- BUG: this doesn't delete empty folders (neither ${build} itself, nor the class dirs (the latter makes sense since we don't traverse them)) -->
+	<delete verbose="true" quiet="true" includeEmptyDirs="true">
+	  <fileset dir="${build}">
+		<include name="joshua.jar"/>
+		<include name="joshua-ui.jar"/>
+	  </fileset>
+	</delete>
 	
+	<!-- BUG: this doesn't delete ${pmdOUT} when it's empty. But I'm wary of doing what I do for ${test}-output and ${doc} in case someone resets ${pmdOUT} to somewhere else (e.g. the same as ${pmd}) -->
+	<delete verbose="true" quiet="true" includeEmptyDirs="true">
+	  <fileset dir="${pmdOUT}">
+		<include name="report.html"/>
+	  </fileset>
+	</delete>
 	
-	<!-- Run the FindBugs tool for linting bytecode.
-		http://findbugs.sourceforge.net/manual/anttask.html
-		N.B. This task can take a *lot* of memory. 0.5Gb is the bare minimum for effort=default.
-		
-		We try to automatically find the Ant task within $FINDBUGS_HOME in order to ensure that things will work right. This path is correct for version 1.3.8 (and hopefully other versions as well).
-	-->
-	<target name="findbugs" depends="set-findbugs,jar">
-		<taskdef
-			name="findbugs"
-			classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
-			classpath="${env.FINDBUGS_HOME}/lib/findbugs-ant.jar"
-			/>
-		
-		<!-- reportLevel = low,medium(default),high -->
-		<!-- effort = min,default,max; try using min to lower memory usage -->
-		<findbugs
-			home="${env.FINDBUGS_HOME}"
-			output="xml"
-			outputFile="joshua-fb.xml"
-			jvmargs="-Xmx1024m -Xms512m -XX:MinHeapFreeRatio=10"
-		>
-			<class location="${build}/joshua.jar" />
-			<sourcePath path="${src}" />
-			<auxClasspath path="${testng}" />
-			<auxClasspath path="${cli}" />
-		</findbugs>
-	</target>
+	<!-- HACK: these two work perfectly, but maybe problematic if people reset ${test} or ${doc} -->
+	<delete verbose="true" quiet="true" includeEmptyDirs="true">
+	  <fileset dir="${test}-output" />
+	</delete>
+
+	<delete verbose="true" quiet="true" includeEmptyDirs="true">
+	  <fileset dir="${doc}" includes="**/*.tmp"/>
+	  <fileset dir="${doc}/html"/>
+	  <fileset dir="${doc}/latex"/>
+	</delete>
 	
+	<delete verbose="true" quiet="true" file="joshua-fb.xml" />
+
+	<delete verbose="true" quiet="true" includeEmptyDirs="true">
+	  <fileset dir="tree_visualizer">
+		<include name="tree_visualizer.jar"/>
+	  </fileset>
+	</delete>
+  </target>
+  
+  
+  <!-- ~~~~~ Javadoc ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  
+  <!-- Compile the Javadocs into web pages -->
+  <target name="javadoc">
+	<mkdir dir="${doc}"/>
+	<javadoc packagenames="joshua.*"
+			 classpath="${cli}"
+        	 sourcepath="${src}"
+			 destdir="${doc}"
+			 author="true"
+			 version="true"
+			 charset="utf-8"
+			 overview="src/overview.html"
+		     >
+	  <link href="http://java.sun.com/j2se/1.5.0/docs/api" />
+	  <link href="http://commons.apache.org/cli/api-release" />
+	</javadoc>
+  </target>
+  
+  <!-- ~~~~~ Doxygen ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+  <taskdef uri="antlib:org.doxygen.tools"
+		   resource="org/doxygen/tools/antlib.xml"
+		   classpath="${lib}/ant_doxygen.jar"/>
+
+  <!-- Compile the Javadocs and Markdown documentation into web pages -->
+  <target name="documentation">
+	<doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+  </target>
+
+  <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+  <target name="test" depends="all">
+	<exec dir="test" executable="/bin/bash" failonerror="true">
+	  <arg line="run-all-tests.sh" />
+	</exec>
+  </target>
+  
+  <!-- ~~~~~ TestNG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  
+  <!-- Define the unit testing task -->
+  <taskdef resource="testngtasks" classpath="${testng}"/>
+  
+  
+  <!-- Compile the unit test code -->
+  <!-- FIXME: why is this broken out from the 'test' target? -->
+  <target name="compile-tests" depends="init"> 
+	<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
+		   classpath="${testng}" debug="on" encoding="utf8"/> 
+  </target>
+  
+  
+  <!-- Run the unit tests -->
+  <target name="testng" depends="all,compile-tests">
+	<testng classpath="${build}" sourcedir="${test}">
+	  <jvmarg value="-Dfile.encoding=UTF8"/>
+	  <jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
+	  <jvmarg value="-Xms256m" />
+	  <jvmarg value="-Xmx256m" />
+	  <xmlfileset dir="." includes="testng.xml"/>
+	</testng>
+  </target>
+  
 </project>

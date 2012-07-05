@@ -6,6 +6,9 @@
 
 use strict;
 
+binmode(STDIN, ":utf8");
+binmode(STDOUT, ":utf8");
+
 my ($language) = @ARGV;
 
 while(<STDIN>) {
@@ -54,24 +57,24 @@ while(<STDIN>) {
 
   # English "quotation," followed by comma, style
   if ($language eq "en") {
-	s/\"([,\.]+)/$1\"/g;
+    s/\"([,\.]+)/$1\"/g;
   }
   # Czech is confused
   elsif ($language eq "cs" || $language eq "cz") {
   }
   # German/Spanish/French "quotation", followed by comma, style
   else {
-	s/,\"/\",/g;	
-	s/(\.+)\"(\s*[^<])/\"$1$2/g; # don't fix period at end of sentence
+    s/,\"/\",/g;  
+    s/(\.+)\"(\s*[^<])/\"$1$2/g; # don't fix period at end of sentence
   }
 
   print STDERR $_ if /﻿/;
 
   if ($language eq "de" || $language eq "es" || $language eq "cz" || $language eq "cs" || $language eq "fr") {
-	s/(\d) (\d)/$1,$2/g;
+    s/(\d) (\d)/$1,$2/g;
   }
   else {
-	s/(\d) (\d)/$1.$2/g;
+    s/(\d) (\d)/$1.$2/g;
   }
   print $_;
 }

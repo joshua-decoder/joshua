@@ -1,7 +1,0 @@
-Tests lattice decoding on a very small model.  The lattice that is used as
-input to the decoder is test.plf.  A visualization is found in test.pdf.
-
-To run the test, go to this directory after building Joshua and run:
-
-  ./decode.sh
-
