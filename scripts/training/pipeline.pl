@@ -586,6 +586,7 @@ if (! defined $ALIGNMENT) {
   #
   # my $pool = new Thread::Pool(Min => 1, Max => $max_aligner_threads);
 
+	my @aligned_files;
   for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
 
 		# create the alignment subdirectory
@@ -596,29 +597,25 @@ if (! defined $ALIGNMENT) {
 			run_giza($chunkdir, $chunkno, $NUM_THREADS > 1);
 			# $pool->enqueue(\&run_giza, $chunkdir, $chunkno, $NUM_THREADS > 1);
 
+			push(@aligned_files, "alignments/$chunkno/model/aligned.grow-diag-final");
 		} elsif ($ALIGNER eq "berkeley") {
 			run_berkeley_aligner($chunkdir, $chunkno);
 			# $pool->enqueue(\&run_berkeley_aligner, $chunkdir, $chunkno);
+
+			push(@aligned_files, "alignments/$chunkno/training.align");
 		}
   }
+
+	my $aligned_file_list = join(" ", @aligned_files);
 
   # wait for all the threads to finish
   # $pool->join();
 
-  if ($ALIGNER eq "giza") {
-    # combine the alignments
-    $cachepipe->cmd("giza-aligner-combine",
-										"cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
-										"alignments/$lastchunk/model/aligned.grow-diag-final",
-										"alignments/training.align");
-  } elsif ($ALIGNER eq "berkeley") {
-
-    # combine the alignments
-    $cachepipe->cmd("berkeley-aligner-combine",
-										"cat alignments/*/training.align > alignments/training.align",
-										"alignments/$lastchunk/training.align",
-										"alignments/training.align");
-  }
+	# combine the alignments
+	$cachepipe->cmd("aligner-combine",
+									"cat $aligned_file_list > alignments/training.align",
+									$aligned_files[-1],
+									"alignments/training.align");
 
   # at the end, all the files are concatenated into a single alignment file parallel to the input
   # corpora
