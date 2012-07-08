@@ -365,22 +365,13 @@ public class MertCore {
       for (int i = 0; i < numSentences; ++i) {
         for (int r = 0; r < refsPerSen; ++r) {
           // read the rth reference translation for the ith sentence
-          refSentences[i][r] = reference_readers[r].readLine();
+          refSentences[i][r] = normalize(reference_readers[r].readLine(), textNormMethod);
         }
       }
 
 			// close all the reference files
 			for (int i = 0; i < refsPerSen; i++) 
 				reference_readers[i].close();
-
-      // normalize reference sentences
-      for (int i = 0; i < numSentences; ++i) {
-        for (int r = 0; r < refsPerSen; ++r) {
-          // normalize the rth reference translation for the ith sentence
-          refSentences[i][r] = normalize(refSentences[i][r], textNormMethod);
-        }
-      }
-
 
       // read in decoder command, if any
       decoderCommand = null;
