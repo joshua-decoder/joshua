@@ -850,8 +850,25 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 										$lmfile);
   }
 
-  push (@LMFILES, $lmfile);
+	if ($LM_TYPE eq "kenlm") {
+		my $kenlm_file = "lm.kenlm";
+		$cachepipe->cmd("compile-kenlm",
+										"$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary lm.gz lm.kenlm",
+										$lmfile, $kenlm_file);
 
+		push (@LMFILES, $kenlm_file);
+
+	} elsif ($LM_TYPE eq "berkeleylm") {
+		my $berkeleylm_file = "lm.berkeleylm";
+		$cachepipe->cmd("compile-berkeleylm",
+										"java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa lm.gz lm.berkeleylm",
+										$lmfile, $berkeleylm_file);
+
+		push (@LMFILES, $berkeleylm_file);
+	} else {
+
+		push (@LMFILES, $lmfile);
+	}
 }
 
 system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
