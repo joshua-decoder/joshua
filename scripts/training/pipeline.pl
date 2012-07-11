@@ -331,13 +331,16 @@ map {
   $CORPORA[$_] = get_absolute_path("$CORPORA[$_]");
 } (0..$#CORPORA);
 
-# Do the same for tuning and test data
-$TUNE = get_absolute_path($TUNE)
-    if (defined $TUNE);
-$TEST = get_absolute_path($TEST)
-    if (defined $TEST);
+# Do the same for tuning and test data, and other files
+$TUNE = get_absolute_path($TUNE);
+$TEST = get_absolute_path($TEST);
 
-# TODO: every file request should be passed through a wrapper that does this.
+$GRAMMAR_FILE = get_absolute_path($GRAMMAR_FILE);
+$GLUE_GRAMMAR_FILE = get_absolute_path($GLUE_GRAMMAR_FILE);
+$TUNE_GRAMMAR_FILE = get_absolute_path($TUNE_GRAMMAR_FILE);
+$TEST_GRAMMAR_FILE = get_absolute_path($TEST_GRAMMAR_FILE);
+$THRAX_CONF_FILE = get_absolute_path($THRAX_CONF_FILE);
+$ALIGNMENT = get_absolute_path($ALIGNMENT);
 
 foreach my $corpus (@CORPORA) {
   foreach my $ext ($TARGET,$SOURCE) {
@@ -1529,8 +1532,10 @@ sub count_num_features {
 sub get_absolute_path {
 	my ($file) = @_;
 
-	# prepend startdir (which is absolute) unless the path is absolute.
-	$file = "$STARTDIR/$file" unless $file =~ /^\//;
+	if (defined $file) {
+		# prepend startdir (which is absolute) unless the path is absolute.
+		$file = "$STARTDIR/$file" unless $file =~ /^\//;
+	}
 
 	return $file;
 }
