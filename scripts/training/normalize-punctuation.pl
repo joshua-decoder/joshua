@@ -9,7 +9,7 @@ use strict;
 binmode(STDIN, ":utf8");
 binmode(STDOUT, ":utf8");
 
-my ($language) = @ARGV;
+my ($language) = shift(@ARGV) || "en";
 
 while(<STDIN>) {
   s/\r//g;
@@ -37,23 +37,27 @@ while(<STDIN>) {
   s/''/\"/g;
   s/´´/\"/g;
   s/…/.../g;
+	# Replace non-breaking spaces (which are surprisingly prevalent, and don't count as whitespace)
+	# with spaces.  Actually, an earlier version of this script had NBSPs in the file itself,
+	# accidentally (they were probably cut-and-pasted)
+	s/\xA0/ /g;
   # French quotes
-  s/ « / \"/g;
-  s/« /\"/g;
+  s/ « / \"/g;
+  s/« /\"/g;
   s/«/\"/g;
-  s/ » /\" /g;
-  s/ »/\"/g;
+  s/ » /\" /g;
+  s/ »/\"/g;
   s/»/\"/g;
   # handle pseudo-spaces
-  s/ \%/\%/g;
-  s/nº /nº /g;
-  s/ :/:/g;
-  s/ ºC/ ºC/g;
-  s/ cm/ cm/g;
-  s/ \?/\?/g;
-  s/ \!/\!/g;
-  s/ ;/;/g;
-  s/, /, /g; s/ +/ /g;
+  s/ \%/\%/g;
+  s/nº /nº /g;
+  s/ :/:/g;
+  s/ ºC/ ºC/g;
+  s/ cm/ cm/g;
+  s/ \?/\?/g;
+  s/ \!/\!/g;
+  s/ ;/;/g;
+  s/, /, /g; s/ +/ /g;
 
   # English "quotation," followed by comma, style
   if ($language eq "en") {
@@ -71,10 +75,10 @@ while(<STDIN>) {
   print STDERR $_ if /﻿/;
 
   if ($language eq "de" || $language eq "es" || $language eq "cz" || $language eq "cs" || $language eq "fr") {
-    s/(\d) (\d)/$1,$2/g;
+    s/(\d) (\d)/$1,$2/g;
   }
   else {
-    s/(\d) (\d)/$1.$2/g;
+    s/(\d) (\d)/$1.$2/g;
   }
   print $_;
 }
