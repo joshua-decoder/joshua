@@ -49,11 +49,18 @@ public class JoshuaConfiguration {
   public static String lm_file = null;
   public static int ngramStateID = 0; // TODO ?????????????
 
-  // tm config
+	/* The span limit is the maximum span of the input to which rules from the main translation
+	 * grammar can be applied.  It does not apply to the glue grammar.
+	 */
   public static int span_limit = 10;
-  // note: owner should be different from each other, it can have same value as a word in LM/TM
-  public static String phrase_owner = "pt";
-  public static String glue_owner = "pt";
+
+	/* This word is in an index into a grammars feature sets.  The name here ties together the
+	 * features present on each grammar line in a grammar file, and the features present in the Joshua
+	 * configuration file.  This allows you to have different sets of features (or shared) across
+	 * grammar files.
+	 */
+  public static String phrase_owner = "pt"; 
+	public static String glue_owner   = "glue";
 
 	// Default symbols.  The symbol here should be enclosed in square brackets.
   public static String default_non_terminal = "[X]";

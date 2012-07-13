@@ -1,5 +1,6 @@
 <LMPARAMS>
 <TMPARAMS>
-wordpenalty       |||     -2.844814 Opt    -Inf    +Inf    -5      0
-oovpenalty        |||     -100     Fix     0       0       0       0
+phrasemodel glue 0 ||| 1.0 Opt -Inf +Inf -1 +1
+wordpenalty        |||     -2.844814 Opt    -Inf    +Inf    -5      0
+oovpenalty         |||     -100     Fix     0       0       0       0
 normalization = absval 1 lm 0
