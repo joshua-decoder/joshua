@@ -51,10 +51,14 @@ my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
+my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR_TYPE = "hiero";
 my $WITTEN_BELL = 0;
+
+# Run description.
+my $DESCRIPTION = undef;
 
 # gzip-aware cat
 my $CAT = "$SCRIPTDIR/training/scat";
@@ -144,12 +148,12 @@ my $TUNER = "mert";  # or PRO
 my $PARSED_CORPUS = undef;
 
 my $retval = GetOptions(
+	"description=s"    => \$DESCRIPTION,
   "corpus=s"        => \@CORPORA,
   "parsed-corpus=s"   => \$PARSED_CORPUS,
   "tune=s"          => \$TUNE,
   "test=s"            => \$TEST,
   "prepare!"          => \$DO_PREPARE_CORPORA,
-  "data-dir=s"        => \$DATA_DIR,
   "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
@@ -382,6 +386,13 @@ $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf"
 
 mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
+
+if (defined $DESCRIPTION) {
+	open DESC, ">description.txt" or die "can't write description file";
+	print DESC $DESCRIPTION;
+	print DESC $/;
+	close DESC;
+}
 
 # default values -- these are overridden if the full script is run
 # (after tokenization and normalization)
