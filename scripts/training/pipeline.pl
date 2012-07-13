@@ -200,11 +200,13 @@ if (! $retval) {
   exit 1;
 }
 
+my $DOING_LATTICES = 0;
+
 my %DATA_DIRS = (
-  train => "$DATA_DIR/train",
-  tune  => "$DATA_DIR/tune",
-  test  => "$DATA_DIR/test",
-		);
+  train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
+  tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
+  test  => get_absolute_path("$RUNDIR/$DATA_DIR/test"),
+);
 
 if (defined $NAME) {
   map { $DATA_DIRS{$_} .= "/$NAME" } (keys %DATA_DIRS);
@@ -969,6 +971,13 @@ for my $i (0..($num_tm_features-1)) {
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
 
+my $latticeparam = ($DOING_LATTICES == 1) 
+		? "latticecost ||| 1.0 Opt -Inf +Inf -1 +1"
+		: "";
+my $latticeweight = ($DOING_LATTICES == 1)
+		? "latticecost 1.0"
+		: "";
+
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
@@ -987,6 +996,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
+			s/<LATTICEWEIGHT>/$latticeweight/g;
+			s/<LATTICEPARAM>/$latticeparam/g;
 			s/<LMFILE>/$LMFILES[0]/g;
 			s/<LMTYPE>/$LM_TYPE/g;
 			s/<MEM>/$JOSHUA_MEM/g;
@@ -1482,6 +1493,7 @@ sub is_lattice {
   my $line = <READ>;
   close(READ);
   if ($line =~ /^\(\(\(/) {
+		$DOING_LATTICES = 1;
 		return 1;
   } else {
 		return 0;
