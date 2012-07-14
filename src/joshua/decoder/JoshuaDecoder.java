@@ -544,11 +544,13 @@ public class JoshuaDecoder {
 
 						configFile = args[i + 1].trim();
 						JoshuaConfiguration.readConfigFile(configFile);
-						JoshuaConfiguration.processCommandLineOptions(args);
 
 						break;
 					}
 				}
+
+				// now process all the command-line args
+				JoshuaConfiguration.processCommandLineOptions(args);
 
 				oracleFile = JoshuaConfiguration.oracleFile;
 
