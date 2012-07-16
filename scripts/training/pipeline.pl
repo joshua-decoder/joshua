@@ -51,10 +51,14 @@ my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
+my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR_TYPE = "hiero";
 my $WITTEN_BELL = 0;
+
+# Run description.
+my $DESCRIPTION = undef;
 
 # gzip-aware cat
 my $CAT = "$SCRIPTDIR/training/scat";
@@ -144,12 +148,12 @@ my $TUNER = "mert";  # or PRO
 my $PARSED_CORPUS = undef;
 
 my $retval = GetOptions(
+	"description=s"    => \$DESCRIPTION,
   "corpus=s"        => \@CORPORA,
   "parsed-corpus=s"   => \$PARSED_CORPUS,
   "tune=s"          => \$TUNE,
   "test=s"            => \$TEST,
   "prepare!"          => \$DO_PREPARE_CORPORA,
-  "data-dir=s"        => \$DATA_DIR,
   "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
@@ -196,11 +200,13 @@ if (! $retval) {
   exit 1;
 }
 
+my $DOING_LATTICES = 0;
+
 my %DATA_DIRS = (
-  train => "$DATA_DIR/train",
-  tune  => "$DATA_DIR/tune",
-  test  => "$DATA_DIR/test",
-		);
+  train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
+  tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
+  test  => get_absolute_path("$RUNDIR/$DATA_DIR/test"),
+);
 
 if (defined $NAME) {
   map { $DATA_DIRS{$_} .= "/$NAME" } (keys %DATA_DIRS);
@@ -382,6 +388,13 @@ $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf"
 
 mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
+
+if (defined $DESCRIPTION) {
+	open DESC, ">description.txt" or die "can't write description file";
+	print DESC $DESCRIPTION;
+	print DESC $/;
+	close DESC;
+}
 
 # default values -- these are overridden if the full script is run
 # (after tokenization and normalization)
@@ -958,6 +971,13 @@ for my $i (0..($num_tm_features-1)) {
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
 
+my $latticeparam = ($DOING_LATTICES == 1) 
+		? "latticecost ||| 1.0 Opt -Inf +Inf -1 +1"
+		: "";
+my $latticeweight = ($DOING_LATTICES == 1)
+		? "latticecost 1.0"
+		: "";
+
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
@@ -976,6 +996,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
+			s/<LATTICEWEIGHT>/$latticeweight/g;
+			s/<LATTICEPARAM>/$latticeparam/g;
 			s/<LMFILE>/$LMFILES[0]/g;
 			s/<LMTYPE>/$LM_TYPE/g;
 			s/<MEM>/$JOSHUA_MEM/g;
@@ -1238,12 +1260,12 @@ if ($TUNEFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
 # this needs to be in a function since it is done all over the place
 open FROM, $TUNEFILES{decoder_command} or die "can't find file '$TUNEFILES{decoder_command}'";
 open TO, ">$testrun/decoder_command";
-print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
+print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
-system("cp $TUNEFILES{'joshua.config'} $testrun/joshua.config");
+system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true > $testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
@@ -1471,6 +1493,7 @@ sub is_lattice {
   my $line = <READ>;
   close(READ);
   if ($line =~ /^\(\(\(/) {
+		$DOING_LATTICES = 1;
 		return 1;
   } else {
 		return 0;
