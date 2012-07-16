@@ -23,7 +23,7 @@ while(<STDIN>) {
   s/ :/:/g;
   s/ ;/;/g;
   # normalize unicode punctuation
-  s/\x{fdd3}/-/g;
+  s/﷓/-/g;
   s/„/\"/g;
   s/“/\"/g;
   s/”/\"/g;

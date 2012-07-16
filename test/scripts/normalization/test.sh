@@ -3,7 +3,7 @@
 set -u
 
 cat data/train.en | $JOSHUA/scripts/training/normalize-punctuation.pl en > output
-diff -u output data/train.en.norm > diff
+diff -U 1 output data/train.en.norm > diff
 
 if [[ $? -eq 0 ]]; then
 	echo PASSED
