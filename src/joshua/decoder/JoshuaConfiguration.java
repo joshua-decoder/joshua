@@ -39,11 +39,14 @@ public class JoshuaConfiguration {
   // new format enabling multiple language models
   public static ArrayList<String> lms = new ArrayList<String>();
 
+  // new format enabling any number of grammar files
+  public static ArrayList<String> tms = new ArrayList<String>();
+
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
   public static double lm_ceiling_cost = 100;
   public static boolean use_left_equivalent_state = false;
-  public static boolean use_right_equivalent_state = true;
+  public static boolean use_right_equivalent_state = false;
   public static int lm_order = 3;
   public static boolean use_sent_specific_lm = false;
   public static String lm_file = null;
@@ -215,6 +218,9 @@ public class JoshuaConfiguration {
           // store the line for later processing
           if (parameter.equals(normalize_key("lm"))) {
             lms.add(fds[1]);
+
+					} else if (parameter.equals(normalize_key("tm"))) {
+            tms.add(fds[1]);
 
           } else if (parameter.equals(normalize_key("lm_file"))) {
             lm_file = fds[1].trim();
@@ -482,6 +488,16 @@ public class JoshuaConfiguration {
       int order = Integer.parseInt(tokens[1]);
       if (order > JoshuaConfiguration.lm_order) JoshuaConfiguration.lm_order = order;
     }
+
+		/* Now we do a similar thing for the TMs, enabling backward compatibility with the old format
+		 * that allowed for just two grammars.  The new format is
+		 *
+		 * tm = FORMAT OWNER SPAN_LIMIT FILE
+		 */
+		if (tms.size() == 0 && tm_file != null) {
+			tms.add(String.format("%s %s %d %s", tm_format, phrase_owner, span_limit, tm_file));
+			tms.add(String.format("%s %s %d %s", glue_format, glue_owner, -1, glue_file));
+		}
 
     if (useGoogleLinearCorpusGain) {
       if (linearCorpusGainThetas == null) {
