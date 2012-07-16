@@ -43,6 +43,12 @@ on *Import...* and choose `eclipse-java-google-style.xml`.
 
 * 100 characters maximum line width
 * Indent with 2 spaces
+
+  In emacs: 
+
+    (setq tab-width 2)
+    (setq-default indent-tabs-mode nil)
+
 * Use spaces only for tabbing
 * Open brace on same line
 * Keep `else if` on one line
