@@ -58,7 +58,7 @@ my $GRAMMAR_TYPE = "hiero";
 my $WITTEN_BELL = 0;
 
 # Run description.
-my $DESCRIPTION = undef;
+my $README = undef;
 
 # gzip-aware cat
 my $CAT = "$SCRIPTDIR/training/scat";
@@ -148,7 +148,7 @@ my $TUNER = "mert";  # or PRO
 my $PARSED_CORPUS = undef;
 
 my $retval = GetOptions(
-	"description=s"    => \$DESCRIPTION,
+	"readme=s"    => \$README,
   "corpus=s"        => \@CORPORA,
   "parsed-corpus=s"   => \$PARSED_CORPUS,
   "tune=s"          => \$TUNE,
@@ -389,9 +389,9 @@ $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf"
 mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
 
-if (defined $DESCRIPTION) {
-	open DESC, ">description.txt" or die "can't write description file";
-	print DESC $DESCRIPTION;
+if (defined $README) {
+	open DESC, ">README" or die "can't write README file";
+	print DESC $README;
 	print DESC $/;
 	close DESC;
 }
