@@ -413,11 +413,21 @@ if (defined $PARSED_CORPUS) {
 if ($TUNE) {
   $TUNE{source} = "$TUNE.$SOURCE";
   $TUNE{target} = "$TUNE.$TARGET";
+
+  if (! -e "$TUNE{source}") {
+    print "* FATAL: couldn't find tune source file at '$TUNE{source}'\n";
+    exit;
+  }
 }
 
 if ($TEST) {
   $TEST{source} = "$TEST.$SOURCE";
   $TEST{target} = "$TEST.$TARGET";
+
+  if (! -e "$TEST{source}") {
+    print "* FATAL: couldn't find test source file at '$TEST{source}'\n";
+    exit;
+  }
 }
 
 if ($FIRST_STEP ne "FIRST") {
