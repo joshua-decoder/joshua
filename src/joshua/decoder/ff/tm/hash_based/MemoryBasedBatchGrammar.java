@@ -122,19 +122,21 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
   protected GrammarReader<BilingualRule> createReader(String formatKeyword, String grammarFile) {
 
-    if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
-      return new HieroFormatReader(grammarFile);
-    } else if ("samt".equals(formatKeyword)) {
-      return new SamtFormatReader(grammarFile);
-    } else {
-      // TODO: throw something?
-      // TODO: add special warning if "heiro" mispelling is used
+    if (grammarFile != null) {
+      if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
+        return new HieroFormatReader(grammarFile);
+      } else if ("samt".equals(formatKeyword)) {
+        return new SamtFormatReader(grammarFile);
+      } else {
+        // TODO: throw something?
+        // TODO: add special warning if "heiro" mispelling is used
 
-      if (logger.isLoggable(Level.WARNING))
-        logger.warning("Unknown GrammarReader format " + formatKeyword);
-
-      return null;
+        if (logger.isLoggable(Level.WARNING))
+          logger.warning("Unknown GrammarReader format " + formatKeyword);
+      }
     }
+
+    return null;
   }
 
 

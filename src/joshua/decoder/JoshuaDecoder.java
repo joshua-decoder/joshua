@@ -361,29 +361,37 @@ public class JoshuaDecoder {
   }
 
   private void initializeTranslationGrammars() throws IOException {
-		if (JoshuaConfiguration.tms.size() == 0) {
-      logger.warning("* WARNING: no grammars supplied!");
-			return;
+
+		if (JoshuaConfiguration.tms.size() > 0) {
+
+      // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
+      for (String tmLine: JoshuaConfiguration.tms) {
+        String tokens[] = tmLine.split("\\s+");
+        String format = tokens[0];
+        String owner = tokens[1];
+        int span_limit = Integer.parseInt(tokens[2]);
+        String file = tokens[3];
+
+        logger.info("Using grammar read from file " + file);
+
+        if (format.equals("packed")) {
+          this.grammarFactories.add(new PackedGrammar(file, span_limit));
+        } else {
+          this.grammarFactories.add(new MemoryBasedBatchGrammar(format, file, owner, 
+              JoshuaConfiguration.default_non_terminal, span_limit,
+              JoshuaConfiguration.oov_feature_cost));
+        }
+      }
+    } else {
+      logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
+      // TODO: this should initialize the grammar dynamically so that the goal symbol and default
+      // non terminal match
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, 
+        System.getenv().get("JOSHUA") + "/data/" + "glue-grammar",
+        JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
+        JoshuaConfiguration.oov_feature_cost);
+      this.grammarFactories.add(glueGrammar);
 		}
-
-		// tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
-		for (String tmLine: JoshuaConfiguration.tms) {
-			String tokens[] = tmLine.split("\\s+");
-			String format = tokens[0];
-			String owner = tokens[1];
-			int span_limit = Integer.parseInt(tokens[2]);
-			String file = tokens[3];
-
-			logger.info("Using grammar read from file " + file);
-
-			if (format.equals("packed")) {
-				this.grammarFactories.add(new PackedGrammar(file, span_limit));
-			} else {
-				this.grammarFactories.add(new MemoryBasedBatchGrammar(format, file, owner,
-          JoshuaConfiguration.default_non_terminal, span_limit,
-          JoshuaConfiguration.oov_feature_cost));
-			}
-    }
 
 		logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
