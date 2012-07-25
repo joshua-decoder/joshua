@@ -158,35 +158,52 @@ class DotChart {
 
 
   /**
-   * two kinds of symbols in the foreign side: (1) non-terminal (e.g., X or NP); (2) CN-side
-   * terminal therefore, two ways to extend the dot postion.
+   * This function computes all possible expansions of all rules over the provided span (i,j).  By
+   * expansions, we mean the moving of the dot forward (from left to right) over a nonterminal or
+   * terminal symbol on the rule's source side.
+   *
+   * There are two kinds of expansions:
+   *
+   * 1. Expansion over a nonterminal symbol.  For this kind of expansion, a rule has a dot
+   *    immediately prior to a source-side nonterminal.  The main Chart is consulted to see whether
+   *    there exists a completed nonterminal with the same label.  If so, the dot is advanced.
+   *
+   *    Discovering nonterminal expansions is a matter of enumerating all split points k such that
+   *    i < k and k < j.  The nonterminal symbol must exist in the main Chart over (k,j).
+   *
+   * 2. Expansion over a terminal symbol.  In this case, expansion is a simple matter of determing
+   *    whether the input symbol at position j (the end of the span) matches the next symbol in the
+   *    rule.  This is equivalent to choosing a split point k = j - 1 and looking for terminal
+   *    symbols over (k,j).  Note that phrases in the input rule are handled one-by-one as we
+   *    consider longer spans.
    */
   void expandDotCell(int i, int j) {
     if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell (" + i + "," + j + ")");
 
-    // (1) if the dot is just to the left of a non-terminal variable,
-    // looking for theorems or axioms in the Chart that may apply and
-    // extend the dot pos
-    for (int k = i + 1; k < j; k++) { // Varying middle point k.
+    /* (1) If the dot is just to the left of a non-terminal variable, we look for theorems or axioms
+     * in the Chart that may apply and extend the dot position.  We look for existing axioms over
+     * all spans (k,j), i < k < j.
+     */
+    for (int k = i + 1; k < j; k++) {
       extendDotItemsWithProvedItems(i, k, j, false);
     }
 
-    // (2) the dot-item is looking for a CN-side terminal symbol:
-    // so we just need a CN-side terminal symbol to advance the dot in
-    // seeding case: j=i+1, therefore, it will look for l_dot_bins[i][i]
+    /* (2) If the the dot-item is looking for a source-side terminal symbol, we simply match against
+     * the input sentence and advance the dot.
+     */
     Node<Integer> node = input.getNode(j - 1);
     for (Arc<Integer> arc : node.getOutgoingArcs()) {
 
+      // TODO: Tail and Head are backward! FIX names!
       int last_word = arc.getLabel();
-      // Tail and Head are backward! FIX names!
       int arc_len = arc.getTail().getNumber() - arc.getHead().getNumber();
 
       // int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //
 
       if (null != dotcells[i][j - 1]) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-        for (DotNode dt : dotcells[i][j - 1].getDotNodes()) {
-          if (null == dt.trieNode) {
+        for (DotNode dotNode : dotcells[i][j - 1].getDotNodes()) {
+          if (null == dotNode.trieNode) {
             // We'll get one anyways in the else branch
             // TODO: better debugging.
             throw new NullPointerException("DotChart.expand_cell(" + i + "," + j + "): "
@@ -194,14 +211,14 @@ class DotChart {
 
           } else {
             // match the terminal
-            Trie child_tnode = dt.trieNode.match(last_word);
+            Trie child_tnode = dotNode.trieNode.match(last_word);
             if (null != child_tnode) {
               // we do not have an ant for the terminal
-              addDotItem(child_tnode, i, j - 1 + arc_len, dt.antSuperNodes, null,
-                  dt.srcPath.extend(arc));
+              addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
+                  dotNode.srcPath.extend(arc));
             }
           }
-        } // end foreach DotItem
+        }
       }
     }
   }

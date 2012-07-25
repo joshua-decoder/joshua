@@ -21,6 +21,8 @@ import java.util.HashMap;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 
+import joshua.corpus.Vocabulary;
+
 /**
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -28,15 +30,31 @@ import joshua.decoder.ff.tm.Trie;
 public class MemoryBasedTrie implements Trie {
   MemoryBasedRuleBin ruleBin = null;
   HashMap<Integer, MemoryBasedTrie> childrenTbl = null;
+  boolean regexpMatch = false;
 
+  public MemoryBasedTrie() { 
+    boolean regexpMatch = false;
+  }
+
+  public MemoryBasedTrie(boolean regexpMatch) {
+    this.regexpMatch = regexpMatch;
+  }
 
   /* See Javadoc for Trie interface. */
   public MemoryBasedTrie match(int sym_id) {
     if (null == childrenTbl) {
       return null;
-    } else {
-      return childrenTbl.get(sym_id);
+    } else if (childrenTbl.get(sym_id) != null) {
+        return childrenTbl.get(sym_id);
+    } else if (regexpMatch) {
+      // get all the extensions, map to string, check for *, build regexp
+      for (Integer arcID: childrenTbl.keySet()) {
+        String arcWord = Vocabulary.word(arcID);
+        if (Vocabulary.word(sym_id).matches(arcWord)) 
+          return childrenTbl.get(arcID);
+      }
     }
+    return null;
   }
 
   /* See Javadoc for Trie interface. */

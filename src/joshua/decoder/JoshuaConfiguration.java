@@ -42,6 +42,9 @@ public class JoshuaConfiguration {
   // new format enabling any number of grammar files
   public static ArrayList<String> tms = new ArrayList<String>();
 
+  // when set to a grammar's owner, it permits that grammar to have regular expressions in its rules
+  public static String regexpGrammar = "";
+
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
   public static double lm_ceiling_cost = 100;
@@ -228,6 +231,10 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("parse"))) {
             parse = Boolean.parseBoolean(fds[1]);
             logger.finest(String.format("parse: %s", parse));
+
+          } else if (parameter.equals(normalize_key("regexp-grammar"))) {
+            regexpGrammar = fds[1];
+            logger.finest(String.format("regexp-grammar: %s", regexpGrammar));
 
           } else if (parameter.equals(normalize_key("tm_file"))) {
             tm_file = fds[1].trim();
