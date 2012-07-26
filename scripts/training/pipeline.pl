@@ -54,7 +54,7 @@ my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
 my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
-my $GRAMMAR_TYPE = "hiero";
+my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt"
 my $WITTEN_BELL = 0;
 
 # Run description.
@@ -765,8 +765,8 @@ if (! defined $GRAMMAR_FILE) {
   if (! -e "grammar.gz" && ! -z "grammar.gz") {
 
 		# create the input file
-		my $target_file = ($GRAMMAR_TYPE eq "hiero") 
-				? $TRAIN{target} : $TRAIN{parsed};
+		my $target_file = ($GRAMMAR_TYPE eq "samt") 
+				? $TRAIN{parsed} : $TRAIN{target};
 		$cachepipe->cmd("thrax-input-file",
 										"paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
 										$TRAIN{source}, $target_file, $ALIGNMENT,
