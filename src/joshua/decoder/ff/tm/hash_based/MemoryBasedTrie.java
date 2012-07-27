@@ -57,6 +57,19 @@ public class MemoryBasedTrie implements Trie {
     return null;
   }
 
+  /* This version only looks for exact matches.  For grammars with regular expressions enabled,
+   * those should be applied only when traversing the completely-built trie structure.  When
+   * building the structure, we do not want regular expressions supplied.  This is the version that
+   * should be called when constructing the trie.
+   */
+  public MemoryBasedTrie exactMatch(int sym_id) {
+    if (null == childrenTbl) {
+      return null;
+    } else {
+      return childrenTbl.get(sym_id);
+    }
+  }
+
   /* See Javadoc for Trie interface. */
   public boolean hasExtensions() {
     return (null != this.childrenTbl);

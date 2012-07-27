@@ -240,7 +240,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
        * (logger.isLoggable(Level.FINEST)) logger.finest("Amended to: " + curSymID); }
        */
 
-      MemoryBasedTrie nextLayer = pos.match(curSymID);
+      // we call exactMatch() here to avoid applying regular expressions along the arc
+      MemoryBasedTrie nextLayer = pos.exactMatch(curSymID);
       if (null == nextLayer) {
         nextLayer = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(defaultOwner)));
         if (pos.hasExtensions() == false) {
