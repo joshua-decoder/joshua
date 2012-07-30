@@ -1056,7 +1056,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   }
 }
 
-maybe_quit("MERT");
+maybe_quit("TUNE");
 
 # prepare the testing data
 if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
