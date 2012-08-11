@@ -1,55 +1,34 @@
-#!/usr/bin/env python
-"""
-Joshua decoder invocation script.
+#!/bin/bash
+#
+# Joshua decoder invocation script.
+# 
+# This script takes care of passing arguments to Java and to the
+# Joshua decoder.  Usage:
+#
+# ./decoder [-m memory] [Joshua arguments]
+#
+# The default amount of memory is 4gb.
 
-This script takes care of passing arguments to Java and to the
-Joshua decoder.  Usage:
+NUM_ARGS=0
+E_OPTERROR=1
 
-./decoder [-m memory] [Joshua arguments]
+## memory usage; default is 4 GB
+mem=4g
 
-The default amount of memory is 4gb.
+if [[ $1 == "-m" ]]; then
+	mem=$2
 
-To initiate the debugger, you can either just issue the argument --debug and
-the debugger will start on the default port (1044), or just use the argument
---debug_port followed by the desired port. If neither arguments are passed,
-then the debugger is not started.
-"""
-import argparse
-import os
-import shlex
-import subprocess
-import sys
+    shift
+    shift
+fi
 
-DEFAULT_DEBUG_PORT = 1044
-parser = argparse.ArgumentParser(description='Joshua decoder invocation script.')
-parser.add_argument('-m', dest='mem', default='4g',
-                    help='the amount of memory to reserve for the JVM. The default is "4g".')
-parser.add_argument('--debug', action='store_true',
-                    help='whether or not to start the java debugger')
-parser.add_argument('--debug-port', type=int, default=DEFAULT_DEBUG_PORT,
-                    help='the port to connect the debugger to')
-parser.add_argument('joshua_args', nargs='*',
-                    help='the arguments to pass to JoshuaDecoder')
-args = parser.parse_args()
+set -u
 
-try:
-    JOSHUA = os.environ['JOSHUA']
-except:
-    sys.exit('The JOSHUA environment variable is not set.')
+java -Xmx${mem} \
+	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
+	-Dfile.encoding=utf8 \
+	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
+	-Djava.library.path=$JOSHUA/lib \
+	joshua.decoder.JoshuaDecoder $@
 
-cmd = shlex.split("""
-java -Xmx{0.mem} \
-  -cp {1}/bin:{1}/thrax/bin/thrax.jar:{1}/lib/berkeleylm.jar \
-  -Dfile.encoding=utf8 \
-  -Djava.util.logging.config.file={1}/logging.properties \
-  -Djava.library.path={1}/lib \
-""".format(args, JOSHUA))
 
-if args.debug or ((not args.debug) and args.debug_port != DEFAULT_DEBUG_PORT):
-    cmd.append('-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address={0}'.format(args.debug_port))
-
-cmd.append('joshua.decoder.JoshuaDecoder')
-cmd.extend(args.joshua_args)
-
-p = subprocess.Popen(cmd)
-out, err = p.communicate()
