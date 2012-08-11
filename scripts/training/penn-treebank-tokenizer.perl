@@ -3,8 +3,8 @@
 # Sample Tokenizer
 # written by Josh Schroeder, based on code by Philipp Koehn
 
-binmode(STDIN, ":utf8");
-binmode(STDOUT, ":utf8");
+binmode(STDIN, ":encoding(utf8)");
+binmode(STDOUT, ":encoding(utf8)");
 
 use FindBin qw($Bin);
 use strict;
