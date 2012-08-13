@@ -5,21 +5,27 @@
 # --- and it allows jumping into arbitrary points of the pipeline. 
 
 my $JOSHUA;
+my $HADOOP;
 
 BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
+      ! exists $ENV{HADOOP} || $ENV{HADOOP} eq "" ||
       ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "") {
-		print "Several environment variables must be set before running the pipeline.  Please set:\n";
-		print "* \$JOSHUA to the root of the Joshua source code.\n"
-				if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
-		print "* \$JAVA_HOME to the directory of your local java installation. \n"
-				if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
-		exit;
+                print "Several environment variables must be set before running the pipeline.  Please set:\n";
+                print "* \$JOSHUA to the root of the Joshua source code.\n"
+                                if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
+                print "* \$HADOOP to the directory of your local hadoop installation.\n"
+                                if (! exists $ENV{HADOOP} || $ENV{HADOOP} eq "");
+                print "* \$JAVA_HOME to the directory of your local java installation. \n"
+                                if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
+                exit;
   }
   $JOSHUA = $ENV{JOSHUA};
   unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
   unshift(@INC,"$JOSHUA/lib");
 }
+
+
 
 use strict;
 use warnings;
@@ -32,7 +38,7 @@ use File::Temp qw/ :mktemp /;
 use CachePipe;
 # use Thread::Pool;
 
-my $HADOOP = $ENV{HADOOP};
+$HADOOP = $ENV{HADOOP};
 
 my $THRAX = "$JOSHUA/thrax";
 
