@@ -41,7 +41,7 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
     try {
       this.reader = new LineReader(fileName);
     } catch (IOException e) {
-      throw new RuntimeException("Error opening translation model file: " + fileName
+      throw new RuntimeException("Error opening translation model file: " + fileName + "\n"
           + (null != e.getMessage() ? e.getMessage() : "No details available. Sorry."), e);
     }
 

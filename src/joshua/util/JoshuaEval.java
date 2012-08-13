@@ -1,19 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
-
 package joshua.util;
 
 import java.io.BufferedReader;
@@ -287,53 +271,53 @@ public class JoshuaEval {
     evaluateRefs = false;
     verbose = false;
 
-    int i = 0;
+    int argno = 0;
 
-    while (i < args.length) {
-      String option = args[i];
+    while (argno < args.length) {
+      String option = args[argno];
       if (option.equals("-cand")) {
-        candFileName = args[i + 1];
+        candFileName = args[argno + 1];
       } else if (option.equals("-format")) {
-        candFileFormat = args[i + 1];
+        candFileFormat = args[argno + 1];
         if (!candFileFormat.equals("plain") && !candFileFormat.equals("nbest")) {
           println("candFileFormat must be either plain or nbest.");
           System.exit(10);
         }
       } else if (option.equals("-rank")) {
-        candRank = Integer.parseInt(args[i + 1]);
+        candRank = Integer.parseInt(args[argno + 1]);
         if (refsPerSen < 1) {
           println("Argument for -rank must be positive.");
           System.exit(10);
         }
       } else if (option.equals("-ref")) {
-        refFileName = args[i + 1];
+        refFileName = args[argno + 1];
       } else if (option.equals("-rps")) {
-        refsPerSen = Integer.parseInt(args[i + 1]);
+        refsPerSen = Integer.parseInt(args[argno + 1]);
         if (refsPerSen < 1) {
           println("refsPerSen must be positive.");
           System.exit(10);
         }
       } else if (option.equals("-txtNrm")) {
-        textNormMethod = Integer.parseInt(args[i + 1]);
+        textNormMethod = Integer.parseInt(args[argno + 1]);
         if (textNormMethod < 0 || textNormMethod > 4) {
           println("textNormMethod should be between 0 and 4");
           System.exit(10);
         }
       } else if (option.equals("-m")) {
-        metricName = args[i + 1];
+        metricName = args[argno + 1];
         if (EvaluationMetric.knownMetricName(metricName)) {
           int optionCount = EvaluationMetric.metricOptionCount(metricName);
           metricOptions = new String[optionCount];
           for (int opt = 0; opt < optionCount; ++opt) {
-            metricOptions[opt] = args[i + opt + 2];
+            metricOptions[opt] = args[argno + opt + 2];
           }
-          i += optionCount;
+          argno += optionCount;
         } else {
           println("Unknown metric name " + metricName + ".");
           System.exit(10);
         }
       } else if (option.equals("-evr")) {
-        int evr = Integer.parseInt(args[i + 1]);
+        int evr = Integer.parseInt(args[argno + 1]);
         if (evr == 1) {
           evaluateRefs = true;
         } else if (evr == 0) {
@@ -343,7 +327,7 @@ public class JoshuaEval {
           System.exit(10);
         }
       } else if (option.equals("-v")) {
-        int v = Integer.parseInt(args[i + 1]);
+        int v = Integer.parseInt(args[argno + 1]);
         if (v == 1) {
           verbose = true;
         } else if (v == 0) {
@@ -357,46 +341,63 @@ public class JoshuaEval {
         System.exit(10);
       }
 
-      i += 2;
+      argno += 2;
 
-    } // while (i)
+    } // while (argno)
 
     if (refsPerSen > 1) {
-      // the provided refFileName must be a prefix
-      // File dummy = new File(refFileName);
-      // if (!dummy.exists()) {
-      refFileName = createUnifiedRefFile(refFileName, refsPerSen);
-      // }
+			String refFile = refFileName + "0";
+			if (! new File(refFile).exists())
+				refFile = refFileName + ".0";
+			if (! new File(refFile).exists()) {
+				System.err.println(String.format("* FATAL: can't find first reference file '%s{0,.0}'", refFileName));
+				System.exit(1);
+			}
+
+			numSentences = countLines(refFile);
     } else {
-      checkFile(refFileName);
+			numSentences = countLines(refFileName);
     }
-
-
-    // initialize
-    numSentences = countLines(refFileName) / refsPerSen;
 
     // read in reference sentences
     refSentences = new String[numSentences][refsPerSen];
 
     try {
 
-      InputStream inStream_refs = new FileInputStream(new File(refFileName));
-      BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
+			// read in reference sentences
+			BufferedReader reference_readers[] = new BufferedReader[refsPerSen];
+			if (refsPerSen == 1) {
+				reference_readers[0] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFileName)), "utf8"));
+			} else {
+				for (int i = 0; i < refsPerSen; i++) {
+					String refFile = refFileName + i;
+					if (! new File(refFile).exists())
+						refFile = refFileName + "." + i;
+					if (! new File(refFile).exists()) {
+						System.err.println(String.format("* FATAL: can't find reference file '%s'", refFile));
+						System.exit(1);
+					}
 
-      for (i = 0; i < numSentences; ++i) {
+					reference_readers[i] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFile)), "utf8"));
+				}
+			}
+				
+      for (int i = 0; i < numSentences; ++i) {
         for (int r = 0; r < refsPerSen; ++r) {
           // read the rth reference translation for the ith sentence
-          refSentences[i][r] = normalize(inFile_refs.readLine(), textNormMethod);
+          refSentences[i][r] = normalize(reference_readers[r].readLine(), textNormMethod);
         }
       }
 
-      inFile_refs.close();
+			// close all the reference files
+			for (int i = 0; i < refsPerSen; i++) 
+				reference_readers[i].close();
 
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.err.println("FileNotFoundException in JoshuaEval.processArgsAndInitialize(): " + e.getMessage());
       System.exit(99901);
     } catch (IOException e) {
-      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.err.println("IOException in JoshuaEval.processArgsAndInitialize(): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -426,87 +427,6 @@ public class JoshuaEval {
     return checker.exists();
   }
 
-
-  private static String createUnifiedRefFile(String prefix, int numFiles) {
-    if (numFiles < 2) {
-      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles
-          + "; doing nothing.");
-      return prefix;
-    } else {
-      File checker;
-      checker = new File(prefix + "1");
-
-      if (!checker.exists()) {
-        checker = new File(prefix + ".1");
-        if (!checker.exists()) {
-          println("Can't find reference files.");
-          System.exit(50);
-        } else {
-          prefix = prefix + ".";
-        }
-      }
-
-      String outFileName;
-      if (prefix.endsWith(".")) {
-        outFileName = prefix + "all";
-      } else {
-        outFileName = prefix + ".all";
-      }
-
-      try {
-        PrintWriter outFile = new PrintWriter(outFileName);
-
-        BufferedReader[] inFile = new BufferedReader[numFiles];
-
-        int nextIndex;
-        checker = new File(prefix + "0");
-        if (checker.exists()) {
-          nextIndex = 0;
-        } else {
-          nextIndex = 1;
-        }
-        int lineCount = countLines(prefix + nextIndex);
-
-        for (int r = 0; r < numFiles; ++r) {
-          if (countLines(prefix + nextIndex) != lineCount) {
-            println("Line count mismatch in " + (prefix + nextIndex) + ".");
-            System.exit(60);
-          }
-          InputStream inStream = new FileInputStream(new File(prefix + nextIndex));
-          inFile[r] = new BufferedReader(new InputStreamReader(inStream, "utf8"));
-          ++nextIndex;
-        }
-
-        String line;
-
-        for (int i = 0; i < lineCount; ++i) {
-          for (int r = 0; r < numFiles; ++r) {
-            line = inFile[r].readLine();
-            outFile.println(line);
-          }
-        }
-
-        outFile.close();
-
-        for (int r = 0; r < numFiles; ++r) {
-          inFile[r].close();
-        }
-
-      } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in MertCore.createUnifiedRefFile(String,int): "
-            + e.getMessage());
-        System.exit(99901);
-      } catch (IOException e) {
-        System.err.println("IOException in MertCore.createUnifiedRefFile(String,int): "
-            + e.getMessage());
-        System.exit(99902);
-      }
-
-      return outFileName;
-
-    }
-
-  } // createUnifiedRefFile(String prefix, int numFiles)
 
   private static String normalize(String str, int normMethod) {
     if (normMethod == 0) return str;

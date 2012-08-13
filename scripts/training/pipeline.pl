@@ -5,21 +5,27 @@
 # --- and it allows jumping into arbitrary points of the pipeline. 
 
 my $JOSHUA;
+my $HADOOP;
 
 BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
+      ! exists $ENV{HADOOP} || $ENV{HADOOP} eq "" ||
       ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "") {
-		print "Several environment variables must be set before running the pipeline.  Please set:\n";
-		print "* \$JOSHUA to the root of the Joshua source code.\n"
-				if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
-		print "* \$JAVA_HOME to the directory of your local java installation. \n"
-				if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
-		exit;
+                print "Several environment variables must be set before running the pipeline.  Please set:\n";
+                print "* \$JOSHUA to the root of the Joshua source code.\n"
+                                if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
+                print "* \$HADOOP to the directory of your local hadoop installation.\n"
+                                if (! exists $ENV{HADOOP} || $ENV{HADOOP} eq "");
+                print "* \$JAVA_HOME to the directory of your local java installation. \n"
+                                if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
+                exit;
   }
   $JOSHUA = $ENV{JOSHUA};
   unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
   unshift(@INC,"$JOSHUA/lib");
 }
+
+
 
 use strict;
 use warnings;
@@ -32,7 +38,7 @@ use File::Temp qw/ :mktemp /;
 use CachePipe;
 # use Thread::Pool;
 
-my $HADOOP = $ENV{HADOOP};
+$HADOOP = $ENV{HADOOP};
 
 my $THRAX = "$JOSHUA/thrax";
 
@@ -51,10 +57,14 @@ my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
+my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
-my $GRAMMAR_TYPE = "hiero";
+my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt"
 my $WITTEN_BELL = 0;
+
+# Run description.
+my $README = undef;
 
 # gzip-aware cat
 my $CAT = "$SCRIPTDIR/training/scat";
@@ -144,12 +154,12 @@ my $TUNER = "mert";  # or PRO
 my $PARSED_CORPUS = undef;
 
 my $retval = GetOptions(
+	"readme=s"    => \$README,
   "corpus=s"        => \@CORPORA,
   "parsed-corpus=s"   => \$PARSED_CORPUS,
   "tune=s"          => \$TUNE,
   "test=s"            => \$TEST,
   "prepare!"          => \$DO_PREPARE_CORPORA,
-  "data-dir=s"        => \$DATA_DIR,
   "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
@@ -196,11 +206,13 @@ if (! $retval) {
   exit 1;
 }
 
+my $DOING_LATTICES = 0;
+
 my %DATA_DIRS = (
-  train => "$DATA_DIR/train",
-  tune  => "$DATA_DIR/tune",
-  test  => "$DATA_DIR/test",
-		);
+  train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
+  tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
+  test  => get_absolute_path("$RUNDIR/$DATA_DIR/test"),
+);
 
 if (defined $NAME) {
   map { $DATA_DIRS{$_} .= "/$NAME" } (keys %DATA_DIRS);
@@ -331,11 +343,16 @@ map {
   $CORPORA[$_] = get_absolute_path("$CORPORA[$_]");
 } (0..$#CORPORA);
 
-# Do the same for tuning and test data
+# Do the same for tuning and test data, and other files
 $TUNE = get_absolute_path($TUNE);
 $TEST = get_absolute_path($TEST);
 
-# TODO: every file request should be passed through a wrapper that does this.
+$GRAMMAR_FILE = get_absolute_path($GRAMMAR_FILE);
+$GLUE_GRAMMAR_FILE = get_absolute_path($GLUE_GRAMMAR_FILE);
+$TUNE_GRAMMAR_FILE = get_absolute_path($TUNE_GRAMMAR_FILE);
+$TEST_GRAMMAR_FILE = get_absolute_path($TEST_GRAMMAR_FILE);
+$THRAX_CONF_FILE = get_absolute_path($THRAX_CONF_FILE);
+$ALIGNMENT = get_absolute_path($ALIGNMENT);
 
 foreach my $corpus (@CORPORA) {
   foreach my $ext ($TARGET,$SOURCE) {
@@ -378,6 +395,13 @@ $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf"
 mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
 
+if (defined $README) {
+	open DESC, ">README" or die "can't write README file";
+	print DESC $README;
+	print DESC $/;
+	close DESC;
+}
+
 # default values -- these are overridden if the full script is run
 # (after tokenization and normalization)
 my (%TRAIN,%TUNE,%TEST);
@@ -395,11 +419,21 @@ if (defined $PARSED_CORPUS) {
 if ($TUNE) {
   $TUNE{source} = "$TUNE.$SOURCE";
   $TUNE{target} = "$TUNE.$TARGET";
+
+  if (! -e "$TUNE{source}") {
+    print "* FATAL: couldn't find tune source file at '$TUNE{source}'\n";
+    exit;
+  }
 }
 
 if ($TEST) {
   $TEST{source} = "$TEST.$SOURCE";
   $TEST{target} = "$TEST.$TARGET";
+
+  if (! -e "$TEST{source}") {
+    print "* FATAL: couldn't find test source file at '$TEST{source}'\n";
+    exit;
+  }
 }
 
 if ($FIRST_STEP ne "FIRST") {
@@ -737,8 +771,8 @@ if (! defined $GRAMMAR_FILE) {
   if (! -e "grammar.gz" && ! -z "grammar.gz") {
 
 		# create the input file
-		my $target_file = ($GRAMMAR_TYPE eq "hiero") 
-				? $TRAIN{target} : $TRAIN{parsed};
+		my $target_file = ($GRAMMAR_TYPE eq "samt") 
+				? $TRAIN{parsed} : $TRAIN{target};
 		$cachepipe->cmd("thrax-input-file",
 										"paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
 										$TRAIN{source}, $target_file, $ALIGNMENT,
@@ -848,8 +882,25 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 										$lmfile);
   }
 
-  push (@LMFILES, $lmfile);
+	if ($LM_TYPE eq "kenlm") {
+		my $kenlm_file = "lm.kenlm";
+		$cachepipe->cmd("compile-kenlm",
+										"$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary lm.gz lm.kenlm",
+										$lmfile, $kenlm_file);
 
+		push (@LMFILES, $kenlm_file);
+
+	} elsif ($LM_TYPE eq "berkeleylm") {
+		my $berkeleylm_file = "lm.berkeleylm";
+		$cachepipe->cmd("compile-berkeleylm",
+										"java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa lm.gz lm.berkeleylm",
+										$lmfile, $berkeleylm_file);
+
+		push (@LMFILES, $berkeleylm_file);
+	} else {
+
+		push (@LMFILES, $lmfile);
+	}
 }
 
 system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
@@ -886,7 +937,7 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
-									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TUNE_GRAMMAR",
+									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | grep -av '|||  |||' | gzip -9n > $TUNE_GRAMMAR",
 									$GRAMMAR_FILE,
 									$TUNE{source},
 									$TUNE_GRAMMAR);
@@ -936,6 +987,13 @@ for my $i (0..($num_tm_features-1)) {
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
 
+my $latticeparam = ($DOING_LATTICES == 1) 
+		? "latticecost ||| 1.0 Opt -Inf +Inf -1 +1"
+		: "";
+my $latticeweight = ($DOING_LATTICES == 1)
+		? "latticecost 1.0"
+		: "";
+
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
@@ -954,6 +1012,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
+			s/<LATTICEWEIGHT>/$latticeweight/g;
+			s/<LATTICEPARAM>/$latticeparam/g;
 			s/<LMFILE>/$LMFILES[0]/g;
 			s/<LMTYPE>/$LM_TYPE/g;
 			s/<MEM>/$JOSHUA_MEM/g;
@@ -1002,7 +1062,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   }
 }
 
-maybe_quit("MERT");
+maybe_quit("TUNE");
 
 # prepare the testing data
 if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
@@ -1026,7 +1086,7 @@ if ($TEST_GRAMMAR_FILE) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test",
-										"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TEST_GRAMMAR",
+										"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
 										$GRAMMAR_FILE,
 										$TEST{source},
 										$TEST_GRAMMAR);
@@ -1048,7 +1108,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   if ($GLUE_GRAMMAR_FILE =~ /^\//) {
 		system("ln -sf $GLUE_GRAMMAR_FILE $filename"); 
   } else {
-		system("ln -sf ../../$GLUE_GRAMMAR_FILE $filename"); 
+		system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename"); 
   }
 }
 
@@ -1063,7 +1123,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		open FROM, $file or die "can't find file '$file'";
 		open TO, ">$testrun/$key" or die "can't write to '$testrun/$key'";
 		while (<FROM>) {
-			s/<INPUT>/$TEST{source}/g;
+ 			s/<INPUT>/$TEST{source}/g;
 			s/<NUMJOBS>/$NUM_JOBS/g;
 			s/<NUMTHREADS>/$NUM_THREADS/g;
 			s/<QSUB_ARGS>/$QSUB_ARGS/g;
@@ -1156,6 +1216,7 @@ exit;
 # data sets
 
 TEST:
+    ;
 
 system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
 
@@ -1215,12 +1276,12 @@ if ($TUNEFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
 # this needs to be in a function since it is done all over the place
 open FROM, $TUNEFILES{decoder_command} or die "can't find file '$TUNEFILES{decoder_command}'";
 open TO, ">$testrun/decoder_command";
-print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
+print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
-system("cp $TUNEFILES{'joshua.config'} $testrun/joshua.config");
+system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true > $testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
@@ -1448,6 +1509,7 @@ sub is_lattice {
   my $line = <READ>;
   close(READ);
   if ($line =~ /^\(\(\(/) {
+		$DOING_LATTICES = 1;
 		return 1;
   } else {
 		return 0;
@@ -1509,8 +1571,10 @@ sub count_num_features {
 sub get_absolute_path {
 	my ($file) = @_;
 
-	# prepend startdir (which is absolute) unless the path is absolute.
-	$file = "$STARTDIR/$file" unless $file =~ /^\//;
+	if (defined $file) {
+		# prepend startdir (which is absolute) unless the path is absolute.
+		$file = "$STARTDIR/$file" unless $file =~ /^\//;
+	}
 
 	return $file;
 }

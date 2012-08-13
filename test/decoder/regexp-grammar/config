@@ -1,0 +1,9 @@
+tm = thrax regexp 10 ./regexp-grammar
+tm = thrax glue -1 ./glue-grammar
+mark-oovs = true
+goal-symbol = GOAL
+regexp-grammar = regexp
+
+phrasemodel regexp 0 1
+phrasemodel regexp 1 1
+phrasemodel glue 0 1

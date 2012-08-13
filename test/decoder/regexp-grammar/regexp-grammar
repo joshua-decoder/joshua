@@ -1,0 +1,6 @@
+[X] ||| lind.* ||| pretty ||| 1 1
+[X] ||| lindo ||| [boy version of pretty] ||| 10 0 
+[X] ||| linda ||| [girl version of pretty] ||| 10 0 
+[X] ||| chico ||| boy ||| 1 0
+[X] ||| chica ||| girl ||| 1 0
+[X] ||| \d{10,} ||| really big number ||| 1 0

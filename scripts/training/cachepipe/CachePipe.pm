@@ -35,7 +35,7 @@ sub new {
 	running   => "",            # currently running command
 	lastrun   => "",            # last command run
 	qsub_args => "",            # qsub args
-	omit_cmd  => 0,             # whether to omit the command from the signature
+	omit_cmd  => 1,             # whether to omit the command from the signature
 	email   => undef,
   };
 

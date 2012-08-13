@@ -274,7 +274,19 @@ public class MertCore {
       println("", 1);
     }
 
-    numSentences = countLines(refFileName) / refsPerSen;
+		if (refsPerSen > 1) {
+			String refFile = refFileName + "0";
+			if (! new File(refFile).exists())
+				refFile = refFileName + ".0";
+			if (! new File(refFile).exists()) {
+				System.err.println(String.format("* FATAL: can't find first reference file '%s{0,.0}'", refFileName));
+				System.exit(1);
+			}
+
+			numSentences = countLines(refFile);
+		} else {
+			numSentences = countLines(refFileName);
+		}
 
     processDocInfo();
     // sets numDocuments and docOfSentence[]
@@ -333,26 +345,33 @@ public class MertCore {
     try {
 
       // read in reference sentences
-      InputStream inStream_refs = new FileInputStream(new File(refFileName));
-      BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
+			BufferedReader reference_readers[] = new BufferedReader[refsPerSen];
+			if (refsPerSen == 1) {
+				reference_readers[0] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFileName)), "utf8"));
+			} else {
+				for (int i = 0; i < refsPerSen; i++) {
+					String refFile = refFileName + i;
+					if (! new File(refFile).exists())
+						refFile = refFileName + "." + i;
+					if (! new File(refFile).exists()) {
+						System.err.println(String.format("* FATAL: can't find reference file '%s'", refFile));
+						System.exit(1);
+					}
 
+					reference_readers[i] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFile)), "utf8"));
+				}
+			}
+				
       for (int i = 0; i < numSentences; ++i) {
         for (int r = 0; r < refsPerSen; ++r) {
           // read the rth reference translation for the ith sentence
-          refSentences[i][r] = inFile_refs.readLine();
+          refSentences[i][r] = normalize(reference_readers[r].readLine(), textNormMethod);
         }
       }
 
-      inFile_refs.close();
-
-      // normalize reference sentences
-      for (int i = 0; i < numSentences; ++i) {
-        for (int r = 0; r < refsPerSen; ++r) {
-          // normalize the rth reference translation for the ith sentence
-          refSentences[i][r] = normalize(refSentences[i][r], textNormMethod);
-        }
-      }
-
+			// close all the reference files
+			for (int i = 0; i < refsPerSen; i++) 
+				reference_readers[i].close();
 
       // read in decoder command, if any
       decoderCommand = null;
@@ -2461,19 +2480,6 @@ public class MertCore {
 
     }
 
-
-
-    if (refsPerSen > 1) {
-      // the provided refFileName might be a prefix
-      // File dummy = new File(refFileName);
-      // if (!dummy.exists()) {
-      refFileName = createUnifiedRefFile(refFileName, refsPerSen);
-      // }
-    } else {
-      checkFile(refFileName);
-    }
-
-
     if (firstTime) {
       println("Processed the following args array:", 1);
       print("  ", 1);
@@ -2619,85 +2625,6 @@ public class MertCore {
     }
   }
 
-  private String createUnifiedRefFile(String prefix, int numFiles) {
-    if (numFiles < 2) {
-      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; "
-          + "doing nothing.", 1);
-      return prefix;
-    } else {
-      File checker;
-      checker = new File(prefix + "1");
-
-      if (!checker.exists()) {
-        checker = new File(prefix + ".1");
-        if (!checker.exists()) {
-          println("Can't find reference files.");
-          System.exit(50);
-        } else {
-          prefix = prefix + ".";
-        }
-      }
-
-      String outFileName;
-      if (prefix.endsWith(".")) {
-        outFileName = prefix + "all";
-      } else {
-        outFileName = prefix + ".all";
-      }
-
-      try {
-        PrintWriter outFile = new PrintWriter(outFileName);
-
-        BufferedReader[] inFile = new BufferedReader[numFiles];
-
-        int nextIndex;
-        checker = new File(prefix + "0");
-        if (checker.exists()) {
-          nextIndex = 0;
-        } else {
-          nextIndex = 1;
-        }
-        int lineCount = countLines(prefix + nextIndex);
-
-        for (int r = 0; r < numFiles; ++r) {
-          if (countLines(prefix + nextIndex) != lineCount) {
-            println("Line count mismatch in " + (prefix + nextIndex) + ".");
-            System.exit(60);
-          }
-          InputStream inStream = new FileInputStream(new File(prefix + nextIndex));
-          inFile[r] = new BufferedReader(new InputStreamReader(inStream, "utf8"));
-          ++nextIndex;
-        }
-
-        String line;
-
-        for (int i = 0; i < lineCount; ++i) {
-          for (int r = 0; r < numFiles; ++r) {
-            line = inFile[r].readLine();
-            outFile.println(line);
-          }
-        }
-
-        outFile.close();
-
-        for (int r = 0; r < numFiles; ++r) {
-          inFile[r].close();
-        }
-      } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in MertCore.createUnifiedRefFile(String,int): "
-            + e.getMessage());
-        System.exit(99901);
-      } catch (IOException e) {
-        System.err.println("IOException in MertCore.createUnifiedRefFile(String,int): "
-            + e.getMessage());
-        System.exit(99902);
-      }
-
-      return outFileName;
-
-    }
-
-  } // createUnifiedRefFile(String prefix, int numFiles)
 
   private String normalize(String str, int normMethod) {
     if (normMethod == 0) return str;

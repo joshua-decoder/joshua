@@ -301,7 +301,7 @@
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <target name="test" depends="all">
-	<exec dir="test" executable="/bin/bash" failonerror="true">
+	<exec dir="test" executable="/bin/bash" failonerror="false">
 	  <arg line="run-all-tests.sh" />
 	</exec>
   </target>
