@@ -1,5 +1,5 @@
 tm = thrax pt 50 grammar.test
-tm = thrax pt -1 glue-grammar
+tm = thrax glue -1 glue-grammar
 
 #lm config
 lm = berkeleylm 3 false false 100 test.lm
@@ -27,7 +27,7 @@ phrasemodel pt 0 1.0
 phrasemodel pt 1 0.5
 phrasemodel pt 2 0.5
 
-#phrasemodel glue 0 0.0
+phrasemodel glue 0 0.0
 
 #arityphrasepenalty owner start_arity end_arity weight
 #arityphrasepenalty pt 0 0 1.0
@@ -36,3 +36,5 @@ phrasemodel pt 2 0.5
 #wordpenalty weight
 wordpenalty -1.0
 latticecost 1.0
+
+oovpenalty -100
