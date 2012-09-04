@@ -44,8 +44,16 @@ public class ComputeNodeResult {
 
     TreeMap<Integer, DPState> allDPStates = null;
 
+    /* For each type of state (usually just the ngram state), we need to compute the new state that
+     * is created when applying the rule to the tail nodes at the current span.
+     */
     if (stateComputers != null) {
       for (StateComputer stateComputer : stateComputers) {
+        // Compute the new state and store it in a treemap of states indexed by the state ID.  This
+        // treemap can contain subtypes of many different kinds.  These DP states are used to
+        // identify the resultant hypergraph node in the hyperforest, and are also passed to their
+        // associated stateful feature functions (note that the function passing DP states to
+        // feature functions below does not make this clear).
         DPState dpState = stateComputer.computeState(rule, antNodes, i, j, srcPath);
 
         if (allDPStates == null) allDPStates = new TreeMap<Integer, DPState>();
@@ -57,6 +65,11 @@ public class ComputeNodeResult {
     double transitionLogPSum = 0.0;
     double futureLogPEstimation = 0.0;
 
+    /* We now iterate over all the feature functions, computing their cost and their expected future
+     * cost.  This code does not effectively distinguish between stateful and stateless feature
+     * functions, which is somewhat of a waste, since the dpState that is passed in to the feature
+     * function's call to estimateFutureLogP() will be null for all stateless features.
+     */
     for (FeatureFunction ff : featureFunctions) {
       transitionLogPSum +=
           ff.getWeight() * ff.reEstimateTransitionLogP(rule, antNodes, i, j, srcPath, sentID);
