@@ -81,7 +81,7 @@ my %TUNEFILES = (
   'mert.config'     => "$TUNECONFDIR/mert.config",
   'pro.config'      => "$TUNECONFDIR/pro.config",
   'params.txt'      => "$TUNECONFDIR/params.txt",
-		);
+);
 
 my $DO_MBR = 1;
 
@@ -154,7 +154,7 @@ my $TUNER = "mert";  # or PRO
 my $PARSED_CORPUS = undef;
 
 my $retval = GetOptions(
-	"readme=s"    => \$README,
+  "readme=s"    => \$README,
   "corpus=s"        => \@CORPORA,
   "parsed-corpus=s"   => \$PARSED_CORPUS,
   "tune=s"          => \$TUNE,
@@ -199,7 +199,7 @@ my $retval = GetOptions(
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
   "hadoop=s"          => \$HADOOP,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
-		);
+);
 
 if (! $retval) {
   print "Invalid usage, quitting\n";
@@ -246,8 +246,8 @@ if (scalar @LMFILES == 0) {
 # make sure the LMs exist
 foreach my $lmfile (@LMFILES) {
   if (! -e $lmfile) {
-		print "* FATAL: couldn't find language model file '$lmfile'\n";
-		exit 1;
+    print "* FATAL: couldn't find language model file '$lmfile'\n";
+    exit 1;
   }
 }
 
@@ -262,7 +262,7 @@ if (scalar @LMFILES && ! scalar(@CORPORA)) {
 
 # absolutize LM file paths
 map {
-	$LMFILES[$_] = get_absolute_path($LMFILES[$_]);
+  $LMFILES[$_] = get_absolute_path($LMFILES[$_]);
 } 0..$#LMFILES;
 
 # case-normalize this
@@ -286,14 +286,14 @@ if (@CORPORA == 0 and $STEPS{$FIRST_STEP} < $STEPS{TUNE}) {
 
 # make sure a tuning corpus was provided if we're doing tuning
 if (! defined $TUNE and ($STEPS{$FIRST_STEP} <= $STEPS{TUNE}
-												 and $STEPS{$LAST_STEP} >= $STEPS{TUNE})) { 
+                         and $STEPS{$LAST_STEP} >= $STEPS{TUNE})) { 
   print "* FATAL: need a tuning set (--tune)\n";
   exit 1;
 }
 
 # make sure a test corpus was provided if we're decoding a test set
 if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
-												 and $STEPS{$LAST_STEP} >= $STEPS{TEST})) {
+                         and $STEPS{$LAST_STEP} >= $STEPS{TEST})) {
   print "* FATAL: need a test set (--test)\n";
   exit 1;
 }
@@ -301,8 +301,8 @@ if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
 # make sure a grammar file was given if we're skipping training
 if (! defined $GRAMMAR_FILE) {
   if ($STEPS{$FIRST_STEP} >= $STEPS{TEST}) {
-		if (! defined $TEST_GRAMMAR_FILE) {
-			print "* FATAL: need a grammar (--grammar or --test-grammar) if you're skipping to testing\n";
+    if (! defined $TEST_GRAMMAR_FILE) {
+      print "* FATAL: need a grammar (--grammar or --test-grammar) if you're skipping to testing\n";
 			exit 1;
 		}
   } elsif ($STEPS{$FIRST_STEP} >= $STEPS{TUNE}) {
@@ -356,10 +356,10 @@ $ALIGNMENT = get_absolute_path($ALIGNMENT);
 
 foreach my $corpus (@CORPORA) {
   foreach my $ext ($TARGET,$SOURCE) {
-		if (! -e "$corpus.$ext") {
-			print "* FATAL: can't find '$corpus.$ext'";
-			exit 1;
-		}
+    if (! -e "$corpus.$ext") {
+      print "* FATAL: can't find '$corpus.$ext'";
+      exit 1;
+    } 
   }
 }
 
@@ -396,10 +396,10 @@ mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
 
 if (defined $README) {
-	open DESC, ">README" or die "can't write README file";
-	print DESC $README;
-	print DESC $/;
-	close DESC;
+  open DESC, ">README" or die "can't write README file";
+  print DESC $README;
+  print DESC $/;
+  close DESC;
 }
 
 # default values -- these are overridden if the full script is run
