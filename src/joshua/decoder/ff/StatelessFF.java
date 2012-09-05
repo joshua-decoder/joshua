@@ -21,8 +21,12 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public abstract class DefaultStatelessFF extends FeatureFunction {
 
-  public StatelessFF(WeightVector weights) {
-    super(weights);
+  public StatelessFF(WeightVector weights, String name) {
+    super(weights, name);
+  }
+
+  public StatelessFF(WeightVector weights, String name, String args) {
+    super(weights, name, args);
   }
 
   public final boolean isStateful() {

@@ -51,12 +51,14 @@ public abstract class FeatureFunction {
   // Methods
   // ===============================================================
 
-  public FeatureFunction(WeightVector weights) {
+  public FeatureFunction(WeightVector weights, String name) {
     this.weights = weights;
+    this.name = name;
   }
 
-  public FeatureFunction(WeightVector weights, String args) {
+  public FeatureFunction(WeightVector weights, String name, String args) {
     this.weights = weights;
+    this.name = name;
     this.argString = args;
 
     processArgs(this.argString);
