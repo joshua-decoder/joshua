@@ -6,15 +6,18 @@
 # ID WORD COUNT
 
 use utf8;
+use warnings;
+use strict;
 
-binmode(STDIN,  ":utf-8");
-binmode(STDOUT, ":utf-8");
+binmode(STDIN,  ":utf8");
+binmode(STDOUT, ":utf8");
 
-while (<>) {
-  chomp;
-  split;
-  map { $count{$_}++ } @_;
+my %count;
+while (my $line = <>) {
+  chomp($line);
+  my @tokens = split(' ', $line);
+  map { $count{$_}++ } @tokens;
 }
 
-$id = 1;
-map { print $id++ . " $_ $count{$_}\n" } (sort { $b <=> $a } keys %count);
+my $id = 1;
+map { print $id++ . " $_ $count{$_}\n" } (sort { $count{$b} <=> $count{$a} } keys %count);

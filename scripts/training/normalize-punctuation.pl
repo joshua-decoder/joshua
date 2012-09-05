@@ -1,15 +1,13 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 # This script is distributed along with the datasets for the
 # shared translation task of the NAACL 2012 Workshop on Statistical Machine
 # Translation.  We include it here for convenience.
 
 use strict;
+use warnings;
 
-binmode(STDIN, ":utf8");
-binmode(STDOUT, ":utf8");
-
-my ($language) = @ARGV;
+my ($language) = shift(@ARGV) || "en";
 
 while(<STDIN>) {
   s/\r//g;
@@ -23,6 +21,7 @@ while(<STDIN>) {
   s/ :/:/g;
   s/ ;/;/g;
   # normalize unicode punctuation
+  s/﷓/-/g;
   s/„/\"/g;
   s/“/\"/g;
   s/”/\"/g;
@@ -37,23 +36,25 @@ while(<STDIN>) {
   s/''/\"/g;
   s/´´/\"/g;
   s/…/.../g;
+  # Replace non-breaking spaces (which are surprisingly prevalent, and don't
+  # count as whitespace) with spaces.
   # French quotes
-  s/ « / \"/g;
-  s/« /\"/g;
+  s/\xA0«\xA0/ \"/g;
+  s/«\xA0/\"/g;
   s/«/\"/g;
-  s/ » /\" /g;
-  s/ »/\"/g;
+  s/\xA0»\xA0/\" /g;
+  s/\xA0»/\"/g;
   s/»/\"/g;
   # handle pseudo-spaces
-  s/ \%/\%/g;
-  s/nº /nº /g;
-  s/ :/:/g;
-  s/ ºC/ ºC/g;
-  s/ cm/ cm/g;
-  s/ \?/\?/g;
-  s/ \!/\!/g;
-  s/ ;/;/g;
-  s/, /, /g; s/ +/ /g;
+  s/\xA0\%/\%/g;
+  s/nº\xA0/nº /g;
+  s/\xA0:/:/g;
+  s/\xA0ºC/ ºC/g;
+  s/\xA0cm/ cm/g;
+  s/\xA0\?/\?/g;
+  s/\xA0\!/\!/g;
+  s/\xA0;/;/g;
+  s/,\xA0/, /g; s/ +/ /g;
 
   # English "quotation," followed by comma, style
   if ($language eq "en") {
@@ -64,17 +65,19 @@ while(<STDIN>) {
   }
   # German/Spanish/French "quotation", followed by comma, style
   else {
-    s/,\"/\",/g;  
+    s/,\"/\",/g;
     s/(\.+)\"(\s*[^<])/\"$1$2/g; # don't fix period at end of sentence
   }
 
   print STDERR $_ if /﻿/;
 
   if ($language eq "de" || $language eq "es" || $language eq "cz" || $language eq "cs" || $language eq "fr") {
-    s/(\d) (\d)/$1,$2/g;
+    s/(\d)\xA0(\d)/$1,$2/g;
   }
   else {
-    s/(\d) (\d)/$1.$2/g;
+    s/(\d)\xA0(\d)/$1.$2/g;
   }
+  # Replace the rest of the nonbreaking spaces with a regular space.
+  s/[\xA0]+/ /g;
   print $_;
 }

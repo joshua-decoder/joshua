@@ -91,7 +91,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
-    this.root = new MemoryBasedTrie();
+    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(defaultOwner)));
     modelReader = gr;
   }
 
@@ -102,7 +102,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
     this.spanLimit = spanLimit;
     this.oovFeatureCost = oovFeatureCost_;
-    this.root = new MemoryBasedTrie();
+    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(defaultOwner));
     this.grammarFile = grammarFile;
 
     // ==== loading grammar
@@ -122,19 +122,21 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
   protected GrammarReader<BilingualRule> createReader(String formatKeyword, String grammarFile) {
 
-    if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
-      return new HieroFormatReader(grammarFile);
-    } else if ("samt".equals(formatKeyword)) {
-      return new SamtFormatReader(grammarFile);
-    } else {
-      // TODO: throw something?
-      // TODO: add special warning if "heiro" mispelling is used
+    if (grammarFile != null) {
+      if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
+        return new HieroFormatReader(grammarFile);
+      } else if ("samt".equals(formatKeyword)) {
+        return new SamtFormatReader(grammarFile);
+      } else {
+        // TODO: throw something?
+        // TODO: add special warning if "heiro" mispelling is used
 
-      if (logger.isLoggable(Level.WARNING))
-        logger.warning("Unknown GrammarReader format " + formatKeyword);
-
-      return null;
+        if (logger.isLoggable(Level.WARNING))
+          logger.warning("Unknown GrammarReader format " + formatKeyword);
+      }
     }
+
+    return null;
   }
 
 
@@ -238,9 +240,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
        * (logger.isLoggable(Level.FINEST)) logger.finest("Amended to: " + curSymID); }
        */
 
-      MemoryBasedTrie nextLayer = pos.match(curSymID);
+      // we call exactMatch() here to avoid applying regular expressions along the arc
+      MemoryBasedTrie nextLayer = pos.exactMatch(curSymID);
       if (null == nextLayer) {
-        nextLayer = new MemoryBasedTrie();
+        nextLayer = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(defaultOwner)));
         if (pos.hasExtensions() == false) {
           pos.childrenTbl = new HashMap<Integer, MemoryBasedTrie>();
         }

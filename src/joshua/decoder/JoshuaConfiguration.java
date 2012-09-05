@@ -39,21 +39,34 @@ public class JoshuaConfiguration {
   // new format enabling multiple language models
   public static ArrayList<String> lms = new ArrayList<String>();
 
+  // new format enabling any number of grammar files
+  public static ArrayList<String> tms = new ArrayList<String>();
+
+  // when set to a grammar's owner, it permits that grammar to have regular expressions in its rules
+  public static String regexpGrammar = "";
+
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
   public static double lm_ceiling_cost = 100;
   public static boolean use_left_equivalent_state = false;
-  public static boolean use_right_equivalent_state = true;
+  public static boolean use_right_equivalent_state = false;
   public static int lm_order = 3;
   public static boolean use_sent_specific_lm = false;
   public static String lm_file = null;
   public static int ngramStateID = 0; // TODO ?????????????
 
-  // tm config
+	/* The span limit is the maximum span of the input to which rules from the main translation
+	 * grammar can be applied.  It does not apply to the glue grammar.
+	 */
   public static int span_limit = 10;
-  // note: owner should be different from each other, it can have same value as a word in LM/TM
-  public static String phrase_owner = "pt";
-  public static String glue_owner = "pt";
+
+	/* This word is in an index into a grammars feature sets.  The name here ties together the
+	 * features present on each grammar line in a grammar file, and the features present in the Joshua
+	 * configuration file.  This allows you to have different sets of features (or shared) across
+	 * grammar files.
+	 */
+  public static String phrase_owner = "pt"; 
+	public static String glue_owner   = "glue";
 
 	// Default symbols.  The symbol here should be enclosed in square brackets.
   public static String default_non_terminal = "[X]";
@@ -209,12 +222,19 @@ public class JoshuaConfiguration {
           if (parameter.equals(normalize_key("lm"))) {
             lms.add(fds[1]);
 
+					} else if (parameter.equals(normalize_key("tm"))) {
+            tms.add(fds[1]);
+
           } else if (parameter.equals(normalize_key("lm_file"))) {
             lm_file = fds[1].trim();
             logger.finest(String.format("lm file: %s", lm_file));
           } else if (parameter.equals(normalize_key("parse"))) {
             parse = Boolean.parseBoolean(fds[1]);
             logger.finest(String.format("parse: %s", parse));
+
+          } else if (parameter.equals(normalize_key("regexp-grammar"))) {
+            regexpGrammar = fds[1];
+            logger.finest(String.format("regexp-grammar: %s", regexpGrammar));
 
           } else if (parameter.equals(normalize_key("tm_file"))) {
             tm_file = fds[1].trim();
@@ -286,8 +306,12 @@ public class JoshuaConfiguration {
             logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 
           } else if (parameter.equals(normalize_key("goalSymbol"))) {
-            goal_symbol = "[" + fds[1].trim() + "]";
-            // goal_symbol = fds[1].trim();
+            goal_symbol = fds[1].trim();
+
+            // If the goal symbol was not enclosed in square brackets, then add them
+            if (! goal_symbol.matches("\\[.*\\]"))
+              goal_symbol = "[" + goal_symbol + "]";
+
             logger.finest("goalSymbol: " + goal_symbol);
 
           } else if (parameter.equals(normalize_key("constrain_parse"))) {
@@ -471,6 +495,16 @@ public class JoshuaConfiguration {
       int order = Integer.parseInt(tokens[1]);
       if (order > JoshuaConfiguration.lm_order) JoshuaConfiguration.lm_order = order;
     }
+
+		/* Now we do a similar thing for the TMs, enabling backward compatibility with the old format
+		 * that allowed for just two grammars.  The new format is
+		 *
+		 * tm = FORMAT OWNER SPAN_LIMIT FILE
+		 */
+		if (tms.size() == 0 && tm_file != null) {
+			tms.add(String.format("%s %s %d %s", tm_format, phrase_owner, span_limit, tm_file));
+			tms.add(String.format("%s %s %d %s", glue_format, glue_owner, -1, glue_file));
+		}
 
     if (useGoogleLinearCorpusGain) {
       if (linearCorpusGainThetas == null) {

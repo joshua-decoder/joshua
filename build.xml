@@ -134,7 +134,7 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
-  <target name="all" depends="init,thrax,java,giza,kenlm,parallelize">
+  <target name="all" depends="init,java,giza,kenlm,parallelize">
   </target>
 
   <!-- Compile the Java code. -->
@@ -172,7 +172,7 @@
   </target>
   
   <target name="tree_visualizer" depends="java,set-joshua-home">
-	<jar destfile="tree_visualizer/tree_visualizer.jar" index="true">
+	<jar destfile="examples/tree_visualizer/tree_visualizer.jar" index="true">
 	  <zipgroupfileset dir="lib" includes="*.jar"/>
 	  <fileset dir="${build}">
 		<include name="**/*.class"/>
@@ -301,7 +301,7 @@
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <target name="test" depends="all">
-	<exec dir="test" executable="/bin/bash" failonerror="true">
+	<exec dir="test" executable="/bin/bash" failonerror="false">
 	  <arg line="run-all-tests.sh" />
 	</exec>
   </target>

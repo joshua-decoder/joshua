@@ -1,4 +1,13 @@
-== 4.0 (June 3, 2012) ===========================================
+== 4.01 ==
+
+Bugfixes:
+
+- If the training data were split into 10 or more pieces, the alignments were combined
+  in the wrong order (due to a lexicographic instead of numeric sort on a file glob).
+
+- Removed "thrax" dependency from "all" target
+
+== 4.0 (July 2, 2012) ===========================================
 
 The main features of this release are described in 
 
@@ -8,9 +17,9 @@ The main features of this release are described in
 
 They include:
 
-- Improved documentation (both user and developer)
+- Significantly improved and expanded documentation (both user and developer)
 
-  See doc/html/index.html
+  See http://joshua-decoder.org/4.0 or ./joshua-decoder.org/4.0/index.html (local mirror)
 
 - Synchronous parsing
 

@@ -1,0 +1,17 @@
+These examples demonstrate how to use the tree visualizer.  
+Build the visualizer by running the following commmand in the
+$JOSHUA directory:
+
+    ant tree_visualizer
+
+You can run the visualizer by using the visualizer invocation 
+script under UNIX/Linux/OS-X:
+
+    tree_visualizer.sh tree.fr tree.ref tree.en
+
+or under Windows:
+
+    tree_visualizer.cmd tree.fr tree.ref tree.en
+
+Click on the sentence that displays, and you will be presented
+with the visualization in a second window.
