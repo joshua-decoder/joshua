@@ -30,6 +30,14 @@ public abstract class DefaultStatelessFF extends FeatureFunction {
   }
 
   /**
+   * Computes the features and their values induced by applying this rule.  This is used for the
+   * k-best extraction code, and should also be called from ComputeCost().  Makes use of the
+   * WeightVector class, but note this contains feature values and not weights.
+   */
+  @Override
+  public WeightVector computeFeatures(Rule rule, int sentID);
+
+  /**
    * Return the cost of applying a rule for a particular sentence.  The cost is the inner product of
    * (1) the feature vector of features that fire on this rule and (2) the associated weights from
    * the weight vector.
@@ -42,8 +50,9 @@ public abstract class DefaultStatelessFF extends FeatureFunction {
   @Override
   public float computeCost(Rule rule, int sentID) {
     if (name != null) {
-      if (weights.containsKey(name))
-        return weights.get(name);
+      WeightVector features = computeFeatures(rule, sentID);
+      if (weights.containsKey(name) && features.containsKey(name))
+        return weights.get(name) * features.get(name);
     }
     return 0.0;
   }
