@@ -35,6 +35,9 @@ public final class ArityPhrasePenaltyFF extends StatelessFF {
     logger.fine(String.format("ArityPhrasePenaltyFF feature with owner=%s, minArity=%d, maxArity=%d", owner, minArity, maxArity));
   }
 
+  /**
+   * Returns 1 if the arity penalty feature applies to the current rule
+   */
   private int isEligible(final Rule rule) {
     if (this.owner == rule.getOwner() && rule.getArity() >= this.minArity && rule.getArity() <= this.maxArity)
       return 1;
@@ -43,11 +46,11 @@ public final class ArityPhrasePenaltyFF extends StatelessFF {
   }
 
   public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
-    return FeatureVector(name, isEligible());
+    return FeatureVector(name, isEligible(rule));
   }
 
 
   public float computeCost(Rule rule, int SentID) {
-    return weight * isEligible();
+    return weight * isEligible(rule);
   }
 }
