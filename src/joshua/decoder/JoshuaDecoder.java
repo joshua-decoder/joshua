@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -72,6 +73,9 @@ public class JoshuaDecoder {
   private List<StateComputer> stateComputers;
 
   private Map<String, Integer> ruleStringToIDTable;
+
+  /* The feature weights. */
+  public static HashMap<String, Float> weights;
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(JoshuaDecoder.class.getName());
@@ -263,6 +267,10 @@ public class JoshuaDecoder {
     try {
 
       long pre_load_time = System.currentTimeMillis();
+
+      // Load the weights.
+      JoshuaDecoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
+
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
       logger.info(String.format("Grammar loading took: %d seconds.",
@@ -425,6 +433,42 @@ public class JoshuaDecoder {
   private void initializeStateComputers(int nGramOrder, int ngramStateID) {
     stateComputers = new ArrayList<StateComputer>();
     if (nGramOrder > 0) stateComputers.add(new NgramStateComputer(nGramOrder, ngramStateID));
+  }
+
+  /* This function reads the weights for the model.  For backwards compatibility, weights may be
+   * listed in the Joshua configuration file, but the preferred method is to list the weights in a
+   * separate file, specified by the Joshua parameter "weights-file".
+   *
+   * Feature names and their weights are listed one per line in the following format
+   *
+   * FEATURE NAME WEIGHT
+   *
+   * Fields are space delimited.  The first k-1 fields are concatenated with underscores to form the
+   * feature name (putting them there explicitly is preferred, but the concatenation is in place for
+   * backwards compatibility
+   */
+  private HashMap<String,Float> readWeights(String fileName) {
+    HashMap<String,Float> weights = new HashMap<String,Float>();
+
+    try {
+      LineReader lineReader = new LineReader(fileName);
+
+      for (String line: lineReader) {
+        if (line.equals("") || line.startsWith("#") || line.startsWith("//") || line.indexOf(' ') == -1)
+          continue;
+
+        String feature = line.substring(0, line.lastIndexOf(' ')).replaceAll(" ", "_");
+        Float value = Float.parseFloat(line.substring(line.lastIndexOf(' ')));
+
+        weights.put(feature, value);
+      }
+    } catch (IOException ioe) {
+      System.err.println("Can't open file '" + fileName + "'");
+      ioe.printStackTrace();
+      System.exit(1);
+    }
+
+    return weights;
   }
 
   // iterate over the features that were discovered when the config file was read

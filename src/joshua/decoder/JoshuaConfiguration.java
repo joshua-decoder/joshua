@@ -55,6 +55,10 @@ public class JoshuaConfiguration {
   public static String lm_file = null;
   public static int ngramStateID = 0; // TODO ?????????????
 
+  /* The file to read the weights from.
+   */
+  public static String weights_file = "";
+
 	/* The span limit is the maximum span of the input to which rules from the main translation
 	 * grammar can be applied.  It does not apply to the glue grammar.
 	 */
@@ -313,6 +317,9 @@ public class JoshuaConfiguration {
               goal_symbol = "[" + goal_symbol + "]";
 
             logger.finest("goalSymbol: " + goal_symbol);
+
+          } else if (parameter.equals(normalize_key("weights-file"))) {
+            weights_file = fds[1];
 
           } else if (parameter.equals(normalize_key("constrain_parse"))) {
             constrain_parse = Boolean.parseBoolean(fds[1]);
