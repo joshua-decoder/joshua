@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff;
 
 import java.util.logging.Level;
@@ -21,50 +6,48 @@ import java.util.logging.Logger;
 import joshua.decoder.ff.tm.Rule;
 
 /**
- * 
- * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * This feature function counts rules from a particular grammar (identified by the owner) having an
+ * arity within a specific range.  It expects three parameters upon initialization: the owner, the
+ * minimum arity, and the maximum arity.
+ *
+ * @author Matt Post <post@cs.jhu.edu
+ * @author Zhifei Li <zhifei.work@gmail.com>
  */
-public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
-
-  /** Logger for this class. */
-  private static final Logger logger = Logger.getLogger(ArityPhrasePenaltyFF.class.getName());
-
-  /**
-   * Estimated log probability value of this feature function when active.
-   * 
-   * The value of this field should be equal to <code>- Math.log10(Math.E)</code>.
-   * <p>
-   * This field is package-private to allow access by unit tests for this class.
-   */
-  static final double ALPHA = -Math.log10(Math.E);// -0.435
+public final class ArityPhrasePenaltyFF extends StatelessFF {
 
   // when the rule.arity is in the range, then this feature is activated
+  private final int owner;
   private final int minArity;
   private final int maxArity;
 
+  public ArityPhrasePenaltyFF(final WeightVector weights, String argString) {
+    super(weight, "ArityPenalty", argString);
 
-  public ArityPhrasePenaltyFF(final int featureID, final double weight, final int owner,
-      final int min, final int max) {
-    super(weight, owner, featureID);
-    this.minArity = min;
-    this.maxArity = max;
-    if (logger.isLoggable(Level.FINE)) {
-      logger.fine("ArityPhrasePenaltyFF feature with owner=" + this.owner + "; minArity="
-          + this.minArity + "; maxArity=" + this.maxArity);
-    }
+    // Process the args for the owner, minimum, and maximum.  
+    
+    // TODO: This should be done in a general way by FeatureFunction::processArgs, in a way that
+    // allows any feature to have arguments.
+    String args[] = argString.split();
+    this.owner = Vocabulary.id(args[0]);
+    this.minArity = Integer.parseInt(args[1]);
+    this.maxArity = Integer.parseInt(args[2]);
+
+    logger.fine(String.format("ArityPhrasePenaltyFF feature with owner=%s, minArity=%d, maxArity=%d", owner, minArity, maxArity));
   }
 
-  /* See Javadoc for FeatureFunction interface. */
-  public double estimateLogP(final Rule rule, int sentID) {
+  private int isEligible(final Rule rule) {
+    if (this.owner == rule.getOwner() && rule.getArity() >= this.minArity && rule.getArity() <= this.maxArity)
+      return 1;
 
-    if (this.owner == rule.getOwner() && rule.getArity() >= this.minArity
-        && rule.getArity() <= this.maxArity) {
-      return ALPHA;
-    } else {
-
-      return 0.0;
-    }
+    return 0;
   }
 
+  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+    return FeatureVector(name, isEligible());
+  }
+
+
+  public float computeCost(Rule rule, int SentID) {
+    return weight * isEligible();
+  }
 }
