@@ -16,7 +16,6 @@ public class BooleanQuantizer extends StatelessQuantizer {
 
   public final void write(ByteBuffer stream, float value) {}
 
-  @Override
   public String getKey() {
     return "boolean";
   }

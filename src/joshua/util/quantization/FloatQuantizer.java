@@ -12,7 +12,6 @@ public class FloatQuantizer extends StatelessQuantizer {
     stream.putFloat(value);
   }
 
-  @Override
   public String getKey() {
     return "float";
   }

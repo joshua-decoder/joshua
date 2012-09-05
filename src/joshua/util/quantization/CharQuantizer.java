@@ -12,7 +12,6 @@ public class CharQuantizer extends StatelessQuantizer {
     stream.putChar((char) value);
   }
 
-  @Override
   public String getKey() {
     return "char";
   }

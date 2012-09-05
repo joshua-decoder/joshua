@@ -112,7 +112,6 @@ public class EightBitQuantizer implements Quantizer {
     stream.put(index);
   }
 
-  @Override
   public String getKey() {
     return "8bit";
   }

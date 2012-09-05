@@ -12,7 +12,6 @@ public class ShortQuantizer extends StatelessQuantizer {
     stream.putShort((short) value);
   }
 
-  @Override
   public String getKey() {
     return "short";
   }

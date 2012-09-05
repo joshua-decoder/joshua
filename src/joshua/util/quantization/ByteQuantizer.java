@@ -12,7 +12,6 @@ public class ByteQuantizer extends StatelessQuantizer {
     stream.put((byte) value);
   }
 
-  @Override
   public String getKey() {
     return "byte";
   }

@@ -12,7 +12,6 @@ public class IntQuantizer extends StatelessQuantizer {
     stream.putInt((int) value);
   }
 
-  @Override
   public String getKey() {
     return "int";
   }
