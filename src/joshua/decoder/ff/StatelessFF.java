@@ -21,11 +21,11 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public abstract class StatelessFF extends FeatureFunction {
 
-  public StatelessFF(WeightVector weights, String name) {
+  public StatelessFF(FeatureVector weights, String name) {
     super(weights, name);
   }
 
-  public StatelessFF(WeightVector weights, String name, String args) {
+  public StatelessFF(FeatureVector weights, String name, String args) {
     super(weights, name, args);
   }
 
@@ -36,10 +36,10 @@ public abstract class StatelessFF extends FeatureFunction {
   /**
    * Computes the features and their values induced by applying this rule.  This is used for the
    * k-best extraction code, and should also be called from ComputeCost().  Makes use of the
-   * WeightVector class, but note this contains feature values and not weights.
+   * FeatureVector class, but note this contains feature values and not weights.
    */
   @Override
-  public WeightVector computeFeatures(Rule rule, int sentID);
+  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID);
 
   /**
    * Return the cost of applying a rule for a particular sentence.  The cost is the inner product of
@@ -52,9 +52,9 @@ public abstract class StatelessFF extends FeatureFunction {
    * it times the weight obtained inefficiently from the hash.
    */
   @Override
-  public float computeCost(Rule rule, int sentID) {
+  public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
     if (name != null) {
-      WeightVector features = computeFeatures(rule, sentID);
+      FeatureVector features = computeFeatures(rule, sentID);
       if (weights.containsKey(name) && features.containsKey(name))
         return weights.get(name) * features.get(name);
     }

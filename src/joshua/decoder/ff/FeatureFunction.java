@@ -37,7 +37,7 @@ public abstract class FeatureFunction {
   private String argString;
 
   // The weight vector used by the decoder, passed it when the feature is instantiated.
-  private WeightVector weights;
+  private FeatureVector weights;
 
   // Accessor functions
   public String getName() { 
@@ -51,12 +51,12 @@ public abstract class FeatureFunction {
   // Methods
   // ===============================================================
 
-  public FeatureFunction(WeightVector weights, String name) {
+  public FeatureFunction(FeatureVector weights, String name) {
     this.weights = weights;
     this.name = name;
   }
 
-  public FeatureFunction(WeightVector weights, String name, String args) {
+  public FeatureFunction(FeatureVector weights, String name, String args) {
     this.weights = weights;
     this.name = name;
     this.argString = args;
