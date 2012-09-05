@@ -63,6 +63,18 @@ public abstract class FeatureFunction {
   }
 
   /**
+   * This function could be implemented to process the feature-line arguments in a generic way, if
+   * so desired.
+   */
+  private void processArgs(String argString) {
+    return;
+  }
+
+  /**************************************************************
+   * OLD INTERFACE DON'T USE WILL SOON DELETE *******************
+   **************************************************************/
+
+  /**
    * It is used when initializing translation grammars (for pruning purpose, and to get stateless
    * logP for each rule). This is also required to sort the rules (required by Cube-pruning).
    */
@@ -91,11 +103,4 @@ public abstract class FeatureFunction {
 
   double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
-  /**
-   * This function could be implemented to process the feature-line arguments in a generic way, if
-   * so desired.
-   */
-  private void processArgs(String argString) {
-    return;
-  }
 }
