@@ -53,6 +53,38 @@ So what are the actual steps that need to be accomplished?
      internally to map to the class that implements the feature and is also used as the feature name
      prefix in the weights file.  By convention these two names (the class name and the feature
      name) should be the same (perhaps the key name should be the class name to enforce this).
+     
+     To be explicit, this means that features not explicitly loaded in this manner would not be
+     loaded.  For example, the OOV penalty is currently loaded by virtue of giving it a weight.  We
+     would want to do away with this.
+
+     A further benefit of this approach is that arguments could be passed to the feature.  We could
+     define a general command-line processing procedure for each feature template implemented in the
+     parent type and thus easily usable by any feature implementation.
+     
+     So what does the design look like?  
+     
+     - Each feature is triggered with a `feature_function=NAME` line.  NAME is the exact name of the
+       feature function class.
+     - Features are templates that might produce any number of actual features (zero or more).
+     - When the feature is instantiated, it is given (1) all the arguments passed to it and (2) the
+       weight vector.
+     - Currently, feature functions know
+        - their weight
+        - their feature ID
+        - whether they are stateful
+        - how to compute their cost initially (estimateLogP())
+        - how to recompute their cost (reEstimateTransitionLogP())
+        - how to compute their final cost
+     - The new feature interface needs to do all these things, but I think we should rename some of
+       the functions.  This will start by distinguishing at the design stage between stateful and
+       stateless feature functions.  Stateless ones can always be precomputed, whereas stateful ones
+       cannot be computed until they are created.  We could distinguish between different types of
+       state, but for the moment I think we'll just say that if a feature needs access to *any* kind
+       of state (e.g., span of the input it's being applied over), it is stateful.  This leads to
+       the following set of functions.
+       
+ 
 
   3. When instantiating grammar rules, we can look up the weights of each key found listed with the
      rule directly, and use it to produce the cached score for the rule application.  There is no

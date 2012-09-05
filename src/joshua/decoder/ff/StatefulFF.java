@@ -1,79 +1,57 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
-
 package joshua.decoder.ff;
 
 import joshua.decoder.hypergraph.HyperEdge;
 
-
-
 /**
+ * Implements stateFUL feature functions.  These are functions that require access to the dynamic
+ * programming state, so they cannot in general be precomputed.  However, there are times when
+ * portions of the feature value can be precomputed; an example is in scoring rules by the language
+ * model, where words found on the righthand side sometimes have enough context to be computed ahead
+ * of time.  For this reason, the 
  * 
- * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
+ * @author Juri Ganitkevich <juri@cs.jhu.edu>
  */
-public abstract class DefaultStatefulFF implements FeatureFunction {
+public abstract class StatefulFF implements FeatureFunction {
 
-  /** any integers exept -1 */
-  private int stateID;
-
-  private double weight = 0.0;
-  private int featureID; // the unique integer that identifies a feature
-
-  public DefaultStatefulFF(int stateID, double weight, int featureID) {
-    this.weight = weight;
-    this.featureID = featureID;
-    this.stateID = stateID;
+  public StatefulFF(WeightVector weights) {
+    super(weights);
   }
 
-  public boolean isStateful() {
+  public final boolean isStateful() {
     return true;
   }
 
-  public final double getWeight() {
-    return this.weight;
+  /**
+   * This is a convenience function that unpacks the rule and tail nodes from the hyperedge and
+   * chains the call.
+   */
+  @Override
+  public double computeCost(HyperEdge edge, int i, int j, int sentID) {
+    return computeCost(edge.getRule(), edge.getAntNodes(), i, j, edge.getSourcePath(), sentID);
   }
 
-  public final void setWeight(final double weight) {
-    this.weight = weight;
-  }
 
-  public final int getFeatureID() {
-    return this.featureID;
-  }
+  /**
+   * Return the cost of applying a rule for a particular sentence.  The cost is the inner product of
+   * (1) the feature vector of features that fire on this rule and (2) the associated weights from
+   * the weight vector.
+   *
+   * For stateless features, the features can only come from the rule itself, the input sentence,
+   * neither, or both.  This function should be overridden to be made more efficient than the hash
+   * lookup defined here; this default implementation assumes the feature value is 1 and multiplies
+   * it times the weight obtained inefficiently from the hash.
+   */
+  @Override
+  public double computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
 
-  public final void setFeatureID(final int id) {
-    this.featureID = id;
-  }
 
-  public final int getStateID() {
-    return this.stateID;
-  }
-
-  public final void setStateID(final int id) {
-    this.stateID = id;
-  }
-
-  public double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID) {
-    return transitionLogP(edge.getRule(), edge.getAntNodes(), spanStart, spanEnd,
-        edge.getSourcePath(), sentID);
-  }
-
-  public double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID) {
-    return finalTransitionLogP(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath(),
-        sentID);
+  /**
+   * Often the final transition cost differs in some key way from regular transition costs.  This
+   * function can compute that difference.  By default it just chains to computeCost().
+   */
+  @Override
+  public double computeFinalCost(HyperEdge edge, int i, int j, int sentID) {
+    return computeCost(edge, i, j, sentID);
   }
 }

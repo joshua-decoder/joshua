@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff;
 
 import java.util.List;
@@ -23,46 +8,59 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
-
 /**
- * This interface provide ways to calculate logP based on rule and state information. In order to
- * implement a new feature function you must (1) implement this FeatureFunction interface, and (2)
- * implement the FFTransitionResult and FFDPState interfaces. BUG: the distinction between those
- * latter two interfaces is unclear.
+ * This class defines is the entry point for Joshua's dense+sparse feature implementation.  It
+ * defines some basic variables and interfaces that are common to all features, and is immediately
+ * inherited by StatelessFF and StatefulFF, which provide functionality common to stateless and
+ * stateful features, respectively.  Any feature implementation should extend those classes, and not
+ * this one.
+ *
+ * Features in Joshua work like templates.  Each feature function defines any number of actual
+ * features, which are associated with weights.  The task of the feature function is to compute the
+ * features that are fired in different circumstances and then return the inner product of those
+ * features with the weight vector.  Feature functions can also produce estimates of their future
+ * cost; these values are not used in computing the score, but are only used for pruning.
  * 
- * @author wren ng thornton <wren@users.sourceforge.net>
- * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
+ * @author Juri Ganitkevich <juri@cs.jhu.edu>
  */
-public interface FeatureFunction {
+public abstract class FeatureFunction {
 
   // ===============================================================
   // Attributes
   // ===============================================================
 
-  /**
-   * It is essential to make sure the feature ID is unique for each feature.
-   */
-  void setFeatureID(int id);
+  // The name of the feature function (also the prefix on weights)
+  private String name = null;
 
-  int getFeatureID();
+  // The list of arguments passed to the feature.
+  private String argString;
 
-  void setWeight(double weight);
+  // The weight vector used by the decoder, passed it when the feature is instantiated.
+  private WeightVector weights;
 
-  double getWeight();
+  // Accessor functions
+  public String getName() { 
+    return name;
+  }
 
-  boolean isStateful();
-
-  void setStateID(int stateID);
-
-  int getStateID();
+  // Whether the feature has state.
+  public boolean isStateful();
 
   // ===============================================================
   // Methods
   // ===============================================================
-  /**
-   * sentID might be useful for sentence-specific features (e.g., oralce model)
-   * */
+
+  public FeatureFunction(WeightVector weights) {
+    this.weights = weights;
+  }
+
+  public FeatureFunction(WeightVector weights, String args) {
+    this.weights = weights;
+    this.argString = args;
+
+    processArgs(this.argString);
+  }
 
   /**
    * It is used when initializing translation grammars (for pruning purpose, and to get stateless
@@ -93,4 +91,11 @@ public interface FeatureFunction {
 
   double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
+  /**
+   * This function could be implemented to process the feature-line arguments in a generic way, if
+   * so desired.
+   */
+  private void processArgs(String argString) {
+    return;
+  }
 }

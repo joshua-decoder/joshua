@@ -72,8 +72,6 @@ public class JoshuaDecoder {
 
   private List<StateComputer> stateComputers;
 
-  private Map<String, Integer> ruleStringToIDTable;
-
   /* The feature weights. */
   public static HashMap<String, Float> weights;
 
