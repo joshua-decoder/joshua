@@ -19,7 +19,7 @@ import joshua.decoder.hypergraph.HyperEdge;
  * @author Juri Ganitkevich <juri@cs.jhu.edu>
  */
 
-public abstract class DefaultStatelessFF extends FeatureFunction {
+public abstract class StatelessFF extends FeatureFunction {
 
   public StatelessFF(WeightVector weights, String name) {
     super(weights, name);
