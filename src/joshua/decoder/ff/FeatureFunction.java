@@ -31,13 +31,13 @@ public abstract class FeatureFunction {
   // ===============================================================
 
   // The name of the feature function (also the prefix on weights)
-  private String name = null;
+  protected String name = null;
 
   // The list of arguments passed to the feature.
   private String argString;
 
   // The weight vector used by the decoder, passed it when the feature is instantiated.
-  private FeatureVector weights;
+  protected FeatureVector weights;
 
   // Accessor functions
   public String getName() { 
@@ -80,29 +80,29 @@ public abstract class FeatureFunction {
    * It is used when initializing translation grammars (for pruning purpose, and to get stateless
    * logP for each rule). This is also required to sort the rules (required by Cube-pruning).
    */
-  double estimateLogP(Rule rule, int sentID);
+  // double estimateLogP(Rule rule, int sentID);
 
 
   /**
    * estimate future logP, e.g., the logPs of partial n-grams asscociated with the left-edge ngram
    * state
    * */
-  double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);
+  // double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);
 
-  double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-      SourcePath srcPath, int sentID);
+  // double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
+  //     SourcePath srcPath, int sentID);
 
-  double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
+  // double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
-  double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-      SourcePath srcPath, int sentID);
+  // double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
+  //     SourcePath srcPath, int sentID);
 
   /**
    * Edges calling finalTransition do not have concret rules associated with them.
    * */
-  double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
-      int sentID);
+  // double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
+  //     int sentID);
 
-  double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
+  // double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
 }
