@@ -28,7 +28,6 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
-import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -67,8 +66,6 @@ public class ParserThread extends Thread {
   // final String nbestFile; // package-private for DecoderFactory
   private BufferedWriter nbestWriter; // set in decodeTestFile
   private final KBestExtractor kbestExtractor;
-  DiskHyperGraph hypergraphSerializer; // package-private for DecoderFactory
-
 
   private static final Logger logger = Logger.getLogger(ParserThread.class.getName());
 
@@ -90,33 +87,6 @@ public class ParserThread extends Thread {
         new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
             JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
             JoshuaConfiguration.add_combined_cost, false, true);
-
-    // if (JoshuaConfiguration.save_disk_hg) {
-    // FeatureFunction languageModel = null;
-    // for (FeatureFunction ff : this.featureFunctions) {
-    // if (ff instanceof LanguageModelFF) {
-    // languageModel = ff;
-    // break;
-    // }
-    // }
-    // int lmFeatID = -1;
-    // if (null == languageModel) {
-    // logger.warning("No language model feature function found, but save disk hg");
-    // } else {
-    // lmFeatID = languageModel.getFeatureID();
-    // }
-
-    // this.hypergraphSerializer = new DiskHyperGraph(
-    // Vocabulary,
-    // lmFeatID,
-    // true, // always store model cost
-    // this.featureFunctions);
-
-    // this.hypergraphSerializer.initWrite(
-    // "out." + Integer.toString(sentence.id()) + ".hg.items",
-    // JoshuaConfiguration.forest_pruning,
-    // JoshuaConfiguration.forest_pruning_threshold);
-    // }
   }
 
 

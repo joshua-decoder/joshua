@@ -25,7 +25,6 @@ import java.util.List;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Support;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
-import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -142,9 +141,9 @@ public class OracleExtractionHG extends SplitHg {
     long time_on_reading = 0;
     long time_on_orc_extract = 0;
     BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
-    DiskHyperGraph dhg_read = new DiskHyperGraph(baseline_lm_feat_id, true, null);
+    // DiskHyperGraph dhg_read = new DiskHyperGraph(baseline_lm_feat_id, true, null);
 
-    dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
+    // dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
 
     OracleExtractionHG orc_extractor = new OracleExtractionHG(baseline_lm_feat_id);
     String ref_sent = null;
@@ -156,7 +155,8 @@ public class OracleExtractionHG extends SplitHg {
       sent_id++;
       // if(sent_id>10)break;
 
-      HyperGraph hg = dhg_read.readHyperGraph();
+      // HyperGraph hg = dhg_read.readHyperGraph();
+      HyperGraph hg = null;
       if (hg == null) continue;
       String orc_sent = null;
       double orc_bleu = 0;
