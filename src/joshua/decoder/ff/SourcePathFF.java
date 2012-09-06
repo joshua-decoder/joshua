@@ -19,20 +19,20 @@ public final class SourcePathFF extends StatelessFF {
    */
   private float weight;
 
-  public SourcePathFF(FeatureVector weights, String args) {
-    super(weights, "SourcePath", args);  // this sets name
+  public SourcePathFF(FeatureVector weights) {
+    super(weights, "SourcePath", "");  // this sets name
 
     // Find the weight for this feature in the weights hash and cache it.
     if (weights.containsKey(name)) {
       weight = weights.get(name);
     } else {
-      logger.warn("* WARNING: no weight for feature '" + name + "'");
-      weight = 0.0;
+      System.err.println("* WARNING: no weight for feature '" + name + "'");
+			weight = 0.0f;
     }
   }
 
   public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
-    return FeatureVector(name, -sourcePath.getPathCost())
+    return new FeatureVector(name, -sourcePath.getPathCost());
   }
 
   public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
