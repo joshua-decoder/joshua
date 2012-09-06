@@ -147,8 +147,13 @@ X = done
 
 - [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
   count OOVs, instead of clunky approach applied now
-- [ ] ComputeNodeResult needs to know how to compute features
-  - [ ] Producing a score
-  - [ ] Producing a list of features
+- [X] ComputeNodeResult needs to know how to compute features
+  - [X] Producing a score
+  - [X] Producing a list of features
 - [ ] Rewrite the k-best extraction code to know about sparse features, apply labels to the output
-- [ ] Modify MERT and PRO to know about labeled features
+- [ ] Modify MERT to know about labeled features
+  This could probably be done by (a) having sparse features output in the order they are declared in
+  the file and (b) modifying MERT to assume a dense representation that (perhaps) allows labels that
+  are then just ignored.
+- [ ] Modify PRO to work with sparse labeled features
+* [ ] Get batch MIRA working with sparse features
