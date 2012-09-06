@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version
- * 2.1n_pruned of the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
@@ -28,6 +13,7 @@ import java.util.logging.Logger;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -38,8 +24,8 @@ import joshua.decoder.hypergraph.HyperEdge;
  * items and hyper-edges to construct a hyper-graph, (2) evaluate model score for items, (3)
  * cube-pruning Note: Bin creates Items, but not all Items will be used in the hyper-graph
  * 
+ * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2010-02-03 15:58:06 -0500 (Wed, 03 Feb 2010) $
  */
 class Cell {
 
@@ -63,7 +49,6 @@ class Cell {
    * sort values in nodesSigTbl, we need this list when necessary
    */
   private List<HGNode> sortedNodes = null;
-
 
 
   // ===============================================================
@@ -115,7 +100,7 @@ class Cell {
         antNodes.add(antNode);
 
         double finalTransitionLogP =
-            ComputeNodeResult.computeCombinedTransitionLogP(featureFunctions, null, antNodes, 0,
+            ComputeNodeResult.computeFinalCost(featureFunctions, antNodes, 0,
                 sentenceLength, null, this.chart.segmentID);
 
         List<HGNode> previousItems = new ArrayList<HGNode>();
@@ -181,12 +166,10 @@ class Cell {
       SourcePath srcPath, boolean noPrune) {
     HGNode res = null;
 
-    TreeMap<Integer, DPState> dpStates = result.getDPStates();
-    double expectedTotalLogP = result.getExpectedTotalLogP(); // including outside estimation
-    double transitionLogP = result.getTransitionTotalLogP();
-    double finalizedTotalLogP = result.getFinalizedTotalLogP();
-
-
+    TreeMap<StateComputer, DPState> dpStates = result.getDPStates();
+    double expectedTotalLogP = result.getPruningEstimate();
+    double transitionLogP = result.getTransitionCost();
+    double finalizedTotalLogP = result.getViterbiCost();
 
     if (noPrune == false && beamPruner != null
         && beamPruner.relativeThresholdPrune(expectedTotalLogP)) {// the hyperedge should be pruned
