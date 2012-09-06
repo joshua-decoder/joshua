@@ -1,79 +1,90 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff;
-
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.chart_parser.SourcePath;
+import joshua.corpus.Vocabulary;
+
 
 /**
+ * This feature handles the list of dense features that may be associated with the rules in a
+ * grammar file.  The feature names of these dense rules are a function of the phrase model owner.
+ * When the feature is loaded, it queries the weights for the set of features that are active for
+ * this grammar, storing them in an array.
  * 
- * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
+ * @author Zhifei Li <zhifei.work@gmail.com>
  */
 
-
-/**
- * */
-public final class PhraseModelFF extends DefaultStatelessFF {
+public class PhraseModelFF extends StatelessFF {
 
   private static final Logger logger = Logger.getLogger(PhraseModelFF.class.getName());
 
-  /*
-   * the feature will be activated only when the owner is the same as the rule, we need an owner to
-   * distinguish different feature in different phrase table/source
-   */
-  private int columnIndex; // = -1;//zero-indexed
+	/* An array for storing the dense set of features */
+	private float[] featureWeights;
+
+	/* The owner of the grammar. */
+	private String owner;
+	private int ownerID;
+
+  public PhraseModelFF(FeatureVector weights, GrammarFactory grammar, String owner) {
+    super(weights, "PhraseModel_" + owner, "");
+
+		// Store the owner.
+		this.owner = owner;
+		this.ownerID = Vocabulary.id(owner);
+		
+		/* Now query the weights to see how many features there are active for this template.  We go
+		 * through, finding all weights of the form "PhraseModel_OWNER_NUMBER".  The highest NUMBER is
+		 * the length of the dense array.  We record the weights for quick and easy application when we
+		 * are later asked to score a rule. 
+		 */
+		String prefix = name + "_";
+		int maxIndex = 0;
+		for (String key: weights.keySet()) {
+			if (key.startsWith(prefix)) {
+				int index = Integer.parseInt(key.substring(key.lastIndexOf("_")));
+				if (index > maxIndex) 
+					maxIndex = index;
+			}
+		}
+		featureWeights = new float[maxIndex+1];
+		for (int i = 0; i <= maxIndex; i++) {
+			String key = String.format("%s_%d", name, i);
+				featureWeights[i] = (weights.containsKey(key))
+					? weights.get(key)
+					: 0.0f;
+		}
+	}
 
 
-  public PhraseModelFF(final int featureID, final double weight, final int owner,
-      final int columnIndex) {
-    super(weight, owner, featureID);
-    this.columnIndex = columnIndex;
-  }
+	/**
+	 * Compute the features triggered by the supplied rule.
+	 */
+	public FeatureVector computeFeatures(final Rule rule, SourcePath sourcePath, int sentID) {
+		FeatureVector featureDelta = new FeatureVector();
 
-  public double estimateLogP(final Rule rule, int sentID) {
-    if (this.owner == rule.getOwner()) {
-      // Assume featScores are cost (i.e., - logP).
-      float[] featScores = rule.getFeatureScores();
+		float[] featureScores = rule.getFeatureScores();
+		for (int i = 0; i < featureScores.length; i++)
+			featureDelta.put(String.format("PhraseModel_%s_%d", owner, i), featureScores[i]);
 
-      if (this.columnIndex < featScores.length) {
-        return -featScores[this.columnIndex];// negate it
-      } else {
-        if (logger.isLoggable(Level.FINEST))
-          logger.finest("In PhraseModelFF: columnIndex is not right, model columnIndex: "
-              + columnIndex + "; num of features in rul is :" + featScores.length);
-        return 0.0;
-      }
-    } else {
-      return 0.0;
+		return featureDelta;
+	}
+
+
+  public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {
+		float cost = 0.0f;
+
+    if (this.ownerID == rule.getOwner()) {
+
+      float[] featureScores = rule.getFeatureScores();
+			for (int i = 0; i < featureWeights.length; i++)
+				cost += featureWeights[i] + featureScores[i];
     }
+
+		return cost;
   }
-
-
-  public int getColumnIndex() {
-    return columnIndex;
-  }
-
-
-  public void setColumnIndex(int columnIndex) {
-    this.columnIndex = columnIndex;
-  }
-
-
 }

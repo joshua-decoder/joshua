@@ -122,7 +122,7 @@ X = done
 - [ ] Write script to take an old config file and change it to the new format.
 - [ ] The grammar reading code needs to know about sparse features
   - [ ] MemoryBasedBatchGrammar
-  - [ ] PackGrammar
+  - [ ] PackedGrammar
 - [X] Rewrite the feature function interface.
   - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
   - [X] Stateless features: computeCost(), computeFeatures()
@@ -131,9 +131,12 @@ X = done
   - [X] ArityPenalty
   - [X] OOVFF
   - [X] WordPenalty
-  - [ ] PhraseModel
+  - [X] PhraseModel
   - [ ] LanguageModel
   - [ ] EdgePhraseSimilarity
+- [ ] features need to know to make sure that rule is not null (signifies final transition).
+  Alternately separate the interface for transitions and final transitions.
+- [ ] make sure AbstractGrammar.sortGrammar(List<FeatureFunction>) works
 - [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
   count OOVs, instead of clunky approach applied now
 - [ ] ComputeNodeResult needs to know how to compute features
