@@ -129,7 +129,7 @@ X = done
   - [ ] A separate precomputable feature type?
 - [ ] Adapt all existing features to the new interface
   - [X] ArityPenalty
-  - [X] OOVFF
+  - [ ] OOVFF
   - [X] WordPenalty
   - [ ] PhraseModel
   - [ ] LanguageModel
