@@ -132,7 +132,7 @@ X = done
   - [X] OOVFF
   - [X] WordPenalty
   - [X] PhraseModel
-  - [ ] LanguageModel
+  - [X] LanguageModel
   - [ ] EdgePhraseSimilarity
 - [ ] features need to know to make sure that rule is not null (signifies final transition).
   Alternately separate the interface for transitions and final transitions.
