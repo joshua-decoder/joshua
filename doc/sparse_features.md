@@ -78,14 +78,10 @@ So what are the actual steps that need to be accomplished?
         - how to compute their final cost
      - The new feature interface needs to do all these things, but I think we should rename some of
        the functions.  This will start by distinguishing at the design stage between stateful and
-       stateless feature functions.  Stateless ones can always be precomputed, whereas stateful ones
-       cannot be computed until they are created.  We could distinguish between different types of
-       state, but for the moment I think we'll just say that if a feature needs access to *any* kind
-       of state (e.g., span of the input it's being applied over), it is stateful.  This leads to
-       the following set of functions.
+       stateless feature functions.  Stateful features are ones that contribute to the state of the
+       object (such as a target-side (n>1)-gram language model).  Stateless features are sometimes
+       precomputable.
        
- 
-
   3. When instantiating grammar rules, we can look up the weights of each key found listed with the
      rule directly, and use it to produce the cached score for the rule application.  There is no
      need to instantiate objects here.
@@ -107,3 +103,40 @@ this interface, `DefaultStatelessFF` and `DefaultStatefulFF`, which implement st
 feature functions, respectively.  These functions share some functionality (mostly getters and
 setters) that could be folded together if FeatureFunction were an abstract class instead of an
 interface. 
+
+This section is incomplete.
+
+Checklist
+--------
+
+Here is a list of things that need to get done.
+
+X = done
+. = in progress
+
+- [X] Build a FeatureVector class, a sparse representation that can be used to hold both feature
+  values and weight vectors
+- [X] Read in the weight vector from a supplied file (a new Joshua parameter, weights-file)
+- [ ] Change JoshuaDecoder.java to activate features only when feature_function= lines are present
+  in the configuration
+- [ ] Write script to take an old config file and change it to the new format.
+- [ ] The grammar reading code needs to know about sparse features
+  - [ ] MemoryBasedBatchGrammar
+  - [ ] PackGrammar
+- [ ] Rewrite the feature function interface.
+  - [ ] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
+  - [ ] Stateless features: computeCost(), computeFeatures()
+  - [ ] A separate precomputable feature type?
+- [ ] Adapt all existing features to the new interface
+  - [X] ArityPenalty
+  - [X] OOVFF
+  - [X] WordPenalty
+  - [ ] PhraseModel
+  - [ ] LanguageModel
+- [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
+  count OOVs, instead of clunky approach applied now
+- [ ] ComputeNodeResult needs to know how to compute features
+  - [ ] Producing a score
+  - [ ] Producing a list of features
+- [ ] Rewrite the k-best extraction code to know about sparse features, apply labels to the output
+- [ ] Modify MERT and PRO to know about labeled features
