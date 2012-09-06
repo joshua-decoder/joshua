@@ -38,27 +38,24 @@ public abstract class StatelessFF extends FeatureFunction {
    * k-best extraction code, and should also be called from ComputeCost().  Makes use of the
    * FeatureVector class, but note this contains feature values and not weights.
    */
-  @Override
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID);
+  public abstract FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID);
 
   /**
    * Return the cost of applying a rule for a particular sentence.  The cost is the inner product of
    * (1) the feature vector of features that fire on this rule and (2) the associated weights from
    * the weight vector.
    *
-   * For stateless features, the features can only come from the rule itself, the input sentence,
-   * neither, or both.  This function should be overridden to be made more efficient than the hash
-   * lookup defined here; this default implementation assumes the feature value is 1 and multiplies
-   * it times the weight obtained inefficiently from the hash.
+	 * This function should be overridden to be made more efficient than the hash * lookup defined
+	 * here; this default implementation assumes the feature value is 1 and multiplies * it times the
+	 * weight obtained inefficiently from the hash.
    */
-  @Override
   public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
     if (name != null) {
-      FeatureVector features = computeFeatures(rule, sentID);
+      FeatureVector features = computeFeatures(rule, sourcePath, sentID);
       if (weights.containsKey(name) && features.containsKey(name))
         return weights.get(name) * features.get(name);
     }
-    return 0.0;
+    return 0.0f;
   }
 }
  
