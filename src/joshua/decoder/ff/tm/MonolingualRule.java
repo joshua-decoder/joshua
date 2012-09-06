@@ -225,7 +225,7 @@ public class MonolingualRule implements Rule {
       float estcost = 0.0f;
       for (FeatureFunction ff : featureFunctions) {
 				if (ff instanceof PrecomputableFF)
-					estcost += ff.computeCost(this);
+					estcost += ((PrecomputableFF)ff).computeCost(this);
       }
 
       this.est_cost = estcost;
