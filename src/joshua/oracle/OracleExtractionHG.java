@@ -24,6 +24,7 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Support;
+import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -132,7 +133,7 @@ public class OracleExtractionHG extends SplitHg {
     boolean do_ngram_clip_nbest = true; // TODO
     if (orc_extract_nbest) {
       System.out.println("oracle extraction from nbest list");
-      kbest_extractor = new KBestExtractor(extract_unique_nbest, false, false, false, false, true);
+      kbest_extractor = new KBestExtractor(JoshuaDecoder.weights, extract_unique_nbest, false, false, false, false, true);
     }
 
     BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);
@@ -465,15 +466,8 @@ public class OracleExtractionHG extends SplitHg {
     // ####now calculate the BLEU score and state
     int[] left_lm_state = null;
     int[] right_lm_state = null;
-    if (!always_maintain_seperate_lm_state && lm_order >= g_bleu_order) { // do not need to change
-                                                                          // lm state, just use
-                                                                          // orignal lm state
-      NgramDPState state = (NgramDPState) parent_item.getDPState(this.lm_feat_id);
-      left_lm_state = intListToArray(state.getLeftLMStateWords());
-      right_lm_state = intListToArray(state.getRightLMStateWords());
-    } else {
-      left_lm_state = get_left_equiv_state(left_state_sequence, tbl_suffix);
-      right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix);
+		left_lm_state = get_left_equiv_state(left_state_sequence, tbl_suffix);
+		right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix);
 
       // debug
       // System.out.println("lm_order is " + lm_order);
@@ -482,7 +476,7 @@ public class OracleExtractionHG extends SplitHg {
       // compare_two_int_arrays(right_lm_state,
       // (int[])parent_item.tbl_states.get(Symbol.LM_R_STATE_SYM_ID));
       // end
-    }
+
     bleu_score[0] = compute_bleu(total_hyp_len, ref_len, num_ngram_match, g_bleu_order);
     // System.out.println("blue score is " + bleu_score[0]);
     return new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);
