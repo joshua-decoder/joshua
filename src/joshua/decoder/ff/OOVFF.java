@@ -27,4 +27,9 @@ public final class OOVFF extends StatelessFF {
     else
       return 0.0f;
   }
+
+	public FeatureVector computeFeatures(final Rule rule, final SourcePath sourcePath, int sentID) {
+		float value = (rule.getRuleID() == AbstractGrammar.OOV_RULE_ID) ? 1.0f : 0.0f;
+		return new FeatureVector(name, value);
+	}
 }
