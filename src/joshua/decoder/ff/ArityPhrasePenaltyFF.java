@@ -20,7 +20,7 @@ public final class ArityPhrasePenaltyFF extends StatelessFF {
   private final int minArity;
   private final int maxArity;
 
-  public ArityPhrasePenaltyFF(final WeightVector weights, String argString) {
+  public ArityPhrasePenaltyFF(final FeatureVector weights, String argString) {
     super(weight, "ArityPenalty", argString);
 
     // Process the args for the owner, minimum, and maximum.  
