@@ -45,7 +45,7 @@ public abstract class FeatureFunction {
   }
 
   // Whether the feature has state.
-  public boolean isStateful();
+  public abstract boolean isStateful();
 
   // ===============================================================
   // Methods
