@@ -19,7 +19,7 @@ import joshua.corpus.Vocabulary;
  * @author Zhifei Li <zhifei.work@gmail.com>
  */
 
-public class PhraseModelFF extends StatelessFF {
+public class PhraseModelFF extends PrecomputableFF {
 
   private static final Logger logger = Logger.getLogger(PhraseModelFF.class.getName());
 
@@ -64,7 +64,7 @@ public class PhraseModelFF extends StatelessFF {
 	/**
 	 * Compute the features triggered by the supplied rule.
 	 */
-	public FeatureVector computeFeatures(final Rule rule, SourcePath sourcePath, int sentID) {
+	public FeatureVector computeFeatures(final Rule rule) {
 		FeatureVector featureDelta = new FeatureVector();
 
 		float[] featureScores = rule.getFeatureScores();
@@ -75,7 +75,7 @@ public class PhraseModelFF extends StatelessFF {
 	}
 
 
-  public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {
+  public float computeCost(final Rule rule) {
 		float cost = 0.0f;
 
     if (this.ownerID == rule.getOwner()) {

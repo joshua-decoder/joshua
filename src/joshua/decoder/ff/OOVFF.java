@@ -11,7 +11,7 @@ import joshua.decoder.chart_parser.SourcePath;
  *
  * @author Matt Post <post@cs.jhu.edu>
  */
-public final class OOVFF extends StatelessFF {
+public class OOVFF extends PrecomputableFF {
 
   public OOVFF(FeatureVector weights) {
     super(weights, "OOVpenalty");
@@ -21,14 +21,14 @@ public final class OOVFF extends StatelessFF {
    * Each additional word gets a penalty. The more number of words, the more negative. So, to
    * encourage longer sentence, we should have a negative weight on the feature
    */
-  public float computeCost(final Rule rule, final SourcePath sourcePath, int sentID) {
+  public float computeCost(final Rule rule) {
     if (rule.getRuleID() == AbstractGrammar.OOV_RULE_ID)
       return 1.0f;
     else
       return 0.0f;
   }
 
-	public FeatureVector computeFeatures(final Rule rule, final SourcePath sourcePath, int sentID) {
+	public FeatureVector computeFeatures(final Rule rule) {
 		float value = (rule.getRuleID() == AbstractGrammar.OOV_RULE_ID) ? 1.0f : 0.0f;
 		return new FeatureVector(name, value);
 	}

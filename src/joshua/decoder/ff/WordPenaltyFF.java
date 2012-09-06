@@ -8,7 +8,7 @@ import joshua.decoder.chart_parser.SourcePath;
  * @author Zhifei Li <zhifei.work@gmail.com>
  * @author Matt Post <post@cs.jhu.edu>
  */
-public final class WordPenaltyFF extends StatelessFF {
+public final class WordPenaltyFF extends PrecomputableFF {
 
   private static final float OMEGA = -(float)Math.log10(Math.E); // -0.435
 
@@ -33,7 +33,7 @@ public final class WordPenaltyFF extends StatelessFF {
    *
    * I'm not sure why it doesn't just incur a penalty of one.
    */
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule) {
     return new FeatureVector(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
   }
 
@@ -41,7 +41,7 @@ public final class WordPenaltyFF extends StatelessFF {
    * Compute the cost directly instead of chaining to computeFeatures, since we have just one
    * weight.
    */
-  public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
+  public float computeCost(Rule rule) {
     return weight * OMEGA * (rule.getEnglish().length - rule.getArity());
   }
 }

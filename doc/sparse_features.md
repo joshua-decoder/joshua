@@ -136,7 +136,15 @@ X = done
   - [ ] EdgePhraseSimilarity
 - [ ] features need to know to make sure that rule is not null (signifies final transition).
   Alternately separate the interface for transitions and final transitions.
-- [ ] make sure AbstractGrammar.sortGrammar(List<FeatureFunction>) works
+- [X] make sure AbstractGrammar.sortGrammar(List<FeatureFunction>) works.  
+
+  This function chains to MonolingualRule.estimateRuleCost(), which is where the action happens.
+  This function iterates over the feature functions, calling -
+  
+    -ff.estimateLogP() * ff.getWeight()
+	
+  If the weight vector is updated, this can work simply by changing this to computeCost();
+
 - [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
   count OOVs, instead of clunky approach applied now
 - [ ] ComputeNodeResult needs to know how to compute features

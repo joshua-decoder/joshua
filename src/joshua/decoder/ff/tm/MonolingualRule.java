@@ -21,12 +21,13 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.PrecomputableFF;
 
 /**
  * this class implements MonolingualRule
  * 
+ * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class MonolingualRule implements Rule {
 
@@ -44,7 +45,9 @@ public class MonolingualRule implements Rule {
   private int[] pFrench; // pointer to the RuleCollection, as all the rules under it share the same
                          // Source side
   private int arity;
-  private float[] featScores; // the feature scores for this rule
+
+ // The set of dense feature scores for this rule.
+  private float[] featScores;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
@@ -179,6 +182,11 @@ public class MonolingualRule implements Rule {
     this.featScores = scores;
   }
 
+	/* This function returns the dense (phrasal) features discovered when the rule was loaded.  Dense
+	 * features are the list of unlabeled features that preceded labeled ones.  They can also be
+	 * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
+	 * preferred.
+	 */ 
   public final float[] getFeatureScores() {
     return this.featScores;
   }
@@ -212,12 +220,12 @@ public class MonolingualRule implements Rule {
    */
   public final float estimateRuleCost(List<FeatureFunction> featureFunctions) {
     if (null == featureFunctions) {
-      return 0;
+      return 0.0f;
     } else {
       float estcost = 0.0f;
       for (FeatureFunction ff : featureFunctions) {
-        double mdcost = -ff.estimateLogP(this, -1) * ff.getWeight();
-        estcost += mdcost;
+				if (ff instanceof PrecomputableFF)
+					estcost += ff.computeCost(this);
       }
 
       this.est_cost = estcost;

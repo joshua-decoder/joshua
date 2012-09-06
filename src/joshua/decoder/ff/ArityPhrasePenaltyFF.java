@@ -15,7 +15,7 @@ import joshua.corpus.Vocabulary;
  * @author Matt Post <post@cs.jhu.edu
  * @author Zhifei Li <zhifei.work@gmail.com>
  */
-public final class ArityPhrasePenaltyFF extends StatelessFF {
+public class ArityPhrasePenaltyFF extends PrecomputableFF {
 
   // when the rule.arity is in the range, then this feature is activated
   private final int owner;
@@ -53,11 +53,11 @@ public final class ArityPhrasePenaltyFF extends StatelessFF {
     return 0;
   }
 
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule) {
     return new FeatureVector(name, isEligible(rule));
   }
 
-  public float computeCost(Rule rule, int SentID) {
+  public float computeCost(Rule rule) {
     return weight * isEligible(rule);
   }
 }
