@@ -1,3 +1,8 @@
+package joshua.decoder.ff;
+
+import java.util.HashMap;
+import java.util.Set;
+
 /**
  * An implementation of a sparse feature vector, using for representing both weights and feature
  * values.
@@ -16,6 +21,27 @@ public class FeatureVector {
     features = new HashMap<String, Float>();
     features.put(feature, value);
   }
+
+	public Set<String> keySet() {
+		return features.keySet();
+	}
+
+	/**
+	 * Adds the weights in the other feature vector to this one.  This is set union, with values
+	 * shared between the two being summed.
+	 */
+	public void add(FeatureVector other) {
+		for (String key: other.keySet()) {
+			if (! features.containsKey(key))
+				features.put(key, other.get(key));
+			else
+				features.put(key, features.get(key) + other.get(key));
+		}
+	}
+
+	public boolean containsKey(final String feature) {
+		return features.containsKey(feature);
+	}
 
   public float get(String feature) {
     if (features.containsKey(feature))
