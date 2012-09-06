@@ -35,7 +35,7 @@ import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
+// import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import edu.jhu.thrax.util.TestSetFilter;
 
 /**
@@ -129,9 +129,9 @@ public class DecoderThread extends Thread {
       HyperGraph hypergraph = translate(sentence, null);
       Translation translation = null;
 
-      if (JoshuaConfiguration.visualize_hypergraph) {
-        HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
-      }
+      // if (JoshuaConfiguration.visualize_hypergraph) {
+      //   HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
+      // }
 
       String oracleSentence = inputHandler.oracleSentence(sentence.id());
       if (!sentence.isEmpty() && oracleSentence != null) {
