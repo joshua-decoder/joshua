@@ -1,6 +1,14 @@
 package joshua.decoder.ff;
 
+import java.util.List;
+
+import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.ff.state_maintenance.StateComputer;
+
 
 /**
  * Implements stateFUL feature functions.  These are functions that require access to the dynamic
@@ -12,36 +20,46 @@ import joshua.decoder.hypergraph.HyperEdge;
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevich <juri@cs.jhu.edu>
  */
-public abstract class StatefulFF implements FeatureFunction {
+public abstract class StatefulFF extends FeatureFunction {
 
-  public StatefulFF(WeightVector weights, String name) {
-    super(weights, name);
+  /* Stateful features have a state computer, which is recorded with the feature function.
+   */
+  private StateComputer stateComputer = null;
+
+  public StatefulFF(FeatureVector weights, String name, StateComputer stateComputer) {
+    super(weights, name, "");
+
+    this.stateComputer = stateComputer;
   }
 
-  public StatefulFF(WeightVector weights, String name, String args) {
+  public StatefulFF(FeatureVector weights, String name, String args, StateComputer stateComputer) {
     super(weights, name, args);
+
+    this.stateComputer = stateComputer;
   }
 
   public final boolean isStateful() {
     return true;
   }
 
-  /**
-   * This is a convenience function that unpacks the rule and tail nodes from the hyperedge and
-   * chains the call.
-   */
-  @Override
-  public double computeCost(HyperEdge edge, int i, int j, int sentID) {
-    return computeCost(edge.getRule(), edge.getAntNodes(), i, j, edge.getSourcePath(), sentID);
+  public StateComputer getStateComputer() {
+    return stateComputer;
   }
+
 
   /**
    * Computes the features and their values induced by applying this rule.  This is used for the
    * k-best extraction code, and should also be called from ComputeCost().  Makes use of the
-   * WeightVector class, but note this contains feature values and not weights.
+   * FeatureVector class, but note this contains feature values and not weights.
    */
-  @Override
-  public WeightVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+  public abstract FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+
+	/**
+	 * Convenience function for the above.
+	 */
+  public FeatureVector computeFeatures(HyperEdge edge, int i, int j, int sentID) {
+    return computeFeatures(edge.getRule(), edge.getAntNodes(), i, j, edge.getSourcePath(), sentID);
+  }
 
 
   /**
@@ -56,16 +74,30 @@ public abstract class StatefulFF implements FeatureFunction {
    *
    * These functions should make use of computeFeatures().
    */
-  @Override
-  public double computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+  public abstract float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+
+  /**
+   * This is a convenience function that unpacks the rule and tail nodes from the hyperedge and
+   * chains the call.
+   */
+  public float computeCost(HyperEdge edge, int i, int j, int sentID) {
+    return computeCost(edge.getRule(), edge.getAntNodes(), i, j, edge.getSourcePath(), sentID);
+  }
 
 
   /**
    * Often the final transition cost differs in some key way from regular transition costs.  This
-   * function can compute that difference.  By default it just chains to computeCost().
+   * function can compute that difference.  For the final transition, no rule is applied, so no
+   * hyperedge is created, so we pass in the final node instead.
    */
-  @Override
-  public double computeFinalCost(HyperEdge edge, int i, int j, int sentID) {
-    return computeCost(edge, i, j, sentID);
+  public float computeFinalCost(HGNode node, int i, int j, SourcePath sourcePath, int sentID) {
+    return 0.0f;
   }
+
+
+  /**
+   * Computes an estimated future cost of this rule.  Note that this is not compute as part of the
+   * score but is used for pruning.
+   */
+  public abstract float estimateFutureCost(Rule rule, DPState state, int sentID);
 }
