@@ -123,9 +123,9 @@ X = done
 - [ ] The grammar reading code needs to know about sparse features
   - [ ] MemoryBasedBatchGrammar
   - [ ] PackGrammar
-- [ ] Rewrite the feature function interface.
-  - [ ] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
-  - [ ] Stateless features: computeCost(), computeFeatures()
+- [X] Rewrite the feature function interface.
+  - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
+  - [X] Stateless features: computeCost(), computeFeatures()
   - [ ] A separate precomputable feature type?
 - [ ] Adapt all existing features to the new interface
   - [X] ArityPenalty
@@ -133,6 +133,7 @@ X = done
   - [X] WordPenalty
   - [ ] PhraseModel
   - [ ] LanguageModel
+  - [ ] EdgePhraseSimilarity
 - [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
   count OOVs, instead of clunky approach applied now
 - [ ] ComputeNodeResult needs to know how to compute features
