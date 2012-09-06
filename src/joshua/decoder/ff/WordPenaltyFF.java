@@ -1,7 +1,7 @@
 package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
-
+import joshua.decoder.chart_parser.SourcePath;
 
 /**
  * 
@@ -10,21 +10,21 @@ import joshua.decoder.ff.tm.Rule;
  */
 public final class WordPenaltyFF extends StatelessFF {
 
-  private static final float OMEGA = -Math.log10(Math.E); // -0.435
+  private static final float OMEGA = -(float)Math.log10(Math.E); // -0.435
 
   /* This is a single-value feature template, so we cache the weight here.
    */
   private float weight;
 
-  public WordPenaltyFF(final FeatureVector weights, String args) {
-    super(weights, "WordPenaltyFF", args);
+  public WordPenaltyFF(final FeatureVector weights) {
+    super(weights, "WordPenaltyFF", "");
 
     // Find the weight for this feature in the weights hash and cache it.
     if (weights.containsKey(name)) {
       weight = weights.get(name);
     } else {
-      logger.warn("* WARNING: no weight for feature '" + name + "'");
-      weight = 0.0;
+      System.err.println("* WARNING: no weight for feature '" + name + "'");
+      weight = 0.0f;
     }
   }
 
