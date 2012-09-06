@@ -126,7 +126,7 @@ X = done
 - [X] Rewrite the feature function interface.
   - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
   - [X] Stateless features: computeCost(), computeFeatures()
-  - [ ] A separate precomputable feature type?
+  - [X] A separate precomputable feature type?
 - [ ] Adapt all existing features to the new interface
   - [X] ArityPenalty
   - [X] OOVFF
