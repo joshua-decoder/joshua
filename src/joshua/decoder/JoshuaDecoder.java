@@ -25,8 +25,9 @@ import java.util.HashMap;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
@@ -43,7 +44,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
-import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
+// import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
@@ -73,7 +74,7 @@ public class JoshuaDecoder {
   private List<StateComputer> stateComputers;
 
   /* The feature weights. */
-  public static HashMap<String, Float> weights;
+  public static FeatureVector weights;
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(JoshuaDecoder.class.getName());
@@ -117,36 +118,23 @@ public class JoshuaDecoder {
   // Public Methods
   // ===============================================================
 
-  public void changeBaselineFeatureWeights(double[] weights) {
-    changeFeatureWeightVector(weights, null);
-  }
-
-  public void changeDiscrminativeModelOnly(String discrminativeModelFile) {
-    changeFeatureWeightVector(null, discrminativeModelFile);
+  public void changeBaselineFeatureWeights(FeatureVector weights) {
+    changeFeatureWeightVector(weights);
   }
 
   /**
    * Sets the feature weight values used by the decoder.
-   * <p>
-   * This method assumes that the order of the provided weights is the same as their order in the
-   * decoder's configuration file.
    * 
    * @param weights Feature weight values
    */
-  public void changeFeatureWeightVector(double[] weights, String discrminativeModelFile) {
-    if (weights != null) {
-      if (this.featureFunctions.size() != weights.length) {
-        throw new IllegalArgumentException(
-            "number of weights does not match number of feature functions");
-      }
+  public void changeFeatureWeightVector(FeatureVector newWeights) {
+    if (newWeights != null) {
 
-      int i = 0;
-      for (FeatureFunction ff : this.featureFunctions) {
-        double oldWeight = ff.getWeight();
-        ff.setWeight(weights[i]);
-        logger.info("Feature function : " + ff.getClass().getSimpleName()
-            + "; weight changed from " + oldWeight + " to " + ff.getWeight());
-        i++;
+      for (String feature: this.weights.keySet()) {
+        float oldWeight = this.weights.get(feature);
+				float newWeight = newWeights.get(feature);
+				this.weights.put(feature, newWeights.get(feature));
+        logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature, oldWeight, newWeight));
       }
     }
     // FIXME: this works for Batch grammar only; not for sentence-specific grammars
@@ -186,10 +174,11 @@ public class JoshuaDecoder {
     // this.languageModel.end_lm_grammar(); //end the threads
   }
 
-  public void visualizeHyperGraphForSentence(String sentence) {
-    HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory
-        .getHyperGraphForSentence(sentence));
-  }
+
+  // public void visualizeHyperGraphForSentence(String sentence) {
+  //   HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory
+  //       .getHyperGraphForSentence(sentence));
+  // }
 
 
   public static void writeConfigFile(double[] newWeights, String template, String outputFile,
@@ -274,14 +263,14 @@ public class JoshuaDecoder {
       logger.info(String.format("Grammar loading took: %d seconds.",
           (System.currentTimeMillis() - pre_load_time) / 1000));
 
+      // Initialize features that contribute to state (currently only n-grams).
+      this.initializeStateComputers();
+
       // Initialize the LM.
-      initializeLanguageModel();
+      initializeLanguageModels();
 
       // Initialize the features: requires that LM model has been initialized.
       this.initializeFeatureFunctions();
-
-      // Initialize features that contribute to state (currently only n-grams).
-      this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
       long pre_sort_time = System.currentTimeMillis();
       // Sort the TM grammars (needed to do cube pruning)
@@ -305,7 +294,10 @@ public class JoshuaDecoder {
     return this;
   }
 
-  private void initializeLanguageModel() throws IOException {
+  private void initializeLanguageModels() throws IOException {
+
+    // Indexed by order.
+    HashMap<Integer, NgramStateComputer> ngramStateComputers = new HashMap<Integer, NgramStateComputer>();
 
     this.languageModels = new ArrayList<NGramLanguageModel>();
 
@@ -319,6 +311,14 @@ public class JoshuaDecoder {
       boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
       double lm_ceiling_cost = Double.parseDouble(tokens[4]);
       String lm_file = tokens[5];
+
+      if (! ngramStateComputers.containsKey(lm_order)) {
+        // Create a new state computer.
+        NgramStateComputer ngramState = new NgramStateComputer(lm_order);
+        // Record that we've created it.
+        stateComputers.add(ngramState);
+        ngramStateComputers.put(lm_order, ngramState);
+      }
 
       if (lm_type.equals("kenlm")) {
         if (left_equiv_state || right_equiv_state) {
@@ -347,6 +347,16 @@ public class JoshuaDecoder {
         this.languageModels.add(new LMGrammarJAVA(lm_order, lm_file, left_equiv_state,
             right_equiv_state));
       }
+    }
+
+    this.languageModels = new ArrayList<NGramLanguageModel>();
+    for (int i = 0; i < this.languageModels.size(); i++) {
+      NGramLanguageModel lm = this.languageModels.get(i);
+      int order = lm.getOrder();
+      this.featureFunctions.add(new LanguageModelFF(weights, lm, ngramStateComputers.get(lm.getOrder())));
+
+			logger.info(String.format("FEATURE: language model #%d, order %d (weight %.3f)",
+					(i + 1), languageModels.get(i).getOrder(), weights.get(String.format("lm_%d",i))));
     }
   }
 
@@ -380,13 +390,20 @@ public class JoshuaDecoder {
 
         logger.info("Using grammar read from file " + file);
 
+				GrammarFactory grammar = null;
         if (format.equals("packed")) {
-          this.grammarFactories.add(new PackedGrammar(file, span_limit));
+					grammar = new PackedGrammar(file, span_limit);
+
         } else {
-          this.grammarFactories.add(new MemoryBasedBatchGrammar(format, file, owner, 
-              JoshuaConfiguration.default_non_terminal, span_limit,
-              JoshuaConfiguration.oov_feature_cost));
+					grammar = new MemoryBasedBatchGrammar(format, file, owner, 
+						JoshuaConfiguration.default_non_terminal, span_limit,
+						JoshuaConfiguration.oov_feature_cost);
         }
+
+				this.grammarFactories.add(grammar);
+				this.featureFunctions.add(new PhraseModelFF(weights, grammar, owner));
+
+        logger.info(String.format("FEATURE: phrase model with owner %s", owner));
       }
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
@@ -428,9 +445,8 @@ public class JoshuaDecoder {
         .getRuntime().freeMemory()) / 1000000.0)));
   }
 
-  private void initializeStateComputers(int nGramOrder, int ngramStateID) {
+  private void initializeStateComputers() {
     stateComputers = new ArrayList<StateComputer>();
-    if (nGramOrder > 0) stateComputers.add(new NgramStateComputer(nGramOrder, ngramStateID));
   }
 
   /* This function reads the weights for the model.  For backwards compatibility, weights may be
@@ -445,8 +461,8 @@ public class JoshuaDecoder {
    * feature name (putting them there explicitly is preferred, but the concatenation is in place for
    * backwards compatibility
    */
-  private HashMap<String,Float> readWeights(String fileName) {
-    HashMap<String,Float> weights = new HashMap<String,Float>();
+  private FeatureVector readWeights(String fileName) {
+    FeatureVector weights = new FeatureVector();
 
     try {
       LineReader lineReader = new LineReader(fileName);
@@ -458,7 +474,7 @@ public class JoshuaDecoder {
         String feature = line.substring(0, line.lastIndexOf(' ')).replaceAll(" ", "_");
         Float value = Float.parseFloat(line.substring(line.lastIndexOf(' ')));
 
-        weights.put(feature, value);
+        weights.put(feature.toLowerCase(), value);
       }
     } catch (IOException ioe) {
       System.err.println("Can't open file '" + fileName + "'");
@@ -469,73 +485,38 @@ public class JoshuaDecoder {
     return weights;
   }
 
-  // iterate over the features that were discovered when the config file was read
+  /**
+   * This function supports two means of activating features.  (1) The old format turns on a feature
+   * when it finds a line of the form "FEATURE OPTIONS WEIGHTS" (lines with an = sign, which signify
+   * configuration options).  (2) The new format requires lines that are of the form
+   * "feature_function = FEATURE OPTIONS", and expects to find the weights loaded separately in the
+   * weights file.
+   *
+   */
   private void initializeFeatureFunctions() {
     this.featureFunctions = new ArrayList<FeatureFunction>();
-    JoshuaConfiguration.num_phrasal_features = 0;
 
     for (String featureLine : JoshuaConfiguration.features) {
 
+      // Get rid of the leading crap.
+      featureLine = featureLine.replaceFirst("^feature_function\\s*=\\s*", "");
+
       String fields[] = featureLine.split("\\s+");
-      String feature = fields[0];
+      String feature = fields[0].toLowerCase();
 
-      // initialize the language model
-      if (feature.equals("lm") && !JoshuaConfiguration.lm_type.equals("none")) {
-        int index;
-        double weight;
-
-        // new format
-        if (fields.length == 3) {
-          index = Integer.parseInt(fields[1]);
-          weight = Double.parseDouble(fields[2]);
-        } else {
-          index = 0;
-          weight = Double.parseDouble(fields[1]);
-        }
-
-        if (index >= this.languageModels.size()) {
-          System.err.println(String.format(
-              "* FATAL: there is no LM corresponding to LM feature index %d", index));
-          System.exit(1);
-        }
-
-        this.featureFunctions.add(new LanguageModelFF(JoshuaConfiguration.ngramStateID,
-            this.featureFunctions.size(), this.languageModels.get(index).getOrder(),
-            this.languageModels.get(index), weight));
-
-        // TODO: lms should have a name or something
-        logger.info(String.format("FEATURE: language model #%d, order %d (weight %.3f)",
-            (index + 1), languageModels.get(index).getOrder(), weight));
+      if (feature.equals("latticecost") || feature.equals("sourcepath")) {
+        this.featureFunctions.add(new SourcePathFF(JoshuaDecoder.weights));
+        logger.info(String.format("FEATURE: lattice cost (weight %.3f)", weights.get("sourcepath")));
       }
 
-      else if (feature.equals("latticecost")) {
-        double weight = Double.parseDouble(fields[1]);
-        this.featureFunctions.add(new SourcePathFF(this.featureFunctions.size(), weight));
-        logger.info(String.format("FEATURE: lattice cost (weight %.3f)", weight));
-      }
-
-      else if (feature.equals("phrasemodel")) {
-        // TODO: error-checking
-
-        int owner = Vocabulary.id(fields[1]);
-        int column = Integer.parseInt(fields[2].trim());
-        double weight = Double.parseDouble(fields[3].trim());
-
-        this.featureFunctions.add(new PhraseModelFF(this.featureFunctions.size(), weight, owner,
-            column));
-        JoshuaConfiguration.num_phrasal_features += 1;
-
-        logger.info(String.format("FEATURE: phrase model %d, owner %s (weight %.3f)", column,
-            owner, weight));
-      }
-
-      else if (feature.equals("arityphrasepenalty")) {
-        int owner = Vocabulary.id(fields[1]);
+      else if (feature.equals("arityphrasepenalty") || feature.equals("aritypenalty")) {
+        String owner = fields[1];
         int startArity = Integer.parseInt(fields[2].trim());
         int endArity = Integer.parseInt(fields[3].trim());
-        double weight = Double.parseDouble(fields[4].trim());
-        this.featureFunctions.add(new ArityPhrasePenaltyFF(this.featureFunctions.size(), weight,
-            owner, startArity, endArity));
+        float weight = Float.parseFloat(fields[4].trim());
+
+        weights.put("aritypenalty", weight);
+        this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d", owner, startArity, endArity)));
 
         logger.info(String.format(
             "FEATURE: arity phrase penalty: owner %s, start %d, end %d (weight %.3f)", owner,
@@ -543,25 +524,17 @@ public class JoshuaDecoder {
       }
 
       else if (feature.equals("wordpenalty")) {
-        double weight = Double.parseDouble(fields[1].trim());
+        this.featureFunctions.add(new WordPenaltyFF(weights));
 
-        this.featureFunctions.add(new WordPenaltyFF(this.featureFunctions.size(), weight));
-
-        logger.info(String.format("FEATURE: word penalty (weight %.3f)", weight));
+        logger.info(String.format("FEATURE: word penalty (weight %.3f)", weights.get("wordpenalty")));
       }
 
       else if (feature.equals("oovpenalty")) {
-        double weight = Double.parseDouble(fields[1].trim());
-        int owner = Vocabulary.id("pt");
-        int column = JoshuaConfiguration.num_phrasal_features;
+        this.featureFunctions.add(new OOVFF(weights));
 
-        this.featureFunctions.add(new OOVFF(this.featureFunctions.size(), weight, owner));
+        logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weights.get("oovpenalty")));
 
-        JoshuaConfiguration.oov_feature_index = column;
-        JoshuaConfiguration.num_phrasal_features += 1;
-
-        logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weight));
-      } else if (feature.equals("edge-sim")) {
+      } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
         double weight = Double.parseDouble(fields[3].trim());
@@ -572,7 +545,7 @@ public class JoshuaDecoder {
           e.printStackTrace();
           System.exit(1);
         }
-        logger.info(String.format("FEATURE: edge similarity (weight %.3f)", weight));
+        logger.info(String.format("FEATURE: edge similarity (weight %.3f)", weights.get("edgephrasesimilarity")));
       } else {
         System.err.println("* WARNING: invalid feature '" + featureLine + "'");
       }

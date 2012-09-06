@@ -117,7 +117,7 @@ X = done
 - [X] Build a FeatureVector class, a sparse representation that can be used to hold both feature
   values and weight vectors
 - [X] Read in the weight vector from a supplied file (a new Joshua parameter, weights-file)
-- [ ] Change JoshuaDecoder.java to activate features only when feature_function= lines are present
+- [X] Change JoshuaDecoder.java to activate features only when feature_function= lines are present
   in the configuration
 - [ ] Write script to take an old config file and change it to the new format.
 - [ ] The grammar reading code needs to know about sparse features

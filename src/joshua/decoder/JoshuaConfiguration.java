@@ -457,10 +457,15 @@ public class JoshuaConfiguration {
             // this was used to send in the config file, just ignore it
             ;
 
+          } else if (parameter.equals(normalize_key("feature-function"))) {
+            // add the feature to the list of features for later processing
+            features.add(fds[1]);
+
           } else {
             logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");
             System.exit(1);
           }
+
 
         } else {
           // Feature function. These are processed a bit later
