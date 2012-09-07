@@ -18,7 +18,6 @@ import joshua.decoder.segment_file.Sentence;
  * DecoderThread instances to the InputHandler, where they are assembled in order for output.
  * 
  * @author Matt Post <post@jhu.edu>
- * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */
 
 public class Translation {
