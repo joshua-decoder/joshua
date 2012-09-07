@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
 import java.util.Arrays;
@@ -25,10 +10,10 @@ import joshua.corpus.Vocabulary;
  * weight should be positive
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class BilingualRule extends MonolingualRule {
 
+	private String sparseFeatures;
   private int[] english;
 
   // ===============================================================
@@ -57,6 +42,13 @@ public class BilingualRule extends MonolingualRule {
   // called by class who does not care about lattice_cost, rule_id, and owner
   public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity) {
     super(lhs, sourceRhs, featureScores, arity);
+    this.english = targetRhs;
+  }
+
+	// Sparse feature version
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] denseFeatures, String sparseFeatures, int arity) {
+    super(lhs, sourceRhs, denseFeatures, arity);
+		this.sparseFeatures = sparseFeatures;
     this.english = targetRhs;
   }
 
@@ -91,10 +83,10 @@ public class BilingualRule extends MonolingualRule {
       sb.append(Vocabulary.getWords(this.english));
       // sb.append(java.util.Arrays.toString(this.english));
       sb.append(" |||");
-      for (int i = 0; i < this.getFeatureScores().length; i++) {
+      for (int i = 0; i < this.getDenseFeatures().length; i++) {
         // sb.append(String.format(" %.12f", this.getFeatureScores()[i]));
         sb.append(' ');
-        sb.append(Float.toString(this.getFeatureScores()[i]));
+        sb.append(Float.toString(this.getDenseFeatures()[i]));
       }
       this.cachedToString = sb.toString();
     }
@@ -116,8 +108,8 @@ public class BilingualRule extends MonolingualRule {
           sb.append(" ").append(Vocabulary.word(english[i]));
       }
       sb.append(" |||");
-      for (int i = 0; i < this.getFeatureScores().length; i++) {
-        sb.append(String.format(" %.4f", this.getFeatureScores()[i]));
+      for (int i = 0; i < this.getDenseFeatures().length; i++) {
+        sb.append(String.format(" %.4f", this.getDenseFeatures()[i]));
       }
       this.cachedToString = sb.toString();
     }

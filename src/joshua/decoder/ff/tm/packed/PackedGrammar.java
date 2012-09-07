@@ -461,10 +461,7 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setFeatureScores(float[] scores) {}
-
-    @Override
-    public float[] getFeatureScores() {
+    public float[] getDenseFeatures() {
       if (features == null) {
         features = parent.grammar.getFeatures(parent.grammar.source[address + 2]);
       }
@@ -472,15 +469,7 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setFeatureCost(int column, float cost) {}
-
-    @Override
-    public float getFeatureCost(int column) {
-      return 0;
-    }
-
-    @Override
-    public float incrementFeatureScore(int column, double score) {
+    public float getDenseFeature(int column) {
       return 0;
     }
 

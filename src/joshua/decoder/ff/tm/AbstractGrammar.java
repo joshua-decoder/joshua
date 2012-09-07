@@ -104,7 +104,7 @@ public abstract class AbstractGrammar implements Grammar {
           StringBuilder s = new StringBuilder();
           for (Rule r : rules.getSortedRules()) {
             s.append("\n\t" + r.getLHS() + " ||| " + Arrays.toString(r.getFrench()) + " ||| "
-                + Arrays.toString(r.getEnglish()) + " ||| " + Arrays.toString(r.getFeatureScores())
+                + Arrays.toString(r.getEnglish()) + " ||| " + Arrays.toString(r.getDenseFeatures())
                 + " ||| " + r.getEstCost() + "  " + r.getClass().getName() + "@"
                 + Integer.toHexString(System.identityHashCode(r)));
           }
@@ -125,33 +125,6 @@ public abstract class AbstractGrammar implements Grammar {
   // write grammar to disk
   public void writeGrammarOnDisk(String file) {}
 
-  // change the feature weight in the grammar
-  public void changeGrammarCosts(Map<String, Double> weightTbl,
-      HashMap<String, Integer> featureMap, double[] scores, String prefix, int column,
-      boolean negate) {
-    changeGrammarCosts(this.getTrieRoot(), featureMap, scores, prefix, column, negate);
-  }
-
-  private void changeGrammarCosts(Trie trie, HashMap<String, Integer> featureMap, double[] scores,
-      String prefix, int column, boolean negate) {
-    if (trie.hasRules()) {
-      RuleCollection rlCollection = trie.getRuleCollection();
-      for (Rule rl : rlCollection.getSortedRules()) {
-        String featName = prefix + rl.getRuleID();
-        float weight = (float) scores[featureMap.get(featName)];
-        if (negate) weight *= -1.0;
-        rl.setFeatureCost(column, weight);
-      }
-    }
-
-    if (trie.hasExtensions()) {
-      Object[] tem = trie.getExtensions().toArray();
-
-      for (int i = 0; i < tem.length; i++) {
-        changeGrammarCosts((Trie) tem[i], featureMap, scores, prefix, column, negate);
-      }
-    }
-  }
 
   // obtain RulesIDTable in the grammar, accumalative
   public void obtainRulesIDTable(Map<String, Integer> rulesIDTable) {

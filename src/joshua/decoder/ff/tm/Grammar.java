@@ -119,8 +119,5 @@ public interface Grammar {
 
   void writeGrammarOnDisk(String file);
 
-  void changeGrammarCosts(Map<String, Double> weightTbl, HashMap<String, Integer> featureMap,
-      double[] scores, String prefix, int column, boolean negate);
-
   void obtainRulesIDTable(Map<String, Integer> rulesIDTable);
 }

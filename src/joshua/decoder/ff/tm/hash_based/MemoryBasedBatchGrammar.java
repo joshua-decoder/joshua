@@ -53,7 +53,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private MemoryBasedTrie root = null;
 
   // protected ArrayList<FeatureFunction> featureFunctions = null;
-  private int defaultOwner;
+  private int owner;
 
   private float oovFeatureCost = 100;
 
@@ -91,18 +91,18 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
-    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(defaultOwner)));
+    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
     modelReader = gr;
   }
 
-  public MemoryBasedBatchGrammar(String formatKeyword, String grammarFile, String defaultOwner,
+  public MemoryBasedBatchGrammar(String formatKeyword, String grammarFile, String owner,
       String defaultLHSSymbol, int spanLimit, float oovFeatureCost_) throws IOException {
 
-    this.defaultOwner = Vocabulary.id(defaultOwner);
+    this.owner = Vocabulary.id(owner);
     this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
     this.spanLimit = spanLimit;
     this.oovFeatureCost = oovFeatureCost_;
-    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(defaultOwner));
+    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(owner));
     this.grammarFile = grammarFile;
 
     // ==== loading grammar
@@ -165,7 +165,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
       feat_scores[0] = oovFeatureCost;
     }
 
-    return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.defaultOwner,
+    return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.owner,
         0, getOOVRuleID());
   }
 
@@ -187,13 +187,13 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
       feat_scores[0] = oovFeatureCost;
     }
 
-    return new BilingualRule(lhs, french, english, feat_scores, 0, this.defaultOwner, 0,
+    return new BilingualRule(lhs, french, english, feat_scores, 0, this.owner, 0,
         getOOVRuleID());
   }
 
   public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores,
       int arity) {
-    return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.defaultOwner, 0,
+    return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.owner, 0,
         getOOVRuleID());
   }
 
@@ -219,7 +219,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     ruleIDCount++;
 
     rule.setRuleID(ruleIDCount);
-    rule.setOwner(defaultOwner);
+    rule.setOwner(owner);
 
     // TODO: make sure costs are calculated here or in reader
     temEstcost += rule.getEstCost();
@@ -243,7 +243,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
       // we call exactMatch() here to avoid applying regular expressions along the arc
       MemoryBasedTrie nextLayer = pos.exactMatch(curSymID);
       if (null == nextLayer) {
-        nextLayer = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(defaultOwner)));
+        nextLayer = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
         if (pos.hasExtensions() == false) {
           pos.childrenTbl = new HashMap<Integer, MemoryBasedTrie>();
         }

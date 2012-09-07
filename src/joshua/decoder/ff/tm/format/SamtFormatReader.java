@@ -107,7 +107,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
     sb.append(Arrays.toString(rule.getEnglish()));
     sb.append(" |||");
 
-    float[] feature_scores = rule.getFeatureScores();
+    float[] feature_scores = rule.getDenseFeatures();
     for (int i = 0; i < feature_scores.length; i++) {
       sb.append(String.format(" %.4f", feature_scores[i]));
     }
@@ -135,7 +135,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
     sb.append(Vocabulary.getWords(rule.getEnglish()));
     sb.append(" |||");
 
-    float[] feature_scores = rule.getFeatureScores();
+    float[] feature_scores = rule.getDenseFeatures();
     for (int i = 0; i < feature_scores.length; i++) {
       sb.append(String.format(" %.4f", feature_scores[i]));
     }

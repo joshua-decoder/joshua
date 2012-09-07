@@ -633,7 +633,7 @@ public class Chart {
     }
 
     if (logger.isLoggable(Level.FINEST)) for (Rule r : filteredRules)
-      logger.finest(r.toString() + " num_feats: " + r.getFeatureScores().length);
+      logger.finest(r.toString() + " dense features: " + r.getDenseFeatures().length);
 
     if (arity == 0)
       combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);

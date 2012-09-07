@@ -7,6 +7,12 @@ import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
+/**
+ *
+ * @author Unknown
+ * @author Matt Post <post@cs.jhu.edu>
+ */
+
 public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
   private static final Logger logger = Logger.getLogger(HieroFormatReader.class.getName());
@@ -59,16 +65,31 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
       }
     }
 
-    // feature scores
-    String[] scores = fields[3].split("\\s+");
-    float[] feature_scores = new float[scores.length];
+		/* Now read the feature scores, which can be any number of dense features and sparse features.
+		 * Any unlabeled feature becomes a dense feature.  By convention, dense features should precede
+		 * sparse (labeled) ones, but it's not required.
+		 */
+    String[] tokens = fields[3].split("\\s+");
 
-    int i = 0;
-    for (String score : scores) {
-      feature_scores[i++] = Float.parseFloat(score);
-    }
+		int denseFeatureCount = 0;
+		for (int i = 0; i < tokens.length; i++) {
+			if (tokens[i].indexOf('=') == -1)
+				denseFeatureCount++;
+		}
 
-    return new BilingualRule(lhs, french, english, feature_scores, arity);
+    float[] dense_scores = new float[denseFeatureCount];
+		String features = "";
+		denseFeatureCount = 0;
+		for (int i = 0; i < tokens.length; i++) {
+			if (tokens[i].indexOf('=') == -1) {
+				dense_scores[denseFeatureCount] = Float.parseFloat(tokens[i]);
+				denseFeatureCount++;
+			} else {
+				features += ((features.length() > 0) ? " " : "") + tokens[i];
+			}
+		}
+
+		return new BilingualRule(lhs, french, english, dense_scores, features, arity);
   }
 
 
@@ -82,7 +103,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     sb.append(Arrays.toString(rule.getEnglish()));
     sb.append(" |||");
 
-    float[] feature_scores = rule.getFeatureScores();
+    float[] feature_scores = rule.getDenseFeatures();
     for (int i = 0; i < feature_scores.length; i++) {
       sb.append(String.format(" %.4f", feature_scores[i]));
     }
@@ -110,7 +131,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     sb.append(Vocabulary.getWords(rule.getEnglish()));
     sb.append(" |||");
 
-    float[] feature_scores = rule.getFeatureScores();
+    float[] feature_scores = rule.getDenseFeatures();
     for (int i = 0; i < feature_scores.length; i++) {
       sb.append(String.format(" %.4f", feature_scores[i]));
     }

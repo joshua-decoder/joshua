@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
 import java.util.List;
@@ -46,8 +31,12 @@ public class MonolingualRule implements Rule {
                          // Source side
   private int arity;
 
- // The set of dense feature scores for this rule.
-  private float[] featScores;
+	// The set of dense feature scores for this rule.
+  // private float[] featScores;
+  private float[] denseFeatures;
+	
+	// And a string containing the sparse ones
+	private String sparseFeatures;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
@@ -96,7 +85,7 @@ public class MonolingualRule implements Rule {
       float latticeCost, int ruleID) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.featScores = featureScores;
+    this.denseFeatures = featureScores;
     this.arity = arity;
     this.latticeCost = latticeCost;
     this.ruleID = ruleID;
@@ -109,7 +98,7 @@ public class MonolingualRule implements Rule {
   public MonolingualRule(int lhs_, int[] source_rhs, float[] feature_scores, int arity_) {
     this.lhs = lhs_;
     this.pFrench = source_rhs;
-    this.featScores = feature_scores;
+    this.denseFeatures = feature_scores;
     this.arity = arity_;
 
     // ==== dummy values
@@ -178,17 +167,13 @@ public class MonolingualRule implements Rule {
   }
 
 
-  public final void setFeatureScores(float[] scores) {
-    this.featScores = scores;
-  }
-
 	/* This function returns the dense (phrasal) features discovered when the rule was loaded.  Dense
 	 * features are the list of unlabeled features that preceded labeled ones.  They can also be
 	 * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
 	 * preferred.
 	 */ 
-  public final float[] getFeatureScores() {
-    return this.featScores;
+  public final float[] getDenseFeatures() {
+    return this.denseFeatures;
   }
 
 
@@ -237,24 +222,16 @@ public class MonolingualRule implements Rule {
   // Methods
   // ===============================================================
 
-  public float incrementFeatureScore(int column, double score) {
-    synchronized (this) {
-      featScores[column] += score;
-      return featScores[column];
-    }
-  }
-
-
   public void setFeatureCost(int column, float score) {
     synchronized (this) {
-      featScores[column] = score;
+      denseFeatures[column] = score;
     }
   }
 
 
-  public float getFeatureCost(int column) {
+  public float getDenseFeature(int column) {
     synchronized (this) {
-      return featScores[column];
+      return denseFeatures[column];
     }
   }
 
@@ -276,9 +253,9 @@ public class MonolingualRule implements Rule {
       sb.append(" ||| ");
       sb.append(Vocabulary.getWords(this.pFrench));
       sb.append(" |||");
-      for (int i = 0; i < this.featScores.length; i++) {
+      for (int i = 0; i < this.denseFeatures.length; i++) {
         // sb.append(String.format(" %.4f", this.feat_scores[i]));
-        sb.append(' ').append(Float.toString(this.featScores[i]));
+        sb.append(' ').append(Float.toString(this.denseFeatures[i]));
       }
       this.cachedToString = sb.toString();
     }
@@ -293,8 +270,8 @@ public class MonolingualRule implements Rule {
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(this.pFrench));
     sb.append(" |||");
-    for (int i = 0; i < this.featScores.length; i++) {
-      sb.append(String.format(" %.4f", this.featScores[i]));
+    for (int i = 0; i < this.denseFeatures.length; i++) {
+      sb.append(String.format(" %.4f", this.denseFeatures[i]));
     }
     return sb.toString();
   }

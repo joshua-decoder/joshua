@@ -102,7 +102,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     if (source == null) return null;
     int[] target = getNewTargetFromSource(source);
     BilingualRule result =
-        new BilingualRule(headLabel, source, target, edgeRule.getFeatureScores(),
+        new BilingualRule(headLabel, source, target, edgeRule.getDenseFeatures(),
             edgeRule.getArity());
     // System.err.printf("new rule is %s\n", result);
     return result;

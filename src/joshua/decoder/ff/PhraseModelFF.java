@@ -67,7 +67,7 @@ public class PhraseModelFF extends PrecomputableFF {
 	public FeatureVector computeFeatures(final Rule rule) {
 		FeatureVector featureDelta = new FeatureVector();
 
-		float[] featureScores = rule.getFeatureScores();
+		float[] featureScores = rule.getDenseFeatures();
 		for (int i = 0; i < featureScores.length; i++)
 			featureDelta.put(String.format("PhraseModel_%s_%d", owner, i), featureScores[i]);
 
@@ -80,7 +80,7 @@ public class PhraseModelFF extends PrecomputableFF {
 
     if (this.ownerID == rule.getOwner()) {
 
-      float[] featureScores = rule.getFeatureScores();
+      float[] featureScores = rule.getDenseFeatures();
 			for (int i = 0; i < featureWeights.length; i++)
 				cost += featureWeights[i] + featureScores[i];
     }
