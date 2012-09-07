@@ -46,7 +46,7 @@ public class PhraseModelFF extends PrecomputableFF {
 		int maxIndex = 0;
 		for (String key: weights.keySet()) {
 			if (key.startsWith(prefix)) {
-				int index = Integer.parseInt(key.substring(key.lastIndexOf("_")));
+				int index = Integer.parseInt(key.substring(key.lastIndexOf("_") + 1));
 				if (index > maxIndex) 
 					maxIndex = index;
 			}
