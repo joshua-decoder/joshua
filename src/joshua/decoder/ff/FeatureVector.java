@@ -26,6 +26,19 @@ public class FeatureVector {
 		return features.keySet();
 	}
 
+
+	/**
+	 * Adds the weights in the other feature vector to this one.  This is set union, with values
+	 * shared between the two being summed.
+	 */
+	public void subtract(FeatureVector other) {
+		for (String key: other.keySet()) {
+			if (features.containsKey(key))
+				features.put(key, features.get(key) - other.get(key));
+		}
+	}
+
+
 	/**
 	 * Adds the weights in the other feature vector to this one.  This is set union, with values
 	 * shared between the two being summed.
