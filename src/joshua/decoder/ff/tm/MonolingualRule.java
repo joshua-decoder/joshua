@@ -25,7 +25,6 @@ public class MonolingualRule implements Rule {
   /*
    * The string format of Rule is: [Phrase] ||| french ||| english ||| feature scores
    */
-  private int ruleID;
   private int lhs; // tag of this rule
   private int[] pFrench; // pointer to the RuleCollection, as all the rules under it share the same
                          // Source side
@@ -43,10 +42,6 @@ public class MonolingualRule implements Rule {
    * of the feature function
    */
   private int owner;
-
-  // TODO: consider remove this from the general class, and
-  // create a new specific Rule class
-  private float latticeCost;
 
   /**
    * estimate_cost depends on rule itself: statelesscost +
@@ -78,17 +73,12 @@ public class MonolingualRule implements Rule {
    * @param featureScores Feature value scores for the rule.
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
-   * @param latticeCost
-   * @param ruleID
    */
-  public MonolingualRule(int lhs, int[] sourceRhs, float[] featureScores, int arity, int owner,
-      float latticeCost, int ruleID) {
+  public MonolingualRule(int lhs, int[] sourceRhs, float[] featureScores, int arity, int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
     this.denseFeatures = featureScores;
     this.arity = arity;
-    this.latticeCost = latticeCost;
-    this.ruleID = ruleID;
     this.owner = owner;
   }
 
@@ -102,8 +92,6 @@ public class MonolingualRule implements Rule {
     this.arity = arity_;
 
     // ==== dummy values
-    this.latticeCost = 0;
-    this.ruleID = DUMMY_RULE_ID;
     this.owner = DUMMY_OWNER;
   }
 
@@ -118,8 +106,6 @@ public class MonolingualRule implements Rule {
     this.arity = arity_;
 
     // ==== dummy values
-    this.latticeCost = 0;
-    this.ruleID = DUMMY_RULE_ID;
     this.owner = DUMMY_OWNER;
   }
 
@@ -127,15 +113,6 @@ public class MonolingualRule implements Rule {
   // ===============================================================
   // Attributes
   // ===============================================================
-
-  public final void setRuleID(int id) {
-    this.ruleID = id;
-  }
-
-  public final int getRuleID() {
-    return this.ruleID;
-  }
-
 
   public final void setArity(int arity) {
     this.arity = arity;
@@ -191,16 +168,6 @@ public class MonolingualRule implements Rule {
   public final float[] getDenseFeatures() {
     return this.denseFeatures;
   }
-
-
-  public final void setLatticeCost(float cost) {
-    this.latticeCost = cost;
-  }
-
-  public final float getLatticeCost() {
-    return this.latticeCost;
-  }
-
 
   public final float getEstCost() {
     if (est_cost <= Double.NEGATIVE_INFINITY) {

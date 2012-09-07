@@ -12,17 +12,12 @@ import joshua.decoder.ff.FeatureFunction;
  * *cost* (i.e., -LogP), so that the feature weight should be positive.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public interface Rule {
 
   // ===============================================================
   // Attributes
   // ===============================================================
-
-  void setRuleID(int id);
-
-  int getRuleID();
 
   void setArity(int arity);
 
@@ -56,10 +51,6 @@ public interface Rule {
    * @param column start from zero
    */
   float getDenseFeature(int column);
-
-  void setLatticeCost(float cost);
-
-  float getLatticeCost();
 
   void setEstCost(float cost);
 

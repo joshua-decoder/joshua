@@ -125,27 +125,4 @@ public abstract class AbstractGrammar implements Grammar {
   // write grammar to disk
   public void writeGrammarOnDisk(String file) {}
 
-
-  // obtain RulesIDTable in the grammar, accumalative
-  public void obtainRulesIDTable(Map<String, Integer> rulesIDTable) {
-    obtainRulesIDTable(this.getTrieRoot(), rulesIDTable);
-  }
-
-  private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable) {
-    if (trie.hasRules()) {
-      RuleCollection rlCollection = trie.getRuleCollection();
-      for (Rule rl : rlCollection.getRules()) {
-        rulesIDTable.put(rl.toStringWithoutFeatScores(), rl.getRuleID());
-      }
-    }
-
-    if (trie.hasExtensions()) {
-      Object[] tem = trie.getExtensions().toArray();
-
-      for (int i = 0; i < tem.length; i++) {
-        obtainRulesIDTable((Trie) tem[i], rulesIDTable);
-      }
-    }
-  }
-
 }

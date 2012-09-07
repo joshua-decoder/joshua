@@ -10,6 +10,7 @@ import joshua.corpus.Vocabulary;
  * weight should be positive
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class BilingualRule extends MonolingualRule {
 
@@ -30,16 +31,14 @@ public class BilingualRule extends MonolingualRule {
    * @param featureScores Feature value scores for the rule.
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
-   * @param latticeCost
-   * @param ruleID
    */
   public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity,
-      int owner, float latticeCost, int ruleID) {
-    super(lhs, sourceRhs, featureScores, arity, owner, latticeCost, ruleID);
+		int owner) {
+    super(lhs, sourceRhs, featureScores, arity, owner);
     this.english = targetRhs;
-  }
+	}
 
-  // called by class who does not care about lattice_cost, rule_id, and owner
+  // called by class who does not care about owner
   public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity) {
     super(lhs, sourceRhs, featureScores, arity);
     this.english = targetRhs;
@@ -50,6 +49,7 @@ public class BilingualRule extends MonolingualRule {
     super(lhs, sourceRhs, denseFeatures, sparseFeatures, arity);
     this.english = targetRhs;
   }
+
 
   // ===============================================================
   // Attributes

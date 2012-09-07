@@ -85,7 +85,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // Constructors
   // ===============================================================
 
-  public MemoryBasedBatchGrammar() {}
+  public MemoryBasedBatchGrammar() {
+		this.root = new MemoryBasedTrie();
+	}
 
   public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
@@ -147,53 +149,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     return this.qtyRulesRead;
   }
 
-  public Rule constructOOVRule(int num_features, int source_word, int target_word,
-      boolean use_max_lm_cost) {
-    int[] french = {source_word};
-    int[] english = {target_word};
-    float[] feat_scores = new float[JoshuaConfiguration.num_phrasal_features];
-
-    // TODO: This is a hack to make the decoding without a LM works
-    /*
-     * When a ngram LM is used, the OOV word will have a cost 100. if no LM is used for decoding, so
-     * we should set the cost of some TM feature to be maximum
-     */
-    if (JoshuaConfiguration.oov_feature_index != -1) {
-      feat_scores[JoshuaConfiguration.oov_feature_index] = oovFeatureCost; // 1.0f;
-    } else if ((!use_max_lm_cost) && num_features > 0) {
-      feat_scores[0] = oovFeatureCost;
-    }
-
-    return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.owner,
-        0, getOOVRuleID());
-  }
-
-  public Rule constructLabeledOOVRule(int num_features, int source_word, int target_word, int lhs,
-      boolean use_max_lm_cost) {
-    int[] french = {source_word};
-    int[] english = {target_word};
-    // HACK: this is making sure the OOV rules get the right number of feature values
-    float[] feat_scores = new float[JoshuaConfiguration.num_phrasal_features];
-
-    // TODO: This is a hack to make the decoding without a LM work
-    /*
-     * When a ngram LM is used, the OOV word will have a cost 100. if no LM is used for decoding, so
-     * we should set the cost of some TM feature to be maximum
-     */
-    if (JoshuaConfiguration.oov_feature_index != -1) {
-      feat_scores[JoshuaConfiguration.oov_feature_index] = oovFeatureCost; // 1.0f;
-    } else if ((!use_max_lm_cost) && num_features > 0) {
-      feat_scores[0] = oovFeatureCost;
-    }
-
-    return new BilingualRule(lhs, french, english, feat_scores, 0, this.owner, 0,
-        getOOVRuleID());
-  }
-
-  public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores,
+  public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] denseScores,
       int arity) {
-    return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.owner, 0,
-        getOOVRuleID());
+    return new BilingualRule(lhs, sourceWords, targetWords, denseScores, "", arity);
   }
 
   /**
@@ -217,7 +175,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.qtyRulesRead++;
     ruleIDCount++;
 
-    rule.setRuleID(ruleIDCount);
     rule.setOwner(owner);
 
     // TODO: make sure costs are calculated here or in reader

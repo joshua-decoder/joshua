@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
@@ -34,8 +19,10 @@ import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.segment_file.ParsedSentence;
@@ -146,7 +133,13 @@ public class Chart {
     this.segmentID = sentence.id();
     this.goalSymbolID = Vocabulary.id(goalSymbol);
     this.goalBin = new Cell(this, this.goalSymbolID);
-    this.grammars = grammars;
+
+		/* Create the grammars, leaving space for the OOV grammar. */
+    this.grammars = new Grammar[grammars.length + 1];
+		for (int i = 0; i < grammars.length; i++)
+			this.grammars[i] = grammars[i];
+		MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar();
+		this.grammars[this.grammars.length - 1] = oovGrammar;
 
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
@@ -176,12 +169,8 @@ public class Chart {
         new ManualConstraintsHandler(this, grammars[grammars.length - 1], sentence.constraints());
 
     /*
-     * Add OOV rules; This should be called after the manual constraints have been set up. Different
-     * grammar differ in hasRuleForSpan, defaultOwner, and defaultLHSSymbol
+     * Add OOV rules; This should be called after the manual constraints have been set up.
      */
-
-    // TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except
-    // the LM cost
     for (Node<Integer> node : inputLattice) {
       for (Arc<Integer> arc : node.getOutgoingArcs()) {
         // create a rule, but do not add into the grammar trie
@@ -208,27 +197,32 @@ public class Chart {
           targetWord = sourceWord;
         }
 
-        Rule oov_rule = null;
+				int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll("\\[\\]",""));
+
+        BilingualRule oov_rule = null;
+				int[] sourceWords = {sourceWord};
+				int[] targetWords = {targetWord};
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
           Collection<Integer> labels =
               parseTree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
-          for (int l : labels)
-            oov_rule =
-                this.grammars[grammars.length - 1].constructLabeledOOVRule(
-                    this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
+          for (int label : labels) {
+            oov_rule = new BilingualRule(label, sourceWords, targetWords, null, "OOVPenalty=1", 0);
+                // this.grammars[grammars.length - 1].constructLabeledOOVRule(
+                //     this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
+					}
         } else {
-          oov_rule =
-              this.grammars[grammars.length - 1].constructOOVRule(this.featureFunctions.size(),
-                  sourceWord, targetWord, useMaxLMCostForOOV);
+					oov_rule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, null, "OOVPenalty=1", 0);
+          // oov_rule =
+          //     this.grammars[grammars.length - 1].constructOOVRule(this.featureFunctions.size(),
+          //         sourceWord, targetWord, useMaxLMCostForOOV);
           oov_rule.estimateRuleCost(featureFunctions);
         }
+				oovGrammar.addRule(oov_rule);
 
-        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail()
-            .getNumber())) {
+        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
           // do not add the oov axiom
-          logger.fine("Using hard rule constraint for span " + node.getNumber() + ", "
-              + arc.getTail().getNumber());
+          logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
         } else {
           addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule,
               new SourcePath().extend(arc));

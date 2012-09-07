@@ -140,19 +140,6 @@ public class PackedGrammar extends BatchGrammar {
     return num_rules;
   }
 
-  // TODO: need to decide how online-generated rules are to be treated. Can't
-  // add them to a packed grammar. Probably best to have a hash-based grammar
-  // just for OOVs and other auto-generated rules.
-  public Rule constructOOVRule(int num_feats, int source_word, int target_word,
-      boolean use_max_lm_cost) {
-    return null;
-  }
-
-  public Rule constructLabeledOOVRule(int num_feats, int source_word, int target_word, int lhs,
-      boolean use_max_lm_cost) {
-    return null;
-  }
-
   public Rule constructManualRule(int lhs, int[] src, int[] tgt, float[] scores, int arity) {
     return null;
   }
@@ -305,8 +292,7 @@ public class PackedGrammar extends BatchGrammar {
 
         BilingualRule rule =
             new BilingualRule(grammar.source[rule_position + 3 * i], src,
-                grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner, 0,
-                rule_position + 3 * i);
+							grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
         grammar.cache[block_id] = rule.estimateRuleCost(models);
       }
 
@@ -409,15 +395,6 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setRuleID(int id) {}
-
-    @Override
-    public int getRuleID() {
-      // TODO: Doesn't factor in the slice.
-      return address;
-    }
-
-    @Override
     public void setArity(int arity) {}
 
     @Override
@@ -470,14 +447,6 @@ public class PackedGrammar extends BatchGrammar {
 
     @Override
     public float getDenseFeature(int column) {
-      return 0;
-    }
-
-    @Override
-    public void setLatticeCost(float cost) {}
-
-    @Override
-    public float getLatticeCost() {
       return 0;
     }
 
@@ -605,7 +574,7 @@ public class PackedGrammar extends BatchGrammar {
 
         BilingualRule rule =
             new BilingualRule(source[rule_position + 3 * i], src, getTarget(target_address),
-                getFeatures(block_id), arity, owner, 0, rule_position + 3 * i);
+							getFeatures(block_id), arity, owner);
         cache[block_id] = rule.estimateRuleCost(models);
       }
 
@@ -670,7 +639,7 @@ public class PackedGrammar extends BatchGrammar {
       int data_block = source[address + 2];
       BilingualRule rule =
           new BilingualRule(lhs, src, getTarget(tgt_address), getFeatures(data_block), arity,
-              owner, 0, address);
+						owner);
       if (cache[data_block] != Float.NEGATIVE_INFINITY) rule.setEstCost(cache[data_block]);
       return rule;
     }

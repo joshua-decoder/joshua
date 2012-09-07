@@ -243,8 +243,7 @@ public class DecoderThread extends Thread {
     }
 
     /* Seeding: the chart only sees the grammars, not the factories */
-    Chart chart =
-        new Chart(sentence, this.featureFunctions, this.stateComputers, grammars, false,
+    Chart chart = new Chart(sentence, this.featureFunctions, this.stateComputers, grammars, false,
             JoshuaConfiguration.goal_symbol);
 
     /* Parsing */
