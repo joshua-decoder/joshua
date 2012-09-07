@@ -66,4 +66,11 @@ public class FeatureVector {
   public void put(String feature, float value) {
     features.put(feature, value);
   }
+
+	public String toString() {
+		String outputString = "";
+		for (String key: features.keySet())
+			outputString += String.format("%s%s=%.3f", (outputString.length() > 0) ? " " : "", key, features.get(key));
+		return outputString;
+	}
 }

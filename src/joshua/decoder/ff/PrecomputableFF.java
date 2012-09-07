@@ -37,6 +37,10 @@ public abstract class PrecomputableFF extends StatelessFF {
   public abstract FeatureVector computeFeatures(Rule rule);
 
 
+	/**
+	 * Precomputable feature functions do not look at the source path or the sentence ID,
+	 * so here we just chain to a simpler call.
+	 */
   public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
 		return computeCost(rule);
 	}

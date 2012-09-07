@@ -72,50 +72,28 @@ public class BilingualRule extends MonolingualRule {
   // We mark it transient because it is, though cf java.io.Serializable
   private transient String cachedToString = null;
 
-  public String toString(Map<Integer, String> ntVocab) {
+  public String toString() {
     if (null == this.cachedToString) {
       StringBuffer sb = new StringBuffer("[");
-      sb.append(ntVocab.get(this.getLHS()));
+      sb.append(Vocabulary.word(this.getLHS()));
       sb.append("] ||| ");
       sb.append(Vocabulary.getWords(this.getFrench()));
       sb.append(" ||| ");
-      sb.append(Vocabulary.getWords(this.english));
-      // sb.append(java.util.Arrays.toString(this.english));
+      sb.append(Vocabulary.getWords(this.getEnglish()));
       sb.append(" |||");
-      for (int i = 0; i < this.getDenseFeatures().length; i++) {
-        // sb.append(String.format(" %.12f", this.getFeatureScores()[i]));
-        sb.append(' ');
-        sb.append(Float.toString(this.getDenseFeatures()[i]));
-      }
+			if (this.getDenseFeatures() != null)
+				for (int i = 0; i < this.getDenseFeatures().length; i++) {
+					// sb.append(String.format(" %.12f", this.getFeatureScores()[i]));
+					sb.append(' ');
+					sb.append(Float.toString(this.getDenseFeatures()[i]));
+				}
+			sb.append(" " + sparseFeatures);
+			sb.append(String.format(" ||| %.3f", getEstCost()));
       this.cachedToString = sb.toString();
     }
     return this.cachedToString;
   }
 
-  public String toString() {
-    if (null == this.cachedToString) {
-      StringBuffer sb = new StringBuffer();
-      sb.append(this.getEstCost() + " | ");
-      sb.append(Vocabulary.word(this.getLHS()));
-      sb.append(" ||| ");
-      sb.append(Vocabulary.getWords(this.getFrench()));
-      sb.append(" |||");
-      for (int i = 0; i < english.length; i++) {
-        if (english[i] < 0)
-          sb.append(" ").append("NT" + english[i]);
-        else
-          sb.append(" ").append(Vocabulary.word(english[i]));
-      }
-      sb.append(" |||");
-			if (this.getDenseFeatures() != null) {
-				for (int i = 0; i < this.getDenseFeatures().length; i++) {
-					sb.append(String.format(" %.4f", this.getDenseFeatures()[i]));
-				}
-			}
-      this.cachedToString = sb.toString();
-    }
-    return this.cachedToString;
-  }
 
   public String toStringWithoutFeatScores() {
     StringBuffer sb = new StringBuffer();

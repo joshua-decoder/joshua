@@ -46,12 +46,6 @@ public interface Rule {
 	 */ 
 	float[] getDenseFeatures();
 
-
-  /**
-   * @param column start from zero
-   */
-  float getDenseFeature(int column);
-
   void setEstCost(float cost);
 
   float getEstCost();

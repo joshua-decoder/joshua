@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
@@ -23,6 +8,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.Prunable;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.StateComputer;
@@ -31,7 +17,6 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
  * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 
 // @todo: handle the case that the Hypergraph only maintains the one-best tree
@@ -69,14 +54,13 @@ public class HGNode implements Prunable<HGNode> {
   // Constructors
   // ===============================================================
 
-  public HGNode(int i, int j, int lhs, TreeMap<StateComputer, DPState> dpStates, HyperEdge initHyperedge,
-      double estTotalLogP) {
+  public HGNode(int i, int j, int lhs, TreeMap<StateComputer, DPState> dpStates, HyperEdge hyperEdge, double pruningEstimate) {
+    this.lhs = lhs;
     this.i = i;
     this.j = j;
-    this.lhs = lhs;
     this.dpStates = dpStates;
-    this.estTotalLogP = estTotalLogP;
-    addHyperedgeInNode(initHyperedge);
+    this.estTotalLogP = pruningEstimate;
+    addHyperedgeInNode(hyperEdge);
   }
 
 
@@ -96,27 +80,48 @@ public class HGNode implements Prunable<HGNode> {
   // Methods
   // ===============================================================
 
-  public void addHyperedgeInNode(HyperEdge dt) {
-    if (dt != null) {
-      if (null == hyperedges) {
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(String.format("%s (%d,%d)", Vocabulary.word(lhs), i, j));
+		if (dpStates != null)
+			for (DPState state: dpStates.values())
+				sb.append(" <" + state + ">");
+
+		return sb.toString();
+	}
+
+	/**
+	 * Adds the hyperedge to the list of incoming hyperedges (i.e., ways to form this node), creating
+	 * the list if necessary. We then update the cache of the best incoming hyperedge via a call to
+	 * the (obscurely named) semiringPlus().
+	 */
+  public void addHyperedgeInNode(HyperEdge hyperEdge) {
+    if (hyperEdge != null) {
+      if (null == hyperedges)
         hyperedges = new ArrayList<HyperEdge>();
-      }
-      hyperedges.add(dt);
-      semiringPlus(dt);
+
+      hyperedges.add(hyperEdge);
+      semiringPlus(hyperEdge);
     }
   }
 
-  public void semiringPlus(HyperEdge dt) {
-    if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP) {// semiring
-                                                                                            // +
-                                                                                            // operation
-      bestHyperedge = dt; // no change when tied
-    }
-  }
 
+	/**
+	 * Convenience function to add a list of hyperedges one at a time.
+	 */
   public void addHyperedgesInNode(List<HyperEdge> hyperedges) {
     for (HyperEdge hyperEdge : hyperedges)
       addHyperedgeInNode(hyperEdge);
+  }
+
+
+	/**
+	 * Updates the cache of the best incoming hyperedge.
+	 */
+  public void semiringPlus(HyperEdge hyperEdge) {
+    if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < hyperEdge.bestDerivationLogP)
+      bestHyperedge = hyperEdge;
   }
 
 
@@ -172,10 +177,6 @@ public class HGNode implements Prunable<HGNode> {
     }
 
     return this.signature;
-  }
-
-  public void releaseDPStatesMemory() {
-    dpStates = null;
   }
 
   public double getEstTotalLogP() {

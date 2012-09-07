@@ -160,24 +160,32 @@ class Cell {
 
 
   /**
-   * create a hyperege, and add it into the chart if not got prunned
-   * */
+	 * Creates a new hyperedge and adds it to the chart, subject to pruning.  The logic of this
+	 * function is as follows: if the pruner permits the edge to be added, we build the new edge,
+	 * which ends in an HGNode.  If this is the first time we've built an HGNode for this point in the
+	 * graph, it gets added automatically.  Otherwise, we add the hyperedge to the existing HGNode,
+	 * possibly updating the HGNode's cache of the best incoming hyperedge.
+	 *
+	 * @return the new hypernode, or null if the cell was pruned.
+   */
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
+
     HGNode res = null;
 
     TreeMap<StateComputer, DPState> dpStates = result.getDPStates();
-    double expectedTotalLogP = result.getPruningEstimate();
+    double pruningEstimate = result.getPruningEstimate();
     double transitionLogP = result.getTransitionCost();
     double finalizedTotalLogP = result.getViterbiCost();
 
     if (noPrune == false && beamPruner != null
-        && beamPruner.relativeThresholdPrune(expectedTotalLogP)) {// the hyperedge should be pruned
+        && beamPruner.relativeThresholdPrune(pruningEstimate)) {// the hyperedge should be pruned
       this.chart.nPreprunedEdges++;
       res = null;
     } else {
-      HyperEdge dt = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
-      res = new HGNode(i, j, rule.getLHS(), dpStates, dt, expectedTotalLogP);
+      HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
+			System.err.println(String.format("CELL(%d,%d): new hyperedge: ",i,j) + hyperEdge);
+      res = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
 
       /**
        * each node has a list of hyperedges, need to check whether the node is already exist, if

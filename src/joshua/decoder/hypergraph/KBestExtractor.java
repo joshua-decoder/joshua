@@ -328,12 +328,11 @@ public class KBestExtractor {
 
     // ####individual model cost, and final transition cost
     if (null != features) {
-      strHyp.append(" |||");
+      strHyp.append(" ||| " + features);
       double temSum = 0.0;
 
 			for (String feature: features.keySet()) {
-				strHyp.append(String.format(" %s=%.3f", feature, -features.get(feature)));
-					temSum += features.get(feature) * weights.get(feature);
+				temSum += features.get(feature) * weights.get(feature);
 
       // for (int k = 0; k < modelCost.length; k++) {
       //   strHyp.append(String.format(" %.3f", -modelCost[k]));

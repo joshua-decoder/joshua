@@ -69,6 +69,9 @@ public class HyperEdge {
     return srcPath;
   }
 
+	public List<HGNode> getTailNodes() {
+		return antNodes;
+	}
   public List<HGNode> getAntNodes() {
     return antNodes;
   }
@@ -89,6 +92,14 @@ public class HyperEdge {
     this.transitionLogP = transitionLogP;
   }
 
-
-
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("HYPEREDGE[rule=" + this.rule);
+		if (getTailNodes() != null)
+			for (HGNode tailNode: getTailNodes()) {
+				sb.append(" tail=" + tailNode);
+			}
+		sb.append("]");
+		return sb.toString();
+	}
 }

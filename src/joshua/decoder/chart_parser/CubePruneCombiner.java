@@ -36,7 +36,9 @@ public class CubePruneCombiner implements Combiner {
   }
 
 
-
+	/**
+	 *
+	 */
   public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
     cell.addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath,
         stateComputers, chart.segmentID), rule, i, j, null, srcPath, false);
