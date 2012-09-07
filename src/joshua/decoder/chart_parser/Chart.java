@@ -231,6 +231,9 @@ public class Chart {
       }
     }
 
+		// Grammars must be sorted.
+		oovGrammar.sortGrammar(this.featureFunctions);
+
     for (FeatureFunction ff : this.featureFunctions)
       if (ff instanceof SourceDependentFF) ((SourceDependentFF) ff).setSource(sentence);
 
