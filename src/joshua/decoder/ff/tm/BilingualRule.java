@@ -107,9 +107,11 @@ public class BilingualRule extends MonolingualRule {
           sb.append(" ").append(Vocabulary.word(english[i]));
       }
       sb.append(" |||");
-      for (int i = 0; i < this.getDenseFeatures().length; i++) {
-        sb.append(String.format(" %.4f", this.getDenseFeatures()[i]));
-      }
+			if (this.getDenseFeatures() != null) {
+				for (int i = 0; i < this.getDenseFeatures().length; i++) {
+					sb.append(String.format(" %.4f", this.getDenseFeatures()[i]));
+				}
+			}
       this.cachedToString = sb.toString();
     }
     return this.cachedToString;
