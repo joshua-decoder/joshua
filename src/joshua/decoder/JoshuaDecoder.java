@@ -285,7 +285,7 @@ public class JoshuaDecoder {
 
       this.decoderFactory =
           new DecoderFactory(this.grammarFactories, JoshuaConfiguration.use_max_lm_cost_for_oov,
-              this.featureFunctions, this.stateComputers);
+						this.featureFunctions, this.weights, this.stateComputers);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -538,9 +538,20 @@ public class JoshuaDecoder {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
         double weight = Double.parseDouble(fields[3].trim());
+
+				// Find the language model with the largest state.
+				int maxOrder = 0;
+				NgramStateComputer ngramStateComputer = null;
+				for (StateComputer stateComputer: this.stateComputers) {
+					if (stateComputer instanceof NgramStateComputer)
+						if (((NgramStateComputer)stateComputer).getOrder() > maxOrder) {
+							maxOrder = ((NgramStateComputer)stateComputer).getOrder();
+							ngramStateComputer = (NgramStateComputer)stateComputer;
+						}
+				}
+
         try {
-          this.featureFunctions.add(new EdgePhraseSimilarityFF(JoshuaConfiguration.ngramStateID,
-              weight, this.featureFunctions.size(), host, port));
+          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host, port));
         } catch (Exception e) {
           e.printStackTrace();
           System.exit(1);
