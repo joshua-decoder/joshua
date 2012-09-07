@@ -67,9 +67,12 @@ public class PhraseModelFF extends PrecomputableFF {
 	public FeatureVector computeFeatures(final Rule rule) {
 		FeatureVector featureDelta = new FeatureVector();
 
-		float[] featureScores = rule.getDenseFeatures();
-		for (int i = 0; i < featureScores.length; i++)
-			featureDelta.put(String.format("PhraseModel_%s_%d", owner, i), featureScores[i]);
+		if (rule != null) {
+			float[] featureScores = rule.getDenseFeatures();
+			if (featureScores != null)
+				for (int i = 0; i < featureScores.length; i++)
+					featureDelta.put(String.format("PhraseModel_%s_%d", owner, i), featureScores[i]);
+		}
 
 		return featureDelta;
 	}
