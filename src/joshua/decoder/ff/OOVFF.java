@@ -14,7 +14,7 @@ import joshua.decoder.chart_parser.SourcePath;
 public class OOVFF extends PrecomputableFF {
 
   public OOVFF(FeatureVector weights) {
-    super(weights, "OOVpenalty");
+    super(weights, "OOVPenalty");
   }
 
   /**
@@ -22,14 +22,10 @@ public class OOVFF extends PrecomputableFF {
    * encourage longer sentence, we should have a negative weight on the feature
    */
   public float computeCost(final Rule rule) {
-    if (rule.getRuleID() == AbstractGrammar.OOV_RULE_ID)
-      return 1.0f;
-    else
-      return 0.0f;
+		return 1.0f;
   }
 
 	public FeatureVector computeFeatures(final Rule rule) {
-		float value = (rule.getRuleID() == AbstractGrammar.OOV_RULE_ID) ? 1.0f : 0.0f;
-		return new FeatureVector(name, value);
+		return new FeatureVector(name, 1.0f);
 	}
 }
