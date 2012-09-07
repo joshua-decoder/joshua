@@ -25,6 +25,7 @@ import java.util.logging.Level;
 
 import joshua.decoder.chart_parser.Prunable;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 
 /**
  * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing.
@@ -50,7 +51,7 @@ public class HGNode implements Prunable<HGNode> {
 
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
-  TreeMap<Integer, DPState> dpStates;
+  TreeMap<StateComputer, DPState> dpStates;
 
 
   // ============== auxiluary variables, no need to store on disk
@@ -68,7 +69,7 @@ public class HGNode implements Prunable<HGNode> {
   // Constructors
   // ===============================================================
 
-  public HGNode(int i, int j, int lhs, TreeMap<Integer, DPState> dpStates, HyperEdge initHyperedge,
+  public HGNode(int i, int j, int lhs, TreeMap<StateComputer, DPState> dpStates, HyperEdge initHyperedge,
       double estTotalLogP) {
     this.i = i;
     this.j = j;
@@ -81,7 +82,7 @@ public class HGNode implements Prunable<HGNode> {
 
   // used by disk hg
   public HGNode(int i, int j, int lhs, List<HyperEdge> hyperedges, HyperEdge bestHyperedge,
-      TreeMap<Integer, DPState> states) {
+      TreeMap<StateComputer, DPState> states) {
     this.i = i;
     this.j = j;
     this.lhs = lhs;
@@ -119,16 +120,16 @@ public class HGNode implements Prunable<HGNode> {
   }
 
 
-  public TreeMap<Integer, DPState> getDPStates() {
+  public TreeMap<StateComputer, DPState> getDPStates() {
     return dpStates;
   }
 
 
-  public DPState getDPState(int stateID) {
+  public DPState getDPState(StateComputer state) {
     if (null == this.dpStates) {
       return null;
     } else {
-      return this.dpStates.get(stateID);
+      return this.dpStates.get(state);
     }
   }
 
@@ -140,20 +141,31 @@ public class HGNode implements Prunable<HGNode> {
   }
 
 
-  // signature of this item: lhs, states (we do not need i, j)
+	/**
+	 * Produce the signature of the item.  The span (i,j) is implicit and does not need to be part of
+	 * the signature.
+	 *
+	 * TODO: we shouldn't be using string signatures.
+	 */
   public String getSignature() {
     if (null == this.signature) {
       StringBuffer s = new StringBuffer();
       s.append(lhs);
       s.append(" ");
 
+			/* Iterate over all the node's states, creating the signature. */
       if (null != this.dpStates && this.dpStates.size() > 0) {
-        Iterator<Map.Entry<Integer, DPState>> it = this.dpStates.entrySet().iterator();
-        while (it.hasNext()) {
-          Map.Entry<Integer, DPState> entry = it.next();
-          s.append(entry.getValue().getSignature(false));
-          if (it.hasNext()) s.append(STATE_SIG_SEP);
-        }
+				for (StateComputer state: this.dpStates.keySet()) {
+					s.append(this.dpStates.get(state).getSignature(false));
+					s.append(STATE_SIG_SEP);
+				}
+
+        // Iterator<Map.Entry<Integer, DPState>> it = this.dpStates.entrySet().iterator();
+        // while (it.hasNext()) {
+        //   Map.Entry<Integer, DPState> entry = it.next();
+        //   s.append(entry.getValue().getSignature(false));
+        //   if (it.hasNext()) s.append(STATE_SIG_SEP);
+        // }
       }
 
       this.signature = s.toString();
