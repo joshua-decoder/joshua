@@ -24,7 +24,7 @@ public abstract class StatefulFF extends FeatureFunction {
 
   /* Stateful features have a state computer, which is recorded with the feature function.
    */
-  private StateComputer stateComputer = null;
+  protected StateComputer stateComputer = null;
 
   public StatefulFF(FeatureVector weights, String name, StateComputer stateComputer) {
     super(weights, name, "");
