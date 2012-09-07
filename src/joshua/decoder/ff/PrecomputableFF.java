@@ -38,7 +38,7 @@ public abstract class PrecomputableFF extends StatelessFF {
 
 
   public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
-		return computeCost(rule, null, -1);
+		return computeCost(rule);
 	}
 
   /**
