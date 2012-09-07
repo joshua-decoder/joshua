@@ -34,7 +34,10 @@ public final class WordPenaltyFF extends PrecomputableFF {
    * I'm not sure why it doesn't just incur a penalty of one.
    */
   public FeatureVector computeFeatures(Rule rule) {
-    return new FeatureVector(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
+		if (rule != null)
+			return new FeatureVector(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
+
+		return new FeatureVector();
   }
 
   /**
