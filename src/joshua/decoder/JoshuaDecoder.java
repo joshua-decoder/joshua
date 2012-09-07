@@ -428,7 +428,7 @@ public class JoshuaDecoder {
       int order = lm.getOrder();
       this.featureFunctions.add(new LanguageModelFF(weights, lm, ngramStateComputers.get(lm.getOrder())));
 
-			logger.info(String.format("FEATURE: language model #%d, order %d (weight %.3f)",
+			logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", 
 					(i + 1), languageModels.get(i).getOrder(), weights.get(String.format("lm_%d",i))));
     }
   }
@@ -476,7 +476,7 @@ public class JoshuaDecoder {
 				this.grammarFactories.add(grammar);
 				this.featureFunctions.add(new PhraseModelFF(weights, grammar, owner));
 
-        logger.info(String.format("FEATURE: phrase model with owner %s", owner));
+        logger.info("FEATURE: PhraseModel_" + owner);
       }
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
@@ -580,7 +580,7 @@ public class JoshuaDecoder {
 
       if (feature.equals("latticecost") || feature.equals("sourcepath")) {
         this.featureFunctions.add(new SourcePathFF(JoshuaDecoder.weights));
-        logger.info(String.format("FEATURE: lattice cost (weight %.3f)", weights.get("sourcepath")));
+        logger.info(String.format("FEATURE: SourcePath (weight %.3f)", weights.get("SourcePath")));
       }
 
       else if (feature.equals("arityphrasepenalty") || feature.equals("aritypenalty")) {
@@ -592,21 +592,19 @@ public class JoshuaDecoder {
         weights.put("aritypenalty", weight);
         this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d", owner, startArity, endArity)));
 
-        logger.info(String.format(
-            "FEATURE: arity phrase penalty: owner %s, start %d, end %d (weight %.3f)", owner,
-            startArity, endArity, weight));
+        logger.info(String.format("FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity, endArity, weight));
       }
 
       else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
 
-        logger.info(String.format("FEATURE: word penalty (weight %.3f)", weights.get("wordpenalty")));
+        logger.info(String.format("FEATURE: WordPenalty (weight %.3f)", weights.get("WordPenalty")));
       }
 
       else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights));
 
-        logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weights.get("oovpenalty")));
+        logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weights.get("OOVPenalty")));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
