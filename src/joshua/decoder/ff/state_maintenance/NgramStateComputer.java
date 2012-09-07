@@ -11,7 +11,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 
-public class NgramStateComputer implements StateComputer<NgramDPState> {
+public class NgramStateComputer implements StateComputer<NgramDPState>, Comparable {
 
   private int ngramOrder;
 
@@ -25,6 +25,14 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 
 	public int getOrder() {
 		return ngramOrder;
+	}
+
+	@Override
+	public int compareTo(Object otherState) {
+		if (this == otherState)
+			return 0;
+		else
+			return -1;
 	}
 
   public NgramDPState computeFinalState(HGNode tailNode, int i, int j,
