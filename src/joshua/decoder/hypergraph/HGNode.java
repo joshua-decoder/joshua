@@ -155,8 +155,8 @@ public class HGNode implements Prunable<HGNode> {
 
 			/* Iterate over all the node's states, creating the signature. */
       if (null != this.dpStates && this.dpStates.size() > 0) {
-				for (StateComputer state: this.dpStates.keySet()) {
-					s.append(this.dpStates.get(state).getSignature(false));
+				for (StateComputer stateComputer: this.dpStates.keySet()) {
+					s.append(this.dpStates.get(stateComputer).getSignature(false));
 					s.append(STATE_SIG_SEP);
 				}
 
