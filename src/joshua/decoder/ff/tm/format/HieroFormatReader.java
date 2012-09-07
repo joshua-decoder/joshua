@@ -78,18 +78,18 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		}
 
     float[] dense_scores = new float[denseFeatureCount];
-		String features = "";
+		String sparse_features = "";
 		denseFeatureCount = 0;
 		for (int i = 0; i < tokens.length; i++) {
 			if (tokens[i].indexOf('=') == -1) {
 				dense_scores[denseFeatureCount] = Float.parseFloat(tokens[i]);
 				denseFeatureCount++;
 			} else {
-				features += ((features.length() > 0) ? " " : "") + tokens[i];
+				sparse_features += ((sparse_features.length() > 0) ? " " : "") + tokens[i];
 			}
 		}
 
-		return new BilingualRule(lhs, french, english, dense_scores, features, arity);
+		return new BilingualRule(lhs, french, english, dense_scores, sparse_features, arity);
   }
 
 

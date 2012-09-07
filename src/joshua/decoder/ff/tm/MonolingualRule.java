@@ -107,6 +107,22 @@ public class MonolingualRule implements Rule {
     this.owner = DUMMY_OWNER;
   }
 
+	/**
+	 * Sparse feature version.
+	 */
+  public MonolingualRule(int lhs_, int[] source_rhs, float[] dense_scores, String sparse_features, int arity_) {
+    this.lhs = lhs_;
+    this.pFrench = source_rhs;
+    this.denseFeatures = dense_scores;
+		this.sparseFeatures = sparse_features;
+    this.arity = arity_;
+
+    // ==== dummy values
+    this.latticeCost = 0;
+    this.ruleID = DUMMY_RULE_ID;
+    this.owner = DUMMY_OWNER;
+  }
+
 
   // ===============================================================
   // Attributes

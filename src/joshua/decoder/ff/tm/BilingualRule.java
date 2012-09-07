@@ -47,8 +47,7 @@ public class BilingualRule extends MonolingualRule {
 
 	// Sparse feature version
   public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] denseFeatures, String sparseFeatures, int arity) {
-    super(lhs, sourceRhs, denseFeatures, arity);
-		this.sparseFeatures = sparseFeatures;
+    super(lhs, sourceRhs, denseFeatures, sparseFeatures, arity);
     this.english = targetRhs;
   }
 

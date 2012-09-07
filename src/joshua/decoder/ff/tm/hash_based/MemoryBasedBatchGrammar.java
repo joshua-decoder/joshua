@@ -38,7 +38,6 @@ import joshua.decoder.ff.tm.format.SamtFormatReader;
  * in HashMap
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class MemoryBasedBatchGrammar extends BatchGrammar {
 
