@@ -75,14 +75,16 @@ public class PhraseModelFF extends PrecomputableFF {
 	}
 
 
+	/**
+	 * Computes the cost of applying the feature.
+	 */
   public float computeCost(final Rule rule) {
 		float cost = 0.0f;
 
-    if (this.ownerID == rule.getOwner()) {
-
-      float[] featureScores = rule.getDenseFeatures();
+    if (this.ownerID == rule.getOwner() && rule.getDenseFeatures() != null) {
+			float[] featureScores = rule.getDenseFeatures();
 			for (int i = 0; i < featureWeights.length; i++)
-				cost += featureWeights[i] + featureScores[i];
+				cost += featureWeights[i] * featureScores[i];
     }
 
 		return cost;
