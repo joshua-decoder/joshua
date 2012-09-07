@@ -1,23 +1,9 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -258,6 +244,93 @@ public class JoshuaDecoder {
       // Load the weights.
       JoshuaDecoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
 
+			this.featureFunctions = new ArrayList<FeatureFunction>();
+
+			/* Backwards compatibility.  Before initializing the grammars, the language models, or the
+			 * other feature functions, we need to take a pass through features and their weights
+			 * initialized in the old style, which was accomplished for many of the features simply by
+			 * setting a weight.  The new style puts all the weights in the weights file above, and has a
+			 * separate line that initializes the feature function.  Here, we look for the old-style, and
+			 * (1) add the weight for it and (2) trigger the feature with a new-style line.
+			 */
+			for (int i = 0; i < JoshuaConfiguration.features.size(); i++ ) {
+				String featureLine = JoshuaConfiguration.features.get(i);
+
+				// Check if this is an old-style feature.
+				if (! featureLine.startsWith("feature_function")) {
+					String fields[] = featureLine.split("\\s+");
+					String type = fields[0].toLowerCase();
+
+					if (type.equals("phrasemodel")) {
+						String name = "PhraseModel_" + fields[1] + "_" + fields[2];
+						float weight = Float.parseFloat(fields[3]);
+
+						weights.put(name, weight);
+
+						// No feature_function lines are created for LMs
+						JoshuaConfiguration.features.remove(i);
+						i--;
+					} 
+					else if (type.equals("lm")) {
+						String name = "";
+						float weight = 0.0f;
+						if (fields.length == 3) {
+							name = "lm_" + fields[1];
+							weight = Float.parseFloat(fields[2]);
+						} else {
+							name = "lm_0";
+							weight = Float.parseFloat(fields[1]);
+						}
+
+						weights.put(name, weight);
+
+						// No feature_function lines are created for LMs
+						JoshuaConfiguration.features.remove(i);
+						i--;
+					}
+					else if (type.equals("latticecost")) {
+						String name = "SourcePath";
+						float weight = Float.parseFloat(fields[1]);
+
+						weights.put(name, weight);
+						JoshuaConfiguration.features.set(i, "feature_function = " + name);
+					}
+					else if (type.equals("arityphrasepenalty")) {
+						String name = "ArityPenalty";
+						String owner = fields[1];
+						int min = Integer.parseInt(fields[2]);
+						int max = Integer.parseInt(fields[3]);
+						float weight = Float.parseFloat(fields[4]);
+
+						weights.put(name, weight);
+						JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d %d", name, owner, min, max));
+					}
+					else if (type.equals("wordpenalty")) {
+						String name = "WordPenalty";
+						float weight = Float.parseFloat(fields[1]);
+
+						weights.put(name, weight);
+						JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
+					}
+					else if (type.equals("oovpenalty")) {
+						String name = "OOVPenalty";
+						float weight = Float.parseFloat(fields[1]);
+
+						weights.put(name, weight);
+						JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
+					}
+					else if (type.equals("edge-sim")) {
+						String name = "EdgePhraseSimilarity";
+						String host = fields[1];
+						int port = Integer.parseInt(fields[2]);
+						float weight = Float.parseFloat(fields[3]);
+
+						weights.put(name, weight);
+						JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d", name, host, port));
+					}
+				}
+			}
+
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
       logger.info(String.format("Grammar loading took: %d seconds.",
@@ -476,8 +549,10 @@ public class JoshuaDecoder {
 
         weights.put(feature.toLowerCase(), value);
       }
+    } catch (FileNotFoundException ioe) {
+      System.err.println("* WARNING: Can't find weights-file '" + fileName + "'");
     } catch (IOException ioe) {
-      System.err.println("Can't open file '" + fileName + "'");
+      System.err.println("* FATAL: Can't read file weights-file '" + fileName + "'");
       ioe.printStackTrace();
       System.exit(1);
     }
@@ -494,7 +569,6 @@ public class JoshuaDecoder {
    *
    */
   private void initializeFeatureFunctions() {
-    this.featureFunctions = new ArrayList<FeatureFunction>();
 
     for (String featureLine : JoshuaConfiguration.features) {
 

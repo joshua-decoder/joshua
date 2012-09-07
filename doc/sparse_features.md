@@ -119,7 +119,7 @@ X = done
 - [X] Read in the weight vector from a supplied file (a new Joshua parameter, weights-file)
 - [X] Change JoshuaDecoder.java to activate features only when feature_function= lines are present
   in the configuration
-- [ ] Write script to take an old config file and change it to the new format.
+- [X] Write script to take an old config file and change it to the new format.
 - [ ] The grammar reading code needs to know about sparse features
   - [X] MemoryBasedBatchGrammar
   - [ ] PackedGrammar
