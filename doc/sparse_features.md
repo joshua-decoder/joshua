@@ -121,7 +121,7 @@ X = done
   in the configuration
 - [ ] Write script to take an old config file and change it to the new format.
 - [ ] The grammar reading code needs to know about sparse features
-  - [ ] MemoryBasedBatchGrammar
+  - [X] MemoryBasedBatchGrammar
   - [ ] PackedGrammar
 - [X] Rewrite the feature function interface.
   - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
@@ -133,7 +133,7 @@ X = done
   - [X] WordPenalty
   - [X] PhraseModel
   - [X] LanguageModel
-  - [ ] EdgePhraseSimilarity
+  - [X] EdgePhraseSimilarity
 - [ ] features need to know to make sure that rule is not null (signifies final transition).
   Alternately separate the interface for transitions and final transitions.
 - [X] make sure AbstractGrammar.sortGrammar(List<FeatureFunction>) works.  
