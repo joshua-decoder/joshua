@@ -147,6 +147,10 @@ X = done
 
 - [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
   count OOVs, instead of clunky approach applied now
+  - [ ] get rid of `JoshuaConfiguration.num_phrasal_features`
+  - [ ] get rid of `JoshuaConfiguration.oov_feature_index`
+  - [ ] get rid of `JoshuaConfiguration.oov_feature_cost`
+  - [ ] get rid of `JoshuaConfiguration.use_max_lm_cost_for_oov`
 - [X] ComputeNodeResult needs to know how to compute features
   - [X] Producing a score
   - [X] Producing a list of features
