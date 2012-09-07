@@ -1734,7 +1734,10 @@ public class PROCore {
       // myDecoder.initialize(decoderConfigFileName);
       double[] zeroBased_lambda = new double[numParams];
       System.arraycopy(lambda, 1, zeroBased_lambda, 0, numParams);
-      myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
+			/* This is never used and doesn't work with sparse features, so we're commenting it out for
+			 * the moment [MJP, 2012-09-07]
+			 */
+			// myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
       myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
 
       retSA[0] = decoderOutFileName;
