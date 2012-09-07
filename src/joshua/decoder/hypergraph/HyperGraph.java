@@ -21,6 +21,7 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 
 /**
  * this class implement (1) HyperGraph-related data structures (Item and Hyper-edges)
@@ -74,7 +75,7 @@ public class HyperGraph {
     int goalI = hg1.goalNode.i;
     int goalJ = hg1.goalNode.j;
     int goalLHS = hg1.goalNode.lhs;
-    TreeMap<Integer, DPState> goalDPStates = null;
+    TreeMap<StateComputer, DPState> goalDPStates = null;
     double goalEstTotalLogP = -1;
     HGNode newGoalNode = new HGNode(goalI, goalJ, goalLHS, goalDPStates, null, goalEstTotalLogP);;
 
