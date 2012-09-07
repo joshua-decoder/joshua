@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.io.BufferedWriter;
@@ -25,6 +10,7 @@ import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -61,6 +47,8 @@ public class DecoderThread extends Thread {
   private final List<FeatureFunction> featureFunctions;
   private final List<StateComputer> stateComputers;
 
+	private FeatureVector weights;
+
   // more test set specific
   private final InputHandler inputHandler;
   // final String nbestFile; // package-private for DecoderFactory
@@ -72,10 +60,11 @@ public class DecoderThread extends Thread {
   // ===============================================================
   // Constructor
   // ===============================================================
-  public DecoderThread(List<GrammarFactory> grammarFactories,
-      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
-      InputHandler inputHandler) throws IOException {
+  public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
+		List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
+		InputHandler inputHandler) throws IOException {
 
+		this.weights = weights;
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
     this.inputHandler = inputHandler;
@@ -90,9 +79,9 @@ public class DecoderThread extends Thread {
     }
 
     this.kbestExtractor =
-        new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
-            JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-            JoshuaConfiguration.add_combined_cost, false, false);
+			new KBestExtractor(weights, JoshuaConfiguration.use_unique_nbest,
+				JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
+				JoshuaConfiguration.add_combined_cost, false, false);
   }
 
 

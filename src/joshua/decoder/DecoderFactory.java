@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -31,11 +32,11 @@ import joshua.decoder.segment_file.Sentence;
  * and merge the decoding results (2) non-parallel decoding is a special case of parallel decoding
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class DecoderFactory {
   private List<GrammarFactory> grammarFactories = null;
   private List<FeatureFunction> featureFunctions = null;
+	private FeatureVector weights = null;
   private List<StateComputer> stateComputers;
   private boolean useMaxLMCostForOOV = false;
 
@@ -45,10 +46,11 @@ public class DecoderFactory {
 
 
   public DecoderFactory(List<GrammarFactory> grammarFactories, boolean useMaxLMCostForOOV,
-      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers) {
+		List<FeatureFunction> featureFunctions, FeatureVector weights, List<StateComputer> stateComputers) {
     this.grammarFactories = grammarFactories;
     this.useMaxLMCostForOOV = useMaxLMCostForOOV;
     this.featureFunctions = featureFunctions;
+		this.weights = weights;
     this.stateComputers = stateComputers;
   }
 
@@ -75,13 +77,9 @@ public class DecoderFactory {
       try {
         Thread thread;
         if (JoshuaConfiguration.parse) {
-          thread =
-              new ParserThread(this.grammarFactories, this.featureFunctions, this.stateComputers,
-                  inputHandler);
+          thread = new ParserThread(this.grammarFactories, this.weights, this.featureFunctions, this.stateComputers, inputHandler);
         } else {
-          thread =
-              new DecoderThread(this.grammarFactories, this.featureFunctions, this.stateComputers,
-                  inputHandler);
+          thread = new DecoderThread(this.grammarFactories, this.weights, this.featureFunctions, this.stateComputers, inputHandler);
         }
 
         this.decoderThreads[threadno] = thread;
@@ -118,7 +116,7 @@ public class DecoderFactory {
   public HyperGraph getHyperGraphForSentence(String sentence) {
     try {
       DecoderThread decoder =
-          new DecoderThread(this.grammarFactories, this.featureFunctions, this.stateComputers, null);
+				new DecoderThread(this.grammarFactories, this.weights, this.featureFunctions, this.stateComputers, null);
       return decoder.translate(new Sentence(sentence, 0), null);
     } catch (IOException e) {
       e.printStackTrace();
