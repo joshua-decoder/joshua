@@ -973,11 +973,32 @@ my $lmlines   = join($/, @configstrings);
 my $lmweights = join($/, @weightstrings);
 my $lmparams  = join($/, @lmparamstrings);
 
-my $num_tm_features = count_num_features($TUNE_GRAMMAR);
 my (@tmparamstrings, @tmweightstrings);
-for my $i (0..($num_tm_features-1)) {
-  push (@tmparamstrings, "tm_pt_$i |||  1.0 Opt -Inf +Inf -1 +1");
-	push (@tmweightstrings, "tm_pt_$i 1.0");
+if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
+	# If the user supplied a joshua config file, read the parameters that need to
+	# be tuned from the file itself. This will automatically add all the grammar
+	# features, including the glue grammar features, as long as they are already
+	# listed in the file.
+	open CONFIG, $TUNEFILES{'joshua.config'} or die;
+	while (my $line = <CONFIG>) {
+		if ($line =~ /^phrasemodel/) {
+			my (undef,$owner,$i,@rest) = split(' ', $line);
+			push (@tmparamstrings, "phrasemodel $owner $i ||| 1.0 Opt -Inf +Inf -1 +1");
+		}
+	}
+	close CONFIG;
+
+} else {
+	# Otherwise, just count them from the grammars themselves
+
+	my $num_tm_features = count_num_features($TUNE_GRAMMAR);
+	for my $i (0..($num_tm_features-1)) {
+		push (@tmparamstrings, "phrasemodel pt $i ||| 1.0 Opt -Inf +Inf -1 +1");
+		push (@tmweightstrings, "phrasemodel pt $i 1.0");
+	}
+
+	# Add the weight for the glue grammar.
+	push (@tmparamstrings, "phrasemodel glue 0 ||| 1.0 Opt -Inf +Inf -1 +1");
 }
 
 my $tmparams = join($/, @tmparamstrings);
