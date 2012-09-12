@@ -211,11 +211,14 @@ class DotChart {
 
           } else {
             // match the terminal
-            Trie child_tnode = dotNode.trieNode.match(last_word);
-            if (null != child_tnode) {
-              // we do not have an ant for the terminal
-              addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
+            ArrayList<Trie> child_tnodes = dotNode.trieNode.matchAll(last_word);
+            if (child_tnodes == null || child_tnodes.isEmpty()) continue;
+            for (Trie child_tnode : child_tnodes) {
+              if (null != child_tnode) {
+                // we do not have an ant for the terminal
+                addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
                   dotNode.srcPath.extend(arc));
+              }
             }
           }
         }
@@ -263,13 +266,14 @@ class DotChart {
     for (DotNode dotNode : dotcells[i][k].dotNodes) {
       // see if it matches what the dotitem is looking for
       for (SuperNode superNode : t_ArrayList) {
-        Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
-        if (null != child_tnode) {
-          if (true == startDotItems && !child_tnode.hasExtensions()) {
+        ArrayList<Trie> child_tnodes = dotNode.trieNode.matchAll(superNode.lhs);
+        if (child_tnodes.isEmpty()) continue;
+        for (Trie child_tnode : child_tnodes) {
+          if (null == child_tnode) continue;
+          if (true == startDotItems && !child_tnode.hasExtensions())
             continue; // TODO
-          }
-          addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-              .getSourcePath().extendNonTerminal());
+          addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode,
+              dotNode.getSourcePath().extendNonTerminal());
         }
       }
     }
@@ -309,6 +313,7 @@ class DotChart {
       RuleCollection rules = tnode.getRuleCollection();
       if (rules != null) {
         for (Rule r : rules.getRules()) {
+          // System.out.println("rule: "+r.toString());
           logger.finest(r.toString());
         }
       }
