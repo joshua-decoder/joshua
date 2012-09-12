@@ -347,6 +347,13 @@ public class PackedGrammar extends BatchGrammar {
     }
   }
 
+  public ArrayList<Trie> matchAll(int sym_id) {
+    ArrayList<Trie> matches = new ArrayList<Trie>();
+    Trie match = match(sym_id);
+    if (match != null) matches.add(match);
+    return matches;
+  }
+
   public final class PackedRoot implements Trie {
 
     private HashMap<Integer, PackedSlice> lookup;
@@ -361,14 +368,22 @@ public class PackedGrammar extends BatchGrammar {
       }
     }
 
-    @Override
     public Trie match(int word_id) {
       PackedSlice ps = lookup.get(word_id);
       if (ps != null) {
         PackedTrie trie = new PackedTrie(ps, 0);
+        System.out.println("ONE");
         return trie.match(word_id);
       }
       return null;
+    }
+
+    @Override
+    public ArrayList<Trie> matchAll(int sym_id) {
+      ArrayList<Trie> matches = new ArrayList<Trie>();
+      Trie match = match(sym_id);
+      if (match != null) matches.add(match);
+      return matches;
     }
 
     @Override
@@ -379,8 +394,10 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public Collection<? extends Trie> getExtensions() {
       ArrayList<Trie> tries = new ArrayList<Trie>();
-      for (int key : lookup.keySet())
+      for (int key : lookup.keySet()) {
+        System.out.println("TWO");
         tries.add(match(key));
+      }
       return tries;
     }
 
