@@ -359,6 +359,7 @@ public class PackedGrammar extends BatchGrammar {
       }
     }
 
+    @Override
     public Trie match(int word_id) {
       PackedSlice ps = lookup.get(word_id);
       if (ps != null) {
