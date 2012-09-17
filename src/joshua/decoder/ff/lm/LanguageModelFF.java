@@ -133,7 +133,19 @@ public class LanguageModelFF extends StatefulFF {
     return transitionFeatures;
   }
 
-
+  /**
+   * Returns the feature accumulated over the final, top-level, rule-less transition.
+   * @param tailNode
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @return
+   */
+  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
+    return new FeatureVector(name, computeFinalTransitionLogP((NgramDPState) tailNode.getDPState(this.getStateComputer())));
+  }
+  
   // public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
   //     int sentID) {
   public float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
@@ -209,7 +221,6 @@ public class LanguageModelFF extends StatefulFF {
             // compute the current word probablity, and remove it
             float prob = (float)this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
             transitionLogP += prob;
-            System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram), prob));
             currentNgram.remove(0);
           }
 
@@ -341,7 +352,8 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     // ================ left context
-    if (addStartAndEndSymbol) currentNgram.add(START_SYM_ID);
+    if (addStartAndEndSymbol) 
+      currentNgram.add(START_SYM_ID);
 
     for (int i = 0; i < leftContext.size(); i++) {
       int t = leftContext.get(i);

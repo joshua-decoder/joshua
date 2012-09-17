@@ -39,8 +39,8 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   private final int MAX_PHRASE_LENGTH = 4;
   private final int GAP = 0;
 
-	// This feature template defines only a single feature, so we cache the weight.
-	private float weight;
+  // This feature template defines only a single feature, so we cache the weight.
+  private float weight;
 
   public EdgePhraseSimilarityFF(FeatureVector weights, StateComputer state, String host, int port)
       throws NumberFormatException, UnknownHostException, IOException {
@@ -49,7 +49,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     this.host = host;
     this.port = port;
 
-		this.weight = weights.get(name);
+    this.weight = weights.get(name);
 
     initializeConnection();
   }
@@ -62,16 +62,16 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     serverReply = new BufferedReader(new InputStreamReader(socket.getInputStream()));
   }
 
-	public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
-		SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
+    SourcePath sourcePath, int sentID) {
 
-		float value = computeCost(rule, tailNodes, spanStart, spanEnd, sourcePath, sentID);
-		return new FeatureVector(name, value);
-	}
+    float value = computeCost(rule, tailNodes, spanStart, spanEnd, sourcePath, sentID);
+    return new FeatureVector(name, value);
+  }
 
 
   public float computeCost(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
-		SourcePath sourcePath, int sentID) {
+    SourcePath sourcePath, int sentID) {
     float similarity = 0.0f;
     int count = 0;
     if (tailNodes == null || tailNodes.isEmpty()) return 0;
@@ -156,19 +156,28 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     return weight * getSimilarity(batch);
   }
 
-
+  /**
+   * Costs accumulated along the final edge (where no rule is applied).
+   */
   @Override
   public float computeFinalCost(HGNode antNode, int i, int j, SourcePath sourcePath, int sentID) {
     return 0.0f;
   }
 
-	public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
-		return 0.0f;
-	}
+  /**
+   * Features across the final, rule-less edge.
+   */
+  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
+    return new FeatureVector(name, computeFinalCost(tailNode, i, j, sourcePath, sentID));
+  }
+  
+  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+    return 0.0f;
+  }
 
-	/**
-	 * From SourceDependentFF interface.
-	 */
+  /**
+   * From SourceDependentFF interface.
+   */
   @Override
   public void setSource(Sentence source) {
     this.source = source.intSentence();
@@ -183,10 +192,10 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     }
   }
 
-	@Override
-	public float estimateCost(Rule rule, int sentID) {
-		return 0.0f;
-	}
+  @Override
+  public float estimateCost(Rule rule, int sentID) {
+    return 0.0f;
+  }
 
   private final int[] getSourcePhrase(int anchor) {
     int idx;

@@ -96,7 +96,7 @@ public class ComputeNodeResult {
         futureCostEstimate += feature.estimateFutureCost(rule, allDPStates.get(feature.getStateComputer()), sentID);
       }
     }
-    transitionCost -= rule.getEstimatedCost();
+    //transitionCost -= rule.getEstimatedCost();
     
     viterbiCost += transitionCost;
 
@@ -141,7 +141,10 @@ public class ComputeNodeResult {
     // === compute feature logPs
     for (FeatureFunction ff : featureFunctions) {
       // A null rule signifies the final transition.
-      featureDelta.add(ff.computeFeatures(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentID));
+      if (edge.getRule() == null)
+        featureDelta.add(ff.computeFinalFeatures(edge.getTailNodes().get(0), i, j, edge.getSourcePath(), sentID));
+      else
+        featureDelta.add(ff.computeFeatures(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentID));
     }
 
     return featureDelta;

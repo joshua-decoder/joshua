@@ -68,6 +68,9 @@ public abstract class FeatureFunction {
   public abstract float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
   public abstract FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
 
+  public abstract float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID);
+  public abstract FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID);
+  
   public abstract StateComputer getStateComputer();
 
   /**

@@ -40,7 +40,7 @@ public class MonolingualRule implements Rule {
   private int owner = -1;
 
   /**
-   * This is the cost computed only from the features present with the grammar rule.  This cost is
+   * This is the cost computed only from the features present with the grammar rule. This cost is
    * needed to sort the rules in the grammar for cube pruning, but isn't the full cost of applying
    * the rule (which will include contextual features that can't be computed until the rule is
    * applied).
@@ -139,8 +139,9 @@ public class MonolingualRule implements Rule {
   }
 
 
-  /* This function returns the feature vector found in the rule's grammar file.
-   */ 
+  /*
+   * This function returns the feature vector found in the rule's grammar file.
+   */
   public final FeatureVector getFeatureVector() {
     return computeFeatures();
   }
@@ -156,39 +157,44 @@ public class MonolingualRule implements Rule {
     estimatedCost = cost;
   }
 
+  /**
+   * This function returns the cost of a rule, which should have been computed when the grammar was
+   * first sorted via a call to Rule::estimateRuleCost().
+   */
   public final float getEstimatedCost() {
     if (estimatedCost <= Double.NEGATIVE_INFINITY) {
-      logger.warning("The estimatedCost is neg infinity; must be bad rule; rule is:\n" + toString());
+      logger
+          .warning("The estimatedCost is neg infinity; must be bad rule; rule is:\n" + toString());
     }
     return estimatedCost;
   }
 
-
   /**
-   * Set a lower-bound estimate inside the rule returns full estimate.  By lower bound, we mean the
-   * set of precomputable features (i.e., those present with the rule in the grammar file, that can
-   * be computed as soon as we have a weight vector).  The rule's actual, full cost will be greater
-   * than this, but can't be computed until the rule is applied in context and the cost of stateful
-   * features is applied.
-   *
-   * @param weights the weights 
+   * Set a lower-bound estimate inside the rule returns full estimate. By lower bound, we mean the
+   * set of precomputable features. This includes all features listed with the rule in the grammar
+   * file, as well as certain stateful features like n-gram probabilities of any complete n-grams
+   * found with the rule. The value of this function is used only for sorting the rules. When the
+   * rule is later applied in context to particular hypernodes, the rule's actual cost is computed.
+   * 
+   * @param models the list of models available to the decoder
+   * @return estimated cost of the rule
    */
   public final float estimateRuleCost(List<FeatureFunction> models) {
-    if (null == models)
-      return 0.0f;
+    if (null == models) return 0.0f;
 
     // TODO: this should be cached
-    this.estimatedCost = 0.0f; //weights.innerProduct(computeFeatures());
+    this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
     StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
-    
-    for (FeatureFunction ff: models) {
+
+    for (FeatureFunction ff : models) {
       this.estimatedCost -= ff.estimateCost(this, -1);
-      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(), -ff.estimateCost(this, -1)));
+      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
+          -ff.estimateCost(this, -1)));
     }
 
     System.err.println(sb.toString());
     return estimatedCost;
-  }    
+  }
 
 
   // ===============================================================
@@ -197,24 +203,27 @@ public class MonolingualRule implements Rule {
 
   /**
    * This function does the work of turning the string version of the sparse features (passed in
-   * when the rule was created) into an actual set of features.  This is a bit complicated because
-   * we support intermingled labeled and unlabeled features, where the unlabeled features are mapped
-   * to a default name template of the form "PhraseModel_OWNER_INDEX".
+   * when the rule was created) into an actual set of features. This is a bit complicated because we
+   * support intermingled labeled and unlabeled features, where the unlabeled features are mapped to
+   * a default name template of the form "PhraseModel_OWNER_INDEX".
    */
   public FeatureVector computeFeatures() {
 
-    /* Now read the feature scores, which can be any number of dense features and sparse features.
-     * Any unlabeled feature becomes a dense feature.  By convention, dense features should precede
+    /*
+     * Now read the feature scores, which can be any number of dense features and sparse features.
+     * Any unlabeled feature becomes a dense feature. By convention, dense features should precede
      * sparse (labeled) ones, but it's not required.
      */
 
     if (owner == -1) {
-      System.err.println("* FATAL: You asked me to compute the features for a rule, but haven't told me the rule's owner.");
+      System.err
+          .println("* FATAL: You asked me to compute the features for a rule, but haven't told me the rule's owner.");
       System.err.println("* RULE: " + this.toString());
       System.exit(1);
     }
 
-    FeatureVector features = new FeatureVector(sparseFeatures, "PhraseModel_" + Vocabulary.word(owner) + "_");
+    FeatureVector features =
+        new FeatureVector(sparseFeatures, "PhraseModel_" + Vocabulary.word(owner) + "_");
     features.times(-1);
     return features;
   }
@@ -233,7 +242,7 @@ public class MonolingualRule implements Rule {
     sb.append(" ||| " + sparseFeatures);
     // FeatureVector features = this.getFeatureVector();
     // for (String feature: features.keySet()) {
-    //   sb.append(String.format(" %s=%.5f", feature, features.get(feature)));
+    // sb.append(String.format(" %s=%.5f", feature, features.get(feature)));
     // }
     return sb.toString();
   }

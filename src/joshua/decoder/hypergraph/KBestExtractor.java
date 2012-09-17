@@ -383,10 +383,10 @@ public class KBestExtractor {
                                                                            // the paper is: D(^) [v]
     private PriorityQueue<DerivationState> candHeap = null; // remember frontier states, best-first;
                                                             // in the paper, it is called cand[v]
-    private HashMap<String, Integer> derivationTbl = null; // rememeber which DerivationState has
+    private HashMap<String, Integer> derivationTbl = null; // remember which DerivationState has
                                                            // been explored; why duplicate, e.g., 1
                                                            // 2 + 1 0 == 2 1 + 0 1
-    private HashMap<String, Integer> nbestStrTbl = null; // reember unique *string* at each item,
+    private HashMap<String, Integer> nbestStrTbl = null; // remember unique *string* at each item,
                                                          // used for unique-nbest-string extraction
     HGNode pNode = null;
 

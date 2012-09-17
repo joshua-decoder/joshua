@@ -7,7 +7,6 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.HyperEdge;
 
 /**
  * Implements stateless feature functions. Stateless feature functions do not need any access to the
@@ -72,6 +71,21 @@ public abstract class StatelessFF extends FeatureFunction {
     return computeCost(rule, sourcePath, sentID);
   }
 
+  /**
+   * Costs accumulated along the final edge (where no rule is applied).
+   */
+  public float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
+    return 0.0f;
+  }
+
+  /**
+   * Features across the final, rule-less edge.
+   */
+  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
+    return new FeatureVector(name, 0.0f);
+  }
+
+
   public final StateComputer getStateComputer() {
     return null;
   }
@@ -83,7 +97,7 @@ public abstract class StatelessFF extends FeatureFunction {
   public final float estimateFutureCost(Rule rule, DPState state, int sentID) {
     return 0.0f;
   }
-  
+
   /**
    * Return the cost of applying a rule for a particular sentence. The cost is the inner product of
    * (1) the feature vector of features that fire on this rule and (2) the associated weights from
