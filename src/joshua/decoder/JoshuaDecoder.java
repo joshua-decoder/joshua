@@ -435,22 +435,6 @@ public class JoshuaDecoder {
     }
   }
 
-  private void initializeGlueGrammar() throws IOException {
-    logger.info("Constructing glue grammar...");
-
-    MemoryBasedBatchGrammar gr = (JoshuaConfiguration.glue_file == null) 
-      ? new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, 
-            System.getenv().get("JOSHUA") + "/data/" + "glue-grammar",
-            JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
-            JoshuaConfiguration.oov_feature_cost)
-      : new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, JoshuaConfiguration.glue_file,
-            JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
-            JoshuaConfiguration.oov_feature_cost);
-
-    this.grammarFactories.add(gr);
-
-  }
-
   private void initializeTranslationGrammars() throws IOException {
 
     if (JoshuaConfiguration.tms.size() > 0) {
