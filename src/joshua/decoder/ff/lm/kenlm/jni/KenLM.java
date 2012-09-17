@@ -45,7 +45,7 @@ public class KenLM implements NGramLanguageModel {
   }
 
   public int getOrder() {
-    return N;
+    return ngramOrder;
   }
 
   public boolean registerWord(String word, int id) {
