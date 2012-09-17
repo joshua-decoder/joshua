@@ -72,7 +72,7 @@ public class HyperEdge {
         }
       transitionLogP = res;
     }
-    System.err.println("HYPEREDGE SCORE = " + sb.toString());
+//    System.err.println("HYPEREDGE SCORE = " + sb.toString());
     return transitionLogP;
   }
 

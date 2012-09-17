@@ -184,15 +184,15 @@ public class MonolingualRule implements Rule {
 
     // TODO: this should be cached
     this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
-    StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
+//    StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
 
     for (FeatureFunction ff : models) {
       this.estimatedCost -= ff.estimateCost(this, -1);
-      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
-          -ff.estimateCost(this, -1)));
+//      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
+//          -ff.estimateCost(this, -1)));
     }
 
-    System.err.println(sb.toString());
+//    System.err.println(sb.toString());
     return estimatedCost;
   }
 

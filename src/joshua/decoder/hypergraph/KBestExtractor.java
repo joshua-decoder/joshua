@@ -752,9 +752,13 @@ public class KBestExtractor {
       // System.out.println("Rule is: " + dt.rule.toString());
       // double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models,
       // dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
+//      System.err.println(String.format("kbest::computeCost (START) computing features"));
+      
       FeatureVector transitionCosts =
           ComputeNodeResult.computeTransitionFeatures(models, edge, parentNode.i, parentNode.j, sentID);
 
+//      System.err.println(String.format("kbest::computeCost (STOP) features on edge were '%s'", transitionCosts));
+      
       features.subtract(transitionCosts);
     }
 

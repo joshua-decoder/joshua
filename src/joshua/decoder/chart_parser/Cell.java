@@ -182,7 +182,7 @@ class Cell {
       res = null;
     } else {
       HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
-      System.err.println(String.format("CELL(%d,%d): new hyperedge: ",i,j) + hyperEdge);
+//      System.err.println(String.format("CELL(%d,%d): new hyperedge: ",i,j) + hyperEdge);
       res = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
 
       /**
@@ -248,7 +248,7 @@ class Cell {
     this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
     this.sortedNodes = null; // reset the list
 
-    System.err.println("Adding: " + node);
+//    System.err.println("Adding: " + node);
     
     if (beamPruner != null) {
       if (noPrune == false) {

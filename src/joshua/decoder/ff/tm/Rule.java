@@ -40,12 +40,12 @@ public interface Rule {
 
   int[] getFrench();
 
-	/* This function returns the dense (phrasal) features discovered when the rule was loaded.  Dense
-	 * features are the list of unlabeled features that preceded labeled ones.  They can also be
-	 * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
-	 * preferred.
-	 */ 
-	public FeatureVector getFeatureVector();
+  /* This function returns the dense (phrasal) features discovered when the rule was loaded.  Dense
+   * features are the list of unlabeled features that preceded labeled ones.  They can also be
+   * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
+   * preferred.
+   */ 
+  public FeatureVector getFeatureVector();
 
   void setEstimatedCost(float cost);
 

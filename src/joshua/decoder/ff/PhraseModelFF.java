@@ -45,9 +45,13 @@ public class PhraseModelFF extends StatelessFF {
    */
   @Override
   public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
-    if (rule != null)
+    if (rule != null && rule.getOwner() == ownerID) {
       return rule.getFeatureVector();
-    else
+    } else
       return new FeatureVector();
+  }
+  
+  public String toString() {
+    return name + " " + Vocabulary.word(ownerID); 
   }
 }

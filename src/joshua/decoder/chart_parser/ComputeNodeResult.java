@@ -60,7 +60,6 @@ public class ComputeNodeResult {
       }
     }
 
-
     /*
      * For each type of state (usually just the ngram state), we need to compute the new state that
      * is created when applying the rule to the tail nodes at the current span. This new state is
@@ -81,8 +80,8 @@ public class ComputeNodeResult {
     // The future cost estimate is a heuristic estimate of the outside cost of this edge.
     float futureCostEstimate = 0.0f;
 
-    StringBuffer sb = new StringBuffer("ComputeNodeResult:");
-    FeatureVector features = new FeatureVector();
+//    StringBuffer sb = new StringBuffer("ComputeNodeResult:");
+//    FeatureVector features = new FeatureVector();
     
     /*
      * We now iterate over all the feature functions, computing their cost and their expected future
@@ -90,8 +89,8 @@ public class ComputeNodeResult {
      */
     for (FeatureFunction feature : featureFunctions) {
       transitionCost += feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID);
-      features.add(feature.computeFeatures(rule,tailNodes,i,j,sourcePath,sentID));
-      sb.append(String.format(" %s: %.3f", feature.getClass().getSimpleName(), feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID)));
+//      features.add(feature.computeFeatures(rule,tailNodes,i,j,sourcePath,sentID));
+//      sb.append(String.format(" %s: %.3f", feature.getClass().getSimpleName(), feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID)));
       if (feature instanceof StatefulFF) {
         futureCostEstimate += feature.estimateFutureCost(rule, allDPStates.get(feature.getStateComputer()), sentID);
       }
@@ -100,7 +99,7 @@ public class ComputeNodeResult {
     
     viterbiCost += transitionCost;
 
-    System.err.println(sb.toString() + " ||| " + viterbiCost + " ||| " + features);
+//    System.err.println(sb.toString() + " ||| " + viterbiCost + " ||| " + features);
     
     float pruningEstimate = viterbiCost + futureCostEstimate;
 
@@ -143,10 +142,11 @@ public class ComputeNodeResult {
       // A null rule signifies the final transition.
       if (edge.getRule() == null)
         featureDelta.add(ff.computeFinalFeatures(edge.getTailNodes().get(0), i, j, edge.getSourcePath(), sentID));
-      else
+      else {
         featureDelta.add(ff.computeFeatures(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentID));
+      }
     }
-
+    
     return featureDelta;
   }
 
