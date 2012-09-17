@@ -29,6 +29,9 @@ public abstract class StatefulFF extends FeatureFunction {
   public StatefulFF(FeatureVector weights, String name, StateComputer stateComputer) {
     super(weights, name, "");
 
+    if (stateComputer == null) {
+        System.err.println("* WARNING: state computer is null");
+    }
     this.stateComputer = stateComputer;
   }
 

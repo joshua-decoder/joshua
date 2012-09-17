@@ -47,7 +47,7 @@ public class DecoderThread extends Thread {
   private final List<FeatureFunction> featureFunctions;
   private final List<StateComputer> stateComputers;
 
-	private FeatureVector weights;
+  private FeatureVector weights;
 
   // more test set specific
   private final InputHandler inputHandler;
@@ -61,10 +61,10 @@ public class DecoderThread extends Thread {
   // Constructor
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-		List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
-		InputHandler inputHandler) throws IOException {
+    List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
+    InputHandler inputHandler) throws IOException {
 
-		this.weights = weights;
+    this.weights = weights;
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
     this.inputHandler = inputHandler;
@@ -79,9 +79,9 @@ public class DecoderThread extends Thread {
     }
 
     this.kbestExtractor =
-			new KBestExtractor(weights, JoshuaConfiguration.use_unique_nbest,
-				JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-				JoshuaConfiguration.add_combined_cost, false, false);
+      new KBestExtractor(weights, JoshuaConfiguration.use_unique_nbest,
+        JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
+        JoshuaConfiguration.add_combined_cost, false, false);
   }
 
 
@@ -192,59 +192,8 @@ public class DecoderThread extends Thread {
     for (int i = 0; i < grammarFactories.size(); i++)
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 
-    // load the sentence-specific grammar
-    boolean alreadyExisted = true; // whether it already existed
-    String tmFile = null;
-    if (JoshuaConfiguration.use_sent_specific_tm) {
-      // figure out the sentence-level file name
-      tmFile = JoshuaConfiguration.tm_file;
-      tmFile = tmFile.endsWith(".gz") 
-             ? tmFile.substring(0, tmFile.length() - 3) + "." + sentence.id()
-             + ".gz" : tmFile + "." + sentence.id();
-
-      // look in a subdirectory named "filtered" e.g.,
-      // /some/path/grammar.gz will have sentence-level
-      // grammars in /some/path/filtered/grammar.SENTNO.gz
-      int lastSlashPos = tmFile.lastIndexOf('/');
-      String dirPart = tmFile.substring(0, lastSlashPos + 1);
-      String filePart = tmFile.substring(lastSlashPos + 1);
-      tmFile = dirPart + "filtered/" + filePart;
-
-      File filteredDir = new File(dirPart + "filtered");
-      if (!filteredDir.exists()) {
-        logger.info("Creating sentence-level grammar directory '" + dirPart + "filtered'");
-        filteredDir.mkdirs();
-      }
-
-      logger.info("Using sentence-specific TM file '" + tmFile + "'");
-
-      if (!new File(tmFile).exists()) {
-        alreadyExisted = false;
-
-        // filter grammar and write it to a file
-        if (logger.isLoggable(Level.INFO)) logger.info("Automatically producing file " + tmFile);
-
-        new TestSetFilter().filterGrammarToFile(JoshuaConfiguration.tm_file, sentence.sentence(),
-            tmFile, true);
-      } else {
-        if (logger.isLoggable(Level.INFO))
-          logger.info("Using existing sentence-specific tm file " + tmFile);
-      }
-
-
-      grammars[numGrammars - 1] =
-          new MemoryBasedBatchGrammar(JoshuaConfiguration.tm_format, tmFile,
-              JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal,
-              JoshuaConfiguration.span_limit, JoshuaConfiguration.oov_feature_cost);
-
-      // sort the sentence-specific grammar
-      grammars[numGrammars - 1].sortGrammar(this.featureFunctions);
-
-    }
-
     /* Seeding: the chart only sees the grammars, not the factories */
-    Chart chart = new Chart(sentence, this.featureFunctions, this.stateComputers, grammars, false,
-            JoshuaConfiguration.goal_symbol);
+    Chart chart = new Chart(sentence, this.featureFunctions, this.stateComputers, grammars, JoshuaConfiguration.goal_symbol);
 
     /* Parsing */
     HyperGraph hypergraph = chart.expand();

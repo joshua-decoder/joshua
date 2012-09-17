@@ -1,21 +1,4 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
-
 package joshua.decoder.hypergraph;
-
 
 import java.util.List;
 
@@ -26,7 +9,7 @@ import joshua.decoder.ff.tm.Rule;
  * this class implement Hyperedge
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class HyperEdge {
@@ -59,7 +42,7 @@ public class HyperEdge {
     this.rule = rule;
     this.antNodes = antNodes;
     this.srcPath = srcPath;
-	 }
+   }
 
   public Rule getRule() {
     return rule;
@@ -69,22 +52,27 @@ public class HyperEdge {
     return srcPath;
   }
 
-	public List<HGNode> getTailNodes() {
-		return antNodes;
-	}
+  public List<HGNode> getTailNodes() {
+    return antNodes;
+  }
   public List<HGNode> getAntNodes() {
     return antNodes;
   }
 
 
-  public double getTransitionLogP(boolean forceCompute) {// note: transitionLogP is already linearly
-                                                         // interpolated
+  public double getTransitionLogP(boolean forceCompute) {
+    StringBuilder sb = new StringBuilder();
     if (forceCompute || transitionLogP == null) {
       double res = bestDerivationLogP;
-      if (antNodes != null) for (HGNode antNode : antNodes)
-        res -= antNode.bestHyperedge.bestDerivationLogP;
+      sb.append(String.format("Best derivation = %.5f", res));
+      if (antNodes != null) 
+        for (HGNode tailNode : antNodes) {
+          res -= tailNode.bestHyperedge.bestDerivationLogP;
+          sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationLogP));
+        }
       transitionLogP = res;
     }
+    System.err.println("HYPEREDGE SCORE = " + sb.toString());
     return transitionLogP;
   }
 
@@ -92,14 +80,14 @@ public class HyperEdge {
     this.transitionLogP = transitionLogP;
   }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("HYPEREDGE[rule=" + this.rule);
-		if (getTailNodes() != null)
-			for (HGNode tailNode: getTailNodes()) {
-				sb.append(" tail=" + tailNode);
-			}
-		sb.append("]");
-		return sb.toString();
-	}
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("HYPEREDGE[rule=" + this.rule);
+    if (getTailNodes() != null)
+      for (HGNode tailNode: getTailNodes()) {
+        sb.append(" tail=" + tailNode);
+      }
+    sb.append("]");
+    return sb.toString();
+  }
 }

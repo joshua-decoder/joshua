@@ -5,8 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -118,8 +120,8 @@ public class JoshuaDecoder {
 
       for (String feature: this.weights.keySet()) {
         float oldWeight = this.weights.get(feature);
-				float newWeight = newWeights.get(feature);
-				this.weights.put(feature, newWeights.get(feature));
+        float newWeight = newWeights.get(feature);
+        this.weights.put(feature, newWeights.get(feature));
         logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature, oldWeight, newWeight));
       }
     }
@@ -244,92 +246,94 @@ public class JoshuaDecoder {
       // Load the weights.
       JoshuaDecoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
 
-			this.featureFunctions = new ArrayList<FeatureFunction>();
+      this.featureFunctions = new ArrayList<FeatureFunction>();
 
-			/* Backwards compatibility.  Before initializing the grammars, the language models, or the
-			 * other feature functions, we need to take a pass through features and their weights
-			 * initialized in the old style, which was accomplished for many of the features simply by
-			 * setting a weight.  The new style puts all the weights in the weights file above, and has a
-			 * separate line that initializes the feature function.  Here, we look for the old-style, and
-			 * (1) add the weight for it and (2) trigger the feature with a new-style line.
-			 */
-			for (int i = 0; i < JoshuaConfiguration.features.size(); i++ ) {
-				String featureLine = JoshuaConfiguration.features.get(i);
+      /* Backwards compatibility.  Before initializing the grammars, the language models, or the
+       * other feature functions, we need to take a pass through features and their weights
+       * initialized in the old style, which was accomplished for many of the features simply by
+       * setting a weight.  The new style puts all the weights in the weights file above, and has a
+       * separate line that initializes the feature function.  Here, we look for the old-style, and
+       * (1) add the weight for it and (2) trigger the feature with a new-style line.
+       */
+      for (int i = 0; i < JoshuaConfiguration.features.size(); i++ ) {
+        String featureLine = JoshuaConfiguration.features.get(i);
 
-				// Check if this is an old-style feature.
-				if (! featureLine.startsWith("feature_function")) {
-					String fields[] = featureLine.split("\\s+");
-					String type = fields[0].toLowerCase();
+        System.err.println("PROCESSING FEATURE(" + featureLine + ")");
+        
+        // Check if this is an old-style feature.
+        if (! featureLine.startsWith("feature_function")) {
+          String fields[] = featureLine.split("\\s+");
+          String type = fields[0].toLowerCase();
 
-					if (type.equals("phrasemodel")) {
-						String name = "PhraseModel_" + fields[1] + "_" + fields[2];
-						float weight = Float.parseFloat(fields[3]);
+          if (type.equals("phrasemodel")) {
+            String name = "PhraseModel_" + fields[1] + "_" + fields[2];
+            float weight = Float.parseFloat(fields[3]);
 
-						weights.put(name, weight);
+            weights.put(name, weight);
 
-						// No feature_function lines are created for LMs
-						JoshuaConfiguration.features.remove(i);
-						i--;
-					} 
-					else if (type.equals("lm")) {
-						String name = "";
-						float weight = 0.0f;
-						if (fields.length == 3) {
-							name = "lm_" + fields[1];
-							weight = Float.parseFloat(fields[2]);
-						} else {
-							name = "lm_0";
-							weight = Float.parseFloat(fields[1]);
-						}
+            // No feature_function lines are created for LMs
+            JoshuaConfiguration.features.remove(i);
+            i--;
+          } 
+          else if (type.equals("lm")) {
+            String name = "";
+            float weight = 0.0f;
+            if (fields.length == 3) {
+              name = "lm_" + fields[1];
+              weight = Float.parseFloat(fields[2]);
+            } else {
+              name = "lm_0";
+              weight = Float.parseFloat(fields[1]);
+            }
 
-						weights.put(name, weight);
+            weights.put(name, weight);
 
-						// No feature_function lines are created for LMs
-						JoshuaConfiguration.features.remove(i);
-						i--;
-					}
-					else if (type.equals("latticecost")) {
-						String name = "SourcePath";
-						float weight = Float.parseFloat(fields[1]);
+            // No feature_function lines are created for LMs
+            JoshuaConfiguration.features.remove(i);
+            i--;
+          }
+          else if (type.equals("latticecost")) {
+            String name = "SourcePath";
+            float weight = Float.parseFloat(fields[1]);
 
-						weights.put(name, weight);
-						JoshuaConfiguration.features.set(i, "feature_function = " + name);
-					}
-					else if (type.equals("arityphrasepenalty")) {
-						String name = "ArityPenalty";
-						String owner = fields[1];
-						int min = Integer.parseInt(fields[2]);
-						int max = Integer.parseInt(fields[3]);
-						float weight = Float.parseFloat(fields[4]);
+            weights.put(name, weight);
+            JoshuaConfiguration.features.set(i, "feature_function = " + name);
+          }
+          else if (type.equals("arityphrasepenalty")) {
+            String name = "ArityPenalty";
+            String owner = fields[1];
+            int min = Integer.parseInt(fields[2]);
+            int max = Integer.parseInt(fields[3]);
+            float weight = Float.parseFloat(fields[4]);
 
-						weights.put(name, weight);
-						JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d %d", name, owner, min, max));
-					}
-					else if (type.equals("wordpenalty")) {
-						String name = "WordPenalty";
-						float weight = Float.parseFloat(fields[1]);
+            weights.put(name, weight);
+            JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d %d", name, owner, min, max));
+          }
+          else if (type.equals("wordpenalty")) {
+            String name = "WordPenalty";
+            float weight = Float.parseFloat(fields[1]);
 
-						weights.put(name, weight);
-						JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-					}
-					else if (type.equals("oovpenalty")) {
-						String name = "OOVPenalty";
-						float weight = Float.parseFloat(fields[1]);
+            weights.put(name, weight);
+            JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
+          }
+          else if (type.equals("oovpenalty")) {
+            String name = "OOVPenalty";
+            float weight = Float.parseFloat(fields[1]);
 
-						weights.put(name, weight);
-						JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-					}
-					else if (type.equals("edge-sim")) {
-						String name = "EdgePhraseSimilarity";
-						String host = fields[1];
-						int port = Integer.parseInt(fields[2]);
-						float weight = Float.parseFloat(fields[3]);
+            weights.put(name, weight);
+            JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
+          }
+          else if (type.equals("edge-sim")) {
+            String name = "EdgePhraseSimilarity";
+            String host = fields[1];
+            int port = Integer.parseInt(fields[2]);
+            float weight = Float.parseFloat(fields[3]);
 
-						weights.put(name, weight);
-						JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d", name, host, port));
-					}
-				}
-			}
+            weights.put(name, weight);
+            JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d", name, host, port));
+          }
+        }
+      }
 
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
@@ -358,7 +362,7 @@ public class JoshuaDecoder {
 
       this.decoderFactory =
           new DecoderFactory(this.grammarFactories, JoshuaConfiguration.use_max_lm_cost_for_oov,
-						this.featureFunctions, this.weights, this.stateComputers);
+            this.featureFunctions, this.weights, this.stateComputers);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -422,14 +426,12 @@ public class JoshuaDecoder {
       }
     }
 
-    this.languageModels = new ArrayList<NGramLanguageModel>();
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      int order = lm.getOrder();
-      this.featureFunctions.add(new LanguageModelFF(weights, lm, ngramStateComputers.get(lm.getOrder())));
+      this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm, ngramStateComputers.get(lm.getOrder())));
 
-			logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", 
-					(i + 1), languageModels.get(i).getOrder(), weights.get(String.format("lm_%d",i))));
+      logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", 
+          i, languageModels.get(i).getOrder(), weights.get(String.format("lm_%d",i))));
     }
   }
 
@@ -451,7 +453,10 @@ public class JoshuaDecoder {
 
   private void initializeTranslationGrammars() throws IOException {
 
-		if (JoshuaConfiguration.tms.size() > 0) {
+    if (JoshuaConfiguration.tms.size() > 0) {
+      
+      // Records which PhraseModelFF's have been instantiated (one is needed for each owner). 
+      HashSet<String> ownersSeen = new HashSet<String>();
 
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
       for (String tmLine: JoshuaConfiguration.tms) {
@@ -461,22 +466,25 @@ public class JoshuaDecoder {
         int span_limit = Integer.parseInt(tokens[2]);
         String file = tokens[3];
 
+        // Create and add a feature function for this owner, the first time we see each owner.
+        if (! ownersSeen.contains(owner)) {
+          this.featureFunctions.add(new PhraseModelFF(weights, owner));
+          ownersSeen.add(owner);
+        }
+        
         logger.info("Using grammar read from file " + file);
 
-				GrammarFactory grammar = null;
+        GrammarFactory grammar = null;
         if (format.equals("packed")) {
-					grammar = new PackedGrammar(file, span_limit);
+          grammar = new PackedGrammar(file, span_limit);
 
         } else {
-					grammar = new MemoryBasedBatchGrammar(format, file, owner, 
-						JoshuaConfiguration.default_non_terminal, span_limit,
-						JoshuaConfiguration.oov_feature_cost);
+          grammar = new MemoryBasedBatchGrammar(format, file, owner, 
+            JoshuaConfiguration.default_non_terminal, span_limit,
+            JoshuaConfiguration.oov_feature_cost);
         }
 
-				this.grammarFactories.add(grammar);
-				this.featureFunctions.add(new PhraseModelFF(weights, grammar, owner));
-
-        logger.info("FEATURE: PhraseModel_" + owner);
+        this.grammarFactories.add(grammar);
       }
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
@@ -487,18 +495,18 @@ public class JoshuaDecoder {
         JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
         JoshuaConfiguration.oov_feature_cost);
       this.grammarFactories.add(glueGrammar);
-		}
+    }
 
-		logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
+    logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
   }
-	
+  
 
   private void initializeMainTranslationGrammar() throws IOException {
-		if (JoshuaConfiguration.tm_file == null) {
+    if (JoshuaConfiguration.tm_file == null) {
       logger.warning("* WARNING: no TM specified");
-			return;
-		}
+      return;
+    }
 
     if (JoshuaConfiguration.use_sent_specific_tm) {
       logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
@@ -547,7 +555,7 @@ public class JoshuaDecoder {
         String feature = line.substring(0, line.lastIndexOf(' ')).replaceAll(" ", "_");
         Float value = Float.parseFloat(line.substring(line.lastIndexOf(' ')));
 
-        weights.put(feature.toLowerCase(), value);
+        weights.put(feature, value);
       }
     } catch (FileNotFoundException ioe) {
       System.err.println("* WARNING: Can't find weights-file '" + fileName + "'");
@@ -556,7 +564,9 @@ public class JoshuaDecoder {
       ioe.printStackTrace();
       System.exit(1);
     }
-
+    
+    logger.info(String.format("Read %d weights from file '%s'", weights.size(), fileName));
+    
     return weights;
   }
 
@@ -604,23 +614,23 @@ public class JoshuaDecoder {
       else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights));
 
-        logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weights.get("OOVPenalty")));
+        logger.info(String.format("FEATURE: OOVPenalty (weight %.3f)", weights.get("OOVPenalty")));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
         double weight = Double.parseDouble(fields[3].trim());
 
-				// Find the language model with the largest state.
-				int maxOrder = 0;
-				NgramStateComputer ngramStateComputer = null;
-				for (StateComputer stateComputer: this.stateComputers) {
-					if (stateComputer instanceof NgramStateComputer)
-						if (((NgramStateComputer)stateComputer).getOrder() > maxOrder) {
-							maxOrder = ((NgramStateComputer)stateComputer).getOrder();
-							ngramStateComputer = (NgramStateComputer)stateComputer;
-						}
-				}
+        // Find the language model with the largest state.
+        int maxOrder = 0;
+        NgramStateComputer ngramStateComputer = null;
+        for (StateComputer stateComputer: this.stateComputers) {
+          if (stateComputer instanceof NgramStateComputer)
+            if (((NgramStateComputer)stateComputer).getOrder() > maxOrder) {
+              maxOrder = ((NgramStateComputer)stateComputer).getOrder();
+              ngramStateComputer = (NgramStateComputer)stateComputer;
+            }
+        }
 
         try {
           this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host, port));
@@ -670,36 +680,36 @@ public class JoshuaDecoder {
     // argument; if it starts with a hyphen, the new format has
     // been invoked.
 
-		if (args.length >= 1) {
-			if (args[0].startsWith("-")) {
+    if (args.length >= 1) {
+      if (args[0].startsWith("-")) {
 
-				// Search for the configuration file
-				for (int i = 0; i < args.length; i++) {
-					if (args[i].equals("-c") || args[i].equals("-config")) {
+        // Search for the configuration file
+        for (int i = 0; i < args.length; i++) {
+          if (args[i].equals("-c") || args[i].equals("-config")) {
 
-						configFile = args[i + 1].trim();
-						JoshuaConfiguration.readConfigFile(configFile);
+            configFile = args[i + 1].trim();
+            JoshuaConfiguration.readConfigFile(configFile);
 
-						break;
-					}
-				}
+            break;
+          }
+        }
 
-				// now process all the command-line args
-				JoshuaConfiguration.processCommandLineOptions(args);
+        // now process all the command-line args
+        JoshuaConfiguration.processCommandLineOptions(args);
 
-				oracleFile = JoshuaConfiguration.oracleFile;
+        oracleFile = JoshuaConfiguration.oracleFile;
 
-			} else {
+      } else {
 
-				configFile = args[0].trim();
+        configFile = args[0].trim();
 
-				JoshuaConfiguration.readConfigFile(configFile);
+        JoshuaConfiguration.readConfigFile(configFile);
 
-				if (args.length >= 2) testFile = args[1].trim();
-				if (args.length >= 3) nbestFile = args[2].trim();
-				if (args.length == 4) oracleFile = args[3].trim();
-			}
-		}
+        if (args.length >= 2) testFile = args[1].trim();
+        if (args.length >= 3) nbestFile = args[2].trim();
+        if (args.length == 4) oracleFile = args[3].trim();
+      }
+    }
 
     /* Step-0: some sanity checking */
     JoshuaConfiguration.sanityCheck();

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 
 /**
  * Grammar is a class for wrapping a trie of TrieGrammar in order to store holistic metadata.
@@ -32,7 +33,7 @@ public interface Grammar {
    * <p>
    * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
    * 
-   * @param models List of feature functions
+   * @param weights The model weights.
    */
   void sortGrammar(List<FeatureFunction> models);
 

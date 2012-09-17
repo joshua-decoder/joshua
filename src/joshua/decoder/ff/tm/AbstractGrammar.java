@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 
 /**
  * Partial implementation of the <code>Grammar</code> interface that provides logic for sorting a
@@ -104,8 +105,8 @@ public abstract class AbstractGrammar implements Grammar {
           StringBuilder s = new StringBuilder();
           for (Rule r : rules.getSortedRules()) {
             s.append("\n\t" + r.getLHS() + " ||| " + Arrays.toString(r.getFrench()) + " ||| "
-                + Arrays.toString(r.getEnglish()) + " ||| " + Arrays.toString(r.getDenseFeatures())
-                + " ||| " + r.getEstCost() + "  " + r.getClass().getName() + "@"
+                + Arrays.toString(r.getEnglish()) + " ||| " + r.getFeatureVector()
+                + " ||| " + r.getEstimatedCost() + "  " + r.getClass().getName() + "@"
                 + Integer.toHexString(System.identityHashCode(r)));
           }
           logger.finest(s.toString());

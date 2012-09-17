@@ -1,20 +1,4 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.hypergraph;
-
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -49,7 +33,6 @@ import joshua.util.io.UncheckedIOException;
  * to store all these model cost at each hyperedge.)
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class KBestExtractor {
 
@@ -71,13 +54,13 @@ public class KBestExtractor {
 
   private int sentID;
 
-	private FeatureVector weights;
+  private FeatureVector weights;
 
   public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean extractNbestTree, 
-		boolean includeAlign, boolean addCombinedScore, boolean isMonolingual, boolean performSanityCheck) {
+    boolean includeAlign, boolean addCombinedScore, boolean isMonolingual, boolean performSanityCheck) {
     rootID = Vocabulary.id(rootSym);
 
-		this.weights = weights;
+    this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
     this.extractNbestTree = extractNbestTree;
     this.includeAlign = includeAlign;
@@ -103,9 +86,7 @@ public class KBestExtractor {
       return null;
     else {
       // ==== read the kbest from each hgnode and convert to output format
-			FeatureVector features = null;
-      if (models != null) 
-				features = new FeatureVector();
+      FeatureVector features = new FeatureVector();
       String strHypNumeric = derivationState.getHypothesis(this, extractNbestTree, features, models, numNodesAndEdges);
       // for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
       String strHypStr = convertHyp2String(sentID, derivationState, models, strHypNumeric, features);
@@ -328,32 +309,22 @@ public class KBestExtractor {
 
     // ####individual model cost, and final transition cost
     if (null != features) {
-      strHyp.append(" ||| " + features);
+      strHyp.append(" ||| " + features.toString());
       double temSum = 0.0;
 
-			for (String feature: features.keySet()) {
-				temSum += features.get(feature) * weights.get(feature);
-
-      // for (int k = 0; k < modelCost.length; k++) {
-      //   strHyp.append(String.format(" %.3f", -modelCost[k]));
-      //   temSum += modelCost[k] * models.get(k).getWeight();
-
-        // System.err.println("tem_sum: " + tem_sum + " += " + model_cost[k] + " * " +
-        // l_models.get(k).getWeight());
+      for (String feature: features.keySet()) {
+        temSum += features.get(feature) * weights.get(feature);
       }
 
-      int x = 0;
-      x++;
-
       // sanity check
-			if (performSanityCheck) {
+      if (performSanityCheck) {
         if (Math.abs(cur.cost - temSum) > 1e-2) {
           StringBuilder error = new StringBuilder();
           error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost
               + "; temsum: " + temSum + "\n");
           // System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost +
           // "; temsum: " +tem_sum);
-					for (String feature: features.keySet()) {
+          for (String feature: features.keySet()) {
             error.append(String.format("model weight: %.3f; cost: %.3f\n", weights.get(feature), features.get(feature)));
 
           // for (int k = 0; k < modelCost.length; k++) {
@@ -623,7 +594,7 @@ public class KBestExtractor {
     // get the numeric sequence of the particular hypothesis
     // if want to get model cost, then have to set model_cost and l_models
     private String getHypothesis(KBestExtractor kbestExtractor, boolean useTreeFormat,
-			FeatureVector features, List<FeatureFunction> models, int[] numNodesAndEdges) {
+      FeatureVector features, List<FeatureFunction> models, int[] numNodesAndEdges) {
       // ### accumulate cost of p_edge into model_cost if necessary
       if (null != features) {
         computeCost(parentNode, edge, features, models);
@@ -653,7 +624,8 @@ public class KBestExtractor {
               useTreeFormat, features, models, numNodesAndEdges));
           if (id < edge.getAntNodes().size() - 1) res.append(' ');
         }
-        if (useTreeFormat) res.append(')');
+        if (useTreeFormat) 
+          res.append(')');
       } else {
         if (useTreeFormat) {
           res.append('(');
@@ -775,15 +747,15 @@ public class KBestExtractor {
     // accumulate cost into modelCost
     private void computeCost(HGNode parentNode, HyperEdge edge, FeatureVector features,
         List<FeatureFunction> models) {
-      if (null == features) return;
+      if (null == features) 
+        return;
       // System.out.println("Rule is: " + dt.rule.toString());
       // double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models,
       // dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
       FeatureVector transitionCosts =
-          ComputeNodeResult.computeTransitionFeatures(models, edge, parentNode.i, parentNode.j,
-              sentID);
+          ComputeNodeResult.computeTransitionFeatures(models, edge, parentNode.i, parentNode.j, sentID);
 
-			features.subtract(transitionCosts);
+      features.subtract(transitionCosts);
     }
 
 

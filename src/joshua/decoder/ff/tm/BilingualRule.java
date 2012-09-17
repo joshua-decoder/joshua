@@ -14,7 +14,6 @@ import joshua.corpus.Vocabulary;
  */
 public class BilingualRule extends MonolingualRule {
 
-	private String sparseFeatures;
   private int[] english;
 
   // ===============================================================
@@ -23,30 +22,26 @@ public class BilingualRule extends MonolingualRule {
 
   /**
    * Constructs a new rule using the provided parameters. The owner and rule id for this rule are
-   * undefined.
+   * undefined. Note that some of the sparse features may be unlabeled, but they cannot be mapped to
+   * their default names ("PhraseModel_OWNER_INDEX") until later, when we know the owner of the
+   * rule. This is not known until the rule is actually added to a grammar in Grammar::addRule().
    * 
    * @param lhs Left-hand side of the rule.
    * @param sourceRhs Source language right-hand side of the rule.
    * @param targetRhs Target language right-hand side of the rule.
-   * @param featureScores Feature value scores for the rule.
+   * @param sparseFeatures Feature value scores for the rule.
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
    */
-  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity,
-		int owner) {
-    super(lhs, sourceRhs, featureScores, arity, owner);
-    this.english = targetRhs;
-	}
-
-  // called by class who does not care about owner
-  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity) {
-    super(lhs, sourceRhs, featureScores, arity);
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity,
+      int owner) {
+    super(lhs, sourceRhs, sparseFeatures, arity, owner);
     this.english = targetRhs;
   }
 
-	// Sparse feature version
-  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] denseFeatures, String sparseFeatures, int arity) {
-    super(lhs, sourceRhs, denseFeatures, sparseFeatures, arity);
+  // Sparse feature version
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
+    super(lhs, sourceRhs, sparseFeatures, arity);
     this.english = targetRhs;
   }
 
@@ -69,37 +64,17 @@ public class BilingualRule extends MonolingualRule {
   // TODO: remove these methods
 
   // Caching this method significantly improves performance
-  // We mark it transient because it is, though cf java.io.Serializable
-  private transient String cachedToString = null;
-
   public String toString() {
-    if (null == this.cachedToString) {
-      StringBuffer sb = new StringBuffer("[");
-      sb.append(Vocabulary.word(this.getLHS()));
-      sb.append("] ||| ");
-      sb.append(Vocabulary.getWords(this.getFrench()));
-      sb.append(" ||| ");
-      sb.append(Vocabulary.getWords(this.getEnglish()));
-      sb.append(" |||");
-			if (this.getDenseFeatures() != null)
-				for (int i = 0; i < this.getDenseFeatures().length; i++) {
-					// sb.append(String.format(" %.12f", this.getFeatureScores()[i]));
-					sb.append(' ');
-					sb.append(Float.toString(this.getDenseFeatures()[i]));
-				}
-			sb.append(" " + sparseFeatures);
-			sb.append(String.format(" ||| %.3f", getEstCost()));
-      this.cachedToString = sb.toString();
-    }
-    return this.cachedToString;
-  }
-
-
-  public String toStringWithoutFeatScores() {
     StringBuffer sb = new StringBuffer();
     sb.append(Vocabulary.word(this.getLHS()));
-    return sb.append(" ||| ").append(convertToString(this.getFrench())).append(" ||| ")
-        .append(convertToString(this.getEnglish())).toString();
+    sb.append(" ||| ");
+    sb.append(Vocabulary.getWords(this.getFrench()));
+    sb.append(" ||| ");
+    sb.append(Vocabulary.getWords(this.getEnglish()));
+    sb.append(" |||");
+    sb.append(" " + getFeatureVector());
+    sb.append(String.format(" ||| %.3f", getEstimatedCost()));
+    return sb.toString();
   }
 
   /**

@@ -3,6 +3,7 @@ package joshua.decoder.ff.tm;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 
 
 /**
@@ -23,9 +24,9 @@ public interface RuleCollection {
   /**
    * Sorts the grammar rules in this collection using the provided feature functions.
    * 
-   * @param l_models Feature function models to use during sorting.
+   * @param weights the model weights.
    */
-  void sortRules(List<FeatureFunction> l_models);
+  void sortRules(List<FeatureFunction> models);
 
   /**
    * TODO: now, we assume this function will be called only after all the rules have been read; this

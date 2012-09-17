@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -114,13 +115,6 @@ public class PackedGrammar extends BatchGrammar {
       }
     }
   }
-
-  // @Override
-  // public void sortGrammar(List<FeatureFunction> models) {
-  // for (PackedSlice slice : slices) {
-  // slice.sort(models);
-  // }
-  // }
 
   @Override
   public Trie getTrieRoot() {
@@ -292,7 +286,7 @@ public class PackedGrammar extends BatchGrammar {
 
         BilingualRule rule =
             new BilingualRule(grammar.source[rule_position + 3 * i], src,
-							grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
+                grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
         grammar.cache[block_id] = rule.estimateRuleCost(models);
       }
 
@@ -437,44 +431,27 @@ public class PackedGrammar extends BatchGrammar {
       return parent.src;
     }
 
+    /**
+     * This needs to create a sparse feature vector.
+     */
     @Override
-    public float[] getDenseFeatures() {
-      if (features == null) {
-        features = parent.grammar.getFeatures(parent.grammar.source[address + 2]);
-      }
-      return features;
+    public FeatureVector getFeatureVector() {
+      return new FeatureVector();
     }
 
     @Override
-    public float getDenseFeature(int column) {
-      return 0;
-    }
-
-    @Override
-    public void setEstCost(float cost) {
+    public void setEstimatedCost(float cost) {
       parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
     }
 
     @Override
-    public float getEstCost() {
+    public float getEstimatedCost() {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
     }
 
     @Override
-    public float estimateRuleCost(List<FeatureFunction> featureFunctions) {
+    public float estimateRuleCost(List<FeatureFunction> models) {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
-    }
-
-    @Override
-    @Deprecated
-    public String toString(Map<Integer, String> ntVocab) {
-      return null;
-    }
-
-    @Override
-    @Deprecated
-    public String toStringWithoutFeatScores() {
-      return null;
     }
   }
 
@@ -574,7 +551,7 @@ public class PackedGrammar extends BatchGrammar {
 
         BilingualRule rule =
             new BilingualRule(source[rule_position + 3 * i], src, getTarget(target_address),
-							getFeatures(block_id), arity, owner);
+                getFeatures(block_id), arity, owner);
         cache[block_id] = rule.estimateRuleCost(models);
       }
 
@@ -615,7 +592,9 @@ public class PackedGrammar extends BatchGrammar {
       return tgt;
     }
 
-    final float[] getFeatures(int block_id, float[] feature_vector) {
+
+
+    final String getFeatures(int block_id, float[] feature_vector) {
       int feature_position = featureLookup[block_id];
       int num_features = features.getInt(feature_position);
       feature_position += 4;
@@ -625,10 +604,28 @@ public class PackedGrammar extends BatchGrammar {
         feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
         feature_position += 4 + quantizer.size();
       }
-      return feature_vector;
+      return "";
     }
 
-    final float[] getFeatures(int block_id) {
+    // OLD VERSION
+    /*
+     * final float[] getFeatures(int block_id, float[] feature_vector) { int feature_position =
+     * featureLookup[block_id]; int num_features = features.getInt(feature_position);
+     * feature_position += 4; for (int i = 0; i < num_features; i++) { int feature_id =
+     * features.getInt(feature_position); Quantizer quantizer = quantization.get(feature_id);
+     * feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
+     * feature_position += 4 + quantizer.size(); } return feature_vector; }
+     */
+
+    // OLD VERSION
+    /*
+     * final float[] getFeatures(int block_id) { float[] feature_vector = new
+     * float[JoshuaConfiguration.num_phrasal_features]; return getFeatures(block_id,
+     * feature_vector); }
+     */
+
+    // NEW VERSION: doesn't work, needs to return the right value
+    final String getFeatures(int block_id) {
       float[] feature_vector = new float[JoshuaConfiguration.num_phrasal_features];
       return getFeatures(block_id, feature_vector);
     }
@@ -638,9 +635,8 @@ public class PackedGrammar extends BatchGrammar {
       int tgt_address = source[address + 1];
       int data_block = source[address + 2];
       BilingualRule rule =
-          new BilingualRule(lhs, src, getTarget(tgt_address), getFeatures(data_block), arity,
-						owner);
-      if (cache[data_block] != Float.NEGATIVE_INFINITY) rule.setEstCost(cache[data_block]);
+          new BilingualRule(lhs, src, getTarget(tgt_address), getFeatures(data_block), arity, owner);
+      if (cache[data_block] != Float.NEGATIVE_INFINITY) rule.setEstimatedCost(cache[data_block]);
       return rule;
     }
 

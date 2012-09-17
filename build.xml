@@ -139,7 +139,7 @@
 
   <!-- Compile the Java code. -->
   <target name="java" depends="init">
-	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
+		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
 	  <!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
@@ -295,7 +295,7 @@
 
   <!-- Compile the Javadocs and Markdown documentation into web pages -->
   <target name="documentation">
-	<doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+	  <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
   </target>
 
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

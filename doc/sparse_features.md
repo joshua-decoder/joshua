@@ -127,7 +127,7 @@ X = done
   - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
   - [X] Stateless features: computeCost(), computeFeatures()
   - [X] A separate precomputable feature type?
-- [ ] Adapt all existing features to the new interface
+- [X] Adapt all existing features to the new interface
   - [X] ArityPenalty
   - [X] OOVFF
   - [X] WordPenalty
@@ -161,3 +161,8 @@ X = done
   are then just ignored.
 - [ ] Modify PRO to work with sparse labeled features
 * [ ] Get batch MIRA working with sparse features
+
+
+--
+Currently, need to get rid of whole notion of precomputable features, just map unlabeled ones to
+their default names and precompute the score quite easily.

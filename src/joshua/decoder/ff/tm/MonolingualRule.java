@@ -6,13 +6,13 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.PrecomputableFF;
+import joshua.decoder.ff.FeatureVector;
 
 /**
- * this class implements MonolingualRule
+ * This class implements MonolingualRule.
  * 
- * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class MonolingualRule implements Rule {
 
@@ -30,35 +30,22 @@ public class MonolingualRule implements Rule {
                          // Source side
   private int arity;
 
-	// The set of dense feature scores for this rule.
-  // private float[] featScores;
-  private float[] denseFeatures;
-	
-	// And a string containing the sparse ones
-	private String sparseFeatures;
+  // And a string containing the sparse ones
+  protected String sparseFeatures;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
    * of the feature function
    */
-  private int owner;
+  private int owner = -1;
 
   /**
-   * estimate_cost depends on rule itself: statelesscost +
-   * transition_cost(non-stateless/non-contexual* models), we need this variable in order to provide
-   * sorting for cube-pruning
+   * This is the cost computed only from the features present with the grammar rule.  This cost is
+   * needed to sort the rules in the grammar for cube pruning, but isn't the full cost of applying
+   * the rule (which will include contextual features that can't be computed until the rule is
+   * applied).
    */
-  private float est_cost = 0;
-
-  // ===============================================================
-  // Static Fields
-  // ===============================================================
-
-  // TODO: Ideally, we shouldn't have to have dummy rule IDs
-  // and dummy owners. How can this need be eliminated?
-  public static final int DUMMY_RULE_ID = 1;
-  public static final int DUMMY_OWNER = 1;
-
+  private float estimatedCost = 0.0f;
 
   // ===============================================================
   // Constructors
@@ -74,10 +61,10 @@ public class MonolingualRule implements Rule {
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
    */
-  public MonolingualRule(int lhs, int[] sourceRhs, float[] featureScores, int arity, int owner) {
+  public MonolingualRule(int lhs, int[] sourceRhs, String sparseFeatures, int arity, int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.denseFeatures = featureScores;
+    this.sparseFeatures = sparseFeatures;
     this.arity = arity;
     this.owner = owner;
   }
@@ -85,28 +72,24 @@ public class MonolingualRule implements Rule {
 
   // called by class who does not care about lattice_cost,
   // rule_id, and owner
-  public MonolingualRule(int lhs_, int[] source_rhs, float[] feature_scores, int arity_) {
+  public MonolingualRule(int lhs_, int[] source_rhs, int arity_) {
     this.lhs = lhs_;
     this.pFrench = source_rhs;
-    this.denseFeatures = feature_scores;
     this.arity = arity_;
 
-    // ==== dummy values
-    this.owner = DUMMY_OWNER;
+    this.owner = -1;
   }
 
-	/**
-	 * Sparse feature version.
-	 */
-  public MonolingualRule(int lhs_, int[] source_rhs, float[] dense_scores, String sparse_features, int arity_) {
+  /**
+   * Sparse feature version.
+   */
+  public MonolingualRule(int lhs_, int[] source_rhs, String sparse_features, int arity_) {
     this.lhs = lhs_;
     this.pFrench = source_rhs;
-    this.denseFeatures = dense_scores;
-		this.sparseFeatures = sparse_features;
+    this.sparseFeatures = sparse_features;
     this.arity = arity_;
 
-    // ==== dummy values
-    this.owner = DUMMY_OWNER;
+    this.owner = -1;
   }
 
 
@@ -122,7 +105,6 @@ public class MonolingualRule implements Rule {
     return this.arity;
   }
 
-
   public final void setOwner(int owner) {
     this.owner = owner;
   }
@@ -131,7 +113,6 @@ public class MonolingualRule implements Rule {
     return this.owner;
   }
 
-
   public final void setLHS(int lhs) {
     this.lhs = lhs;
   }
@@ -139,7 +120,6 @@ public class MonolingualRule implements Rule {
   public final int getLHS() {
     return this.lhs;
   }
-
 
   public void setEnglish(int[] eng) {
     // TODO: do nothing
@@ -150,7 +130,6 @@ public class MonolingualRule implements Rule {
     return null;
   }
 
-
   public final void setFrench(int[] french) {
     this.pFrench = french;
   }
@@ -160,115 +139,104 @@ public class MonolingualRule implements Rule {
   }
 
 
-	/* This function returns the dense (phrasal) features discovered when the rule was loaded.  Dense
-	 * features are the list of unlabeled features that preceded labeled ones.  They can also be
-	 * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
-	 * preferred.
-	 */ 
-  public final float[] getDenseFeatures() {
-    return this.denseFeatures;
+  /* This function returns the feature vector found in the rule's grammar file.
+   */ 
+  public final FeatureVector getFeatureVector() {
+    return computeFeatures();
   }
 
-  public final float getEstCost() {
-    if (est_cost <= Double.NEGATIVE_INFINITY) {
-      logger.warning("The est cost is neg infinity; must be bad rule; rule is:\n" + toString());
-    }
-    return est_cost;
+  public final String getFeatureString() {
+    return sparseFeatures;
   }
 
-  public final void setEstCost(float cost) {
+  public final void setEstimatedCost(float cost) {
     if (cost <= Double.NEGATIVE_INFINITY) {
       logger.warning("The cost is being set to -infinity in " + "rule:\n" + toString());
     }
-    est_cost = cost;
+    estimatedCost = cost;
   }
+
+  public final float getEstimatedCost() {
+    if (estimatedCost <= Double.NEGATIVE_INFINITY) {
+      logger.warning("The estimatedCost is neg infinity; must be bad rule; rule is:\n" + toString());
+    }
+    return estimatedCost;
+  }
+
 
   /**
-   * Set a lower-bound estimate inside the rule returns full estimate.
+   * Set a lower-bound estimate inside the rule returns full estimate.  By lower bound, we mean the
+   * set of precomputable features (i.e., those present with the rule in the grammar file, that can
+   * be computed as soon as we have a weight vector).  The rule's actual, full cost will be greater
+   * than this, but can't be computed until the rule is applied in context and the cost of stateful
+   * features is applied.
+   *
+   * @param weights the weights 
    */
-  public final float estimateRuleCost(List<FeatureFunction> featureFunctions) {
-    if (null == featureFunctions) {
+  public final float estimateRuleCost(List<FeatureFunction> models) {
+    if (null == models)
       return 0.0f;
-    } else {
-      float estcost = 0.0f;
-      for (FeatureFunction ff : featureFunctions) {
-				if (ff instanceof PrecomputableFF)
-					estcost += ((PrecomputableFF)ff).computeCost(this);
-      }
 
-      this.est_cost = estcost;
-      return estcost;
+    // TODO: this should be cached
+    this.estimatedCost = 0.0f; //weights.innerProduct(computeFeatures());
+    StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
+    
+    for (FeatureFunction ff: models) {
+      this.estimatedCost -= ff.estimateCost(this, -1);
+      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(), -ff.estimateCost(this, -1)));
     }
-  }
+
+    System.err.println(sb.toString());
+    return estimatedCost;
+  }    
+
 
   // ===============================================================
   // Methods
   // ===============================================================
 
-  public void setFeatureCost(int column, float score) {
-    synchronized (this) {
-      denseFeatures[column] = score;
+  /**
+   * This function does the work of turning the string version of the sparse features (passed in
+   * when the rule was created) into an actual set of features.  This is a bit complicated because
+   * we support intermingled labeled and unlabeled features, where the unlabeled features are mapped
+   * to a default name template of the form "PhraseModel_OWNER_INDEX".
+   */
+  public FeatureVector computeFeatures() {
+
+    /* Now read the feature scores, which can be any number of dense features and sparse features.
+     * Any unlabeled feature becomes a dense feature.  By convention, dense features should precede
+     * sparse (labeled) ones, but it's not required.
+     */
+
+    if (owner == -1) {
+      System.err.println("* FATAL: You asked me to compute the features for a rule, but haven't told me the rule's owner.");
+      System.err.println("* RULE: " + this.toString());
+      System.exit(1);
     }
+
+    FeatureVector features = new FeatureVector(sparseFeatures, "PhraseModel_" + Vocabulary.word(owner) + "_");
+    features.times(-1);
+    return features;
   }
 
-
-  public float getDenseFeature(int column) {
-    synchronized (this) {
-      return denseFeatures[column];
-    }
-  }
 
   // ===============================================================
   // Serialization Methods
   // ===============================================================
   // BUG: These are all far too redundant. Should be refactored to share.
 
-  // Caching this method significantly improves performance
-  // We mark it transient because it is, though cf
-  // java.io.Serializable
-  private transient String cachedToString = null;
-
-  @Deprecated
-  public String toString(Map<Integer, String> ntVocab) {
-    if (null == this.cachedToString) {
-      StringBuffer sb = new StringBuffer();
-      sb.append(ntVocab.get(this.lhs));
-      sb.append(" ||| ");
-      sb.append(Vocabulary.getWords(this.pFrench));
-      sb.append(" |||");
-      for (int i = 0; i < this.denseFeatures.length; i++) {
-        // sb.append(String.format(" %.4f", this.feat_scores[i]));
-        sb.append(' ').append(Float.toString(this.denseFeatures[i]));
-      }
-      this.cachedToString = sb.toString();
-    }
-    return this.cachedToString;
-  }
-
-  // do not use cachedToString
-  @Deprecated
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(Vocabulary.word(this.lhs));
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(this.pFrench));
-    sb.append(" |||");
-    for (int i = 0; i < this.denseFeatures.length; i++) {
-      sb.append(String.format(" %.4f", this.denseFeatures[i]));
-    }
+    sb.append(" ||| " + sparseFeatures);
+    // FeatureVector features = this.getFeatureVector();
+    // for (String feature: features.keySet()) {
+    //   sb.append(String.format(" %s=%.5f", feature, features.get(feature)));
+    // }
     return sb.toString();
   }
-
-
-  @Deprecated
-  public String toStringWithoutFeatScores() {
-    StringBuffer sb = new StringBuffer();
-    sb.append(Vocabulary.word(this.getLHS()));
-
-    return sb.append(" ||| ").append(convertToString(this.getFrench())).toString();
-  }
-
-
 
   public String convertToString(int[] words) {
     StringBuffer sb = new StringBuffer();

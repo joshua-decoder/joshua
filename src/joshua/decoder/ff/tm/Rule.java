@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 
 
 /**
@@ -44,11 +45,11 @@ public interface Rule {
 	 * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
 	 * preferred.
 	 */ 
-	float[] getDenseFeatures();
+	public FeatureVector getFeatureVector();
 
-  void setEstCost(float cost);
+  void setEstimatedCost(float cost);
 
-  float getEstCost();
+  float getEstimatedCost();
 
 
   // ===============================================================
@@ -58,7 +59,7 @@ public interface Rule {
   /**
    * Set a lower-bound estimate inside the rule returns full estimate.
    */
-  float estimateRuleCost(List<FeatureFunction> featureFunctions);
+  float estimateRuleCost(List<FeatureFunction> models);
 
 
   /**
@@ -66,8 +67,8 @@ public interface Rule {
    */
   Comparator<Rule> NegtiveCostComparator = new Comparator<Rule>() {
     public int compare(Rule rule1, Rule rule2) {
-      float cost1 = rule1.getEstCost();
-      float cost2 = rule2.getEstCost();
+      float cost1 = rule1.getEstimatedCost();
+      float cost2 = rule2.getEstimatedCost();
       if (cost1 > cost2) {
         return -1;
       } else if (cost1 == cost2) {
@@ -78,12 +79,5 @@ public interface Rule {
     }
   };
 
-  @Deprecated
-  String toString(Map<Integer, String> ntVocab);
-
-  @Deprecated
   String toString();
-
-  @Deprecated
-  String toStringWithoutFeatScores();
 }

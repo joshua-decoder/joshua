@@ -65,60 +65,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
       }
     }
 
-		/* Now read the feature scores, which can be any number of dense features and sparse features.
-		 * Any unlabeled feature becomes a dense feature.  By convention, dense features should precede
-		 * sparse (labeled) ones, but it's not required.
-		 */
-    String[] tokens = fields[3].split("\\s+");
+		String sparse_features = fields[3];
 
-		int denseFeatureCount = 0;
-		for (int i = 0; i < tokens.length; i++) {
-			if (tokens[i].indexOf('=') == -1)
-				denseFeatureCount++;
-		}
-
-    float[] dense_scores = new float[denseFeatureCount];
-		String sparse_features = "";
-		denseFeatureCount = 0;
-		for (int i = 0; i < tokens.length; i++) {
-			if (tokens[i].indexOf('=') == -1) {
-				dense_scores[denseFeatureCount] = Float.parseFloat(tokens[i]);
-				denseFeatureCount++;
-			} else {
-				sparse_features += ((sparse_features.length() > 0) ? " " : "") + tokens[i];
-			}
-		}
-
-		return new BilingualRule(lhs, french, english, dense_scores, sparse_features, arity);
-  }
-
-
-  @Override
-  public String toTokenIds(BilingualRule rule) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(rule.getLHS());
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getFrench()));
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getEnglish()));
-    sb.append(" |||");
-
-    float[] feature_scores = rule.getDenseFeatures();
-    for (int i = 0; i < feature_scores.length; i++) {
-      sb.append(String.format(" %.4f", feature_scores[i]));
-    }
-    return sb.toString();
-  }
-
-  @Override
-  public String toTokenIdsWithoutFeatureScores(BilingualRule rule) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(rule.getLHS());
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getFrench()));
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getEnglish()));
-    return sb.toString();
+		return new BilingualRule(lhs, french, english, sparse_features, arity);
   }
 
   @Override
@@ -130,11 +79,8 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(rule.getEnglish()));
     sb.append(" |||");
+		sb.append(" " + rule.computeFeatures());
 
-    float[] feature_scores = rule.getDenseFeatures();
-    for (int i = 0; i < feature_scores.length; i++) {
-      sb.append(String.format(" %.4f", feature_scores[i]));
-    }
     return sb.toString();
   }
 

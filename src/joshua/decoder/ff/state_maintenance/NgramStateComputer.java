@@ -23,17 +23,17 @@ public class NgramStateComputer implements StateComputer<NgramDPState>, Comparab
     logger.info("NgramStateComputer, order=" + this.ngramOrder);
   }
 
-	public int getOrder() {
-		return ngramOrder;
-	}
+  public int getOrder() {
+    return ngramOrder;
+  }
 
-	@Override
-	public int compareTo(Object otherState) {
-		if (this == otherState)
-			return 0;
-		else
-			return -1;
-	}
+  @Override
+  public int compareTo(Object otherState) {
+    if (this == otherState)
+      return 0;
+    else
+      return -1;
+  }
 
   public NgramDPState computeFinalState(HGNode tailNode, int i, int j,
       SourcePath srcPath) {
@@ -57,7 +57,7 @@ public class NgramStateComputer implements StateComputer<NgramDPState>, Comparab
         int index = -(curID + 1);
 
         if (logger.isLoggable(Level.FINEST)) 
-					logger.finest("Looking up state at: " + index);
+          logger.finest("Looking up state at: " + index);
 
         NgramDPState tailState = (NgramDPState) tailNodes.get(index).getDPState(this);
         List<Integer> leftContext = tailState.getLeftLMStateWords();

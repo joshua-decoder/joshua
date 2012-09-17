@@ -117,10 +117,6 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
 
   public abstract String toWordsWithoutFeatureScores(R rule);
 
-  public abstract String toTokenIds(R rule);
-
-  public abstract String toTokenIdsWithoutFeatureScores(R rule);
-
   public int cleanNonTerminal(int tokenID) {
     // cleans NT of any markup, e.g., [X,1] may becomes [X], depending
     return Vocabulary.id(cleanNonTerminal(Vocabulary.word(tokenID)));

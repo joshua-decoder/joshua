@@ -4,6 +4,7 @@ import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -64,6 +65,20 @@ public abstract class FeatureFunction {
     processArgs(this.argString);
   }
 
+  public abstract float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+  public abstract FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+
+  public abstract StateComputer getStateComputer();
+
+  /**
+   * This function is called when initializing translation grammars (for pruning purpose, and to get
+   * stateless cost for each rule). This is also needed to sort the rules for cube pruning.
+   */
+  public abstract float estimateCost(Rule rule, int sentID);
+
+  public abstract float estimateFutureCost(Rule rule, DPState state, int sentID);
+
+  
   /**
    * This function could be implemented to process the feature-line arguments in a generic way, if
    * so desired.
@@ -75,13 +90,6 @@ public abstract class FeatureFunction {
   /**************************************************************
    * OLD INTERFACE DON'T USE WILL SOON DELETE *******************
    **************************************************************/
-
-  /**
-   * It is used when initializing translation grammars (for pruning purpose, and to get stateless
-   * logP for each rule). This is also required to sort the rules (required by Cube-pruning).
-   */
-  // double estimateLogP(Rule rule, int sentID);
-
 
   /**
    * estimate future logP, e.g., the logPs of partial n-grams asscociated with the left-edge ngram

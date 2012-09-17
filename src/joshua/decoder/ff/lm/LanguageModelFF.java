@@ -70,13 +70,20 @@ public class LanguageModelFF extends StatefulFF {
    */
   private final int ngramOrder;
 
+
+  /**
+   * We cache the weight of the feature since there is only one.
+   */
+  private float weight;
+
+
   // boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 
   /**
    * stateID is any integer exept -1
    **/
-  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm, StateComputer state) {
-    super(weights, "lm", state);
+  public LanguageModelFF(FeatureVector weights, String featureName, NGramLanguageModel lm, StateComputer state) {
+    super(weights, featureName, state);
     this.lmGrammar = lm;
     this.ngramOrder = lm.getOrder();
     this.START_SYM_ID = Vocabulary.id(START_SYM);
@@ -84,6 +91,11 @@ public class LanguageModelFF extends StatefulFF {
 
     LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = Vocabulary.id(BACKOFF_LEFT_LM_STATE_SYM);
     LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);
+
+    if (! weights.containsKey(name))
+      System.err.println("* WARNING: no weight found for LanguageModelFF '" + name + "'");
+      
+    this.weight = weights.get(name);
   }
 
   // public float reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart,
@@ -93,39 +105,53 @@ public class LanguageModelFF extends StatefulFF {
 
   // public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
   //     SourcePath srcPath, int sentID) {
+  /**
+   * Computes the cost of the transition, which is the inner product of the feature value computed
+   * along this edge times the feature weight.
+   *
+   * @return the transition cost
+   */
+  @Override
   public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath srcPath, int sentID) {
-    return computeTransition(rule.getEnglish(), tailNodes);
+    return weight * computeTransition(rule.getEnglish(), tailNodes);
   }
 
 
+  /**
+   * Computes the features incurred along this edge.  Note that these features are unweighted costs
+   * of the feature; they are the feature cost, not the model cost, or the inner product of them.
+   */
   public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, 
-		SourcePath sourcePath, int sentID) {
-		return new FeatureVector(name, computeTransition(rule.getEnglish(), tailNodes));
-	}
+    SourcePath sourcePath, int sentID) {
+    FeatureVector transitionFeatures = null;
+    if (rule != null)
+      transitionFeatures = new FeatureVector(name, computeTransition(rule.getEnglish(), tailNodes));
+    else
+      transitionFeatures = new FeatureVector();
+    
+    return transitionFeatures;
+  }
 
 
   // public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
   //     int sentID) {
   public float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
-    return computeFinalTransitionLogP((NgramDPState) tailNode.getDPState(this.getStateComputer()));
+    return weight * computeFinalTransitionLogP((NgramDPState) tailNode.getDPState(this.getStateComputer()));
   }
 
 
   /**
    * will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit
    * into its left side.
-	 *
-	 * This is only called from within the PackedGrammar.java code.
    */
-  public float estimateLogP(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, int sentID) {
     return estimateRuleLogProb(rule.getEnglish());
   }
 
-	public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
-		return estimateFutureLogP(rule, currentState, sentID);
-	}
-
+  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+    return estimateFutureLogP(rule, currentState, sentID);
+  }
 
   public float estimateFutureLogP(Rule rule, DPState curDPState, int sentID) {
     // TODO: do not consider <s> and </s>
@@ -135,7 +161,6 @@ public class LanguageModelFF extends StatefulFF {
     return estimateStateLogProb((NgramDPState) curDPState, addStart, addEnd);
   }
 
-
   /**
    * Compute the cost of a rule application. The cost of applying a rule is computed by determining
    * the n-gram costs for all n-grams created by this rule application, and summing them. N-grams
@@ -144,7 +169,7 @@ public class LanguageModelFF extends StatefulFF {
    * nonterminals. In all of these situations, the corresponding boundary words of the node in the
    * hypergraph represented by the nonterminal must be retrieved.
    */
-  private float computeTransition(int[] enWords, List<HGNode> antNodes) {
+  private float computeTransition(int[] enWords, List<HGNode> tailNodes) {
 
     List<Integer> currentNgram = new LinkedList<Integer>();
     float transitionLogP = 0.0f;
@@ -155,7 +180,7 @@ public class LanguageModelFF extends StatefulFF {
       if (Vocabulary.nt(curID)) {
         int index = -(curID + 1);
 
-        NgramDPState state = (NgramDPState) antNodes.get(index).getDPState(this.getStateComputer());
+        NgramDPState state = (NgramDPState) tailNodes.get(index).getDPState(this.getStateComputer());
         List<Integer> leftContext = state.getLeftLMStateWords();
         List<Integer> rightContext = state.getRightLMStateWords();
         if (leftContext.size() != rightContext.size()) {
@@ -182,7 +207,9 @@ public class LanguageModelFF extends StatefulFF {
             }
           } else if (currentNgram.size() == this.ngramOrder) {
             // compute the current word probablity, and remove it
-            transitionLogP += this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
+            float prob = (float)this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
+            transitionLogP += prob;
+            System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram), prob));
             currentNgram.remove(0);
           }
 
@@ -207,92 +234,99 @@ public class LanguageModelFF extends StatefulFF {
     return transitionLogP;
   }
 
+  /**
+   * Compute the cost of a rule application. The cost of applying a rule is computed by determining
+   * the n-gram costs for all n-grams created by this rule application, and summing them. N-grams
+   * are created when (a) terminal words in the rule string are followed by a nonterminal (b)
+   * terminal words in the rule string are preceded by a nonterminal (c) we encounter adjacent
+   * nonterminals. In all of these situations, the corresponding boundary words of the node in the
+   * hypergraph represented by the nonterminal must be retrieved.
+   */
+  private float recomputeTransition(int[] tgt, List<HGNode> antecedents) {
+    // Maximum number of upcoming terminals to take out of the estimate (less-than-n-grams scored
+    // in estimation).
+    int head = this.ngramOrder - 1;
+    // Maximum number of upcoming terminals to add to n-gram following a nonterminal.
+    int tail = 0;
+    List<Integer> current_ngram = new LinkedList<Integer>();
+    List<Integer> duplicate_ngram = new LinkedList<Integer>();
 
-  // private double reEstimateTransition(int[] tgt, List<HGNode> antecedents) {
-  //   // Maximum number of upcoming terminals to take out of the estimate (less-than-n-grams scored
-  //   // in estimation).
-  //   int head = this.ngramOrder - 1;
-  //   // Maximum number of upcoming terminals to add to n-gram following a nonterminal.
-  //   int tail = 0;
-  //   List<Integer> current_ngram = new LinkedList<Integer>();
-  //   List<Integer> duplicate_ngram = new LinkedList<Integer>();
+    float log_p = 0;
+    float fix = 0;
+    for (int c = 0; c < tgt.length; c++) {
+      int id = tgt[c];
 
-  //   double log_p = 0;
-  //   double fix = 0;
-  //   for (int c = 0; c < tgt.length; c++) {
-  //     int id = tgt[c];
-
-  //     if (Vocabulary.nt(id)) {
-  //       // Nonterminal symbol.
-  //       if (!duplicate_ngram.isEmpty()) {
-  //         fix += this.lmGrammar.sentenceLogProbability(duplicate_ngram, ngramOrder, 1);
-  //       }
-  //       int index = -(id + 1);
-  //       NgramDPState state = (NgramDPState) antecedents.get(index).getDPState(this.getStateComputer());
-  //       List<Integer> left_context = state.getLeftLMStateWords();
-  //       List<Integer> right_context = state.getRightLMStateWords();
-  //       if (left_context.size() != right_context.size()) {
-  //         throw new RuntimeException("Error in reEstimateTransition: left and right contexts have "
-  //             + "unequal lengths.");
-  //       }
-  //       // Left context.
-  //       for (int i = 0; i < left_context.size(); i++) {
-  //         int t = left_context.get(i);
-  //         current_ngram.add(t);
-  //         // Always calculate logP for <bo>: additional backoff weight
-  //         if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {
-  //           // TODO: Not sure what's happening here.
-  //           // Number of non-state words.
-  //           int numAdditionalBackoffWeight = current_ngram.size() - (i + 1);
-  //           // Compute additional backoff weight.
-  //           log_p +=
-  //               this.lmGrammar.logProbOfBackoffState(current_ngram, current_ngram.size(),
-  //                   numAdditionalBackoffWeight);
-  //           if (current_ngram.size() == this.ngramOrder) {
-  //             current_ngram.remove(0);
-  //           }
-  //         } else if (current_ngram.size() == this.ngramOrder) {
-  //           // Compute the current word probability, and remove it.
-  //           log_p += this.lmGrammar.ngramLogProbability(current_ngram, this.ngramOrder);
-  //           current_ngram.remove(0);
-  //         }
-  //       }
-  //       // Right context.
-  //       int current_size = current_ngram.size();
-  //       for (int i = 0; i < right_context.size(); i++) {
-  //         // Replace context.
-  //         current_ngram.set(current_size - right_context.size() + i, right_context.get(i));
-  //       }
-  //       head = this.ngramOrder - 1;
-  //       tail = this.ngramOrder - 1;
-  //       duplicate_ngram.clear();
-  //     } else {
-  //       // Terminal symbol.
-  //       if (head > 0) {
-  //         duplicate_ngram.add(id);
-  //         head--;
-  //         if (head == 0) {
-  //           fix += this.lmGrammar.sentenceLogProbability(duplicate_ngram, ngramOrder, 1);
-  //           duplicate_ngram.clear();
-  //         }
-  //       }
-  //       current_ngram.add(id);
-  //       tail--;
-  //       if (current_ngram.size() == this.ngramOrder) {
-  //         // Compute the current word probability, and remove it.
-  //         if (tail >= 0) {
-  //           log_p += this.lmGrammar.ngramLogProbability(current_ngram, this.ngramOrder);
-  //         }
-  //         current_ngram.remove(0);
-  //       }
-  //     }
-  //   }
-  //   if (!duplicate_ngram.isEmpty()) {
-  //     fix += this.lmGrammar.sentenceLogProbability(duplicate_ngram, ngramOrder, 1);
-  //     duplicate_ngram.clear();
-  //   }
-  //   return log_p - fix;
-  // }
+      if (Vocabulary.nt(id)) {
+        // Nonterminal symbol.
+        if (!duplicate_ngram.isEmpty()) {
+          fix += this.lmGrammar.sentenceLogProbability(duplicate_ngram, ngramOrder, 1);
+        }
+        int index = -(id + 1);
+        NgramDPState state = (NgramDPState) antecedents.get(index).getDPState(this.getStateComputer());
+        List<Integer> left_context = state.getLeftLMStateWords();
+        List<Integer> right_context = state.getRightLMStateWords();
+        if (left_context.size() != right_context.size()) {
+          throw new RuntimeException("Error in reEstimateTransition: left and right contexts have "
+              + "unequal lengths.");
+        }
+        // Left context.
+        for (int i = 0; i < left_context.size(); i++) {
+          int t = left_context.get(i);
+          current_ngram.add(t);
+          // Always calculate logP for <bo>: additional backoff weight
+          if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {
+            // TODO: Not sure what's happening here.
+            // Number of non-state words.
+            int numAdditionalBackoffWeight = current_ngram.size() - (i + 1);
+            // Compute additional backoff weight.
+            log_p +=
+                this.lmGrammar.logProbOfBackoffState(current_ngram, current_ngram.size(),
+                    numAdditionalBackoffWeight);
+            if (current_ngram.size() == this.ngramOrder) {
+              current_ngram.remove(0);
+            }
+          } else if (current_ngram.size() == this.ngramOrder) {
+            // Compute the current word probability, and remove it.
+            log_p += this.lmGrammar.ngramLogProbability(current_ngram, this.ngramOrder);
+            current_ngram.remove(0);
+          }
+        }
+        // Right context.
+        int current_size = current_ngram.size();
+        for (int i = 0; i < right_context.size(); i++) {
+          // Replace context.
+          current_ngram.set(current_size - right_context.size() + i, right_context.get(i));
+        }
+        head = this.ngramOrder - 1;
+        tail = this.ngramOrder - 1;
+        duplicate_ngram.clear();
+      } else {
+        // Terminal symbol.
+        if (head > 0) {
+          duplicate_ngram.add(id);
+          head--;
+          if (head == 0) {
+            fix += this.lmGrammar.sentenceLogProbability(duplicate_ngram, ngramOrder, 1);
+            duplicate_ngram.clear();
+          }
+        }
+        current_ngram.add(id);
+        tail--;
+        if (current_ngram.size() == this.ngramOrder) {
+          // Compute the current word probability, and remove it.
+          if (tail >= 0) {
+            log_p += this.lmGrammar.ngramLogProbability(current_ngram, this.ngramOrder);
+          }
+          current_ngram.remove(0);
+        }
+      }
+    }
+    if (!duplicate_ngram.isEmpty()) {
+      fix += this.lmGrammar.sentenceLogProbability(duplicate_ngram, ngramOrder, 1);
+      duplicate_ngram.clear();
+    }
+    return log_p - fix;
+  }
 
   private float computeFinalTransitionLogP(NgramDPState state) {
 

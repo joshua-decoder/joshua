@@ -14,7 +14,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -76,7 +76,6 @@ public class Chart {
   private Cell[][] cells; // note that in some cell, it might be null
   private int sourceLength;
   private List<FeatureFunction> featureFunctions;
-  private List<FeatureFunction> nonPhrasalFeatureFunctions;
   private List<StateComputer> stateComputers;
   private Grammar[] grammars;
   private DotChart[] dotcharts; // each grammar should have a dotchart associated with it
@@ -111,18 +110,12 @@ public class Chart {
    * course, we get passed the grammars too so we could move all of that into here.
    */
 
-  public Chart(Sentence sentence, List<FeatureFunction> featureFunctions,
-      List<StateComputer> stateComputers, Grammar[] grammars, boolean useMaxLMCostForOOV,
-      String goalSymbol) {
+  public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, 
+      List<StateComputer> stateComputers, Grammar[] grammars, String goalSymbol) {
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
     this.stateComputers = stateComputers;
-
-    this.nonPhrasalFeatureFunctions = new ArrayList<FeatureFunction>();
-    for (FeatureFunction ff : this.featureFunctions) {
-      if (!(ff instanceof PhraseModelFF)) this.nonPhrasalFeatureFunctions.add(ff);
-    }
 
     this.parseTree = null;
     if (sentence instanceof ParsedSentence)
@@ -134,12 +127,12 @@ public class Chart {
     this.goalSymbolID = Vocabulary.id(goalSymbol);
     this.goalBin = new Cell(this, this.goalSymbolID);
 
-		/* Create the grammars, leaving space for the OOV grammar. */
+    /* Create the grammars, leaving space for the OOV grammar. */
     this.grammars = new Grammar[grammars.length + 1];
-		for (int i = 0; i < grammars.length; i++)
-			this.grammars[i] = grammars[i];
-		MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar();
-		this.grammars[this.grammars.length - 1] = oovGrammar;
+    for (int i = 0; i < grammars.length; i++)
+      this.grammars[i] = grammars[i];
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov");
+    this.grammars[this.grammars.length - 1] = oovGrammar;
 
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
@@ -197,45 +190,40 @@ public class Chart {
           targetWord = sourceWord;
         }
 
-				int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll("\\[\\]",""));
+        int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll("\\[\\]",""));
 
         BilingualRule oov_rule = null;
-				int[] sourceWords = {sourceWord};
-				int[] targetWords = {targetWord};
+        int[] sourceWords = {sourceWord};
+        int[] targetWords = {targetWord};
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
           Collection<Integer> labels =
               parseTree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
-          for (int label : labels) {
-            oov_rule = new BilingualRule(label, sourceWords, targetWords, null, "OOVPenalty=1", 0);
-                // this.grammars[grammars.length - 1].constructLabeledOOVRule(
-                //     this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
-					}
+          for (int label : labels)
+            oov_rule = new BilingualRule(label, sourceWords, targetWords, "", 0);
+
         } else {
-					oov_rule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, null, "OOVPenalty=1", 0);
-          // oov_rule =
-          //     this.grammars[grammars.length - 1].constructOOVRule(this.featureFunctions.size(),
-          //         sourceWord, targetWord, useMaxLMCostForOOV);
-          oov_rule.estimateRuleCost(featureFunctions);
+          oov_rule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
         }
-				oovGrammar.addRule(oov_rule);
+        oovGrammar.addRule(oov_rule);
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
           // do not add the oov axiom
           logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
         } else {
-          addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule,
-              new SourcePath().extend(arc));
+          addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule, new SourcePath().extend(arc));
           logger.finer("Adding OOV rule:\t" + oov_rule.toString());
         }
       }
     }
 
-		// Grammars must be sorted.
-		oovGrammar.sortGrammar(this.featureFunctions);
+    // Grammars must be sorted.
+    oovGrammar.sortGrammar(this.featureFunctions);
 
+    /* Find the SourceDependent feature and give it access to the sentence. */
     for (FeatureFunction ff : this.featureFunctions)
-      if (ff instanceof SourceDependentFF) ((SourceDependentFF) ff).setSource(sentence);
+      if (ff instanceof SourceDependentFF) 
+        ((SourceDependentFF) ff).setSource(sentence);
 
     logger.fine("Finished seeding chart.");
   }
@@ -296,16 +284,19 @@ public class Chart {
         // for each rule with applicable rules
         for (DotNode dotNode : dotcharts[g].getDotCell(i, j).getDotNodes()) {
           RuleCollection ruleCollection = dotNode.getApplicableRules();
-          if (ruleCollection == null) continue;
+          if (ruleCollection == null) 
+            continue;
 
           // create span if required
-          if (cells[i][j] == null) cells[i][j] = new Cell(this, goalSymbolID);
+          if (cells[i][j] == null) 
+            cells[i][j] = new Cell(this, goalSymbolID);
 
           List<Rule> sortedAndFilteredRules =
               manualConstraintsHandler.filterRules(i, j, ruleCollection.getSortedRules());
           SourcePath sourcePath = dotNode.getSourcePath();
 
-          if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0) continue;
+          if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0) 
+            continue;
 
           int arity = ruleCollection.getArity();
 
@@ -585,7 +576,9 @@ public class Chart {
   }
 
 
-  /** axiom is for rules with zero-arity */
+  /** 
+   * This functions add to the hypergraph rules with zero arity (i.e., terminal rules).
+   */
   public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
     if (null == this.cells[i][j]) {
       this.cells[i][j] = new Cell(this, this.goalSymbolID);
@@ -593,11 +586,7 @@ public class Chart {
 
     this.cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
         j, srcPath, stateComputers, segmentID), rule, i, j, null, srcPath, false);
-
-    // combiner.addAxiom(this, this.cells[i][j], i, j, rule, srcPath);
   }
-
-
 
   private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity,
       SourcePath srcPath) {
@@ -629,8 +618,9 @@ public class Chart {
       filteredRules = manualConstraintsHandler.filterRules(i, j, sortedRules);
     }
 
-    if (logger.isLoggable(Level.FINEST)) for (Rule r : filteredRules)
-      logger.finest(r.toString() + " dense features: " + r.getDenseFeatures().length);
+    if (logger.isLoggable(Level.FINEST)) 
+      for (Rule r : filteredRules)
+        logger.finest(r.toString() + " # features: " + r.getFeatureVector().size());
 
     if (arity == 0)
       combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);

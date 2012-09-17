@@ -183,6 +183,11 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     }
   }
 
+	@Override
+	public float estimateCost(Rule rule, int sentID) {
+		return 0.0f;
+	}
+
   private final int[] getSourcePhrase(int anchor) {
     int idx;
     int length =

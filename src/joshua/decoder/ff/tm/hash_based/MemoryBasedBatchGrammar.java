@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm.hash_based;
 
 import java.io.IOException;
@@ -52,7 +37,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private MemoryBasedTrie root = null;
 
   // protected ArrayList<FeatureFunction> featureFunctions = null;
-  private int owner;
+  private int owner = -1;
 
   private float oovFeatureCost = 100;
 
@@ -86,13 +71,19 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // ===============================================================
 
   public MemoryBasedBatchGrammar() {
-		this.root = new MemoryBasedTrie();
-	}
+    this.root = new MemoryBasedTrie();
+  }
+
+  public MemoryBasedBatchGrammar(String owner) {
+    this.root = new MemoryBasedTrie();
+    this.owner = Vocabulary.id(owner);
+  }
 
   public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
-    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
+    this.root =
+        new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
     modelReader = gr;
   }
 
@@ -111,7 +102,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     if (modelReader != null) {
       modelReader.initialize();
       for (BilingualRule rule : modelReader)
-        if (rule != null) addRule(rule);
+        if (rule != null) {
+          addRule(rule);
+        }
     } else {
       if (logger.isLoggable(Level.WARNING))
         logger.warning("Couldn't create a GrammarReader for file " + grammarFile + " with format "
@@ -149,9 +142,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     return this.qtyRulesRead;
   }
 
-  public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] denseScores,
-      int arity) {
-    return new BilingualRule(lhs, sourceWords, targetWords, denseScores, "", arity);
+  public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords,
+      float[] denseScores, int arity) {
+    System.err.println("* WARNING: constructManualRule() not working");
+    return new BilingualRule(lhs, sourceWords, targetWords, "", arity);
   }
 
   /**
@@ -169,16 +163,24 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     return this.root;
   }
 
+
+  /**
+   * Adds a rule to the grammar
+   */
   public void addRule(BilingualRule rule) {
 
     // TODO: Why two increments?
     this.qtyRulesRead++;
     ruleIDCount++;
 
+    if (owner == -1) {
+      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
+      System.exit(1);
+    }
     rule.setOwner(owner);
 
     // TODO: make sure costs are calculated here or in reader
-    temEstcost += rule.getEstCost();
+    temEstcost += rule.getEstimatedCost();
 
     // === identify the position, and insert the trie nodes as necessary
     MemoryBasedTrie pos = root;
@@ -199,7 +201,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
       // we call exactMatch() here to avoid applying regular expressions along the arc
       MemoryBasedTrie nextLayer = pos.exactMatch(curSymID);
       if (null == nextLayer) {
-        nextLayer = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
+        nextLayer =
+            new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
         if (pos.hasExtensions() == false) {
           pos.childrenTbl = new HashMap<Integer, MemoryBasedTrie>();
         }

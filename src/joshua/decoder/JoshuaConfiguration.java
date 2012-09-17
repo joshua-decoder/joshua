@@ -459,7 +459,7 @@ public class JoshuaConfiguration {
 
           } else if (parameter.equals(normalize_key("feature-function"))) {
             // add the feature to the list of features for later processing
-            features.add(fds[1]);
+            features.add("feature_function = " + fds[1]);
 
           } else {
             logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");

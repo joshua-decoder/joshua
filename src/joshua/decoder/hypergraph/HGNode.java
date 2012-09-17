@@ -2,9 +2,7 @@ package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 
@@ -80,22 +78,23 @@ public class HGNode implements Prunable<HGNode> {
   // Methods
   // ===============================================================
 
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
 
-		sb.append(String.format("%s (%d,%d)", Vocabulary.word(lhs), i, j));
-		if (dpStates != null)
-			for (DPState state: dpStates.values())
-				sb.append(" <" + state + ">");
+    sb.append(String.format("HGNODE: %s (%d,%d) score = %.5f", Vocabulary.word(lhs), i, j, bestHyperedge.bestDerivationLogP));
+    if (dpStates != null)
+      for (DPState state: dpStates.values())
+        sb.append("\n\t<" + state + ">");
+        
+    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
+    return sb.toString();
+  }
 
-		return sb.toString();
-	}
-
-	/**
-	 * Adds the hyperedge to the list of incoming hyperedges (i.e., ways to form this node), creating
-	 * the list if necessary. We then update the cache of the best incoming hyperedge via a call to
-	 * the (obscurely named) semiringPlus().
-	 */
+  /**
+   * Adds the hyperedge to the list of incoming hyperedges (i.e., ways to form this node), creating
+   * the list if necessary. We then update the cache of the best incoming hyperedge via a call to
+   * the (obscurely named) semiringPlus().
+   */
   public void addHyperedgeInNode(HyperEdge hyperEdge) {
     if (hyperEdge != null) {
       if (null == hyperedges)
@@ -107,18 +106,18 @@ public class HGNode implements Prunable<HGNode> {
   }
 
 
-	/**
-	 * Convenience function to add a list of hyperedges one at a time.
-	 */
+  /**
+   * Convenience function to add a list of hyperedges one at a time.
+   */
   public void addHyperedgesInNode(List<HyperEdge> hyperedges) {
     for (HyperEdge hyperEdge : hyperedges)
       addHyperedgeInNode(hyperEdge);
   }
 
 
-	/**
-	 * Updates the cache of the best incoming hyperedge.
-	 */
+  /**
+   * Updates the cache of the best incoming hyperedge.
+   */
   public void semiringPlus(HyperEdge hyperEdge) {
     if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < hyperEdge.bestDerivationLogP)
       bestHyperedge = hyperEdge;
@@ -146,24 +145,24 @@ public class HGNode implements Prunable<HGNode> {
   }
 
 
-	/**
-	 * Produce the signature of the item.  The span (i,j) is implicit and does not need to be part of
-	 * the signature.
-	 *
-	 * TODO: we shouldn't be using string signatures.
-	 */
+  /**
+   * Produce the signature of the item.  The span (i,j) is implicit and does not need to be part of
+   * the signature.
+   *
+   * TODO: we shouldn't be using string signatures.
+   */
   public String getSignature() {
     if (null == this.signature) {
       StringBuffer s = new StringBuffer();
       s.append(lhs);
       s.append(" ");
 
-			/* Iterate over all the node's states, creating the signature. */
+      /* Iterate over all the node's states, creating the signature. */
       if (null != this.dpStates && this.dpStates.size() > 0) {
-				for (StateComputer stateComputer: this.dpStates.keySet()) {
-					s.append(this.dpStates.get(stateComputer).getSignature(false));
-					s.append(STATE_SIG_SEP);
-				}
+        for (StateComputer stateComputer: this.dpStates.keySet()) {
+          s.append(this.dpStates.get(stateComputer).getSignature(false));
+          s.append(STATE_SIG_SEP);
+        }
 
         // Iterator<Map.Entry<Integer, DPState>> it = this.dpStates.entrySet().iterator();
         // while (it.hasNext()) {
