@@ -1008,6 +1008,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
+      s/<WEIGHTS_FILE>/$tunedir\/weights/g;
 			s/<LATTICEWEIGHT>/$latticeweight/g;
 			s/<LATTICEPARAM>/$latticeparam/g;
 			s/<LMFILE>/$LMFILES[0]/g;
@@ -1041,20 +1042,20 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		$cachepipe->cmd("mert-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR,
-										"$tunedir/joshua.config.ZMERT.final",
+										"$tunedir/weights.ZMERT.final",
 										"$tunedir/decoder_command",
 										"$tunedir/mert.config",
 										"$tunedir/params.txt");
-		system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
+		system("ln -sf weights.ZMERT.final $tunedir/weights.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/bin joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR,
-										"$tunedir/joshua.config.PRO.final",
+										"$tunedir/weights.PRO.final",
 										"$tunedir/decoder_command",
 										"$tunedir/pro.config",
 										"$tunedir/params.txt");
-		system("ln -sf joshua.config.PRO.final $tunedir/joshua.config.final");
+		system("ln -sf weights.PRO.final $tunedir/weights.final");
   }
 }
 
@@ -1148,9 +1149,14 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # copy the config file over
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-									"cat $tunedir/joshua.config.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=0/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > $testrun/joshua.config",
-									"$tunedir/joshua.config.final",
+									"cat $tunedir/joshua.config | $SCRIPTDIR/copy-config.pl -mark-oovs true -use-sent-specific-tm false -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
+									"$tunedir/joshua.config",
 									"$testrun/joshua.config");
+
+  $cachepipe->cmd("test-joshua-weights-from-tune-$run",
+									"cp $tunedir/weights.final $testrun/weights",
+									"$tunedir/weights.final",
+									"$testrun/weights");
 
   $cachepipe->cmd("test-decode-$run",
 									"./$testrun/decoder_command",

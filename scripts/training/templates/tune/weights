@@ -2,14 +2,14 @@
 
 # For each langage model line listed above, create a weight in the
 # following format: the keyword "lm", a 0-based index, and the weight.
-# lm INDEX WEIGHT
+# lm_INDEX WEIGHT
 
 <LMWEIGHTS>
 
 # The phrasal weights correspond to weights stored with each of the
 # grammar rules.  The format is
 #
-#   phrasemodel owner COLUMN WEIGHT
+#   PhraseModel_OWNER_COLUMN WEIGHT
 #
 # where COLUMN denotes the 0-based order of the parameter in the
 # grammar file and WEIGHT is the corresponding weight.  In the future,
