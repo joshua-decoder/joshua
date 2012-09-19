@@ -121,7 +121,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
         result[i] = curr;
       } else {
         int index = -curr - 1;
-        int label = getLabelWithSpan(edge.getAntNodes().get(index));
+        int label = getLabelWithSpan(edge.getTailNodes().get(index));
         result[i] = label * 2 - currNT;
         currNT++;
       }
@@ -150,7 +150,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
       System.err.println("getGoalSymbolNode: root node has no hyperedges");
       return null;
     }
-    return root.hyperedges.get(0).getAntNodes().get(0);
+    return root.hyperedges.get(0).getTailNodes().get(0);
   }
 
 

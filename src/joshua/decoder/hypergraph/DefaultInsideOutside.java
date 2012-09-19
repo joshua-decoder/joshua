@@ -112,8 +112,8 @@ public abstract class DefaultInsideOutside {
 
     // ### get inside prob of all my ant-items
     double inside = ONE_IN_SEMIRING;
-    if (dt.getAntNodes() != null) {
-      for (HGNode ant_it : dt.getAntNodes())
+    if (dt.getTailNodes() != null) {
+      for (HGNode ant_it : dt.getTailNodes())
         inside = multi_in_semiring(inside, (Double) tbl_inside_prob.get(ant_it));
     }
 
@@ -192,8 +192,8 @@ public abstract class DefaultInsideOutside {
 
   private void sanity_check_deduction(HyperEdge dt) {
     // ### recursive call on each ant item
-    if (null != dt.getAntNodes()) {
-      for (HGNode ant_it : dt.getAntNodes()) {
+    if (null != dt.getTailNodes()) {
+      for (HGNode ant_it : dt.getTailNodes()) {
         sanity_check_item(ant_it);
       }
     }
@@ -241,7 +241,7 @@ public abstract class DefaultInsideOutside {
   private double inside_estimation_deduction(HyperEdge dt, HGNode parent_item) {
     double inside_prob = ONE_IN_SEMIRING;
     // ### recursive call on each ant item
-    if (dt.getAntNodes() != null) for (HGNode ant_it : dt.getAntNodes()) {
+    if (dt.getTailNodes() != null) for (HGNode ant_it : dt.getTailNodes()) {
       double v_item = inside_estimation_item(ant_it);
       inside_prob = multi_in_semiring(inside_prob, v_item);
     }
@@ -283,8 +283,8 @@ public abstract class DefaultInsideOutside {
     additional_outside_prob = multi_in_semiring(additional_outside_prob, parent_deduct_prob);
 
     // ### sibing specifc
-    if (parent_dt.getAntNodes() != null && parent_dt.getAntNodes().size() > 1)
-      for (HGNode ant_it : parent_dt.getAntNodes()) {
+    if (parent_dt.getTailNodes() != null && parent_dt.getTailNodes().size() > 1)
+      for (HGNode ant_it : parent_dt.getTailNodes()) {
         if (ant_it != cur_it) {
           double inside_prob_item = (Double) tbl_inside_prob.get(ant_it);// inside prob
           additional_outside_prob = multi_in_semiring(additional_outside_prob, inside_prob_item);
@@ -313,13 +313,13 @@ public abstract class DefaultInsideOutside {
 
   private void outside_estimation_deduction(HyperEdge dt, HGNode parent_item) {
     // we do not need to outside prob if no ant items
-    if (dt.getAntNodes() != null) {
+    if (dt.getTailNodes() != null) {
       // ### deduction specific prob
       double deduction_prob = getHyperedgeLogProb(dt, parent_item, this.scaling_factor);// feature-set
                                                                                         // specific
 
       // ### recursive call on each ant item
-      for (HGNode ant_it : dt.getAntNodes()) {
+      for (HGNode ant_it : dt.getTailNodes()) {
         outside_estimation_item(ant_it, parent_item, dt, deduction_prob);
       }
     }

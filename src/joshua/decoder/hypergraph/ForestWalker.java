@@ -49,8 +49,8 @@ public class ForestWalker {
 
     if (node.getHyperEdges() != null) {
       for (HyperEdge edge : node.getHyperEdges()) {
-        if (edge.getAntNodes() != null) {
-          for (HGNode tailNode : edge.getAntNodes()) {
+        if (edge.getTailNodes() != null) {
+          for (HGNode tailNode : edge.getTailNodes()) {
             walk(tailNode, walker);
           }
         }

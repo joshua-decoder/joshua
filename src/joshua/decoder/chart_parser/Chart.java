@@ -214,11 +214,11 @@ public class Chart {
           oovRule.estimateRuleCost(featureFunctions);
         }
 
-        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail()
+        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()
             .getNumber())) {
           // do not add the oov axiom
           logger.fine("Using hard rule constraint for span " + node.getNumber() + ", "
-              + arc.getTail().getNumber());
+              + arc.getHead().getNumber());
         } else {
           /*
            * Add each of the OOV rules. The span is generalized to lattices; node.getNumber() is i,
@@ -268,7 +268,7 @@ public class Chart {
    */
   private void completeSpan(int i, int j) {
 
-    System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
+//    System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
 
     if (JoshuaConfiguration.pop_limit > 0) {
       /*

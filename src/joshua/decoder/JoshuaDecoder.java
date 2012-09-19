@@ -258,7 +258,7 @@ public class JoshuaDecoder {
       for (int i = 0; i < JoshuaConfiguration.features.size(); i++ ) {
         String featureLine = JoshuaConfiguration.features.get(i);
 
-        System.err.println("PROCESSING FEATURE(" + featureLine + ")");
+//        System.err.println("PROCESSING FEATURE(" + featureLine + ")");
         
         // Check if this is an old-style feature.
         if (! featureLine.startsWith("feature_function")) {

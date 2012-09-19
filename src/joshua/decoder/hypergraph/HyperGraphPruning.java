@@ -146,8 +146,8 @@ public class HyperGraphPruning extends TrivialInsideOutside {
     }
 
     // ### still survive, recursive call all my ant-items
-    if (null != dt.getAntNodes()) {
-      for (HGNode ant_it : dt.getAntNodes()) {
+    if (null != dt.getTailNodes()) {
+      for (HGNode ant_it : dt.getTailNodes()) {
         pruningNode(ant_it); // recursive call on each ant item, note: the ant_it will not be pruned
                              // as I need it
       }

@@ -31,11 +31,9 @@ public class HGNode implements Prunable<HGNode> {
   // used in pruning, compute_item, and transit_to_goal
   public HyperEdge bestHyperedge = null;
 
-
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
   TreeMap<StateComputer, DPState> dpStates;
-
 
   // ============== auxiluary variables, no need to store on disk
   // signature of this item: lhs, states
@@ -84,9 +82,16 @@ public class HGNode implements Prunable<HGNode> {
     sb.append(String.format("HGNODE: %s (%d,%d) score = %.5f", Vocabulary.word(lhs), i, j, bestHyperedge.bestDerivationLogP));
     if (dpStates != null)
       for (DPState state: dpStates.values())
-        sb.append("\n\t<" + state + ">");
+        sb.append(" <" + state + " >");
+    
+    if (this.hyperedges != null) {
+      sb.append(" hyperedges: " + hyperedges.size());
+//      for (HyperEdge edge: hyperedges) {
+//        sb.append("\n\t" + edge.getRule() + " ||| pathcost=" + edge.getSourcePath() + " ref="+ Integer.toHexString(edge.hashCode()));
+//      }
+    }
         
-    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
+//    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
     return sb.toString();
   }
 
@@ -101,7 +106,10 @@ public class HGNode implements Prunable<HGNode> {
         hyperedges = new ArrayList<HyperEdge>();
 
       hyperedges.add(hyperEdge);
+      // Update the cache of this node's best incoming edge.
       semiringPlus(hyperEdge);
+      
+//      System.err.println(String.format("ADD_EDGES_TO_NODE: adding \n\tEDGE %s to \n\tNODE %s", hyperEdge, this));
     }
   }
 
@@ -119,8 +127,9 @@ public class HGNode implements Prunable<HGNode> {
    * Updates the cache of the best incoming hyperedge.
    */
   public void semiringPlus(HyperEdge hyperEdge) {
-    if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < hyperEdge.bestDerivationLogP)
+    if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < hyperEdge.bestDerivationLogP) {
       bestHyperedge = hyperEdge;
+    }
   }
 
 

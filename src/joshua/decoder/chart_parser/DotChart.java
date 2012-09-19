@@ -194,9 +194,8 @@ class DotChart {
     Node<Integer> node = input.getNode(j - 1);
     for (Arc<Integer> arc : node.getOutgoingArcs()) {
 
-      // TODO: Tail and Head are backward! FIX names!
       int last_word = arc.getLabel();
-      int arc_len = arc.getTail().getNumber() - arc.getHead().getNumber();
+      int arc_len = arc.getHead().getNumber() - arc.getTail().getNumber();
 
       // int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //
 

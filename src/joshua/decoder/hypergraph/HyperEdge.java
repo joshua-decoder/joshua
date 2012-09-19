@@ -33,40 +33,36 @@ public class HyperEdge {
    * If antNodes is null, then this edge corresponds to a rule with zero arity. Aslo, the nodes
    * appear in the list as per the index of the Foreign side non-terminal
    * */
-  private List<HGNode> antNodes = null;
+  private List<HGNode> tailNodes = null;
 
   public HyperEdge(Rule rule, double bestDerivationLogP, Double transitionLogP,
-      List<HGNode> antNodes, SourcePath srcPath) {
+      List<HGNode> tailNodes, SourcePath srcPath) {
     this.bestDerivationLogP = bestDerivationLogP;
     this.transitionLogP = transitionLogP;
     this.rule = rule;
-    this.antNodes = antNodes;
+    this.tailNodes = tailNodes;
     this.srcPath = srcPath;
    }
 
   public Rule getRule() {
     return rule;
   }
-
+  
   public SourcePath getSourcePath() {
     return srcPath;
   }
 
   public List<HGNode> getTailNodes() {
-    return antNodes;
+    return tailNodes;
   }
-  public List<HGNode> getAntNodes() {
-    return antNodes;
-  }
-
 
   public double getTransitionLogP(boolean forceCompute) {
     StringBuilder sb = new StringBuilder();
     if (forceCompute || transitionLogP == null) {
       double res = bestDerivationLogP;
       sb.append(String.format("Best derivation = %.5f", res));
-      if (antNodes != null) 
-        for (HGNode tailNode : antNodes) {
+      if (tailNodes != null) 
+        for (HGNode tailNode : tailNodes) {
           res -= tailNode.bestHyperedge.bestDerivationLogP;
           sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationLogP));
         }

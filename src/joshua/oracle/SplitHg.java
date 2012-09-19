@@ -92,7 +92,7 @@ public abstract class SplitHg {
       for (int i = 0; i < virtual_dt.l_ant_virtual_items.size(); i++) {
         VirtualItem ant_it = (VirtualItem) virtual_dt.l_ant_virtual_items.get(i);
         HGNode new_it = clone_item_with_best_deduction(ant_it);
-        onebest_item.bestHyperedge.getAntNodes().set(i, new_it);
+        onebest_item.bestHyperedge.getTailNodes().set(i, new_it);
         get_1best_tree_item(ant_it, new_it);
       }
   }
@@ -112,8 +112,8 @@ public abstract class SplitHg {
     HyperEdge original_dt = virtual_dt.p_dt;
     ArrayList<HGNode> l_ant_items = null;
     // l_ant_items will be changed in get_1best_tree_item
-    if (original_dt.getAntNodes() != null)
-      l_ant_items = new ArrayList<HGNode>(original_dt.getAntNodes());
+    if (original_dt.getTailNodes() != null)
+      l_ant_items = new ArrayList<HGNode>(original_dt.getTailNodes());
     HyperEdge res =
         new HyperEdge(original_dt.getRule(), original_dt.bestDerivationLogP,
             original_dt.getTransitionLogP(false), l_ant_items, original_dt.getSourcePath());
@@ -158,7 +158,7 @@ public abstract class SplitHg {
     if (speed_up_deduction(cur_dt) == false) return;// no need to continue
 
     // ### recursively split all my ant items, get a l_split_items for each original item
-    if (cur_dt.getAntNodes() != null) for (HGNode ant_it : cur_dt.getAntNodes())
+    if (cur_dt.getTailNodes() != null) for (HGNode ant_it : cur_dt.getTailNodes())
       split_item(ant_it);
 
     // ### recombine the deduction
@@ -167,7 +167,7 @@ public abstract class SplitHg {
 
   private void redo_combine(HyperEdge cur_dt, HashMap<String, VirtualItem> virtual_item_sigs,
       HGNode parent_item) {
-    List<HGNode> l_ant_items = cur_dt.getAntNodes();
+    List<HGNode> l_ant_items = cur_dt.getTailNodes();
     if (l_ant_items != null) {
       // arity: one
       if (l_ant_items.size() == 1) {

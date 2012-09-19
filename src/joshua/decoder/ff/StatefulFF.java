@@ -61,7 +61,7 @@ public abstract class StatefulFF extends FeatureFunction {
 	 * Convenience function for the above.
 	 */
   public FeatureVector computeFeatures(HyperEdge edge, int i, int j, int sentID) {
-    return computeFeatures(edge.getRule(), edge.getAntNodes(), i, j, edge.getSourcePath(), sentID);
+    return computeFeatures(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentID);
   }
 
 
@@ -84,7 +84,7 @@ public abstract class StatefulFF extends FeatureFunction {
    * chains the call.
    */
   public float computeCost(HyperEdge edge, int i, int j, int sentID) {
-    return computeCost(edge.getRule(), edge.getAntNodes(), i, j, edge.getSourcePath(), sentID);
+    return computeCost(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentID);
   }
 
 

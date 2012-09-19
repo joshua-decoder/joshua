@@ -592,8 +592,6 @@ public class PackedGrammar extends BatchGrammar {
       return tgt;
     }
 
-
-
     final String getFeatures(int block_id, float[] feature_vector) {
       int feature_position = featureLookup[block_id];
       int num_features = features.getInt(feature_position);
