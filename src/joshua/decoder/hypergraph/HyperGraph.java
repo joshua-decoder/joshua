@@ -1,21 +1,10 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.hypergraph;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -30,7 +19,6 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
  * not require any list being sorted
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class HyperGraph {
 
@@ -52,6 +40,42 @@ public class HyperGraph {
     this.sentLen = sentLen;
   }
 
+  public void dump(String fileName) {
+    try {
+      BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
+
+      HashMap<HGNode,Integer> printedNodes = new HashMap<HGNode,Integer>();
+      
+      dump(out, this.goalNode, printedNodes);
+      out.close();
+      
+    } catch (IOException e) {
+      System.err.println("* Can't dump hypergraph to file '" + fileName + "'");
+      e.printStackTrace();
+    }
+  }
+
+  private void dump(BufferedWriter out, HGNode node, HashMap<HGNode, Integer> printedNodes) {
+    if (printedNodes.containsKey(node))
+      return;
+    
+    printedNodes.put(node, 1);
+    for (HyperEdge edge : node.getHyperEdges()) {
+      if (edge.getTailNodes() != null)
+        for (HGNode tailNode : edge.getTailNodes()) {
+          dump(out, tailNode, printedNodes);
+      }
+    }
+
+    try {
+//      System.err.println("DUMP: " + Integer.toHexString(node.hashCode()) + " ||| " + node);
+      out.write(node.toString());
+      out.newLine();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
 
   public double bestLogP() {
     return this.goalNode.bestHyperedge.bestDerivationLogP;
