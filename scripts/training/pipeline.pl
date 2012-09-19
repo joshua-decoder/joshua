@@ -9,13 +9,10 @@ my $HADOOP;
 
 BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
-      ! exists $ENV{HADOOP} || $ENV{HADOOP} eq "" ||
       ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "") {
                 print "Several environment variables must be set before running the pipeline.  Please set:\n";
                 print "* \$JOSHUA to the root of the Joshua source code.\n"
                                 if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
-                print "* \$HADOOP to the directory of your local hadoop installation.\n"
-                                if (! exists $ENV{HADOOP} || $ENV{HADOOP} eq "");
                 print "* \$JAVA_HOME to the directory of your local java installation. \n"
                                 if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
                 exit;
@@ -24,8 +21,6 @@ BEGIN {
   unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
   unshift(@INC,"$JOSHUA/lib");
 }
-
-
 
 use strict;
 use warnings;
@@ -78,6 +73,7 @@ my $JOSHUA_CONFIG_ORIG   = "$TUNECONFDIR/joshua.config";
 my %TUNEFILES = (
   'decoder_command' => "$TUNECONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
+  'weights'         => "$TUNECONFDIR/weights",
   'mert.config'     => "$TUNECONFDIR/mert.config",
   'pro.config'      => "$TUNECONFDIR/pro.config",
   'params.txt'      => "$TUNECONFDIR/params.txt",
@@ -966,10 +962,10 @@ for my $i (0..$#LMFILES) {
   my $configstring = "lm = $LM_TYPE $LM_ORDER false false 100 $lmfile";
   push (@configstrings, $configstring);
 
-  my $weightstring = "lm $i 1.0";
+  my $weightstring = "lm_$i 1.0";
   push (@weightstrings, $weightstring);
 
-  my $lmparamstring = "lm $i               |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
+  my $lmparamstring = "lm_$i        |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
   push (@lmparamstrings, $lmparamstring);
 }
 
@@ -980,18 +976,18 @@ my $lmparams  = join($/, @lmparamstrings);
 my $num_tm_features = count_num_features($TUNE_GRAMMAR);
 my (@tmparamstrings, @tmweightstrings);
 for my $i (0..($num_tm_features-1)) {
-  push (@tmparamstrings, "phrasemodel pt $i |||  1.0 Opt -Inf +Inf -1 +1");
-	push (@tmweightstrings, "phrasemodel pt $i 1.0");
+  push (@tmparamstrings, "PhraseModel_pt_$i |||  1.0 Opt -Inf +Inf -1 +1");
+	push (@tmweightstrings, "PhraseModel_pt_$i 1.0");
 }
 
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
 
 my $latticeparam = ($DOING_LATTICES == 1) 
-		? "latticecost ||| 1.0 Opt -Inf +Inf -1 +1"
+		? "SourcePath ||| 1.0 Opt -Inf +Inf -1 +1"
 		: "";
 my $latticeweight = ($DOING_LATTICES == 1)
-		? "latticecost 1.0"
+		? "SourcePath 1.0"
 		: "";
 
 for my $run (1..$OPTIMIZER_RUNS) {
