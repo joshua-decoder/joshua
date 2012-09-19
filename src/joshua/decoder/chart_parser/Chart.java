@@ -110,7 +110,7 @@ public class Chart {
    * course, we get passed the grammars too so we could move all of that into here.
    */
 
-  public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, 
+  public Chart(Sentence sentence, List<FeatureFunction> featureFunctions,
       List<StateComputer> stateComputers, Grammar[] grammars, String goalSymbol) {
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
@@ -190,29 +190,44 @@ public class Chart {
           targetWord = sourceWord;
         }
 
-        int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll("\\[\\]",""));
+        int defaultNTIndex =
+            Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll("\\[\\]", ""));
 
-        BilingualRule oov_rule = null;
+        List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
         int[] sourceWords = {sourceWord};
         int[] targetWords = {targetWord};
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
           Collection<Integer> labels =
               parseTree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
-          for (int label : labels)
-            oov_rule = new BilingualRule(label, sourceWords, targetWords, "", 0);
+          for (int label : labels) {
+            BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0); 
+            oovRules.add(oovRule);
+            oovGrammar.addRule(oovRule);
+            oovRule.estimateRuleCost(featureFunctions);
+          }
 
         } else {
-          oov_rule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
+          BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
+          oovRules.add(oovRule);
+          oovGrammar.addRule(oovRule);
+          oovRule.estimateRuleCost(featureFunctions);
         }
-        oovGrammar.addRule(oov_rule);
 
-        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
+        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail()
+            .getNumber())) {
           // do not add the oov axiom
-          logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
+          logger.fine("Using hard rule constraint for span " + node.getNumber() + ", "
+              + arc.getTail().getNumber());
         } else {
-          addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule, new SourcePath().extend(arc));
-          logger.finer("Adding OOV rule:\t" + oov_rule.toString());
+          /*
+           * Add each of the OOV rules. The span is generalized to lattices; node.getNumber() is i,
+           * and arc.getTail() is j.
+           */
+//          for (BilingualRule rule : oovRules) {
+//            addAxiom(node.getNumber(), arc.getTail().getNumber(), rule,  new SourcePath().extend(arc));
+//            logger.fine("Adding OOV rule:\t" + rule.toString());
+//          }
         }
       }
     }
@@ -251,10 +266,9 @@ public class Chart {
   /**
    * Construct the hypergraph with the help from DotChart.
    */
-
   private void completeSpan(int i, int j) {
 
-    logger.fine("[" + segmentID + "] SPAN(" + i + "," + j + ")");
+    System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
 
     if (JoshuaConfiguration.pop_limit > 0) {
       /*
@@ -295,7 +309,7 @@ public class Chart {
               manualConstraintsHandler.filterRules(i, j, ruleCollection.getSortedRules());
           SourcePath sourcePath = dotNode.getSourcePath();
 
-          if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0) 
+          if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0)
             continue;
 
           int arity = ruleCollection.getArity();
@@ -424,19 +438,16 @@ public class Chart {
   }
 
   /**
-   * a parser that can handle: - multiple grammars - on the fly binarization - unary rules (without
-   * cycle)
-   * */
-
+   * This function performs the main work of decoding.
+   * @return the hypergraph containing the translated sentence.
+   */
   public HyperGraph expand() {
-    logger.fine("Begin expand.");
 
     for (int width = 1; width <= sourceLength; width++) {
       for (int i = 0; i <= sourceLength - width; i++) {
         int j = i + width;
         if (logger.isLoggable(Level.FINEST))
           logger.finest(String.format("Processing span (%d, %d)", i, j));
-
 
         // (1)=== expand the cell in dotchart
         logger.finest("Expanding cell");
@@ -448,7 +459,6 @@ public class Chart {
            **/
           this.dotcharts[k].expandDotCell(i, j);
         }
-
 
         // (2)=== populate COMPLETE rules into Chart: the regular CKY part
         logger.finest("Adding complete items into chart");
@@ -576,7 +586,7 @@ public class Chart {
   }
 
 
-  /** 
+  /**
    * This functions add to the hypergraph rules with zero arity (i.e., terminal rules).
    */
   public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
@@ -584,6 +594,8 @@ public class Chart {
       this.cells[i][j] = new Cell(this, this.goalSymbolID);
     }
 
+//    System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule, srcPath));
+    
     this.cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
         j, srcPath, stateComputers, segmentID), rule, i, j, null, srcPath, false);
   }
@@ -618,9 +630,8 @@ public class Chart {
       filteredRules = manualConstraintsHandler.filterRules(i, j, sortedRules);
     }
 
-    if (logger.isLoggable(Level.FINEST)) 
-      for (Rule r : filteredRules)
-        logger.finest(r.toString() + " # features: " + r.getFeatureVector().size());
+    if (logger.isLoggable(Level.FINEST)) for (Rule r : filteredRules)
+      logger.finest(r.toString() + " # features: " + r.getFeatureVector().size());
 
     if (arity == 0)
       combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);

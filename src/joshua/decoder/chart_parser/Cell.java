@@ -37,7 +37,7 @@ class Cell {
   public BeamPruner<HGNode> beamPruner = null;
 
   private int goalSymID;
-  
+
   // to maintain uniqueness of nodes
   private HashMap<String, HGNode> nodesSigTbl = new HashMap<String, HGNode>();
 
@@ -98,8 +98,8 @@ class Cell {
         antNodes.add(antNode);
 
         double finalTransitionLogP =
-            ComputeNodeResult.computeFinalCost(featureFunctions, antNodes, 0,
-                sentenceLength, null, this.chart.segmentID);
+            ComputeNodeResult.computeFinalCost(featureFunctions, antNodes, 0, sentenceLength, null,
+                this.chart.segmentID);
 
         List<HGNode> previousItems = new ArrayList<HGNode>();
         previousItems.add(antNode);
@@ -158,18 +158,20 @@ class Cell {
 
 
   /**
-	 * Creates a new hyperedge and adds it to the chart, subject to pruning.  The logic of this
-	 * function is as follows: if the pruner permits the edge to be added, we build the new edge,
-	 * which ends in an HGNode.  If this is the first time we've built an HGNode for this point in the
-	 * graph, it gets added automatically.  Otherwise, we add the hyperedge to the existing HGNode,
-	 * possibly updating the HGNode's cache of the best incoming hyperedge.
-	 *
-	 * @return the new hypernode, or null if the cell was pruned.
+   * Creates a new hyperedge and adds it to the chart, subject to pruning. The logic of this
+   * function is as follows: if the pruner permits the edge to be added, we build the new edge,
+   * which ends in an HGNode. If this is the first time we've built an HGNode for this point in the
+   * graph, it gets added automatically. Otherwise, we add the hyperedge to the existing HGNode,
+   * possibly updating the HGNode's cache of the best incoming hyperedge.
+   * 
+   * @return the new hypernode, or null if the cell was pruned.
    */
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
 
     HGNode res = null;
+
+//    System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
 
     TreeMap<StateComputer, DPState> dpStates = result.getDPStates();
     double pruningEstimate = result.getPruningEstimate();
@@ -181,8 +183,18 @@ class Cell {
       this.chart.nPreprunedEdges++;
       res = null;
     } else {
+      /**
+       * Here, the edge has passed pre-pruning. The edge will be added to the chart in one of three
+       * ways:
+       * 
+       * 1. If there is no existing node, a new one gets created and the edge is its only incoming
+       * hyperedge.
+       * 
+       * 2. If there is an existing node, the edge will be added to its list of incoming hyperedges,
+       * possibly taking place as the best incoming hyperedge for that node.
+       */
+
       HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
-//      System.err.println(String.format("CELL(%d,%d): new hyperedge: ",i,j) + hyperEdge);
       res = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
 
       /**
@@ -197,7 +209,7 @@ class Cell {
          * the position of oldItem in this.heapItems may change, basically, we should remove the
          * oldItem, and re-insert it (linear time), this is too expense)
          **/
-        if (res.getPruneLogP() > oldNode.getPruneLogP()) {// merget old to new: semiring plus
+        if (res.getPruneLogP() > oldNode.getPruneLogP()) {// merge old to new: semiring plus
 
           if (beamPruner != null) {
             oldNode.setDead();// this.heapItems.remove(oldItem);
@@ -248,8 +260,8 @@ class Cell {
     this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
     this.sortedNodes = null; // reset the list
 
-//    System.err.println("Adding: " + node);
-    
+    // System.err.println("Adding: " + node);
+
     if (beamPruner != null) {
       if (noPrune == false) {
         List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
@@ -270,8 +282,6 @@ class Cell {
       this.superNodesTbl.put(node.lhs, si);
     }
     si.nodes.add(node);// TODO what about the dead items?
-
-
   }
 
 
