@@ -51,7 +51,7 @@ public class PackedGrammar extends BatchGrammar {
 
   private final float maxId;
 
-  public PackedGrammar(String grammar_directory, int span_limit) throws FileNotFoundException,
+  public PackedGrammar(String grammar_directory, int span_limit, String owner) throws FileNotFoundException,
       IOException {
     this.spanLimit = span_limit;
 
@@ -67,7 +67,7 @@ public class PackedGrammar extends BatchGrammar {
     quantization.read(grammar_directory + File.separator + "quantization");
 
     // Set phrase owner.
-    owner = Vocabulary.id(JoshuaConfiguration.phrase_owner);
+    this.owner = Vocabulary.id(owner);
 
     // Read the dense feature name map.
     if (JoshuaConfiguration.dense_features)

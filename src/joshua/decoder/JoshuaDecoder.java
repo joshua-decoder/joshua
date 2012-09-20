@@ -460,7 +460,7 @@ public class JoshuaDecoder {
 
         GrammarFactory grammar = null;
         if (format.equals("packed")) {
-          grammar = new PackedGrammar(file, span_limit);
+          grammar = new PackedGrammar(file, span_limit, owner);
 
         } else {
           grammar = new MemoryBasedBatchGrammar(format, file, owner, 
