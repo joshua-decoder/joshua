@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.io.File;
@@ -20,7 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.logging.Logger;
 
 import joshua.util.Regex;
@@ -33,6 +17,7 @@ import joshua.util.io.LineReader;
  * class.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class JoshuaConfiguration {
   // lm config
@@ -53,9 +38,8 @@ public class JoshuaConfiguration {
   public static int lm_order = 3;
   public static boolean use_sent_specific_lm = false;
   public static String lm_file = null;
-  public static int ngramStateID = 0; // TODO ?????????????
-
-  /* The file to read the weights from.
+  
+  /* The file to read the weights from (part of the sparse features implementation).
    */
   public static String weights_file = "";
 
@@ -92,13 +76,7 @@ public class JoshuaConfiguration {
   public static boolean use_pos_labels = false;
 
   // oov-specific
-  public static float oov_feature_cost = 100;
-  public static boolean use_max_lm_cost_for_oov = false;
-  public static int oov_feature_index = -1;
   public static boolean true_oovs_only = false;
-
-  // number of phrasal features, for correct oov rule creation
-  public static int num_phrasal_features = 0;
 
   // pruning config
 
@@ -324,9 +302,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("constrain_parse"))) {
             constrain_parse = Boolean.parseBoolean(fds[1]);
 
-          } else if (parameter.equals(normalize_key("oov_feature_index"))) {
-            oov_feature_index = Integer.parseInt(fds[1]);
-
           } else if (parameter.equals(normalize_key("true_oovs_only"))) {
             true_oovs_only = Boolean.parseBoolean(fds[1]);
 
@@ -424,10 +399,6 @@ public class JoshuaConfiguration {
               logger.warning("useBeamAndThresholdPrune=false");
             logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));
 
-          } else if (parameter.equals(normalize_key("oovFeatureCost"))) {
-            oov_feature_cost = Float.parseFloat(fds[1]);
-            logger.finest(String.format("oovFeatureCost: %s", oov_feature_cost));
-
           } else if (parameter.equals(normalize_key("useGoogleLinearCorpusGain"))) {
             useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
             logger
@@ -474,15 +445,7 @@ public class JoshuaConfiguration {
 
           features.add(line);
         }
-
-        // if ("lm".equals(fds[0]) && fds.length == 2) { // lm weight
-        // if (new Double(fds[1].trim())!=0){
-        // use_max_lm_cost_for_oov = true;
-        // }
-        // logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
-        // }
       }
-
     } finally {
       configReader.close();
     }

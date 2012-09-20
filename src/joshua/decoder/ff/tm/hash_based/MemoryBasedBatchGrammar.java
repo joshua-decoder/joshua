@@ -39,14 +39,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // protected ArrayList<FeatureFunction> featureFunctions = null;
   private int owner = -1;
 
-  private float oovFeatureCost = 100;
-
-  /**
-   * the OOV rule should have this lhs, this should be grammar specific as only the grammar knows
-   * what LHS symbol can be combined with other rules
-   */
-  private int defaultLHS;
-
   private String grammarFile;
 
   private int spanLimit = JoshuaConfiguration.span_limit;
@@ -88,12 +80,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   }
 
   public MemoryBasedBatchGrammar(String formatKeyword, String grammarFile, String owner,
-      String defaultLHSSymbol, int spanLimit, float oovFeatureCost_) throws IOException {
+      String defaultLHSSymbol, int spanLimit) throws IOException {
 
     this.owner = Vocabulary.id(owner);
-    this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
+    Vocabulary.id(defaultLHSSymbol);
     this.spanLimit = spanLimit;
-    this.oovFeatureCost = oovFeatureCost_;
     this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(owner));
     this.grammarFile = grammarFile;
 

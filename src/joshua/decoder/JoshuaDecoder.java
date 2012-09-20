@@ -361,8 +361,7 @@ public class JoshuaDecoder {
           (System.currentTimeMillis() - pre_sort_time) / 1000));
 
       this.decoderFactory =
-          new DecoderFactory(this.grammarFactories, JoshuaConfiguration.use_max_lm_cost_for_oov,
-            this.featureFunctions, this.weights, this.stateComputers);
+          new DecoderFactory(this.grammarFactories, this.featureFunctions, this.weights, this.stateComputers);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -464,8 +463,7 @@ public class JoshuaDecoder {
 
         } else {
           grammar = new MemoryBasedBatchGrammar(format, file, owner, 
-            JoshuaConfiguration.default_non_terminal, span_limit,
-            JoshuaConfiguration.oov_feature_cost);
+            JoshuaConfiguration.default_non_terminal, span_limit);
         }
 
         this.grammarFactories.add(grammar);
@@ -476,8 +474,7 @@ public class JoshuaDecoder {
       // non terminal match
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, 
         System.getenv().get("JOSHUA") + "/data/" + "glue-grammar",
-        JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
-        JoshuaConfiguration.oov_feature_cost);
+        JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
 
@@ -485,30 +482,6 @@ public class JoshuaDecoder {
         .getRuntime().freeMemory()) / 1000000.0)));
   }
   
-
-  private void initializeMainTranslationGrammar() throws IOException {
-    if (JoshuaConfiguration.tm_file == null) {
-      logger.warning("* WARNING: no TM specified");
-      return;
-    }
-
-    if (JoshuaConfiguration.use_sent_specific_tm) {
-      logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
-      return;
-    } else if ("packed".equals(JoshuaConfiguration.tm_format)) {
-      this.grammarFactories.add(new PackedGrammar(JoshuaConfiguration.tm_file,
-          JoshuaConfiguration.span_limit));
-    } else {
-      logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
-      this.grammarFactories.add(new MemoryBasedBatchGrammar(JoshuaConfiguration.tm_format,
-          JoshuaConfiguration.tm_file, JoshuaConfiguration.phrase_owner,
-          JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.span_limit,
-          JoshuaConfiguration.oov_feature_cost));
-    }
-
-    logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
-        .getRuntime().freeMemory()) / 1000000.0)));
-  }
 
   private void initializeStateComputers() {
     stateComputers = new ArrayList<StateComputer>();

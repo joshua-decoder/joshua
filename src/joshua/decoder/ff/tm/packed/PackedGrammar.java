@@ -624,7 +624,8 @@ public class PackedGrammar extends BatchGrammar {
 
     // NEW VERSION: doesn't work, needs to return the right value
     final String getFeatures(int block_id) {
-      float[] feature_vector = new float[JoshuaConfiguration.num_phrasal_features];
+      int correctIndex = 0;
+      float[] feature_vector = new float[correctIndex];
       return getFeatures(block_id, feature_vector);
     }
 
