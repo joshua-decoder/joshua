@@ -622,7 +622,21 @@ public class PackedGrammar extends BatchGrammar {
      * feature_vector); }
      */
 
-    // NEW VERSION: doesn't work, needs to return the right value
+    /**
+     * NEW VERSION
+     *
+     * Returns a string version of the features associated with a rule (represented as a block ID).
+     * These features are in the form "feature1=value feature2=value...".  By default, unlabeled
+     * features are named using the pattern
+     * 
+     *   tm_OWNER_INDEX
+     *   
+     * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
+     * of the feature found in the grammar.
+     * 
+     * @param block_id
+     * @return
+     */
     final String getFeatures(int block_id) {
       int correctIndex = 0;
       float[] feature_vector = new float[correctIndex];
