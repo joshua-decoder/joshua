@@ -105,7 +105,7 @@ public class Translation {
 
     } else {
 
-      System.out.print(id() + " ||| " + getSourceSentence().sentence() + " |||  ||| 0.0");
+      System.out.println(id() + " ||| " + getSourceSentence().sentence() + " |||  ||| 0.0");
     }
 
     System.out.flush();
