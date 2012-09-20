@@ -23,7 +23,7 @@ public class BilingualRule extends MonolingualRule {
   /**
    * Constructs a new rule using the provided parameters. The owner and rule id for this rule are
    * undefined. Note that some of the sparse features may be unlabeled, but they cannot be mapped to
-   * their default names ("PhraseModel_OWNER_INDEX") until later, when we know the owner of the
+   * their default names ("tm_OWNER_INDEX") until later, when we know the owner of the
    * rule. This is not known until the rule is actually added to a grammar in Grammar::addRule().
    * 
    * @param lhs Left-hand side of the rule.

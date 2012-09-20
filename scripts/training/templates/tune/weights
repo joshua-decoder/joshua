@@ -9,7 +9,7 @@
 # The phrasal weights correspond to weights stored with each of the
 # grammar rules.  The format is
 #
-#   PhraseModel_OWNER_COLUMN WEIGHT
+#   tm_OWNER_COLUMN WEIGHT
 #
 # where COLUMN denotes the 0-based order of the parameter in the
 # grammar file and WEIGHT is the corresponding weight.  In the future,
@@ -18,7 +18,7 @@
 
 <TMWEIGHTS>
 
-PhraseModel_glue_0 1.0
+tm_glue_0 1.0
 
 # The wordpenalty feature counts the number of words in each hypothesis.
 

@@ -22,7 +22,7 @@ public class PhraseModelFF extends StatelessFF {
   private int ownerID;
 
   public PhraseModelFF(FeatureVector weights, String owner) {
-    super(weights, "PhraseModel_" + owner, "");
+    super(weights, "tm_" + owner, "");
 
     // Store the owner.
     this.ownerID = Vocabulary.id(owner);

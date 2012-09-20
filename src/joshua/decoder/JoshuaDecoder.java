@@ -265,8 +265,8 @@ public class JoshuaDecoder {
           String fields[] = featureLine.split("\\s+");
           String type = fields[0].toLowerCase();
 
-          if (type.equals("phrasemodel")) {
-            String name = "PhraseModel_" + fields[1] + "_" + fields[2];
+          if (type.equals("tm")) {
+            String name = "tm_" + fields[1] + "_" + fields[2];
             float weight = Float.parseFloat(fields[3]);
 
             weights.put(name, weight);

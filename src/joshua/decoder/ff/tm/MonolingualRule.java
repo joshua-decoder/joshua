@@ -205,7 +205,7 @@ public class MonolingualRule implements Rule {
    * This function does the work of turning the string version of the sparse features (passed in
    * when the rule was created) into an actual set of features. This is a bit complicated because we
    * support intermingled labeled and unlabeled features, where the unlabeled features are mapped to
-   * a default name template of the form "PhraseModel_OWNER_INDEX".
+   * a default name template of the form "tm_OWNER_INDEX".
    */
   public FeatureVector computeFeatures() {
 
@@ -223,7 +223,7 @@ public class MonolingualRule implements Rule {
     }
 
     FeatureVector features =
-        new FeatureVector(sparseFeatures, "PhraseModel_" + Vocabulary.word(owner) + "_");
+        new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
     features.times(-1);
     return features;
   }

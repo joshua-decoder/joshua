@@ -42,12 +42,12 @@ public class HyperEdge {
     this.rule = rule;
     this.tailNodes = tailNodes;
     this.srcPath = srcPath;
-   }
+  }
 
   public Rule getRule() {
     return rule;
   }
-  
+
   public SourcePath getSourcePath() {
     return srcPath;
   }
@@ -61,14 +61,13 @@ public class HyperEdge {
     if (forceCompute || transitionLogP == null) {
       double res = bestDerivationLogP;
       sb.append(String.format("Best derivation = %.5f", res));
-      if (tailNodes != null) 
-        for (HGNode tailNode : tailNodes) {
-          res -= tailNode.bestHyperedge.bestDerivationLogP;
-          sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationLogP));
-        }
+      if (tailNodes != null) for (HGNode tailNode : tailNodes) {
+        res -= tailNode.bestHyperedge.bestDerivationLogP;
+        sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationLogP));
+      }
       transitionLogP = res;
     }
-//    System.err.println("HYPEREDGE SCORE = " + sb.toString());
+    // System.err.println("HYPEREDGE SCORE = " + sb.toString());
     return transitionLogP;
   }
 
@@ -79,10 +78,9 @@ public class HyperEdge {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("HYPEREDGE[rule=" + this.rule);
-    if (getTailNodes() != null)
-      for (HGNode tailNode: getTailNodes()) {
-        sb.append(" tail=" + tailNode);
-      }
+    if (getTailNodes() != null) for (HGNode tailNode : getTailNodes()) {
+      sb.append(" tail=" + tailNode);
+    }
     sb.append("]");
     return sb.toString();
   }

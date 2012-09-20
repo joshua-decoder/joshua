@@ -36,7 +36,7 @@ public class FeatureVector {
    *
    * @param featureString, the string of labeled and unlabeled features (probably straight from the
    * grammar text file)
-   * @param prefix, the prefix to use for unlabeled features (probably "PhraseModel_OWNER_")
+   * @param prefix, the prefix to use for unlabeled features (probably "tm_OWNER_")
    */
   public FeatureVector(String featureString, String prefix) {
 

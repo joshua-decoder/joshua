@@ -976,8 +976,8 @@ my $lmparams  = join($/, @lmparamstrings);
 my $num_tm_features = count_num_features($TUNE_GRAMMAR);
 my (@tmparamstrings, @tmweightstrings);
 for my $i (0..($num_tm_features-1)) {
-  push (@tmparamstrings, "PhraseModel_pt_$i |||  1.0 Opt -Inf +Inf -1 +1");
-	push (@tmweightstrings, "PhraseModel_pt_$i 1.0");
+  push (@tmparamstrings, "tm_pt_$i |||  1.0 Opt -Inf +Inf -1 +1");
+	push (@tmweightstrings, "tm_pt_$i 1.0");
 }
 
 my $tmparams = join($/, @tmparamstrings);

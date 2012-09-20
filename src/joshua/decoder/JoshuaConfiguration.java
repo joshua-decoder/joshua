@@ -59,20 +59,20 @@ public class JoshuaConfiguration {
    */
   public static String weights_file = "";
 
-	/* The span limit is the maximum span of the input to which rules from the main translation
-	 * grammar can be applied.  It does not apply to the glue grammar.
-	 */
+  /* The span limit is the maximum span of the input to which rules from the main translation
+   * grammar can be applied.  It does not apply to the glue grammar.
+   */
   public static int span_limit = 10;
 
-	/* This word is in an index into a grammars feature sets.  The name here ties together the
-	 * features present on each grammar line in a grammar file, and the features present in the Joshua
-	 * configuration file.  This allows you to have different sets of features (or shared) across
-	 * grammar files.
-	 */
+  /* This word is in an index into a grammars feature sets.  The name here ties together the
+   * features present on each grammar line in a grammar file, and the features present in the Joshua
+   * configuration file.  This allows you to have different sets of features (or shared) across
+   * grammar files.
+   */
   public static String phrase_owner = "pt"; 
-	public static String glue_owner   = "glue";
+  public static String glue_owner   = "glue";
 
-	// Default symbols.  The symbol here should be enclosed in square brackets.
+  // Default symbols.  The symbol here should be enclosed in square brackets.
   public static String default_non_terminal = "[X]";
   public static String goal_symbol = "[GOAL]";
 
@@ -116,17 +116,17 @@ public class JoshuaConfiguration {
   public static int max_n_rules = 50;
 
   /* N-best configuration.
-	 */
-	// make sure output strings are unique
+   */
+  // make sure output strings are unique
   public static boolean use_unique_nbest = false;
-	// output the synchronous derivation tree
+  // output the synchronous derivation tree
   public static boolean use_tree_nbest = false;
-	// include the phrasal alignments in the output
+  // include the phrasal alignments in the output
   public static boolean include_align_index = false;
-	// include a final field that denotes the complete model score (the dot-product of the weight
-	// vector with the accumulated feature values
+  // include a final field that denotes the complete model score (the dot-product of the weight
+  // vector with the accumulated feature values
   public static boolean add_combined_cost = true;
-	// The number of hypotheses to output by default
+  // The number of hypotheses to output by default
   public static int topN = 1;
 
   public static boolean escape_trees = false;
@@ -226,7 +226,7 @@ public class JoshuaConfiguration {
           if (parameter.equals(normalize_key("lm"))) {
             lms.add(fds[1]);
 
-					} else if (parameter.equals(normalize_key("tm"))) {
+          } else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);
 
           } else if (parameter.equals(normalize_key("lm_file"))) {
@@ -508,15 +508,15 @@ public class JoshuaConfiguration {
       if (order > JoshuaConfiguration.lm_order) JoshuaConfiguration.lm_order = order;
     }
 
-		/* Now we do a similar thing for the TMs, enabling backward compatibility with the old format
-		 * that allowed for just two grammars.  The new format is
-		 *
-		 * tm = FORMAT OWNER SPAN_LIMIT FILE
-		 */
-		if (tms.size() == 0 && tm_file != null) {
-			tms.add(String.format("%s %s %d %s", tm_format, phrase_owner, span_limit, tm_file));
-			tms.add(String.format("%s %s %d %s", glue_format, glue_owner, -1, glue_file));
-		}
+    /* Now we do a similar thing for the TMs, enabling backward compatibility with the old format
+     * that allowed for just two grammars.  The new format is
+     *
+     * tm = FORMAT OWNER SPAN_LIMIT FILE
+     */
+    if (tms.size() == 0 && tm_file != null) {
+      tms.add(String.format("%s %s %d %s", tm_format, phrase_owner, span_limit, tm_file));
+      tms.add(String.format("%s %s %d %s", glue_format, glue_owner, -1, glue_file));
+    }
 
     if (useGoogleLinearCorpusGain) {
       if (linearCorpusGainThetas == null) {

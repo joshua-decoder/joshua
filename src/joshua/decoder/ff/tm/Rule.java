@@ -42,7 +42,7 @@ public interface Rule {
 
   /* This function returns the dense (phrasal) features discovered when the rule was loaded.  Dense
    * features are the list of unlabeled features that preceded labeled ones.  They can also be
-   * specified as labeled features of the form "PhraseModel_OWNER_INDEX", but the former format is
+   * specified as labeled features of the form "tm_OWNER_INDEX", but the former format is
    * preferred.
    */ 
   public FeatureVector getFeatureVector();
