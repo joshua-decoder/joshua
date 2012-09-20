@@ -1,19 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
-
 package joshua.pro;
 
 import java.io.BufferedReader;
@@ -47,9 +31,12 @@ import java.util.zip.GZIPOutputStream;
 import joshua.decoder.JoshuaDecoder;
 import joshua.metrics.EvaluationMetric;
 
+/**
+ * This code was originally written by Yuan Cao, who copied the MERT code to produce this file.
+ */
+
 public class PROCore {
   private TreeSet<Integer>[] indicesOfInterest_all;
-
 
   private final static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
@@ -320,7 +307,8 @@ public class PROCore {
           }
 
           // SAVE THE PARAMETER NAMES
-          paramNames[c] = (line.substring(0, line.indexOf("|||"))).trim();
+          String paramName = (line.substring(0, line.indexOf("|||"))).trim();
+          paramNames[c] = paramName;
         }
       } else if (trainingMode.equals("2") || trainingMode.equals("3") || trainingMode.equals("4")) {
         for (int c = 1; c <= numParamsInFile; ++c) // REGULAR FEATURES + DISC
@@ -1046,11 +1034,32 @@ public class PROCore {
                 // EXTRACT FEATURE VALUE
                 featVal_str = feats_str.split("\\s+");
 
+                /*
+                 * Joshua now (September 2012) uses sparse features natively. We are thus
+                 * overloading the "dense" keyword here to support that format. However, this change
+                 * just maps labeled features to a dense representation; it would not efficiently
+                 * allow a true sparse feature representation similar to the other formats below.
+                 * 
+                 * "sparse" below is reserved for the sparse format Yuan originally implemented, in
+                 * which all the keys are integers (a la SVMlight).
+                 * 
+                 * The "dense" feature format supports both labeled features of the form
+                 * "key=value". These keys are mapped to dense positions based on a map that was
+                 * created when the params file was read in.
+                 */
                 if (nbestFormat.equals("dense")) // FOR MODE 1
                 {
-                  for (int c = 1; c <= numParams; ++c) {
-                    currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
-                    // print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
+                  if (feats_str.indexOf('=') != -1) {
+                    for (String featurePair : featVal_str) {
+                      String[] pair = featurePair.split("=");
+                      String name = pair[0];
+                      Double value = Double.parseDouble(pair[1]);
+                      currFeatVal[c_fromParamName(name)] = value;
+                    }
+                  } else {
+                    for (int c = 1; c <= numParams; ++c) {
+                      currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                    }
                   }
                 } else {
                   for (int c = 1; c <= numParams; c++)
@@ -1332,9 +1341,17 @@ public class PROCore {
                */
 
               if (nbestFormat.equals("dense")) {
-                for (int c = 1; c <= numParams; ++c) {
-                  currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
-                  // print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
+                if (feats_str.indexOf('=') != -1) {
+                  for (String featurePair : featVal_str) {
+                    String[] pair = featurePair.split("=");
+                    String name = pair[0];
+                    Double value = Double.parseDouble(pair[1]);
+                    currFeatVal[c_fromParamName(name)] = value;
+                  }
+                } else {
+                  for (int c = 1; c <= numParams; ++c) {
+                    currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                  }
                 }
               } else {
                 for (int c = 1; c <= numParams; c++)
@@ -1734,10 +1751,11 @@ public class PROCore {
       // myDecoder.initialize(decoderConfigFileName);
       double[] zeroBased_lambda = new double[numParams];
       System.arraycopy(lambda, 1, zeroBased_lambda, 0, numParams);
-			/* This is never used and doesn't work with sparse features, so we're commenting it out for
-			 * the moment [MJP, 2012-09-07]
-			 */
-			// myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
+      /*
+       * This is never used and doesn't work with sparse features, so we're commenting it out for
+       * the moment [MJP, 2012-09-07]
+       */
+      // myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
       myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
 
       retSA[0] = decoderOutFileName;
