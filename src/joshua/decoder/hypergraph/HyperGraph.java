@@ -15,9 +15,16 @@
  */
 package joshua.decoder.hypergraph;
 
+import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -51,6 +58,51 @@ public class HyperGraph {
     this.sentLen = sentLen;
   }
 
+  /**
+   * Dump the hypergraph to the specified file.
+   * 
+   * @param fileName
+   */
+  public void dump(String fileName) {
+    BufferedWriter out = null;
+    try {
+      out = new BufferedWriter(new FileWriter(fileName));
+    } catch (IOException e) {
+      System.err.println("* Can't dump hypergraph to file '" + fileName + "'");
+      e.printStackTrace();
+    }
+
+    Set<HGNode> allNodes = new TreeSet<HGNode>(HGNode.spanComparator);
+    Stack<HGNode> nodesToVisit = new Stack<HGNode>();
+    nodesToVisit.push(this.goalNode);
+    while (! nodesToVisit.empty()) {
+      HGNode node = nodesToVisit.pop();
+      allNodes.add(node);
+      if (node.getHyperEdges() != null)
+        for (HyperEdge edge: node.getHyperEdges())
+          if (edge.getAntNodes() != null)
+            for (HGNode tailNode: edge.getAntNodes())
+              nodesToVisit.push(tailNode);
+    }
+
+    try {
+      for (HGNode node: allNodes) {
+        out.write(String.format("%s %s\n", Integer.toHexString(node.hashCode()), node));
+        if (node.getHyperEdges() != null)
+          for (HyperEdge edge: node.getHyperEdges()) {
+            out.write(String.format("  %s", edge));
+            if (edge.getAntNodes() != null)
+              for (HGNode tailNode: edge.getAntNodes())
+                out.write(String.format(" ||| %s", Integer.toHexString(tailNode.hashCode())));
+            out.write("\n");
+          }
+      }
+      out.close();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
 
   public double bestLogP() {
     return this.goalNode.bestHyperedge.bestDerivationLogP;

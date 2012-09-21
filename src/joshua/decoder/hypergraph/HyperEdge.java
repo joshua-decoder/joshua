@@ -89,6 +89,13 @@ public class HyperEdge {
     this.transitionLogP = transitionLogP;
   }
 
-
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(this.rule);
+    //    if (getTailNodes() != null) for (HGNode tailNode : getTailNodes()) {
+    //      sb.append(" tail=" + tailNode);
+    //    }
+    return sb.toString();
+  }
 
 }

@@ -15,6 +15,8 @@
  */
 package joshua.decoder.hypergraph;
 
+import joshua.corpus.Vocabulary;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -234,6 +236,45 @@ public class HGNode implements Prunable<HGNode> {
 
   public void setPruneLogP(double estTotalLogP) {
     this.estTotalLogP = estTotalLogP;
+  }
+
+  /**
+   * This sorts nodes by span, useful when dumping the hypergraph.
+   */
+  public static Comparator<HGNode> spanComparator = new Comparator<HGNode>() {
+    public int compare(HGNode item1, HGNode item2) {
+      int span1 = item1.j - item1.i;
+      int span2 = item2.j - item2.i;
+      if (span1 < span2)
+        return -1;
+      else if (span1 > span2) 
+        return 1;
+      else
+        if (item1.i < item2.i)
+          return -1;
+        else if (item1.i > item2.i)
+          return 1;
+      return 0;
+    }
+  };
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j, bestHyperedge.bestDerivationLogP));
+    if (dpStates != null)
+      for (DPState state: dpStates.values())
+        sb.append(" <" + state + ">");
+    
+    //    if (this.hyperedges != null) {
+    //      sb.append(" hyperedges: " + hyperedges.size());
+    //      for (HyperEdge edge: hyperedges) {
+    //        sb.append("\n\t" + edge.getRule() + " ||| pathcost=" + edge.getSourcePath() + " ref="+ Integer.toHexString(edge.hashCode()));
+    //      }
+    //    }
+        
+    //    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
+    return sb.toString();
   }
 
   public List<HyperEdge> getHyperEdges() {

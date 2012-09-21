@@ -130,6 +130,8 @@ public class JoshuaConfiguration {
   public static int num_parallel_decoders = 1; // number of threads should run
 
   // disk hg
+  public static String hypergraphFilePattern = "";
+
   public static boolean save_disk_hg = false; // if true, save three files: fnbest, fnbest.hg.items,
                                               // fnbest.hg.rules
   public static boolean use_kbest_hg = false;
@@ -224,6 +226,10 @@ public class JoshuaConfiguration {
 
 					} else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);
+
+          } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
+            hypergraphFilePattern = fds[1].trim();
+            logger.finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
           } else if (parameter.equals(normalize_key("lm_file"))) {
             lm_file = fds[1].trim();
