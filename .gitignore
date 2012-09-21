@@ -68,3 +68,4 @@ doxygen_*.tmp
 *.so
 test/scripts/tokenization/diff
 test/scripts/tokenization/output
+cache/
