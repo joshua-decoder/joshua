@@ -15,5 +15,7 @@
 	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
+	<classpathentry kind="lib" path="lib/org.restlet-2.1.0-sources.jar"/>
+	<classpathentry kind="lib" path="lib/org.restlet-2.1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
