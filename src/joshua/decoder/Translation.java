@@ -88,8 +88,9 @@ public class Translation {
    */
   public void print() {
     if (hypergraph != null) {
-      
-//      this.hypergraph.dump("hypergraph");
+      if (! JoshuaConfiguration.hypergraphFilePattern.equals("")) {
+        this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
+      }
             
       KBestExtractor kBestExtractor =
         new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,

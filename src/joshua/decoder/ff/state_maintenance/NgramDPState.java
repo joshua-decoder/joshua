@@ -38,6 +38,7 @@ public class NgramDPState implements DPState {
     sb.append(" |");
     for (int id: rightLMStateWords)
       sb.append(" " + Vocabulary.word(id));
+    sb.append(" >");
     return sb.toString();
   }
 

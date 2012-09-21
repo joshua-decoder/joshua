@@ -8,7 +8,7 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
 /**
- *
+ * 
  * @author Unknown
  * @author Matt Post <post@cs.jhu.edu>
  */
@@ -65,9 +65,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
       }
     }
 
-		String sparse_features = fields[3];
+    String sparse_features = fields[3];
 
-		return new BilingualRule(lhs, french, english, sparse_features, arity);
+    return new BilingualRule(lhs, french, english, sparse_features, arity);
   }
 
   @Override
@@ -79,7 +79,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(rule.getEnglish()));
     sb.append(" |||");
-		sb.append(" " + rule.computeFeatures());
+    sb.append(" " + rule.computeFeatures());
 
     return sb.toString();
   }

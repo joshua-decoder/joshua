@@ -91,11 +91,6 @@ public class DecoderFactory {
           logger.warning("thread " + threadno + " was interupted");
       }
     }
-
-    // if (JoshuaConfiguration.save_disk_hg) {
-    // pdecoder.hypergraphSerializer.writeRulesNonParallel(
-    // nbestFile + ".hg.rules");
-
   }
 
   /**
@@ -112,16 +107,4 @@ public class DecoderFactory {
     }
     return null;
   }
-
-  // merge the grammar rules for disk hyper-graphs
-  // if (JoshuaConfiguration.save_disk_hg) {
-  // HashMap<Integer,Integer> tblDone = new HashMap<Integer,Integer>();
-  // BufferedWriter rulesWriter = FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
-  // for (DecoderThread decoder : this.decoderThreads) {
-  // decoder.hypergraphSerializer.writeRulesParallel(rulesWriter, tblDone);
-  // //decoder.hypergraphSerializer.closeReaders();
-  // }
-  // rulesWriter.flush();
-  // rulesWriter.close();
-  // }
 }

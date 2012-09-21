@@ -112,11 +112,7 @@ public class JoshuaConfiguration {
   public static int num_parallel_decoders = 1; // number of threads should run
 
   // disk hg
-  public static boolean save_disk_hg = false; // if true, save three files: fnbest, fnbest.hg.items,
-                                              // fnbest.hg.rules
-  public static boolean use_kbest_hg = false;
-  public static boolean forest_pruning = false;
-  public static double forest_pruning_threshold = 10;
+  public static String hypergraphFilePattern = "";
 
   // hypergraph visualization
   public static boolean visualize_hypergraph = false;
@@ -233,6 +229,10 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("glue_format"))) {
             glue_format = fds[1].trim();
             logger.finest(String.format("glue format: %s", glue_format));
+            
+          } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
+            hypergraphFilePattern = fds[1].trim();
+            logger.finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
           } else if (parameter.equals(normalize_key("lm_type"))) {
             lm_type = String.valueOf(fds[1]);
@@ -360,22 +360,6 @@ public class JoshuaConfiguration {
                   "Must specify a positive number for num_parallel_decoders");
             }
             logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
-
-          } else if (parameter.equals(normalize_key("save_disk_hg"))) {
-            save_disk_hg = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
-
-          } else if (parameter.equals(normalize_key("use_kbest_hg"))) {
-            use_kbest_hg = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));
-
-          } else if (parameter.equals(normalize_key("forest_pruning"))) {
-            forest_pruning = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("forest_pruning: %s", forest_pruning));
-
-          } else if (parameter.equals(normalize_key("forest_pruning_threshold"))) {
-            forest_pruning_threshold = Double.parseDouble(fds[1]);
-            logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
 
           } else if (parameter.equals(normalize_key("visualize_hypergraph"))) {
             visualize_hypergraph = Boolean.valueOf(fds[1]);
