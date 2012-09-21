@@ -47,8 +47,6 @@ public class DecoderThread extends Thread {
   private final List<FeatureFunction> featureFunctions;
   private final List<StateComputer> stateComputers;
 
-  private FeatureVector weights;
-
   // more test set specific
   private final InputHandler inputHandler;
   // final String nbestFile; // package-private for DecoderFactory
@@ -64,7 +62,6 @@ public class DecoderThread extends Thread {
     List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
     InputHandler inputHandler) throws IOException {
 
-    this.weights = weights;
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
     this.inputHandler = inputHandler;
@@ -198,9 +195,8 @@ public class DecoderThread extends Thread {
     /* Parsing */
     HyperGraph hypergraph = chart.expand();
 
-    long seconds = (System.currentTimeMillis() - startTime) / 1000;
-    logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds ["
-        + getId() + "]");
+    float seconds = (float)(System.currentTimeMillis() - startTime) / 1000.0f;
+    logger.info(String.format("translation of sentence %d took %.3f seconds [getId()]", sentence.id(), seconds));
 
     return hypergraph;
   }
