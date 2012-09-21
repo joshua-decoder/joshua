@@ -576,7 +576,7 @@ public class JoshuaDecoder {
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
-        double weight = Double.parseDouble(fields[3].trim());
+        float weight = Float.parseFloat(fields[3].trim());
 
         // Find the language model with the largest state.
         int maxOrder = 0;
@@ -591,11 +591,18 @@ public class JoshuaDecoder {
 
         try {
           this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host, port));
+          weights.put("EdgePhraseSimilarity", weight);
         } catch (Exception e) {
           e.printStackTrace();
           System.exit(1);
         }
         logger.info(String.format("FEATURE: edge similarity (weight %.3f)", weights.get("edgephrasesimilarity")));
+      } else if (feature.equals("phrasemodel") || feature.equals("tm")) {
+        String owner = fields[1].trim();
+        String index = fields[2].trim();
+        Float weight = Float.parseFloat(fields[3]);
+        
+        weights.put(String.format("tm_%s_%s", owner, index), weight);
       } else {
         System.err.println("* WARNING: invalid feature '" + featureLine + "'");
       }
