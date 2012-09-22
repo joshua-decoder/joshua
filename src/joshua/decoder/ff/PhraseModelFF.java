@@ -28,9 +28,15 @@ public class PhraseModelFF extends StatelessFF {
     this.ownerID = Vocabulary.id(owner);
   }
 
+  @Override
+  public float estimateCost(final Rule rule, int sentID) {
+    return computeCost(rule, null, sentID);
+  }
+  
   /**
    * Computes the cost of applying the feature.
    */
+  @Override
   public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {
     float cost = 0.0f;
 

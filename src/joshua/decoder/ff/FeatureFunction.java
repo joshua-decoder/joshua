@@ -131,7 +131,10 @@ public abstract class FeatureFunction {
   /**
    * This function is called when initializing translation grammars (for pruning purpose, and to get
    * stateless cost for each rule). This is also needed to sort the rules for cube pruning. It must
-   * return the *weighted cost* of applying a feature.
+   * return the *weighted* estimated cost of applying a feature. This need not be the actual cost of
+   * applying the rule in context. Basically, it's the inner product of the weight vector and all
+   * features found in the grammar rule, though some features (like LanguageModelFF) can also
+   * compute some of their values.
    * 
    * @return the *weighted* cost of applying the feature.
    */

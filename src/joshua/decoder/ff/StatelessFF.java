@@ -34,10 +34,11 @@ public abstract class StatelessFF extends FeatureFunction {
   }
 
   /**
-   * By default, just call computeCost.
+   * The estimated cost of applying this feature, given only the rule. This is used in sorting the
+   * rules for cube pruning.  For most features, this will be 0.0.
    */
   public float estimateCost(Rule rule, int sentID) {
-    return computeCost(rule, null, sentID);
+    return 0.0f;
   }
 
   public final FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
@@ -66,6 +67,7 @@ public abstract class StatelessFF extends FeatureFunction {
    * @param sentID
    * @return
    */
+  @Override
   public final float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath sourcePath, int sentID) {
     return computeCost(rule, sourcePath, sentID);
@@ -74,6 +76,7 @@ public abstract class StatelessFF extends FeatureFunction {
   /**
    * Costs accumulated along the final edge (where no rule is applied).
    */
+  @Override
   public float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
     return 0.0f;
   }
@@ -81,11 +84,13 @@ public abstract class StatelessFF extends FeatureFunction {
   /**
    * Features across the final, rule-less edge.
    */
-  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
+  @Override
+  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath,
+      int sentID) {
     return new FeatureVector(name, 0.0f);
   }
 
-
+  @Override
   public final StateComputer getStateComputer() {
     return null;
   }
