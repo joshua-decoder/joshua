@@ -28,7 +28,7 @@ public class MonolingualRule implements Rule {
   private int lhs; // tag of this rule
   private int[] pFrench; // pointer to the RuleCollection, as all the rules under it share the same
                          // Source side
-  private int arity;
+  protected int arity;
 
   // And a string containing the sparse ones
   protected String sparseFeatures;
@@ -191,8 +191,9 @@ public class MonolingualRule implements Rule {
 //      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
 //          -ff.estimateCost(this, -1)));
     }
-
+//    sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
 //    System.err.println(sb.toString());
+
     return estimatedCost;
   }
 

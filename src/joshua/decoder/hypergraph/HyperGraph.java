@@ -4,14 +4,11 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -60,21 +57,28 @@ public class HyperGraph {
       e.printStackTrace();
     }
 
-    Set<HGNode> allNodes = new TreeSet<HGNode>(HGNode.spanComparator);
+    HashMap<HGNode,HGNode> allNodes = new HashMap<HGNode,HGNode>();
     Stack<HGNode> nodesToVisit = new Stack<HGNode>();
     nodesToVisit.push(this.goalNode);
     while (! nodesToVisit.empty()) {
       HGNode node = nodesToVisit.pop();
-      allNodes.add(node);
+      allNodes.put(node,node);
       if (node.getHyperEdges() != null)
         for (HyperEdge edge: node.getHyperEdges())
           if (edge.getTailNodes() != null)
-            for (HGNode tailNode: edge.getTailNodes())
-              nodesToVisit.push(tailNode);
+            for (HGNode tailNode: edge.getTailNodes()) {
+              if (! allNodes.containsKey(tailNode))
+                nodesToVisit.push(tailNode);
+            }
     }
 
+    ArrayList<HGNode> list = new ArrayList<HGNode>();
+    for (HGNode node: allNodes.keySet())
+      list.add(node);
+
+    Collections.sort(list, HGNode.spanComparator);
     try {
-      for (HGNode node: allNodes) {
+      for (HGNode node: list) {
         out.write(String.format("%s %s\n", Integer.toHexString(node.hashCode()), node));
         if (node.getHyperEdges() != null)
           for (HyperEdge edge: node.getHyperEdges()) {
