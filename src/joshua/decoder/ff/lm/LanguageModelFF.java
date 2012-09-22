@@ -163,12 +163,18 @@ public class LanguageModelFF extends StatefulFF {
    * will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit
    * into its left side.
    */
+  @Override
   public float estimateCost(Rule rule, int sentID) {
-    return estimateRuleLogProb(rule.getEnglish());
+    return weight * estimateRuleLogProb(rule.getEnglish());
   }
 
+  /**
+   * Estimates the future cost of a rule.  For the language model feature, this is the sum of the
+   * costs of the leftmost k-grams, k = [1..n-1].
+   */
+  @Override
   public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
-    return estimateFutureLogP(rule, currentState, sentID);
+    return weight * estimateFutureLogP(rule, currentState, sentID);
   }
 
   public float estimateFutureLogP(Rule rule, DPState curDPState, int sentID) {

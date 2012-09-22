@@ -10,16 +10,16 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
 /**
- * This class defines is the entry point for Joshua's dense+sparse feature implementation.  It
+ * This class defines is the entry point for Joshua's dense+sparse feature implementation. It
  * defines some basic variables and interfaces that are common to all features, and is immediately
  * inherited by StatelessFF and StatefulFF, which provide functionality common to stateless and
- * stateful features, respectively.  Any feature implementation should extend those classes, and not
+ * stateful features, respectively. Any feature implementation should extend those classes, and not
  * this one.
- *
- * Features in Joshua work like templates.  Each feature function defines any number of actual
- * features, which are associated with weights.  The task of the feature function is to compute the
+ * 
+ * Features in Joshua work like templates. Each feature function defines any number of actual
+ * features, which are associated with weights. The task of the feature function is to compute the
  * features that are fired in different circumstances and then return the inner product of those
- * features with the weight vector.  Feature functions can also produce estimates of their future
+ * features with the weight vector. Feature functions can also produce estimates of their future
  * cost; these values are not used in computing the score, but are only used for pruning.
  * 
  * @author Matt Post <post@cs.jhu.edu>
@@ -41,7 +41,7 @@ public abstract class FeatureFunction {
   protected FeatureVector weights;
 
   // Accessor functions
-  public String getName() { 
+  public String getName() {
     return name;
   }
 
@@ -65,23 +65,91 @@ public abstract class FeatureFunction {
     processArgs(this.argString);
   }
 
-  public abstract float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
-  public abstract FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID);
+  /**
+   * This function computes a *weighted* cost of this feature. Stateless features have access to
+   * only stateless variables.
+   * 
+   * @param rule
+   * @param tailNodes
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @return the *weighted* cost of the feature.
+   */
+  public abstract float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID);
 
-  public abstract float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID);
-  public abstract FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID);
-  
+  /**
+   * Returns the *unweighted* cost of the features delta computed at this position. Note that this
+   * is a feature delta, so existing feature costs of the tail nodes should not be incorporated, and
+   * it is very important not to incorporate the feature weights. This function is used in the kbest
+   * extraction code but could also be used in computing the cost.
+   * 
+   * @param rule
+   * @param tailNodes
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @return an *unweighted* feature delta
+   */
+  public abstract FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID);
+
+  /**
+   * This function is called for the final transition. For example, the LanguageModel feature
+   * function treats the last rule specially. It needs to return the *weighted* cost of applying the
+   * feature.
+   * 
+   * @param tailNode
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @return a *weighted* feature cost
+   */
+  public abstract float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath,
+      int sentID);
+
+  /**
+   * Returns the *unweighted* feature delta for the final transition (e.g., for the language model
+   * feature function).
+   * 
+   * @param tailNode
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @return
+   */
+  public abstract FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j,
+      SourcePath sourcePath, int sentID);
+
   public abstract StateComputer getStateComputer();
 
   /**
    * This function is called when initializing translation grammars (for pruning purpose, and to get
-   * stateless cost for each rule). This is also needed to sort the rules for cube pruning.
+   * stateless cost for each rule). This is also needed to sort the rules for cube pruning. It must
+   * return the *weighted cost* of applying a feature.
+   * 
+   * @return the *weighted* cost of applying the feature.
    */
   public abstract float estimateCost(Rule rule, int sentID);
 
+  /**
+   * This feature is called to produce a *weighted estimate* of the future cost of applying this
+   * feature. This value is not incorporated into the model score but is used in pruning decisions.
+   * Stateless features return 0.0f by default, but Stateful features might want to override this.
+   * 
+   * @param rule
+   * @param state
+   * @param sentID
+   * @return the *weighted* future cost estimate of applying this rule in context.
+   */
   public abstract float estimateFutureCost(Rule rule, DPState state, int sentID);
 
-  
+
   /**
    * This function could be implemented to process the feature-line arguments in a generic way, if
    * so desired.
@@ -101,18 +169,18 @@ public abstract class FeatureFunction {
   // double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);
 
   // double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-  //     SourcePath srcPath, int sentID);
+  // SourcePath srcPath, int sentID);
 
   // double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
   // double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-  //     SourcePath srcPath, int sentID);
+  // SourcePath srcPath, int sentID);
 
   /**
    * Edges calling finalTransition do not have concret rules associated with them.
    * */
   // double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
-  //     int sentID);
+  // int sentID);
 
   // double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
