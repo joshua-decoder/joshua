@@ -3,8 +3,6 @@ package joshua.decoder.ff.tm;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.FeatureVector;
-
 
 /**
  * Represents a set of rules under a particular TrieGrammar node. Therefore, all the rules under a

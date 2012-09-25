@@ -1,11 +1,8 @@
 package joshua.decoder.ff.tm;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.FeatureVector;
 
 /**
  * Grammar is a class for wrapping a trie of TrieGrammar in order to store holistic metadata.

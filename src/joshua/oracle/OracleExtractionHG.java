@@ -25,7 +25,6 @@ import java.util.List;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Support;
 import joshua.decoder.JoshuaDecoder;
-import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;

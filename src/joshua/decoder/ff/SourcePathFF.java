@@ -1,10 +1,7 @@
 package joshua.decoder.ff;
 
-import java.util.List;
-
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.hypergraph.HGNode;
 
 /**
  * This feature returns the scored path through the source lattice, which is recorded in a

@@ -1,6 +1,5 @@
 package joshua.decoder.ff.tm.format;
 
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;

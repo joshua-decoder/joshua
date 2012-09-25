@@ -123,6 +123,8 @@ X = done
 - [ ] The grammar reading code needs to know about sparse features
   - [X] MemoryBasedBatchGrammar
   - [ ] PackedGrammar
+    - [ ] getFeatures() is broken
+    - [ ] grammar needs to correctly implement get/setPrecomputableCost() (currently does the same as get/setEstimatedCost())
 - [X] Rewrite the feature function interface.
   - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
   - [X] Stateless features: computeCost(), computeFeatures()
@@ -134,7 +136,7 @@ X = done
   - [X] PhraseModel
   - [X] LanguageModel
   - [X] EdgePhraseSimilarity
-- [ ] features need to know to make sure that rule is not null (signifies final transition).
+- [X] features need to know to make sure that rule is not null (signifies final transition).
   Alternately separate the interface for transitions and final transitions.
 - [X] make sure AbstractGrammar.sortGrammar(List<FeatureFunction>) works.  
 
@@ -145,24 +147,19 @@ X = done
 	
   If the weight vector is updated, this can work simply by changing this to computeCost();
 
-- [ ] Change the way OOV rules are applied (should be separately-owned grammar with one feature
+- [X] Change the way OOV rules are applied (should be separately-owned grammar with one feature
   count OOVs, instead of clunky approach applied now
-  - [ ] get rid of `JoshuaConfiguration.num_phrasal_features`
-  - [ ] get rid of `JoshuaConfiguration.oov_feature_index`
-  - [ ] get rid of `JoshuaConfiguration.oov_feature_cost`
-  - [ ] get rid of `JoshuaConfiguration.use_max_lm_cost_for_oov`
+  - [X] get rid of `JoshuaConfiguration.num_phrasal_features`
+  - [X] get rid of `JoshuaConfiguration.oov_feature_index`
+  - [X] get rid of `JoshuaConfiguration.oov_feature_cost`
+  - [X] get rid of `JoshuaConfiguration.use_max_lm_cost_for_oov`
 - [X] ComputeNodeResult needs to know how to compute features
   - [X] Producing a score
   - [X] Producing a list of features
-- [ ] Rewrite the k-best extraction code to know about sparse features, apply labels to the output
-- [ ] Modify MERT to know about labeled features
+- [X] Rewrite the k-best extraction code to know about sparse features, apply labels to the output
+- [X] Modify MERT to know about labeled features
   This could probably be done by (a) having sparse features output in the order they are declared in
   the file and (b) modifying MERT to assume a dense representation that (perhaps) allows labels that
   are then just ignored.
 - [ ] Modify PRO to work with sparse labeled features
 * [ ] Get batch MIRA working with sparse features
-
-
---
-Currently, need to get rid of whole notion of precomputable features, just map unlabeled ones to
-their default names and precompute the score quite easily.

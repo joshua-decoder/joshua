@@ -1,10 +1,8 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Chart;
@@ -13,7 +11,6 @@ import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -21,7 +18,6 @@ import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-import edu.jhu.thrax.util.TestSetFilter;
 
 /**
  * This class handles parsing of individual Sentence objects (which can represent plain sentences or

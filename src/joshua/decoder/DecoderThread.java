@@ -1,11 +1,9 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Chart;
@@ -15,14 +13,10 @@ import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
-import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-// import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
-import edu.jhu.thrax.util.TestSetFilter;
 
 /**
  * This class handles decoding of individual Sentence objects (which can represent plain sentences
@@ -196,7 +190,7 @@ public class DecoderThread extends Thread {
     HyperGraph hypergraph = chart.expand();
 
     float seconds = (float)(System.currentTimeMillis() - startTime) / 1000.0f;
-    logger.info(String.format("translation of sentence %d took %.3f seconds [%d]", sentence.id(), seconds, getId()));
+    logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]", sentence.id(), seconds, getId()));
 
     return hypergraph;
   }

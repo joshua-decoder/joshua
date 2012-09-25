@@ -1,6 +1,5 @@
 package joshua.decoder.ff.tm.format;
 
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -8,6 +7,7 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
 /**
+ * This class implements reading files in the format defined by David Chiang for Hiero. 
  * 
  * @author Unknown
  * @author Matt Post <post@cs.jhu.edu>

@@ -7,8 +7,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -118,14 +116,14 @@ public class JoshuaDecoder {
   public void changeFeatureWeightVector(FeatureVector newWeights) {
     if (newWeights != null) {
 
-      for (String feature: this.weights.keySet()) {
-        float oldWeight = this.weights.get(feature);
+      for (String feature: JoshuaDecoder.weights.keySet()) {
+        float oldWeight = JoshuaDecoder.weights.get(feature);
         float newWeight = newWeights.get(feature);
-        this.weights.put(feature, newWeights.get(feature));
+        JoshuaDecoder.weights.put(feature, newWeights.get(feature));
         logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature, oldWeight, newWeight));
       }
     }
-    // FIXME: this works for Batch grammar only; not for sentence-specific grammars
+
     for (GrammarFactory grammarFactory : this.grammarFactories) {
       // if (grammarFactory instanceof Grammar) {
       grammarFactory.getGrammarForSentence(null).sortGrammar(this.featureFunctions);
@@ -361,7 +359,7 @@ public class JoshuaDecoder {
           (System.currentTimeMillis() - pre_sort_time) / 1000));
 
       this.decoderFactory =
-          new DecoderFactory(this.grammarFactories, this.featureFunctions, this.weights, this.stateComputers);
+          new DecoderFactory(this.grammarFactories, this.featureFunctions, JoshuaDecoder.weights, this.stateComputers);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -385,7 +383,6 @@ public class JoshuaDecoder {
       int lm_order = Integer.parseInt(tokens[1]);
       boolean left_equiv_state = Boolean.parseBoolean(tokens[2]);
       boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
-      double lm_ceiling_cost = Double.parseDouble(tokens[4]);
       String lm_file = tokens[5];
 
       if (! ngramStateComputers.containsKey(lm_order)) {

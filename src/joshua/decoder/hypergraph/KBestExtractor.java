@@ -74,10 +74,10 @@ public class KBestExtractor {
   // k start from 1
   // ***************** you may need to reset_state() before you call this function for the first
   // time
-  public String getKthHyp(HGNode it, int k, int sentID, List<FeatureFunction> models) {
+  public String getKthHyp(HGNode node, int k, int sentID, List<FeatureFunction> models) {
 
     this.sentID = sentID;
-    VirtualNode virtualNode = addVirtualNode(it);
+    VirtualNode virtualNode = addVirtualNode(node);
 
     // ==== setup the kbest at each hgnode
     DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
