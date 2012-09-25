@@ -1,7 +1,6 @@
 package joshua.decoder.ff.tm;
 
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -46,6 +45,16 @@ public class MonolingualRule implements Rule {
    * applied).
    */
   private float estimatedCost = 0.0f;
+  
+  private float precomputableCost = Float.NEGATIVE_INFINITY;
+  
+  public final float getPrecomputableCost() {
+    return precomputableCost;
+  }
+  
+  public final void setPrecomputableCost(float cost) {
+    this.precomputableCost = cost;
+  }
 
   // ===============================================================
   // Constructors
@@ -151,7 +160,7 @@ public class MonolingualRule implements Rule {
   }
 
   public final void setEstimatedCost(float cost) {
-    if (cost <= Double.NEGATIVE_INFINITY) {
+    if (cost <= Float.NEGATIVE_INFINITY) {
       logger.warning("The cost is being set to -infinity in " + "rule:\n" + toString());
     }
     estimatedCost = cost;
@@ -162,7 +171,7 @@ public class MonolingualRule implements Rule {
    * first sorted via a call to Rule::estimateRuleCost().
    */
   public final float getEstimatedCost() {
-    if (estimatedCost <= Double.NEGATIVE_INFINITY) {
+    if (estimatedCost <= Float.NEGATIVE_INFINITY) {
       logger
           .warning("The estimatedCost is neg infinity; must be bad rule; rule is:\n" + toString());
     }
@@ -184,15 +193,14 @@ public class MonolingualRule implements Rule {
 
     // TODO: this should be cached
     this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
-    // StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
+//    StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
 
     for (FeatureFunction ff : models) {
       this.estimatedCost -= ff.estimateCost(this, -1);
-      // sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
-      // -ff.estimateCost(this, -1)));
+//      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(), -ff.estimateCost(this, -1)));
     }
-    // sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
-    // System.err.println(sb.toString());
+//    sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
+//    System.err.println(sb.toString());
 
     return estimatedCost;
   }

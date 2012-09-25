@@ -137,7 +137,6 @@ public class KBestExtractor {
       CoIterator<String> coIt = new CoIterator<String>() {
         public void coNext(String hypStr) {
           try {
-            System.err.println("GOT HYPSTR");
             writer.write(hypStr);
             writer.write("\n");
             writer.flush();

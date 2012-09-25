@@ -51,6 +51,8 @@ public interface Rule {
 
   float getEstimatedCost();
 
+  float getPrecomputableCost();
+  void setPrecomputableCost(float cost);
 
   // ===============================================================
   // Methods

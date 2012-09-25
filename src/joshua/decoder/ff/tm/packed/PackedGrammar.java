@@ -448,6 +448,16 @@ public class PackedGrammar extends BatchGrammar {
     public float getEstimatedCost() {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
     }
+    
+    @Override
+    public void setPrecomputableCost(float cost) {
+      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
+    }
+
+    @Override
+    public float getPrecomputableCost() {
+      return parent.grammar.cache[parent.grammar.source[address + 2]];
+    }
 
     @Override
     public float estimateRuleCost(List<FeatureFunction> models) {
