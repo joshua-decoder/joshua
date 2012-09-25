@@ -292,9 +292,8 @@ public class DecoderThread extends Thread {
     /* Parsing */
     HyperGraph hypergraph = chart.expand();
 
-    long seconds = (System.currentTimeMillis() - startTime) / 1000;
-    logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds ["
-        + getId() + "]");
+    float seconds = (float)(System.currentTimeMillis() - startTime) / 1000.0f;
+    logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]", sentence.id(), seconds, getId()));
 
     return hypergraph;
   }
