@@ -34,7 +34,7 @@ public class PhraseModelFF extends StatelessFF {
   }
   
   /**
-   * Computes the cost of applying the feature.
+   * Computes the cost of applying the feature.  
    */
   @Override
   public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {

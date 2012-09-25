@@ -82,9 +82,9 @@ public class KBestExtractor {
 
     // ==== setup the kbest at each hgnode
     DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
-    if (derivationState == null)
+    if (derivationState == null) {
       return null;
-    else {
+    } else {
 
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
@@ -108,6 +108,7 @@ public class KBestExtractor {
 
   public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
       int sentID, final List<String> out) {
+
 
     CoIterator<String> coIt = new CoIterator<String>() {
 
@@ -175,7 +176,7 @@ public class KBestExtractor {
     try {
       for (int k = 1;; k++) {
         String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
-
+        
         if (null == hypStr || k >= topN) break;
 
         // System.err.println(String.format("* LAZYKBEST(%d)", k));
@@ -212,7 +213,7 @@ public class KBestExtractor {
       strHyp.append(sentID);
       strHyp.append(" ||| ");
     }
-
+    
     // TODO: consider_start_sym
     // ####hyp words
     for (int t = 0; t < tem.length; t++) {
@@ -286,8 +287,6 @@ public class KBestExtractor {
     if (addCombinedScore) {
       strHyp.append(String.format(" ||| %.3f", -state.cost));
     }
-
-    // System.err.println("Writing hyp");
 
     return strHyp.toString();
   }

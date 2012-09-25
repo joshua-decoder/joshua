@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.TreeMap;
 
 import joshua.decoder.ff.StatefulFF;
-import joshua.decoder.ff.StatelessFF;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.state_maintenance.DPState;
