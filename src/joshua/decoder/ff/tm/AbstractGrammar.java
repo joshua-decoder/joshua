@@ -2,14 +2,11 @@ package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.FeatureVector;
 
 /**
  * Partial implementation of the <code>Grammar</code> interface that provides logic for sorting a
