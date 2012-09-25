@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -138,6 +137,7 @@ public class KBestExtractor {
       CoIterator<String> coIt = new CoIterator<String>() {
         public void coNext(String hypStr) {
           try {
+            System.err.println("GOT HYPSTR");
             writer.write(hypStr);
             writer.write("\n");
             writer.flush();
@@ -177,9 +177,7 @@ public class KBestExtractor {
       for (int k = 1;; k++) {
         String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
         
-        if (null == hypStr || k >= topN) break;
-
-        // System.err.println(String.format("* LAZYKBEST(%d)", k));
+        if (null == hypStr || k > topN) break;
 
         coit.coNext(hypStr);
       }
