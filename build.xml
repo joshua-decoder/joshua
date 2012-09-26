@@ -291,11 +291,11 @@
 
   <taskdef uri="antlib:org.doxygen.tools"
 		   resource="org/doxygen/tools/antlib.xml"
-		   classpath="${lib}/ant_doxygen.jar"/>
+		   classpath="${lib}/ant-doxygen-1.6.1.jar"/>
 
   <!-- Compile the Javadocs and Markdown documentation into web pages -->
-  <target name="documentation">
-	<doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+  <target name="documentation" depends="resolve">
+    <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
   </target>
 
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
