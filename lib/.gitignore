@@ -1,0 +1,10 @@
+*
+cache/
+!.gitignore
+!BerkeleyParser.jar
+!LICENSES
+!README
+!berkeleyaligner.jar
+!berkeleylm.jar
+!collections-generic-4.01.jar
+!eng_sm6.gr
