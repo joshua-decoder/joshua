@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
   
   <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
@@ -138,7 +138,7 @@
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="init, resolve">
+  <target name="java" depends="init">
 	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
@@ -318,8 +318,8 @@
 	<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
 		   classpath="${testng}" debug="on" encoding="utf8"/> 
   </target>
-
-
+  
+  
   <!-- Run the unit tests -->
   <target name="testng" depends="all,compile-tests">
 	<testng classpath="${build}" sourcedir="${test}">
@@ -330,39 +330,5 @@
 	  <xmlfileset dir="." includes="testng.xml"/>
 	</testng>
   </target>
-
-  <property name="ivy.install.version" value="2.1.0-rc2" />
-  <condition property="ivy.home" value="${env.IVY_HOME}">
-    <isset property="env.IVY_HOME" />
-  </condition>
-  <property name="ivy.home" value="${env.JOSHUA}" />
-  <property name="ivy.jar.dir" value="${ivy.home}/lib" />
-  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
-  <target name="download-ivy" unless="offline">
-      <mkdir dir="${ivy.jar.dir}"/>
-      <!-- download Ivy from web site so that it can be used even without any special installation -->
-      <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
-           dest="${ivy.jar.file}" usetimestamp="true"/>
-  </target>
-
-  <target name="init-ivy" depends="download-ivy">
-    <!-- try to load ivy here from ivy home, in case the user has not already dropped
-            it into ant's lib dir (note that the latter copy will always take precedence).
-            We will not fail as long as local lib dir exists (it may be empty) and
-            ivy is in at least one of ant's lib dir or the local lib dir. -->
-      <path id="ivy.lib.path">
-          <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
-
-      </path>
-      <taskdef resource="org/apache/ivy/ant/antlib.xml"
-               uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
-  </target>
-
-  <!-- ================================= 
-          target: resolve              
-       ================================= -->
-  <target name="resolve" description="--> retrieve dependencies with ivy" depends="download-ivy">
-      <ivy:retrieve />
-  </target>
-
+  
 </project>

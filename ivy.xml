@@ -1,6 +1,0 @@
-<ivy-module version="2.0">
-    <info organisation="joshua" module="joshua"/>
-    <dependencies>
-        <dependency org="org.restlet.jse" name="org.restlet" rev="2.1.0"/>
-    </dependencies>
-</ivy-module>
