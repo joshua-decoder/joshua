@@ -45,13 +45,13 @@ public class MonolingualRule implements Rule {
    * applied).
    */
   private float estimatedCost = 0.0f;
-  
+
   private float precomputableCost = Float.NEGATIVE_INFINITY;
-  
+
   public final float getPrecomputableCost() {
     return precomputableCost;
   }
-  
+
   public final void setPrecomputableCost(float cost) {
     this.precomputableCost = cost;
   }
@@ -159,6 +159,10 @@ public class MonolingualRule implements Rule {
     return sparseFeatures;
   }
 
+  /**
+   * Sets the estimated cost. Calling estimateRuleCost(models) will also set the cost, but this
+   * function can be used if the cost is computed elsewhere. 
+   */
   public final void setEstimatedCost(float cost) {
     if (cost <= Float.NEGATIVE_INFINITY) {
       logger.warning("The cost is being set to -infinity in " + "rule:\n" + toString());
@@ -167,8 +171,10 @@ public class MonolingualRule implements Rule {
   }
 
   /**
-   * This function returns the cost of a rule, which should have been computed when the grammar was
-   * first sorted via a call to Rule::estimateRuleCost().
+   * This function returns the estimated cost of a rule, which should have been computed when the
+   * grammar was first sorted via a call to Rule::estimateRuleCost(). This function is a getter
+   * only; it will not compute the value if it has not already been set. Probably this function
+   * should just be done away with in favor of estimateRuleCost().
    */
   public final float getEstimatedCost() {
     if (estimatedCost <= Float.NEGATIVE_INFINITY) {
@@ -179,11 +185,14 @@ public class MonolingualRule implements Rule {
   }
 
   /**
-   * Set a lower-bound estimate inside the rule returns full estimate. By lower bound, we mean the
-   * set of precomputable features. This includes all features listed with the rule in the grammar
-   * file, as well as certain stateful features like n-gram probabilities of any complete n-grams
-   * found with the rule. The value of this function is used only for sorting the rules. When the
-   * rule is later applied in context to particular hypernodes, the rule's actual cost is computed.
+   * This function estimates the cost of a rule, which is used for sorting the rules for cube
+   * pruning. The estimated cost is basically the set of precomputable features (features listed
+   * along with the rule in the grammar file) along with any other estimates that other features
+   * would like to contribute (e.g., a language model estimate). This cost will be a lower bound on
+   * the rule's actual cost.
+   * 
+   * The value of this function is used only for sorting the rules. When the rule is later applied
+   * in context to particular hypernodes, the rule's actual cost is computed.
    * 
    * @param models the list of models available to the decoder
    * @return estimated cost of the rule
@@ -191,16 +200,18 @@ public class MonolingualRule implements Rule {
   public final float estimateRuleCost(List<FeatureFunction> models) {
     if (null == models) return 0.0f;
 
-    // TODO: this should be cached
-    this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
-//    StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
+    if (this.estimatedCost <= Float.NEGATIVE_INFINITY) {
+      this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
+      // StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
 
-    for (FeatureFunction ff : models) {
-      this.estimatedCost -= ff.estimateCost(this, -1);
-//      sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(), -ff.estimateCost(this, -1)));
+      for (FeatureFunction ff : models) {
+        this.estimatedCost -= ff.estimateCost(this, -1);
+        // sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
+        // -ff.estimateCost(this, -1)));
+      }
+      // sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
+      // System.err.println(sb.toString());
     }
-//    sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
-//    System.err.println(sb.toString());
 
     return estimatedCost;
   }
