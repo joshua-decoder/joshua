@@ -15,6 +15,7 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 
@@ -33,6 +34,15 @@ public interface Trie {
    * @return Child node of this trie
    */
   Trie match(int wordID);
+  
+  /**
+   * Traverse one ply further down the trie.
+   * If there are no matches, the result is empty.
+   * 
+   * @param wordId
+   * @return ArrayList<Trie> nodes of this trie
+   */
+  ArrayList<Trie> matchAll(int sym_id);
 
 
   /**
