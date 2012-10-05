@@ -52,7 +52,7 @@
   <!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Create the build directory for compiled class files -->
-  <target name="init" depends="set-joshua-home">
+  <target name="init" depends="set-joshua-home,resolve">
 	<tstamp/>
 	<mkdir dir="${build}"/>
 	<mkdir dir="${lib}"/>
@@ -116,7 +116,7 @@
 	</exec>
   </target>
 
-  <target name="thrax" depends="set-joshua-home">
+  <target name="thrax" depends="set-joshua-home,resolve">
 	<exec executable="git">
 	  <arg value="submodule" />
 	  <arg value="init" />
@@ -135,11 +135,11 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
-  <target name="all" depends="init,java,giza,kenlm,parallelize">
+  <target name="all" depends="init,java,giza,kenlm,parallelize,thrax">
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="init, resolve">
+  <target name="java" depends="init">
 	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
