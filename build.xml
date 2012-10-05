@@ -135,11 +135,11 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
-  <target name="all" depends="init,java,giza,kenlm,parallelize,thrax">
+  <target name="all" depends="init,java,giza,kenlm,parallelize">
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="init">
+  <target name="java" depends="init,thrax">
 	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
