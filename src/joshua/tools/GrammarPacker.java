@@ -16,55 +16,69 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.util.FormatUtils;
+import joshua.util.encoding.Encoder;
+import joshua.util.encoding.AdaptableEncoderConfiguration;
 import joshua.util.io.LineReader;
-import joshua.util.quantization.QuantizerConfiguration;
 
 public class GrammarPacker {
 
   private static final Logger logger = Logger.getLogger(GrammarPacker.class.getName());
 
+  // Approximate maximum size of a slice in number of rules
   private static int SLICE_SIZE;
+  // Size limit for slice in bytes.
   private static int DATA_SIZE_LIMIT;
+  // Estimated average number of feature entries for one rule.
   private static int DATA_SIZE_ESTIMATE;
 
-  private static String WORKING_DIRECTORY;
+  // Output directory name.
+  private String output;
 
+  // Input grammar to be packed.
   private String grammar;
 
-  private boolean have_alignments;
+  private boolean labeled;
+
+  private boolean packAlignments;
   private String alignments;
 
-  private QuantizerConfiguration quantization;
-  private boolean autopack;
+  private AdaptableEncoderConfiguration encodingConfig;
 
   static {
     SLICE_SIZE = 5000000;
     DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
     DATA_SIZE_ESTIMATE = 20;
-
-    WORKING_DIRECTORY = System.getProperty("user.dir") + File.separator + "packed";
   }
 
-  public GrammarPacker(String config_filename, String grammar_filename, String alignments_filename,
-                       boolean autopack)
-      throws IOException {
+  public GrammarPacker(String grammar_filename, String config_filename, String output_filename,
+      String alignments_filename) throws IOException {
+    this.labeled = true;
     this.grammar = grammar_filename;
-    this.quantization = new QuantizerConfiguration();
+    this.output = output_filename;
+
+    // TODO: Always open encoder config? This is debatable.
+    this.encodingConfig = new AdaptableEncoderConfiguration(true);
 
     this.alignments = alignments_filename;
-    have_alignments = (alignments != null);
-    if (!have_alignments) {
+    packAlignments = (alignments != null);
+    if (!packAlignments) {
       logger.info("No alignments file specified, skipping.");
     } else if (!new File(alignments_filename).exists()) {
       logger.severe("Alignements file does not exist: " + alignments);
       System.exit(0);
     }
+
+    if (config_filename != null)
+      readConfig(config_filename);
+    else
+      logger.info("No config specified. Attempting auto-detect of features.");
     
-    this.autopack = autopack;
-    if (this.autopack) {
-      logger.info("Packing automatically. Feature types will be auto-detected.");
+    File working_dir = new File(output);
+    working_dir.mkdir();
+    if (!working_dir.exists()) {
+      logger.severe("Failed creating output directory.");
+      System.exit(0);
     }
-    readConfig(config_filename);
   }
 
   private void readConfig(String config_filename) throws IOException {
@@ -84,26 +98,20 @@ public class GrammarPacker {
         // Number of records to concurrently load into memory for sorting.
         SLICE_SIZE = Integer.parseInt(fields[1]);
 
-      } else if ("quantizer".equals(fields[0])) {
-        // Adding a quantizer to the mix.
+      } else if ("encoder".equals(fields[0])) {
+        // Adding an encoder to the mix.
         if (fields.length < 3) {
-          logger.severe("Incomplete quantizer line in config.");
+          logger.severe("Incomplete encoder line in config.");
           System.exit(0);
         }
-        String quantizer_key = fields[1];
+        String encoder_key = fields[1];
         ArrayList<Integer> feature_ids = new ArrayList<Integer>();
         for (int i = 2; i < fields.length; i++)
           feature_ids.add(Vocabulary.id(fields[i]));
-        quantization.add(quantizer_key, feature_ids);
+        encodingConfig.add(encoder_key, feature_ids);
       }
     }
     reader.close();
-
-    File working_dir = new File(WORKING_DIRECTORY);
-    if (!working_dir.exists() && !working_dir.mkdirs()) {
-      logger.severe("Failed creating working directory.");
-      System.exit(0);
-    }
   }
 
   /**
@@ -116,38 +124,50 @@ public class GrammarPacker {
     LineReader grammar_reader = null;
     LineReader alignment_reader = null;
 
-    quantization.initialize();
+    encodingConfig.initialize();
 
-    // Explore pass. Learn vocabulary and quantizer histograms.
+    // Explore pass. Learn vocabulary and feature value histograms.
     logger.info("Exploring: " + grammar);
     grammar_reader = new LineReader(grammar);
     explore(grammar_reader);
 
-    logger.info("Exploration pass complete. Freezing vocabulary and " + "finalizing quantizers.");
-
-    quantization.finalize();
-    quantization.write(WORKING_DIRECTORY + File.separator + "quantization");
+    logger.info("Exploration pass complete. Freezing vocabulary and finalizing encoders.");
+    encodingConfig.inferTypes(this.labeled);
+    logger.info("Type inference complete.");
+    
+    logger.info("Finalizing encoding.");
+    encodingConfig.finalize();
+    
+    logger.info("Writing encoding.");
+    encodingConfig.write(output + File.separator + "encoding");
+    
+    logger.info("Freezing vocab.");
     Vocabulary.freeze();
-    Vocabulary.write(WORKING_DIRECTORY + File.separator + "vocabulary");
-    // Read previously written quantizer configuration to match up to changed
+    
+    logger.info("Writing vocab.");
+    Vocabulary.write(output + File.separator + "vocabulary");
+    // Read previously written encoder configuration to match up to changed
     // vocabulary id's.
-    quantization.read(WORKING_DIRECTORY + File.separator + "quantization");
+    
+    logger.info("Reading encoding.");
+    encodingConfig.read(output + File.separator + "encoding");
 
     logger.info("Beginning packing pass.");
     Queue<PackingFileTuple> slices = new PriorityQueue<PackingFileTuple>();
     // Actual binarization pass. Slice and pack source, target and data.
     grammar_reader = new LineReader(grammar);
 
-    if (have_alignments) alignment_reader = new LineReader(alignments);
+    if (packAlignments) alignment_reader = new LineReader(alignments);
     binarize(grammar_reader, alignment_reader, slices);
     logger.info("Packing complete.");
 
-    logger.info("Packed grammar in: " + WORKING_DIRECTORY);
+    logger.info("Packed grammar in: " + output);
     logger.info("Done.");
   }
 
   private void explore(LineReader grammar) {
     int counter = 0;
+    boolean first_line = true;
     while (grammar.hasNext()) {
       String line = grammar.next().trim();
       counter++;
@@ -177,11 +197,27 @@ public class GrammarPacker {
         else
           Vocabulary.id(target_word);
       }
+
+      // Test features for labeling.
+      if (first_line && features.length != 0) {
+        if (!features[0].contains("=")) {
+          // We assume that if there is one unlabeled feature the entire grammar is unlabeled.
+          labeled = false;
+        }
+        this.encodingConfig.setLabeled(labeled);
+        first_line = false;
+      }
+
       // Add feature names to vocabulary and pass the value through the
-      // appropriate quantizer.
-      for (String feature_entry : features) {
-        String[] fe = feature_entry.split("=");
-        quantization.get(Vocabulary.id(fe[0])).add(Float.parseFloat(fe[1]));
+      // appropriate encoder.
+      for (int f = 0; f < features.length; ++f) {
+        if (labeled) {
+          String[] fe = features[f].split("=");
+          encodingConfig.get(Vocabulary.id(fe[0])).add(Float.parseFloat(fe[1]));
+        }
+        else{
+          encodingConfig.get(f).add(Float.parseFloat(features[f]));
+        }
       }
     }
   }
@@ -200,7 +236,7 @@ public class GrammarPacker {
     FeatureBuffer feature_buffer = new FeatureBuffer();
 
     AlignmentBuffer alignment_buffer = null;
-    if (have_alignments) alignment_buffer = new AlignmentBuffer();
+    if (packAlignments) alignment_buffer = new AlignmentBuffer();
 
     TreeMap<Integer, Float> features = new TreeMap<Integer, Float>();
     while (grammar_reader.hasNext()) {
@@ -219,9 +255,8 @@ public class GrammarPacker {
       String[] feature_entries = fields[3].split("\\s");
 
       // Reached slice limit size, indicate that we're closing up.
-      if (!ready_to_flush
-          && (slice_counter > SLICE_SIZE || feature_buffer.overflowing() || (have_alignments && alignment_buffer
-              .overflowing()))) {
+      if (!ready_to_flush && (slice_counter > SLICE_SIZE || feature_buffer.overflowing() || 
+          (packAlignments && alignment_buffer.overflowing()))) {
         ready_to_flush = true;
         first_source_word = source_words[0];
       }
@@ -231,7 +266,7 @@ public class GrammarPacker {
         source_trie.clear();
         target_trie.clear();
         feature_buffer.clear();
-        if (have_alignments) alignment_buffer.clear();
+        if (packAlignments) alignment_buffer.clear();
 
         num_slices++;
         slice_counter = 0;
@@ -240,7 +275,7 @@ public class GrammarPacker {
 
       int alignment_index = -1;
       // If present, process alignments.
-      if (have_alignments) {
+      if (packAlignments) {
         if (!alignment_reader.hasNext()) {
           logger.severe("No more alignments starting in line " + counter);
           throw new RuntimeException("No more alignments starting in line " + counter);
@@ -263,16 +298,22 @@ public class GrammarPacker {
       // Implicitly sort via TreeMap, write to data buffer, remember position
       // to pass on to the source trie node.
       features.clear();
-      for (String feature_entry : feature_entries) {
-        String[] parts = feature_entry.split("=");
-        int feature_id = Vocabulary.id(parts[0]);
-        float feature_value = Float.parseFloat(parts[1]);
-        if (feature_value != 0) features.put(feature_id, feature_value);
+      for (int f = 0; f < feature_entries.length; ++f) {
+        String feature_entry = feature_entries[f];
+        if (this.labeled) {
+          String[] parts = feature_entry.split("=");
+          int feature_id = Vocabulary.id(parts[0]);
+          float feature_value = Float.parseFloat(parts[1]);
+          if (feature_value != 0) features.put(encodingConfig.getRank(feature_id), feature_value);
+        } else {
+          float feature_value = Float.parseFloat(feature_entry);
+          if (feature_value != 0) features.put(f, feature_value);
+        }
       }
       int features_index = feature_buffer.add(features);
 
       // Sanity check on the data block index.
-      if (have_alignments && features_index != alignment_index) {
+      if (packAlignments && features_index != alignment_index) {
         logger.severe("Block index mismatch between features (" + features_index
             + ") and alignments (" + alignment_index + ").");
         throw new RuntimeException("Data block index mismatch.");
@@ -393,7 +434,7 @@ public class GrammarPacker {
 
     // Ready data buffers for writing.
     feature_buffer.initialize();
-    if (have_alignments) alignment_buffer.initialize();
+    if (packAlignments) alignment_buffer.initialize();
 
     // Packing loop for downwards-pointing source trie.
     while (!source_queue.isEmpty()) {
@@ -419,7 +460,7 @@ public class GrammarPacker {
       // Write lhs and links to target and data.
       for (SourceValue sv : node.values) {
         int feature_block_index = feature_buffer.write(sv.data);
-        if (have_alignments) {
+        if (packAlignments) {
           int alignment_block_index = alignment_buffer.write(sv.data);
           if (alignment_block_index != feature_block_index) {
             logger.severe("Block index mismatch.");
@@ -434,29 +475,27 @@ public class GrammarPacker {
     }
     // Flush the data stream.
     feature_buffer.flush(feature_stream);
-    if (have_alignments) alignment_buffer.flush(alignment_stream);
+    if (packAlignments) alignment_buffer.flush(alignment_stream);
 
     target_stream.close();
     source_stream.close();
     feature_stream.close();
-    if (have_alignments) alignment_stream.close();
+    if (packAlignments) alignment_stream.close();
 
     return slice;
   }
 
   public static void main(String[] args) throws IOException {
-    String config_filename = null;
     String grammar_filename = null;
+    String config_filename = null;
+    String output_prefix = null;
     String alignments_filename = null;
-    
-    boolean autopilot = false;
-    
+
     if (args.length < 1 || args[0].equals("-h")) {
       System.err.println("Usage: " + GrammarPacker.class.toString());
       System.err.println("    -g grammar_file     translation grammar to process");
-      System.err.println("    -p packed_dir       output directory for packed grammar");
-      System.err.println("    -A                  autopilot");
-      System.err.println("    -c config_file      packing configuration file");
+      System.err.println("    -p packed_name      prefix for *.packed output directory");
+      System.err.println("   [-c config_file      packing configuration file]");
       System.err.println("   [-a alignment_file   alignment_file]");
       System.err.println();
       System.exit(-1);
@@ -466,13 +505,11 @@ public class GrammarPacker {
       if ("-g".equals(args[i]) && (i < args.length - 1)) {
         grammar_filename = args[++i];
       } else if ("-p".equals(args[i]) && (i < args.length - 1)) {
-        WORKING_DIRECTORY = args[++i];
+        output_prefix = args[++i];
       } else if ("-c".equals(args[i]) && (i < args.length - 1)) {
         config_filename = args[++i];
       } else if ("-a".equals(args[i]) && (i < args.length - 1)) {
         alignments_filename = args[++i];
-      } else if ("-A".equals(args[i])) {
-        autopilot = true;
       }
     }
     if (grammar_filename == null) {
@@ -482,21 +519,34 @@ public class GrammarPacker {
     if (!new File(grammar_filename).exists()) {
       logger.severe("Grammar file not found: " + grammar_filename);
     }
-    if (config_filename == null && !autopilot) {
-      logger.severe("Config file not specified.");
-      return;
-    }
     if (config_filename != null && !new File(config_filename).exists()) {
       logger.severe("Config file not found: " + config_filename);
     }
-    if (new File(WORKING_DIRECTORY).exists()) {
-      logger.severe("File or directory already exists: " + WORKING_DIRECTORY);
+
+    String output_filename = null;
+    if (output_prefix != null) {
+      if (output_prefix.endsWith(".packed"))
+        output_filename = output_prefix;
+      else
+        output_filename = output_prefix + (output_prefix.endsWith(".") ? "" : ".") + "packed";
+    } else {
+      int dot_pos = grammar_filename.lastIndexOf(".");
+      if (dot_pos == -1)
+        output_filename = grammar_filename + ".packed";
+      else
+        output_filename = grammar_filename.substring(0, dot_pos + 1) + "packed";
+    }
+
+    if (new File(output_filename).exists()) {
+      logger.severe("File or directory already exists: " + output_filename);
       logger.severe("Will not overwrite.");
       return;
-    }    
+    } else {
+      logger.info("Will be writing to " + output_filename);
+    }
 
-    GrammarPacker packer = new GrammarPacker(config_filename, grammar_filename,
-      alignments_filename, autopilot);
+    GrammarPacker packer =
+        new GrammarPacker(grammar_filename, config_filename, output_filename, alignments_filename);
     packer.pack();
   }
 
@@ -736,8 +786,12 @@ public class GrammarPacker {
 
   class FeatureBuffer extends PackingBuffer<TreeMap<Integer, Float>> {
 
+    private Encoder idEncoder;
+    
     FeatureBuffer() throws IOException {
       super();
+      idEncoder = encodingConfig.getIdEncoder();
+      logger.info("Encoding feature ids in: " + idEncoder.getKey());
     }
 
     /**
@@ -756,13 +810,13 @@ public class GrammarPacker {
       if (buffer.capacity() - buffer.position() <= size_estimate) reallocate();
 
       // Write features to buffer.
-      buffer.putInt(features.size());
+      idEncoder.write(buffer, features.size());
       for (Integer k : features.descendingKeySet()) {
         float v = features.get(k);
         // Sparse features.
         if (v != 0.0) {
-          buffer.putInt(k);
-          quantization.get(k).write(buffer, v);
+          idEncoder.write(buffer, k);
+          encodingConfig.get(k).write(buffer, v);
         }
       }
       // Store position the block was written to.
@@ -814,14 +868,14 @@ public class GrammarPacker {
     private File alignmentFile;
 
     PackingFileTuple(String prefix) {
-      sourceFile = new File(WORKING_DIRECTORY + File.separator + prefix + ".source");
-      targetFile = new File(WORKING_DIRECTORY + File.separator + prefix + ".target");
-      targetLookupFile = new File(WORKING_DIRECTORY + File.separator + prefix + ".target.lookup");
-      featureFile = new File(WORKING_DIRECTORY + File.separator + prefix + ".features");
-      if (have_alignments)
-        alignmentFile = new File(WORKING_DIRECTORY + File.separator + prefix + ".alignments");
-      else
-        alignmentFile = null;
+      sourceFile = new File(output + File.separator + prefix + ".source");
+      targetFile = new File(output + File.separator + prefix + ".target");
+      targetLookupFile = new File(output + File.separator + prefix + ".target.lookup");
+      featureFile = new File(output + File.separator + prefix + ".features");
+
+      alignmentFile = null;
+      if (packAlignments)
+        alignmentFile = new File(output + File.separator + prefix + ".alignments");
 
       logger.info("Allocated slice: " + sourceFile.getAbsolutePath());
     }
