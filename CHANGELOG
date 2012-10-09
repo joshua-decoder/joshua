@@ -7,6 +7,9 @@
 
    - Removed "thrax" dependency from "all" target
 
+   - Fixed bug in MERT and PRO that waited for all the decoder STDOUT before moving on
+     to STDERR.  With large enough dev sets, this could hang indefinitely.
+
 - Updated berkeleyLM to version 1.1 (r463) with built-in thread-safe caching.
 
 
