@@ -21,7 +21,7 @@ my $moses_ini_file = $opts{i} || usage();
 my $outdir         = $opts{d} || "joshua";
 
 sub usage {
-  print "Usage: moses2joshua.pl [-i] moses.ini -d outputdir\n";
+  print "Usage: moses2joshua.pl -i moses.ini [-d outputdir=joshua]\n";
   exit;
 }
 
