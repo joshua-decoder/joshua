@@ -1424,15 +1424,17 @@ public class MertCore {
       println("Running external decoder...", 1);
 
       try {
-        Runtime rt = Runtime.getRuntime();
-        String cmd[] =
-            {decoderCommandFileName, passIterationToDecoder ? Integer.toString(iteration) : ""};
-        Process p = rt.exec(cmd);
+        String cmd = decoderCommandFileName;
+        if (passIterationToDecoder)
+          cmd += " " + Integer.toString(iteration);
 
-        StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        // this merges the error and output streams of the subprocess
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+
+        // capture the sub-command's output
         StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
-
-        errorGobbler.start();
         outputGobbler.start();
 
         int decStatus = p.waitFor();
