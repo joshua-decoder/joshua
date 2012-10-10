@@ -230,7 +230,7 @@ sub convert_grammar {
       if ($rule =~ /<\/s>/) {
 
         my @probs = map { transform($_) } (split(' ',$probs));
-        my $scores = join(" ", @probs);
+        my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
         print OUT "[GOAL] ||| [X,1] ||| [X,1] ||| $scores\n";
         next;
@@ -303,7 +303,7 @@ sub convert_grammar {
       }
 
       my @probs = map { transform($_) } (split(' ',$probs));
-      my $scores = join(" ", @probs);
+      my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
       my $lhs = ($l2lhs eq "[S]") ? "[GOAL]" : $l2lhs;
       print OUT "$lhs ||| $l1rhs ||| $l2rhs ||| $scores\n";
