@@ -71,6 +71,7 @@ test/scripts/tokenization/output
 
 /test/bn-en/packed/diff
 /test/bn-en/packed/output.bleu
+/test/decoder/empty-test/log
 /test/decoder/regexp-grammar/diff
 /test/decoder/regexp-grammar/output
 /test/packed-grammar/diff

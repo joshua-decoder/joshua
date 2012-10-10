@@ -30,9 +30,9 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.util.encoding.Encoder;
+import joshua.util.encoding.AdaptableEncoderConfiguration;
 import joshua.util.io.LineReader;
-import joshua.util.quantization.Quantizer;
-import joshua.util.quantization.QuantizerConfiguration;
 
 public class PackedGrammar extends BatchGrammar {
 
@@ -42,42 +42,38 @@ public class PackedGrammar extends BatchGrammar {
 
   private int owner;
 
-  private QuantizerConfiguration quantization;
+  private AdaptableEncoderConfiguration quantization;
   private HashMap<Integer, Integer> featureNameMap;
 
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
-  private final float maxId;
-
-  public PackedGrammar(String grammar_directory, int span_limit, String owner)
+  public PackedGrammar(String grammar_dir, int span_limit, String owner)
       throws FileNotFoundException, IOException {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
-    logger.info("Reading vocabulary: " + grammar_directory + File.separator + "vocabulary");
-    Vocabulary.read(grammar_directory + File.separator + "vocabulary");
-    maxId = (float) Vocabulary.size();
-
+    logger.info("Reading vocabulary: " + grammar_dir + File.separator + "vocabulary");
+    Vocabulary.read(grammar_dir + File.separator + "vocabulary");
+    
     // Read the quantizer setup.
-    logger.info("Reading quantization configuration: " + grammar_directory + File.separator
+    logger.info("Reading quantization configuration: " + grammar_dir + File.separator
         + "quantization");
-    quantization = new QuantizerConfiguration();
-    quantization.read(grammar_directory + File.separator + "quantization");
+    quantization = new AdaptableEncoderConfiguration();
+    quantization.read(grammar_dir + File.separator + "quantization");
 
     // Set phrase owner.
     this.owner = Vocabulary.id(owner);
 
     // Read the dense feature name map.
     if (JoshuaConfiguration.dense_features)
-      loadFeatureNameMap(grammar_directory + File.separator + "dense_map");
+      loadFeatureNameMap(grammar_dir + File.separator + "dense_map");
 
-    String[] listing = new File(grammar_directory).list();
+    String[] listing = new File(grammar_dir).list();
     slices = new ArrayList<PackedSlice>();
     for (int i = 0; i < listing.length; i++) {
       if (listing[i].startsWith("slice_") && listing[i].endsWith(".source"))
-        slices
-            .add(new PackedSlice(grammar_directory + File.separator + listing[i].substring(0, 11)));
+        slices.add(new PackedSlice(grammar_dir + File.separator + listing[i].substring(0, 11)));
     }
     root = new PackedRoot(this);
   }
@@ -622,7 +618,7 @@ public class PackedGrammar extends BatchGrammar {
       feature_position += 4;
       for (int i = 0; i < num_features; i++) {
         int feature_id = features.getInt(feature_position);
-        Quantizer quantizer = quantization.get(feature_id);
+        Encoder quantizer = quantization.get(feature_id);
         feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
         feature_position += 4 + quantizer.size();
       }
