@@ -499,6 +499,9 @@ public class JoshuaDecoder {
   private FeatureVector readWeights(String fileName) {
     FeatureVector weights = new FeatureVector();
 
+    if (fileName.equals(""))
+      return new FeatureVector();
+
     try {
       LineReader lineReader = new LineReader(fileName);
 
@@ -512,9 +515,10 @@ public class JoshuaDecoder {
         weights.put(feature, value);
       }
     } catch (FileNotFoundException ioe) {
-      System.err.println("* WARNING: Can't find weights-file '" + fileName + "'");
+      System.err.println("* FATAL: Can't find weights-file '" + fileName + "'");
+      System.exit(1);
     } catch (IOException ioe) {
-      System.err.println("* FATAL: Can't read file weights-file '" + fileName + "'");
+      System.err.println("* FATAL: Can't read weights-file '" + fileName + "'");
       ioe.printStackTrace();
       System.exit(1);
     }
