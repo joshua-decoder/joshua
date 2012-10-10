@@ -115,6 +115,7 @@ while (my $line = <MOSES>) {
   } elsif (header($line) eq "weight-w") {
 
     chomp(my $weight = <MOSES>);
+    print JOSHUA "feature-function = WordPenalty\n";
     print WEIGHTS "WordPenalty $weight\n";
 
   } elsif (header($line) eq "cube-pruning-pop-limit") {
@@ -129,8 +130,8 @@ while (my $line = <MOSES>) {
     # this is used for unknown words and for the source-side (if
     # unspecified in a rule); Joshua only supports its use for unknown
     # words
-    print JOSHUA "default-non-terminal=X\n";
-    print JOSHUA "goal-symbol=GOAL\n";
+    print JOSHUA "default-non-terminal = X\n";
+    print JOSHUA "goal-symbol = GOAL\n";
     print JOSHUA "\n";
 
   } elsif (header($line) eq "search-algorithm") {
@@ -144,9 +145,10 @@ while (my $line = <MOSES>) {
   }
 }
 
-print JOSHUA "top-n=1\n\n";
-print JOSHUA "weights-file = weights\n";
+print JOSHUA "top-n = 1\n\n";
+print JOSHUA "weights-file = $outdir/weights\n";
 
+print JOSHUA "feature-function = OOVPenalty\n";
 print WEIGHTS "OOVPenalty -100\n";
 
 close(MOSES);
@@ -329,7 +331,8 @@ sub select_symbol {
 sub transform {
   my ($weight) = @_;
 
-  return "99999" if ($weight == 0.0);
+  # Moses defines the log_e() of non-positive weights as -100
+  return "-100" if ($weight <= 0.0);
   
   # if ($weight eq "2.718") {
   # 	return $weight;
