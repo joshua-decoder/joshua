@@ -50,8 +50,8 @@ public class PackedGrammar extends BatchGrammar {
 
   private final float maxId;
 
-  public PackedGrammar(String grammar_directory, int span_limit, String owner) throws FileNotFoundException,
-      IOException {
+  public PackedGrammar(String grammar_directory, int span_limit, String owner)
+      throws FileNotFoundException, IOException {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
@@ -447,7 +447,7 @@ public class PackedGrammar extends BatchGrammar {
     public float getEstimatedCost() {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
     }
-    
+
     @Override
     public void setPrecomputableCost(float cost) {
       parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
@@ -601,7 +601,22 @@ public class PackedGrammar extends BatchGrammar {
       return tgt;
     }
 
-    final String getFeatures(int block_id, float[] feature_vector) {
+//    final String getFeatures(int block_id, float[] feature_vector) {
+//      int feature_position = featureLookup[block_id];
+//      int num_features = features.getInt(feature_position);
+//      feature_position += 4;
+//      for (int i = 0; i < num_features; i++) {
+//        int feature_id = features.getInt(feature_position);
+//        Quantizer quantizer = quantization.get(feature_id);
+//        feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
+//        feature_position += 4 + quantizer.size();
+//      }
+//      return "";
+//    }
+
+    // OLD VERSION
+
+    final float[] getFeatures(int block_id, float[] feature_vector) {
       int feature_position = featureLookup[block_id];
       int num_features = features.getInt(feature_position);
       feature_position += 4;
@@ -611,46 +626,37 @@ public class PackedGrammar extends BatchGrammar {
         feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
         feature_position += 4 + quantizer.size();
       }
-      return "";
+      return feature_vector;
     }
 
-    // OLD VERSION
-    /*
-     * final float[] getFeatures(int block_id, float[] feature_vector) { int feature_position =
-     * featureLookup[block_id]; int num_features = features.getInt(feature_position);
-     * feature_position += 4; for (int i = 0; i < num_features; i++) { int feature_id =
-     * features.getInt(feature_position); Quantizer quantizer = quantization.get(feature_id);
-     * feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
-     * feature_position += 4 + quantizer.size(); } return feature_vector; }
-     */
 
     // OLD VERSION
-    /*
-     * final float[] getFeatures(int block_id) { float[] feature_vector = new
-     * float[JoshuaConfiguration.num_phrasal_features]; return getFeatures(block_id,
-     * feature_vector); }
-     */
+    final float[] getFeatures(int block_id) {
+      float[] feature_vector = new float[JoshuaConfiguration.num_phrasal_features];
+      return getFeatures(block_id, feature_vector);
+    }
+
 
     /**
      * NEW VERSION
-     *
+     * 
      * Returns a string version of the features associated with a rule (represented as a block ID).
-     * These features are in the form "feature1=value feature2=value...".  By default, unlabeled
+     * These features are in the form "feature1=value feature2=value...". By default, unlabeled
      * features are named using the pattern
      * 
-     *   tm_OWNER_INDEX
-     *   
+     * tm_OWNER_INDEX
+     * 
      * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
      * of the feature found in the grammar.
      * 
      * @param block_id
      * @return
      */
-    final String getFeatures(int block_id) {
-      int correctIndex = 0;
-      float[] feature_vector = new float[correctIndex];
-      return getFeatures(block_id, feature_vector);
-    }
+    // final String getFeatures(int block_id) {
+    // int correctIndex = 0;
+    // float[] feature_vector = new float[correctIndex];
+    // return getFeatures(block_id, feature_vector);
+    // }
 
     final Rule assembleRule(int address, int[] src, int arity) {
       int lhs = source[address];
