@@ -146,6 +146,7 @@ while (my $line = <MOSES>) {
 }
 
 print JOSHUA "top-n = 1\n\n";
+print JOSHUA "mark-oovs = false\n";
 print JOSHUA "weights-file = $outdir/weights\n";
 
 print JOSHUA "feature-function = OOVPenalty\n";
