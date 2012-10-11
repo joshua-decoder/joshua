@@ -452,8 +452,6 @@ public class JoshuaDecoder {
           ownersSeen.add(owner);
         }
         
-        logger.info("Using grammar read from file " + file);
-
         GrammarFactory grammar = null;
         if (format.equals("packed")) {
           grammar = new PackedGrammar(file, span_limit, owner);
