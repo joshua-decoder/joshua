@@ -15,6 +15,7 @@ import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.util.CoIterator;
 import joshua.util.Regex;
 import joshua.util.io.UncheckedIOException;
@@ -88,7 +89,7 @@ public class KBestExtractor {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
 
-//        return derivationState.getDerivation(this, features, models, 0);
+//      return derivationState.getDerivation(this, features, models, 0);
       String strHypNumeric = derivationState.getHypothesis(this, extractNbestTree, features, models);
       String strHypStr =
           convertHyp2String(sentID, derivationState, models, strHypNumeric, features);
@@ -665,8 +666,10 @@ public class KBestExtractor {
      */
     private String getDerivation(KBestExtractor kbestExtractor, FeatureVector features, List<FeatureFunction> models, int indent) {
 
+      FeatureVector transitionFeatures = new FeatureVector();
       if (null != features) {
-        computeCost(parentNode, edge, features, models);
+        computeCost(parentNode, edge, transitionFeatures, models);
+        features.add(transitionFeatures);
       }
 
       // ### get hyp string recursively
@@ -682,9 +685,10 @@ public class KBestExtractor {
         childString.append(getChildDerivationState(kbestExtractor, edge, 0).getDerivation(
           kbestExtractor, features, models, indent + 2));
 
-        sb.append(Vocabulary.word(rootID)).append(" ||| " + features + " ||| " + KBestExtractor.this.weights.innerProduct(features));
+        sb.append(Vocabulary.word(rootID)).append(" ||| " + transitionFeatures + " ||| " + features + " ||| " + KBestExtractor.this.weights.innerProduct(features));
         sb.append("\n");
         sb.append(childString);
+
       } else { 
 
         StringBuilder childStrings = new StringBuilder();
@@ -697,8 +701,9 @@ public class KBestExtractor {
         
 //        sb.append(rule).append(" ||| " + features + " ||| " + KBestExtractor.this.weights.innerProduct(features));
         sb.append(String.format("(%d-%d) ", parentNode.i, parentNode.j));
-        sb.append(rule);
-        sb.append(" ||| " + KBestExtractor.this.weights.innerProduct(features));
+        sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> " + Vocabulary.getWords(rule.getFrench()) + " /// " + ((BilingualRule)rule).getEnglishWords());
+        sb.append(" ||| " + transitionFeatures);
+        sb.append(" ||| " + KBestExtractor.this.weights.innerProduct(transitionFeatures));
         sb.append("\n");
         sb.append(childStrings);
       }
