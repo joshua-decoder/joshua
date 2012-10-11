@@ -183,6 +183,12 @@ public class CubePruneCombiner implements Combiner {
       this.dotNode = null;
     }
 
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("STATE ||| rule=" + rule + " inside cost = " + nodeStatesTbl.getViterbiCost() + " estimate = " + nodeStatesTbl.getPruningEstimate());
+      return sb.toString();
+    }
+
     public void setDotNode(DotNode node) {
       this.dotNode = node;
     }

@@ -44,7 +44,7 @@ public class MonolingualRule implements Rule {
    * the rule (which will include contextual features that can't be computed until the rule is
    * applied).
    */
-  private float estimatedCost = 0.0f;
+  private float estimatedCost = Float.NEGATIVE_INFINITY;
 
   private float precomputableCost = Float.NEGATIVE_INFINITY;
 
@@ -173,14 +173,11 @@ public class MonolingualRule implements Rule {
   /**
    * This function returns the estimated cost of a rule, which should have been computed when the
    * grammar was first sorted via a call to Rule::estimateRuleCost(). This function is a getter
-   * only; it will not compute the value if it has not already been set. Probably this function
-   * should just be done away with in favor of estimateRuleCost().
+   * only; it will not compute the value if it has not already been set. It is necessary in addition
+   * to estimateRuleCost(models) because sometimes the value needs to be retrieved from contexts
+   * that do not have access to the feature functions.
    */
   public final float getEstimatedCost() {
-    if (estimatedCost <= Float.NEGATIVE_INFINITY) {
-      logger
-          .warning("The estimatedCost is neg infinity; must be bad rule; rule is:\n" + toString());
-    }
     return estimatedCost;
   }
 

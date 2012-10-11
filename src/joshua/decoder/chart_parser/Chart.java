@@ -344,6 +344,8 @@ public class Chart {
             bestState.setDotNode(dotNode);
             candidates.add(bestState);
             visitedStates.add(bestState);
+
+//            System.err.println("  SEED: " + bestState);
           }
         }
       }
@@ -360,6 +362,8 @@ public class Chart {
                 .getSortedRules());
 
         List<HGNode> currentAntNodes = new ArrayList<HGNode>(state.antNodes);
+
+//      System.err.println("  POPPED " + state);
 
         // add the hypothesis to the chart
         cells[i][j].addHyperEdgeInCell(state.nodeStatesTbl, state.rule, i, j, state.antNodes,
