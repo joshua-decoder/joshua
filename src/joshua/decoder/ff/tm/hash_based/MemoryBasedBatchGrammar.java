@@ -216,7 +216,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   }
 
   protected void printGrammar() {
-    logger.info("Grammar '" + grammarFile + "'");
-    logger.info(String.format("Read %d rules with %d distinct source sides from '%s'", this.qtyRulesRead, this.qtyRuleBins, grammarFile));
+    logger.info(String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", this.qtyRulesRead, this.qtyRuleBins, grammarFile));
   }
 }
