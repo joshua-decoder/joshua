@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -263,7 +264,6 @@ public class PackedGrammar extends BatchGrammar {
       ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
       for (int i = 0; i < num_rules; i++) {
         rules.add(new PackedRule(this, rule_position + 3 * i));
-        // rules.add(grammar.assembleRule(rule_position + 3 * i, src, arity));
       }
       return rules;
     }
@@ -287,6 +287,7 @@ public class PackedGrammar extends BatchGrammar {
             new BilingualRule(grammar.source[rule_position + 3 * i], src,
                 grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
         grammar.cache[block_id] = rule.estimateRuleCost(models);
+//        System.err.println(String.format("COST(%s) = %.5f", rule, grammar.cache[block_id]));
       }
 
       Arrays.sort(rules, new Comparator<Integer>() {
@@ -380,7 +381,7 @@ public class PackedGrammar extends BatchGrammar {
     int address;
 
     int[] tgt = null;
-    float[] features = null;
+    FeatureVector features = null;
 
     public PackedRule(PackedTrie parent, int address) {
       this.parent = parent;
@@ -430,12 +431,12 @@ public class PackedGrammar extends BatchGrammar {
       return parent.src;
     }
 
-    /**
-     * This needs to create a sparse feature vector.
-     */
     @Override
     public FeatureVector getFeatureVector() {
-      return new FeatureVector();
+      if (features == null)
+        features = new FeatureVector(parent.grammar.getFeatures(parent.grammar.source[address + 2]), String.format("tm_%s",Vocabulary.word(owner)));
+        
+      return features;
     }
 
     @Override
@@ -530,61 +531,6 @@ public class PackedGrammar extends BatchGrammar {
       return array;
     }
 
-    void sort(List<FeatureFunction> models) {
-      Stack<Integer> positions = new Stack<Integer>();
-      Stack<Integer> src_path = new Stack<Integer>();
-      int arity = 0;
-
-      int current = 0;
-      while (current < source.length) {
-        sortRules(models, current, makeArray(src_path), arity);
-        int num_children = source[current];
-
-        // TODO: finish sort implementation.
-      }
-    }
-
-    public void sortRules(List<FeatureFunction> models, int position, int[] src, int arity) {
-      int num_children = source[position];
-      int rule_position = position + 2 * (num_children + 1);
-      int num_rules = source[rule_position - 1];
-
-      Integer[] rules = new Integer[num_rules];
-
-      int target_address;
-      int block_id;
-      for (int i = 0; i < num_rules; i++) {
-        target_address = source[rule_position + 1 + 3 * i];
-        rules[i] = rule_position + 2 + 3 * i;
-        block_id = source[rules[i]];
-
-        BilingualRule rule =
-            new BilingualRule(source[rule_position + 3 * i], src, getTarget(target_address),
-                getFeatures(block_id), arity, owner);
-        cache[block_id] = rule.estimateRuleCost(models);
-      }
-
-      Arrays.sort(rules, new Comparator<Integer>() {
-        public int compare(Integer a, Integer b) {
-          float a_cost = cache[source[a]];
-          float b_cost = cache[source[b]];
-          if (a_cost == b_cost) return 0;
-          return (a_cost > b_cost ? 1 : -1);
-        }
-      });
-
-      int[] sorted = new int[3 * num_rules];
-      int j = 0;
-      for (int i = 0; i < rules.length; i++) {
-        int address = rules[i];
-        sorted[j++] = source[address - 2];
-        sorted[j++] = source[address - 1];
-        sorted[j++] = source[address];
-      }
-      for (int i = 0; i < sorted.length; i++)
-        source[rule_position + i] = sorted[i];
-    }
-
     final int[] getTarget(int pointer) {
       // Figure out level.
       int tgt_length = 1;
@@ -600,37 +546,7 @@ public class PackedGrammar extends BatchGrammar {
       } while (pointer != -1);
       return tgt;
     }
-
-    final String getFeatures(int block_id, float[] feature_vector) {
-      int feature_position = featureLookup[block_id];
-      int num_features = features.getInt(feature_position);
-      feature_position += 4;
-      for (int i = 0; i < num_features; i++) {
-        int feature_id = features.getInt(feature_position);
-        Quantizer quantizer = quantization.get(feature_id);
-        feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
-        feature_position += 4 + quantizer.size();
-      }
-      return "";
-    }
-
-    // OLD VERSION
-    /*
-     * final float[] getFeatures(int block_id, float[] feature_vector) { int feature_position =
-     * featureLookup[block_id]; int num_features = features.getInt(feature_position);
-     * feature_position += 4; for (int i = 0; i < num_features; i++) { int feature_id =
-     * features.getInt(feature_position); Quantizer quantizer = quantization.get(feature_id);
-     * feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
-     * feature_position += 4 + quantizer.size(); } return feature_vector; }
-     */
-
-    // OLD VERSION
-    /*
-     * final float[] getFeatures(int block_id) { float[] feature_vector = new
-     * float[JoshuaConfiguration.num_phrasal_features]; return getFeatures(block_id,
-     * feature_vector); }
-     */
-
+    
     /**
      * NEW VERSION
      *
@@ -646,20 +562,32 @@ public class PackedGrammar extends BatchGrammar {
      * @param block_id
      * @return
      */
-    final String getFeatures(int block_id) {
-      int correctIndex = 0;
-      float[] feature_vector = new float[correctIndex];
-      return getFeatures(block_id, feature_vector);
-    }
 
-    final Rule assembleRule(int address, int[] src, int arity) {
-      int lhs = source[address];
-      int tgt_address = source[address + 1];
-      int data_block = source[address + 2];
-      BilingualRule rule =
-          new BilingualRule(lhs, src, getTarget(tgt_address), getFeatures(data_block), arity, owner);
-      if (cache[data_block] != Float.NEGATIVE_INFINITY) rule.setEstimatedCost(cache[data_block]);
-      return rule;
+    final String getFeatures(int block_id) {
+      int feature_position = featureLookup[block_id];
+
+      /* The number of non-zero features stored with the rule. */
+      int num_features = features.getInt(feature_position);
+      /* The vector will have to grow but it will be at least this size. */
+      Vector<Float> denseFeatures = new Vector<Float>(num_features);
+      feature_position += 4;
+      for (int i = 0; i < num_features; i++) {
+        int feature_id = features.getInt(feature_position);
+        Quantizer quantizer = quantization.get(feature_id);
+        int index = featureNameMap.get(feature_id);
+        while (denseFeatures.size() <= index)
+          denseFeatures.add(0.0f);
+        denseFeatures.set(index, quantizer.read(features, feature_position));
+        feature_position += 4 + quantizer.size();
+      }
+
+      /* Now copy over the feature values. */
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < denseFeatures.size(); i++) {
+        sb.append(String.format(" %.5f", denseFeatures.get(i) == null ? 0.0 : denseFeatures.get(i)));
+      }
+      
+      return sb.toString().trim();
     }
 
     public String toString() {
