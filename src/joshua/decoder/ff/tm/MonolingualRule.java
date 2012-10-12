@@ -78,17 +78,6 @@ public class MonolingualRule implements Rule {
     this.owner = owner;
   }
 
-
-  // called by class who does not care about lattice_cost,
-  // rule_id, and owner
-  public MonolingualRule(int lhs_, int[] source_rhs, int arity_) {
-    this.lhs = lhs_;
-    this.pFrench = source_rhs;
-    this.arity = arity_;
-
-    this.owner = -1;
-  }
-
   /**
    * Sparse feature version.
    */
@@ -97,10 +86,8 @@ public class MonolingualRule implements Rule {
     this.pFrench = source_rhs;
     this.sparseFeatures = sparse_features;
     this.arity = arity_;
-
     this.owner = -1;
   }
-
 
   // ===============================================================
   // Attributes
@@ -147,7 +134,6 @@ public class MonolingualRule implements Rule {
     return this.pFrench;
   }
 
-
   /*
    * This function returns the feature vector found in the rule's grammar file.
    */
@@ -161,7 +147,7 @@ public class MonolingualRule implements Rule {
 
   /**
    * Sets the estimated cost. Calling estimateRuleCost(models) will also set the cost, but this
-   * function can be used if the cost is computed elsewhere. 
+   * function can be used if the cost is computed elsewhere.
    */
   public final void setEstimatedCost(float cost) {
     if (cost <= Float.NEGATIVE_INFINITY) {
@@ -195,7 +181,8 @@ public class MonolingualRule implements Rule {
    * @return estimated cost of the rule
    */
   public final float estimateRuleCost(List<FeatureFunction> models) {
-    if (null == models) return 0.0f;
+    if (null == models)
+      return 0.0f;
 
     if (this.estimatedCost <= Float.NEGATIVE_INFINITY) {
       this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
@@ -212,7 +199,6 @@ public class MonolingualRule implements Rule {
 
     return estimatedCost;
   }
-
 
   // ===============================================================
   // Methods
@@ -239,12 +225,10 @@ public class MonolingualRule implements Rule {
       System.exit(1);
     }
 
-    FeatureVector features =
-        new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
+    FeatureVector features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
     features.times(-1);
     return features;
   }
-
 
   // ===============================================================
   // Serialization Methods
@@ -269,7 +253,8 @@ public class MonolingualRule implements Rule {
     for (int i = 0; i < words.length; i++) {
       sb.append(Vocabulary.word(words[i]));
 
-      if (i < words.length - 1) sb.append(" ");
+      if (i < words.length - 1)
+        sb.append(" ");
     }
     return sb.toString();
   }

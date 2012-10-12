@@ -288,8 +288,7 @@ public class Chart {
       // seed it with the beginning states
       // for each applicable grammar
       for (int g = 0; g < grammars.length; g++) {
-        if (!grammars[g].hasRuleForSpan(i, j, sourceLength)
-            || null == dotcharts[g].getDotCell(i, j))
+        if (!grammars[g].hasRuleForSpan(i, j, sourceLength) || null == dotcharts[g].getDotCell(i, j))
           continue;
         // for each rule with applicable rules
         for (DotNode dotNode : dotcharts[g].getDotCell(i, j).getDotNodes()) {
