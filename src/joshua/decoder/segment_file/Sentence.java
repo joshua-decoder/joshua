@@ -50,9 +50,9 @@ public class Sentence {
    * In most cases, these numbers should be the same.
    */
 
-  private int sequenceId = -1;
   private int id = -1;
   private String sentence;
+  private String target = null;
 
   private List<ConstraintSpan> constraints;
 
@@ -62,21 +62,28 @@ public class Sentence {
       .compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
   protected static final Pattern SEG_END = Pattern.compile("\\s*</seg\\s*>\\s*$");
 
-  public Sentence(String sentence, int id) {
-    this.sequenceId = id;
+  public Sentence(String inputSentence, int id) {
+
+    inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
+
     this.constraints = new LinkedList<ConstraintSpan>();
-    sentence = Regex.spaces.replaceAll(sentence, " ").trim();
 
     // Check if the sentence has SGML markings denoting the
     // sentence ID; if so, override the id passed in to the
     // constructor
-    Matcher start = SEG_START.matcher(sentence);
+    Matcher start = SEG_START.matcher(inputSentence);
     if (start.find()) {
       this.sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
       String idstr = start.group(1);
       this.id = Integer.parseInt(idstr);
     } else {
-      this.sentence = sentence;
+      if (inputSentence.indexOf(" ||| ") != -1) {
+        String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
+        this.sentence = pieces[0];
+        this.target = pieces[1];
+      } else {
+        this.sentence = inputSentence;
+      }
       this.id = id;
     }
   }
@@ -91,6 +98,24 @@ public class Sentence {
 
   public String sentence() {
     return sentence;
+  }
+
+  public String source() {
+    return this.sentence;
+  }
+
+  /**
+   * If a target side was supplied with the sentence, this will be non-null. This is used when doing
+   * synchronous parsing or constrained decoding. The input format is:
+   * 
+   * Bill quiere ir a casa ||| Bill wants to go home
+   * 
+   * If the parameter parse=true is set, parsing will be triggered, otherwise constrained decoding.
+   * 
+   * @return
+   */
+  public String target() {
+    return this.target;
   }
 
   public int[] intSentence() {

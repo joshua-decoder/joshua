@@ -14,7 +14,6 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -30,7 +29,6 @@ import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
-
 
 /**
  * Chart class this class implements chart-parsing: (1) seeding the chart (2) cky main loop over
@@ -83,6 +81,7 @@ public class Chart {
   private int goalSymbolID = -1;
   private Lattice<Integer> inputLattice;
 
+  private Sentence sentence = null;
   private SyntaxTree parseTree;
 
   private Combiner combiner = null;
@@ -117,6 +116,7 @@ public class Chart {
     this.featureFunctions = featureFunctions;
     this.stateComputers = stateComputers;
 
+    this.sentence = sentence;
     this.parseTree = null;
     if (sentence instanceof ParsedSentence)
       this.parseTree = ((ParsedSentence) sentence).syntaxTree();
@@ -158,8 +158,8 @@ public class Chart {
     // Begin to do initialization work
 
     // TODO: which grammar should we use to create a manual rule?
-    manualConstraintsHandler =
-        new ManualConstraintsHandler(this, grammars[grammars.length - 1], sentence.constraints());
+    manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[grammars.length - 1],
+        sentence.constraints());
 
     /*
      * Add OOV rules; This should be called after the manual constraints have been set up.
@@ -180,7 +180,8 @@ public class Chart {
               break;
             }
           }
-          if (!true_oov) continue;
+          if (!true_oov)
+            continue;
         }
 
         final int targetWord;
@@ -190,18 +191,18 @@ public class Chart {
           targetWord = sourceWord;
         }
 
-        int defaultNTIndex =
-            Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll("\\[\\]", ""));
+        int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll(
+            "\\[\\]", ""));
 
         List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
-        int[] sourceWords = {sourceWord};
-        int[] targetWords = {targetWord};
+        int[] sourceWords = { sourceWord };
+        int[] targetWords = { targetWord };
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
-          Collection<Integer> labels =
-              parseTree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
+          Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber(),
+              node.getNumber() + 1);
           for (int label : labels) {
-            BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0); 
+            BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0);
             oovRules.add(oovRule);
             oovGrammar.addRule(oovRule);
             oovRule.estimateRuleCost(featureFunctions);
@@ -219,15 +220,6 @@ public class Chart {
           // do not add the oov axiom
           logger.fine("Using hard rule constraint for span " + node.getNumber() + ", "
               + arc.getHead().getNumber());
-        } else {
-          /*
-           * Add each of the OOV rules. The span is generalized to lattices; node.getNumber() is i,
-           * and arc.getTail() is j.
-           */
-//          for (BilingualRule rule : oovRules) {
-//            addAxiom(node.getNumber(), arc.getTail().getNumber(), rule,  new SourcePath().extend(arc));
-//            logger.fine("Adding OOV rule:\t" + rule.toString());
-//          }
         }
       }
     }
@@ -237,7 +229,7 @@ public class Chart {
 
     /* Find the SourceDependent feature and give it access to the sentence. */
     for (FeatureFunction ff : this.featureFunctions)
-      if (ff instanceof SourceDependentFF) 
+      if (ff instanceof SourceDependentFF)
         ((SourceDependentFF) ff).setSource(sentence);
 
     logger.fine("Finished seeding chart.");
@@ -268,7 +260,10 @@ public class Chart {
    */
   private void completeSpan(int i, int j) {
 
-//    System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
+    // System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
+
+    StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
+        sentence.target()) : null;
 
     if (JoshuaConfiguration.pop_limit > 0) {
       /*
@@ -294,19 +289,20 @@ public class Chart {
       // for each applicable grammar
       for (int g = 0; g < grammars.length; g++) {
         if (!grammars[g].hasRuleForSpan(i, j, sourceLength)
-            || null == dotcharts[g].getDotCell(i, j)) continue;
+            || null == dotcharts[g].getDotCell(i, j))
+          continue;
         // for each rule with applicable rules
         for (DotNode dotNode : dotcharts[g].getDotCell(i, j).getDotNodes()) {
           RuleCollection ruleCollection = dotNode.getApplicableRules();
-          if (ruleCollection == null) 
+          if (ruleCollection == null)
             continue;
 
-          // create span if required
-          if (cells[i][j] == null) 
+          // Create the Cell if necessary.
+          if (cells[i][j] == null)
             cells[i][j] = new Cell(this, goalSymbolID);
 
-          List<Rule> sortedAndFilteredRules =
-              manualConstraintsHandler.filterRules(i, j, ruleCollection.getSortedRules());
+          List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j,
+              ruleCollection.getSortedRules());
           SourcePath sourcePath = dotNode.getSourcePath();
 
           if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0)
@@ -318,9 +314,11 @@ public class Chart {
           // are added to the chart with no pruning
           if (arity == 0) {
             for (Rule rule : sortedAndFilteredRules) {
-              cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule,
-                  null, i, j, sourcePath, stateComputers, this.segmentID), rule, i, j, null,
-                  sourcePath, true);
+              ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null,
+                  i, j, sourcePath, stateComputers, this.segmentID);
+              if (sentence.target() == null
+                  || stateConstraint.isLegal(result.getDPStates().values()))
+                cells[i][j].addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
             }
           } else {
 
@@ -332,20 +330,23 @@ public class Chart {
               currentAntNodes.add(si.nodes.get(0));
             }
 
-            ComputeNodeResult result =
-                new ComputeNodeResult(featureFunctions, bestRule, currentAntNodes, i, j,
-                    sourcePath, this.stateComputers, this.segmentID);
+            ComputeNodeResult result = new ComputeNodeResult(featureFunctions, bestRule,
+                currentAntNodes, i, j, sourcePath, this.stateComputers, this.segmentID);
 
             int[] ranks = new int[1 + superNodes.size()];
             for (int r = 0; r < ranks.length; r++)
               ranks[r] = 1;
 
             CubePruneState bestState = new CubePruneState(result, ranks, bestRule, currentAntNodes);
+
+            if (sentence.target() != null) {
+              if (!stateConstraint.isLegal(bestState.getDPStates()))
+                continue;
+            }
+
             bestState.setDotNode(dotNode);
             candidates.add(bestState);
             visitedStates.add(bestState);
-
-//            System.err.println("  SEED: " + bestState);
           }
         }
       }
@@ -357,16 +358,13 @@ public class Chart {
         Rule currentRule = state.rule;
         SourcePath sourcePath = dotNode.getSourcePath();
         List<SuperNode> superNodes = dotNode.getAntSuperNodes();
-        List<Rule> rules =
-            manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules()
-                .getSortedRules());
+        List<Rule> rules = manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules()
+            .getSortedRules());
 
         List<HGNode> currentAntNodes = new ArrayList<HGNode>(state.antNodes);
 
-//      System.err.println("  POPPED " + state);
-
         // add the hypothesis to the chart
-        cells[i][j].addHyperEdgeInCell(state.nodeStatesTbl, state.rule, i, j, state.antNodes,
+        cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.rule, i, j, state.antNodes,
             sourcePath, true);
 
         // expand the hypothesis
@@ -382,7 +380,8 @@ public class Chart {
 
           // can't extend
           if ((k == 0 && newRanks[k] > rules.size())
-              || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size())) continue;
+              || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size()))
+            continue;
 
           // k = 0 means we extend the rule being used
           // k > 0 means we extend one of the nodes
@@ -397,14 +396,19 @@ public class Chart {
             currentAntNodes.set(k - 1, superNodes.get(k - 1).nodes.get(newRanks[k] - 1));
           }
 
-          CubePruneState nextState =
-              new CubePruneState(new ComputeNodeResult(featureFunctions, currentRule,
-                  currentAntNodes, i, j, sourcePath, stateComputers, this.segmentID), newRanks,
-                  currentRule, currentAntNodes);
+          CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
+              currentRule, currentAntNodes, i, j, sourcePath, stateComputers, this.segmentID),
+              newRanks, currentRule, currentAntNodes);
           nextState.setDotNode(dotNode);
 
           if (visitedStates.contains(nextState)) // explored before
             continue;
+
+          /* Constrained decoding. */
+          if (sentence.target() != null) {
+            if (!stateConstraint.isLegal(nextState.getDPStates()))
+              continue;
+          }
 
           visitedStates.add(nextState);
           candidates.add(nextState);
@@ -443,6 +447,7 @@ public class Chart {
 
   /**
    * This function performs the main work of decoding.
+   * 
    * @return the hypergraph containing the translated sentence.
    */
   public HyperGraph expand() {
@@ -469,13 +474,14 @@ public class Chart {
 
         completeSpan(i, j);
 
-        // (3)=== process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume
+        // (3)=== process unary rules (e.g., S->X, NP->NN), just add these items
+        // in chart, assume
         // acyclic
         logger.finest("Adding unary items into chart");
         addUnaryNodes(this.grammars, i, j);
 
-
-        // (4)=== in dot_cell(i,j), add dot-nodes that start from the /complete/ superIterms in
+        // (4)=== in dot_cell(i,j), add dot-nodes that start from the /complete/
+        // superIterms in
         // chart_cell(i,j)
         logger.finest("Initializing new dot-items that start from complete items in this cell");
         for (int k = 0; k < this.grammars.length; k++) {
@@ -513,11 +519,9 @@ public class Chart {
         sourceLength);
   }
 
-
   public Cell getCell(int i, int j) {
     return this.cells[i][j];
   }
-
 
   // ===============================================================
   // Private methods
@@ -534,13 +538,12 @@ public class Chart {
                     this.nPreprunedFuzz1, this.nPreprunedFuzz2, this.nDotitemAdded));
   }
 
-
   /**
    * agenda based extension: this is necessary in case more than two unary rules can be applied in
    * topological order s->x; ss->s for unary rules like s->x, once x is complete, then s is also
    * complete
    */
-  private int addUnaryNodes(Grammar[] grs, int i, int j) {
+  private int addUnaryNodes(Grammar[] grammars, int i, int j) {
 
     Cell chartBin = this.cells[i][j];
     if (null == chartBin) {
@@ -556,12 +559,16 @@ public class Chart {
       HGNode node = queue.remove(0);
       seen_lhs.add(node.lhs);
 
-      for (Grammar gr : grs) {
-        if (!gr.hasRuleForSpan(i, j, sourceLength)) continue;
+      for (Grammar gr : grammars) {
+        if (!gr.hasRuleForSpan(i, j, sourceLength))
+          continue;
 
-        Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and complete part
+        Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and
+                                                           // complete part
         if (childNode != null && childNode.getRuleCollection() != null
-            && childNode.getRuleCollection().getArity() == 1) { // have unary rules under this
+            && childNode.getRuleCollection().getArity() == 1) { // have unary
+                                                                // rules under
+                                                                // this
                                                                 // trienode
 
           ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
@@ -569,14 +576,13 @@ public class Chart {
           List<Rule> rules = childNode.getRuleCollection().getSortedRules();
 
           for (Rule rule : rules) { // for each unary rules
-            ComputeNodeResult states =
-                new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j,
-                    new SourcePath(), stateComputers, this.segmentID);
-            HGNode resNode =
-                chartBin
-                    .addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath(), true);
+            ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule,
+                antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
+            HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents,
+                new SourcePath(), true);
 
-            if (logger.isLoggable(Level.FINEST)) logger.finest(rule.toString());
+            if (logger.isLoggable(Level.FINEST))
+              logger.finest(rule.toString());
 
             if (null != resNode && !seen_lhs.contains(resNode.lhs)) {
               queue.add(resNode);
@@ -589,7 +595,6 @@ public class Chart {
     return qtyAdditionsToQueue;
   }
 
-
   /**
    * This functions add to the hypergraph rules with zero arity (i.e., terminal rules).
    */
@@ -598,15 +603,17 @@ public class Chart {
       this.cells[i][j] = new Cell(this, this.goalSymbolID);
     }
 
-//    System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule, srcPath));
-    
+    // System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule,
+    // srcPath));
+
     this.cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
         j, srcPath, stateComputers, segmentID), rule, i, j, null, srcPath, false);
   }
 
   private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity,
       SourcePath srcPath) {
-    if (logger.isLoggable(Level.FINEST)) logger.finest("\n\n CELL (" + i + ", " + j + ")");
+    if (logger.isLoggable(Level.FINEST))
+      logger.finest("\n\n CELL (" + i + ", " + j + ")");
 
     if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
       logger.fine("Hard rule constraint for span " + i + ", " + j);
@@ -628,14 +635,16 @@ public class Chart {
 
       filteredRules = new ArrayList<Rule>(sortedRules.size());
       for (Rule r : sortedRules)
-        if (r.getLHS() == goalSymbolID || labels.contains(r.getLHS())) filteredRules.add(r);
+        if (r.getLHS() == goalSymbolID || labels.contains(r.getLHS()))
+          filteredRules.add(r);
     } else {
       // combinations: rules, antecedent items
       filteredRules = manualConstraintsHandler.filterRules(i, j, sortedRules);
     }
 
-    if (logger.isLoggable(Level.FINEST)) for (Rule r : filteredRules)
-      logger.finest(r.toString() + " # features: " + r.getFeatureVector().size());
+    if (logger.isLoggable(Level.FINEST))
+      for (Rule r : filteredRules)
+        logger.finest(r.toString() + " # features: " + r.getFeatureVector().size());
 
     if (arity == 0)
       combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);

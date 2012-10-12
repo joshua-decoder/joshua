@@ -2,6 +2,7 @@ package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -9,6 +10,7 @@ import java.util.PriorityQueue;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
@@ -27,23 +29,19 @@ public class CubePruneCombiner implements Combiner {
   // BUG:???????????????????? CubePrune will depend on relativeThresholdPruning, but cell.beamPruner
   // can be null ????????????????
 
-
-
   public void addAxioms(Chart chart, Cell cell, int i, int j, List<Rule> rules, SourcePath srcPath) {
     for (Rule rule : rules) {
       addAxiom(chart, cell, i, j, rule, srcPath);
     }
   }
 
-
-	/**
+  /**
 	 *
 	 */
   public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
     cell.addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath,
         stateComputers, chart.segmentID), rule, i, j, null, srcPath, false);
   }
-
 
   /** Add complete Items in Chart pruning inside this function */
   // TODO: our implementation do the prunining for each DotItem
@@ -72,9 +70,8 @@ public class CubePruneCombiner implements Combiner {
       // TODO: si.nodes must be sorted
       currentAntNodes.add(si.nodes.get(0));
     }
-    ComputeNodeResult result =
-        new ComputeNodeResult(featureFunctions, currentRule, currentAntNodes, i, j, srcPath,
-            stateComputers, chart.segmentID);
+    ComputeNodeResult result = new ComputeNodeResult(featureFunctions, currentRule,
+        currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID);
 
     int[] ranks = new int[1 + superNodes.size()]; // rule, ant items
     for (int d = 0; d < ranks.length; d++) {
@@ -98,11 +95,11 @@ public class CubePruneCombiner implements Combiner {
       currentRule = curState.rule;
       currentAntNodes = new ArrayList<HGNode>(curState.antNodes); // critical to create a new list
       // cube_state_tbl.remove(cur_state.get_signature()); // TODO, repeat
-      cell.addHyperEdgeInCell(curState.nodeStatesTbl, curState.rule, i, j, curState.antNodes,
+      cell.addHyperEdgeInCell(curState.computeNodeResult, curState.rule, i, j, curState.antNodes,
           srcPath, false); // pre-pruning inside this function
 
       // if the best state is pruned, then all the remaining states should be pruned away
-      if (curState.nodeStatesTbl.getExpectedTotalLogP() < cell.beamPruner.getCutoffLogP()
+      if (curState.computeNodeResult.getExpectedTotalLogP() < cell.beamPruner.getCutoffLogP()
           - JoshuaConfiguration.fuzz1) {
         // n_prepruned += heap_cands.size();
         chart.nPreprunedFuzz1 += combinationHeap.size();
@@ -120,7 +117,8 @@ public class CubePruneCombiner implements Combiner {
         newRanks[k] = curState.ranks[k] + 1;
 
         if ((k == 0 && newRanks[k] > rules.size())
-            || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size())) continue;
+            || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size()))
+          continue;
 
         if (k == 0) { // slide rule
           oldRule = currentRule;
@@ -130,13 +128,13 @@ public class CubePruneCombiner implements Combiner {
           currentAntNodes.set(k - 1, superNodes.get(k - 1).nodes.get(newRanks[k] - 1));
         }
 
-        CubePruneState tState =
-            new CubePruneState(new ComputeNodeResult(featureFunctions, currentRule,
-                currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID), newRanks,
-                currentRule, currentAntNodes);
+        CubePruneState tState = new CubePruneState(new ComputeNodeResult(featureFunctions,
+            currentRule, currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID),
+            newRanks, currentRule, currentAntNodes);
 
         // already visited this state
-        if (visitedStates.contains(tState)) continue;
+        if (visitedStates.contains(tState))
+          continue;
 
         // add state into heap
         visitedStates.add(tState);
@@ -161,20 +159,18 @@ public class CubePruneCombiner implements Combiner {
 
   }
 
-
-
   // ===============================================================
   // CubePruneState class
   // ===============================================================
   public static class CubePruneState implements Comparable<CubePruneState> {
     int[] ranks;
-    ComputeNodeResult nodeStatesTbl;
+    ComputeNodeResult computeNodeResult;
     Rule rule;
     List<HGNode> antNodes;
     private DotNode dotNode;
 
     public CubePruneState(ComputeNodeResult state, int[] ranks, Rule rule, List<HGNode> antecedents) {
-      this.nodeStatesTbl = state;
+      this.computeNodeResult = state;
       this.ranks = ranks;
       this.rule = rule;
       // create a new vector is critical, because
@@ -183,9 +179,19 @@ public class CubePruneCombiner implements Combiner {
       this.dotNode = null;
     }
 
+    /**
+     * This returns the list of DP states associated with the result.
+     * 
+     * @return
+     */
+    Collection<DPState> getDPStates() {
+      return this.computeNodeResult.getDPStates().values();
+    }
+
     public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("STATE ||| rule=" + rule + " inside cost = " + nodeStatesTbl.getViterbiCost() + " estimate = " + nodeStatesTbl.getPruningEstimate());
+      sb.append("STATE ||| rule=" + rule + " inside cost = " + computeNodeResult.getViterbiCost()
+          + " estimate = " + computeNodeResult.getPruningEstimate());
       return sb.toString();
     }
 
@@ -198,13 +204,18 @@ public class CubePruneCombiner implements Combiner {
     }
 
     public boolean equals(Object obj) {
-      if (obj == null) return false;
-      if (!this.getClass().equals(obj.getClass())) return false;
+      if (obj == null)
+        return false;
+      if (!this.getClass().equals(obj.getClass()))
+        return false;
       CubePruneState state = (CubePruneState) obj;
-      if (state.ranks.length != ranks.length) return false;
+      if (state.ranks.length != ranks.length)
+        return false;
       for (int i = 0; i < ranks.length; i++)
-        if (state.ranks[i] != ranks[i]) return false;
-      if (getDotNode() != state.getDotNode()) return false;
+        if (state.ranks[i] != ranks[i])
+          return false;
+      if (getDotNode() != state.getDotNode())
+        return false;
 
       return true;
     }
@@ -221,9 +232,10 @@ public class CubePruneCombiner implements Combiner {
      * order (high-prob first).
      */
     public int compareTo(CubePruneState another) {
-      if (this.nodeStatesTbl.getExpectedTotalLogP() < another.nodeStatesTbl.getExpectedTotalLogP()) {
+      if (this.computeNodeResult.getExpectedTotalLogP() < another.computeNodeResult
+          .getExpectedTotalLogP()) {
         return 1;
-      } else if (this.nodeStatesTbl.getExpectedTotalLogP() == another.nodeStatesTbl
+      } else if (this.computeNodeResult.getExpectedTotalLogP() == another.computeNodeResult
           .getExpectedTotalLogP()) {
         return 0;
       } else {
@@ -231,6 +243,5 @@ public class CubePruneCombiner implements Combiner {
       }
     }
   }
-
 
 }
