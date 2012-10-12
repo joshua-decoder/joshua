@@ -1,14 +1,18 @@
 package joshua.decoder.hypergraph;
 
+import java.io.IOException;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -42,7 +46,6 @@ public class HyperGraph {
     this.sentLen = sentLen;
   }
 
-  
   /**
    * Dump the hypergraph to the specified file.
    * 
@@ -79,6 +82,7 @@ public class HyperGraph {
     Collections.sort(list, HGNode.spanComparator);
     try {
       for (HGNode node: list) {
+
         out.write(String.format("%s %s\n", Integer.toHexString(node.hashCode()), node));
         if (node.getHyperEdges() != null)
           for (HyperEdge edge: node.getHyperEdges()) {

@@ -30,6 +30,7 @@ import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.JoshuaDecoder;
 import joshua.metrics.EvaluationMetric;
+import joshua.util.StreamGobbler;
 
 /**
  * This code was originally written by Yuan Cao, who copied the MERT code to produce this file.
@@ -217,9 +218,8 @@ public class PROCore {
   private String tmpDirPrefix;
   // prefix for the ZMERT.temp.* files
 
-  private int passIterationToDecoder;
+  private boolean passIterationToDecoder;
   // should the iteration number be passed as an argument to decoderCommandFileName?
-  // If 1, iteration number is passed. If 0, launch with no arguments.
 
   // USED FOR PRO
   private String classifierAlg; // THE CLASSIFICATION ALGORITHM(PERCEP, MEGAM, MAXENT ...)
@@ -1768,20 +1768,17 @@ public class PROCore {
       println("Running external decoder...", 1);
 
       try {
-        Runtime rt = Runtime.getRuntime();
         String cmd = decoderCommandFileName;
-        if (passIterationToDecoder == 1) {
+        if (passIterationToDecoder)
           cmd = cmd + " " + iteration;
-        }
 
-        // RUN DECODER
-        Process p = rt.exec(cmd);
-
-        StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
-        StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
-
-        errorGobbler.start();
-        outputGobbler.start();
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        // this merges the error and output streams of the subprocess
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+ 
+        // capture the sub-command's output
+        new StreamGobbler(p.getInputStream(), decVerbosity).start();
 
         int decStatus = p.waitFor();
         if (decStatus != validDecoderExitValue) {
@@ -2627,7 +2624,7 @@ public class PROCore {
     // useDisk = 2;
     // Decoder specs
     decoderCommandFileName = null;
-    passIterationToDecoder = 0;
+    passIterationToDecoder = false;
     decoderOutFileName = "output.nbest";
     validDecoderExitValue = 0;
     decoderConfigFileName = "dec_cfg.txt";
@@ -2858,11 +2855,12 @@ public class PROCore {
       else if (option.equals("-cmd")) {
         decoderCommandFileName = args[i + 1];
       } else if (option.equals("-passIt")) {
-        passIterationToDecoder = Integer.parseInt(args[i + 1]);
-        if (passIterationToDecoder < 0 || passIterationToDecoder > 1) {
+        int val = Integer.parseInt(args[i+1]);
+        if (val < 0 || val > 1) {
           println("passIterationToDecoder should be either 0 or 1");
           System.exit(10);
         }
+        passIterationToDecoder = (val == 1) ? true : false;
       } else if (option.equals("-decOut")) {
         decoderOutFileName = args[i + 1];
       } else if (option.equals("-decExit")) {
@@ -3849,81 +3847,3 @@ public class PROCore {
   }
 
 }
-
-
-// based on:
-// http://www.javaworld.com/javaworld/jw-12-2000/jw-1229-traps.html?page=4
-class StreamGobbler extends Thread {
-  InputStream istream;
-  boolean verbose;
-
-  StreamGobbler(InputStream is, int p) {
-    istream = is;
-    verbose = (p != 0);
-  }
-
-  public void run() {
-    try {
-      InputStreamReader isreader = new InputStreamReader(istream);
-      BufferedReader br = new BufferedReader(isreader);
-      String line = null;
-      while ((line = br.readLine()) != null) {
-        if (verbose) System.out.println(line);
-      }
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
-    }
-  }
-}
-
-
-/*
- * 
- * fake: ----- ex2_N300: java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir
- * MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt
- * -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed
- * 1226091488390 -save 1 -fake nbest_ex2.out.N300.it >
- * ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
- * 
- * ex2_N500: java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example
- * -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut
- * nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390
- * -save 1 -fake nbest_ex2.out.N500.it >
- * ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
- * 
- * exL_N300__600max: java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.ZMERT.ZMERT -dir
- * MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg
- * config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0
- * -seed 1226091488390 -save 1 -fake nbest_exL.out.it >
- * exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
- * 
- * exL_N300__300max: java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir
- * MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg
- * config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0
- * -seed 1226091488390 -save 1 -fake nbest_exL.out.it >
- * exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
- * 
- * gen: ---- ex2_N300: make sure top_n=300 in MERT_example\config_ex2.txt java
- * -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r
- * ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p
- * params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
- * 
- * ex2_N500: make sure top_n=500 in MERT_example\config_ex2.txt java -javaagent:shiftone-jrat.jar
- * -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd
- * decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25
- * -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
- * 
- * exL_N300__600max: run on CLSP machines only! (e.g. z12) $JAVA_bin/java
- * -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.ZMERT.ZMERT -dir YOURDIR -s mt06_source.txt
- * -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300
- * -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
- * 
- * exL_N300__300max: run on CLSP machines only! (e.g. z12) $JAVA_bin/java
- * -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir YOURDIR -s mt06_source.txt
- * -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300
- * -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
- */

@@ -203,6 +203,10 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);
 
+          } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
+            hypergraphFilePattern = fds[1].trim();
+            logger.finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
+
           } else if (parameter.equals(normalize_key("lm_file"))) {
             lm_file = fds[1].trim();
             logger.finest(String.format("lm file: %s", lm_file));

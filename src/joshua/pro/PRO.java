@@ -17,6 +17,7 @@
 package joshua.pro;
 
 import joshua.util.FileUtility;
+import joshua.util.StreamGobbler;
 
 public class PRO {
   public static void main(String[] args) throws Exception {

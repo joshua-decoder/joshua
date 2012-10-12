@@ -91,7 +91,7 @@ public class Translation {
       if (! JoshuaConfiguration.hypergraphFilePattern.equals("")) {
         this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
       }
-            
+
       KBestExtractor kBestExtractor =
         new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
           JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,

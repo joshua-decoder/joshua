@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Vector;
 
+import joshua.util.StreamGobbler;
+
 // sparse feature representation version
 public class ClassifierMegaM implements ClassifierInterface {
   @Override
