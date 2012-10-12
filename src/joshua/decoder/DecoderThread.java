@@ -29,7 +29,6 @@ import joshua.oracle.OracleExtractor;
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */
 // BUG: known synchronization problem: LM cache; srilm call;
 public class DecoderThread extends Thread {
