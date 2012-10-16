@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.Stack;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
