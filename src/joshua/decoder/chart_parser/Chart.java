@@ -260,7 +260,7 @@ public class Chart {
    */
   private void completeSpan(int i, int j) {
 
-    // System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
+//    System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
 
     StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
         sentence.target()) : null;
@@ -288,7 +288,8 @@ public class Chart {
       // seed it with the beginning states
       // for each applicable grammar
       for (int g = 0; g < grammars.length; g++) {
-        if (!grammars[g].hasRuleForSpan(i, j, sourceLength) || null == dotcharts[g].getDotCell(i, j))
+        if (!grammars[g].hasRuleForSpan(i, j, sourceLength)
+            || null == dotcharts[g].getDotCell(i, j))
           continue;
         // for each rule with applicable rules
         for (DotNode dotNode : dotcharts[g].getDotCell(i, j).getDotNodes()) {
@@ -315,13 +316,13 @@ public class Chart {
             for (Rule rule : sortedAndFilteredRules) {
               ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null,
                   i, j, sourcePath, stateComputers, this.segmentID);
-              if (sentence.target() == null
-                  || stateConstraint.isLegal(result.getDPStates().values()))
+              if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates().values()))
                 cells[i][j].addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
             }
           } else {
 
             Rule bestRule = sortedAndFilteredRules.get(0);
+
             List<HGNode> currentAntNodes = new ArrayList<HGNode>();
             List<SuperNode> superNodes = dotNode.getAntSuperNodes();
             for (SuperNode si : superNodes) {
@@ -338,11 +339,6 @@ public class Chart {
 
             CubePruneState bestState = new CubePruneState(result, ranks, bestRule, currentAntNodes);
 
-            if (sentence.target() != null) {
-              if (!stateConstraint.isLegal(bestState.getDPStates()))
-                continue;
-            }
-
             bestState.setDotNode(dotNode);
             candidates.add(bestState);
             visitedStates.add(bestState);
@@ -353,6 +349,7 @@ public class Chart {
       int popCount = 0;
       while (candidates.size() > 0 && ++popCount <= JoshuaConfiguration.pop_limit) {
         CubePruneState state = candidates.poll();
+
         DotNode dotNode = state.getDotNode();
         Rule currentRule = state.rule;
         SourcePath sourcePath = dotNode.getSourcePath();
@@ -362,11 +359,14 @@ public class Chart {
 
         List<HGNode> currentAntNodes = new ArrayList<HGNode>(state.antNodes);
 
-        // add the hypothesis to the chart
-        cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.rule, i, j, state.antNodes,
-            sourcePath, true);
+        // Add the hypothesis to the chart. This can only happen if (a) we're not doing constrained
+        // decoding or (b) we are and the state is legal.
+        if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates()))
+          cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.rule, i, j, state.antNodes,
+              sourcePath, true);
 
-        // expand the hypothesis
+        // Expand the hypothesis. This is done regardless of whether the state was added to the
+        // chart or not.
         for (int k = 0; k < state.ranks.length; k++) {
 
           // get new_ranks, which is the same as the old
@@ -402,12 +402,6 @@ public class Chart {
 
           if (visitedStates.contains(nextState)) // explored before
             continue;
-
-          /* Constrained decoding. */
-          if (sentence.target() != null) {
-            if (!stateConstraint.isLegal(nextState.getDPStates()))
-              continue;
-          }
 
           visitedStates.add(nextState);
           candidates.add(nextState);

@@ -169,7 +169,7 @@ class Cell {
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
 
-    HGNode res = null;
+    HGNode newNode = null;
 
 //    System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
 
@@ -181,7 +181,7 @@ class Cell {
     if (noPrune == false && beamPruner != null
         && beamPruner.relativeThresholdPrune(pruningEstimate)) {// the hyperedge should be pruned
       this.chart.nPreprunedEdges++;
-      res = null;
+      newNode = null;
     } else {
       /**
        * Here, the edge has passed pre-pruning. The edge will be added to the chart in one of three
@@ -195,13 +195,13 @@ class Cell {
        */
 
       HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
-      res = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
+      newNode = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
 
       /**
        * each node has a list of hyperedges, need to check whether the node is already exist, if
        * yes, just add the hyperedges, this may change the best logP of the node
        * */
-      HGNode oldNode = this.nodesSigTbl.get(res.getSignature());
+      HGNode oldNode = this.nodesSigTbl.get(newNode.getSignature());
       if (null != oldNode) { // have an item with same states, combine items
         this.chart.nMerged++;
 
@@ -209,28 +209,28 @@ class Cell {
          * the position of oldItem in this.heapItems may change, basically, we should remove the
          * oldItem, and re-insert it (linear time), this is too expense)
          **/
-        if (res.getPruneLogP() > oldNode.getPruneLogP()) {// merge old to new: semiring plus
+        if (newNode.getPruneLogP() > oldNode.getPruneLogP()) { // merge old to new: semiring plus
 
           if (beamPruner != null) {
             oldNode.setDead();// this.heapItems.remove(oldItem);
             beamPruner.incrementDeadObjs();
           }
 
-          res.addHyperedgesInNode(oldNode.hyperedges);
-          addNewNode(res, noPrune); // this will update the HashMap, so that the oldNode is
+          newNode.addHyperedgesInNode(oldNode.hyperedges);
+          addNewNode(newNode, noPrune); // this will update the HashMap, so that the oldNode is
                                     // destroyed
 
         } else {// merge new to old, does not trigger pruningItems
-          oldNode.addHyperedgesInNode(res.hyperedges);
+          oldNode.addHyperedgesInNode(newNode.hyperedges);
         }
 
       } else { // first time item
         this.chart.nAdded++; // however, this item may not be used in the future due to pruning in
                              // the hyper-graph
-        addNewNode(res, noPrune);
+        addNewNode(newNode, noPrune);
       }
     }
-    return res;
+    return newNode;
   }
 
 
