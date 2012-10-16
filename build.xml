@@ -73,7 +73,7 @@
 	<!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX --> 
   </target>
   
-  <target name="kenlm" depends="init, set-joshua-home">
+  <target name="kenlm" depends="set-joshua-home">
 	<exec executable="make">
 	  <arg value="-j" />
 	  <arg value="4" />
@@ -84,7 +84,7 @@
 	</exec>
   </target>
   
-  <target name="giza" depends="init, set-joshua-home">
+  <target name="giza" depends="set-joshua-home">
 	<exec executable="make">
 	  <arg value="-j" />
 	  <arg value="4" />
@@ -116,7 +116,7 @@
 	</exec>
   </target>
 
-  <target name="thrax" depends="set-joshua-home,resolve">
+  <target name="thrax" depends="set-joshua-home">
 	<exec executable="git">
 	  <arg value="submodule" />
 	  <arg value="init" />
@@ -135,11 +135,11 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
-  <target name="all" depends="init,java,giza,kenlm,parallelize">
+  <target name="all" depends="java,giza,kenlm,parallelize">
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="init,thrax">
+  <target name="java" depends="thrax">
 	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
@@ -295,7 +295,7 @@
 		   classpath="${lib}/ant-doxygen-1.6.1.jar"/>
 
   <!-- Compile the Javadocs and Markdown documentation into web pages -->
-  <target name="documentation" depends="resolve">
+  <target name="documentation" depends="">
     <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
   </target>
 
@@ -315,7 +315,7 @@
   
   <!-- Compile the unit test code -->
   <!-- FIXME: why is this broken out from the 'test' target? -->
-  <target name="compile-tests" depends="init"> 
+  <target name="compile-tests" depends=""> 
 	<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
 		   classpath="${testng}" debug="on" encoding="utf8"/> 
   </target>
