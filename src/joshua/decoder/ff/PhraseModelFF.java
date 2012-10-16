@@ -1,6 +1,7 @@
 package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.packed.PackedGrammar.PackedRule;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.corpus.Vocabulary;
 
@@ -41,11 +42,15 @@ public class PhraseModelFF extends StatelessFF {
     float cost = 0.0f;
 
     if (rule != null && this.ownerID == rule.getOwner()) {
-      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-        float t = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
-        rule.setPrecomputableCost(t);
+      if (rule instanceof PackedRule) {
+        cost = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
+      } else {
+        if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
+          float t = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
+          rule.setPrecomputableCost(t);
+        }
+        cost = rule.getPrecomputableCost();
       }
-      cost = rule.getPrecomputableCost();
     }
     
     return cost; 
@@ -58,8 +63,9 @@ public class PhraseModelFF extends StatelessFF {
   public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
     if (rule != null && rule.getOwner() == ownerID) {
       return rule.getFeatureVector();
-    } else
+    } else {
       return new FeatureVector();
+    }
   }
   
   public String toString() {

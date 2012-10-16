@@ -17,8 +17,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Stack;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -51,8 +49,8 @@ public class PackedGrammar extends BatchGrammar {
 
   private final float maxId;
 
-  public PackedGrammar(String grammar_directory, int span_limit, String owner) throws FileNotFoundException,
-      IOException {
+  public PackedGrammar(String grammar_directory, int span_limit, String owner)
+      throws FileNotFoundException, IOException {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
@@ -161,12 +159,14 @@ public class PackedGrammar extends BatchGrammar {
       System.arraycopy(parent_src, 0, src, 0, parent_src.length);
       src[src.length - 1] = symbol;
       arity = parent_arity;
-      if (Vocabulary.nt(symbol)) arity++;
+      if (Vocabulary.nt(symbol))
+        arity++;
     }
 
     public final Trie match(int token_id) {
       int num_children = grammar.source[position];
-      if (num_children == 0) return null;
+      if (num_children == 0)
+        return null;
       if (num_children == 1 && token_id == grammar.source[position + 1])
         return new PackedTrie(grammar, grammar.source[position + 2], src, arity, token_id);
       int top = 0;
@@ -185,7 +185,8 @@ public class PackedGrammar extends BatchGrammar {
         } else {
           bottom = candidate - 1;
         }
-        if (bottom < top) return null;
+        if (bottom < top)
+          return null;
       }
     }
 
@@ -283,18 +284,18 @@ public class PackedGrammar extends BatchGrammar {
         rules[i] = rule_position + 2 + 3 * i;
         block_id = grammar.source[rules[i]];
 
-        BilingualRule rule =
-            new BilingualRule(grammar.source[rule_position + 3 * i], src,
-                grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
+        BilingualRule rule = new BilingualRule(grammar.source[rule_position + 3 * i], src,
+            grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
         grammar.cache[block_id] = rule.estimateRuleCost(models);
-//        System.err.println(String.format("COST(%s) = %.5f", rule, grammar.cache[block_id]));
+        // System.err.println(String.format("COST(%s) = %.5f", rule, grammar.cache[block_id]));
       }
 
       Arrays.sort(rules, new Comparator<Integer>() {
         public int compare(Integer a, Integer b) {
           float a_cost = grammar.cache[grammar.source[a]];
           float b_cost = grammar.cache[grammar.source[b]];
-          if (a_cost == b_cost) return 0;
+          if (a_cost == b_cost)
+            return 0;
           return (a_cost > b_cost ? 1 : -1);
         }
       });
@@ -389,7 +390,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setArity(int arity) {}
+    public void setArity(int arity) {
+    }
 
     @Override
     public int getArity() {
@@ -397,7 +399,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setOwner(int ow) {}
+    public void setOwner(int ow) {
+    }
 
     @Override
     public int getOwner() {
@@ -405,7 +408,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setLHS(int lhs) {}
+    public void setLHS(int lhs) {
+    }
 
     @Override
     public int getLHS() {
@@ -413,7 +417,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setEnglish(int[] eng) {}
+    public void setEnglish(int[] eng) {
+    }
 
     @Override
     public int[] getEnglish() {
@@ -424,7 +429,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setFrench(int[] french) {}
+    public void setFrench(int[] french) {
+    }
 
     @Override
     public int[] getFrench() {
@@ -433,9 +439,12 @@ public class PackedGrammar extends BatchGrammar {
 
     @Override
     public FeatureVector getFeatureVector() {
-      if (features == null)
-        features = new FeatureVector(parent.grammar.getFeatures(parent.grammar.source[address + 2]), String.format("tm_%s",Vocabulary.word(owner)));
-        
+      if (features == null) {
+        features = new FeatureVector(parent.grammar.getFeatures(parent.grammar.source[address + 2]),
+            "");
+        features.times(-1);
+      }
+
       return features;
     }
 
@@ -448,15 +457,16 @@ public class PackedGrammar extends BatchGrammar {
     public float getEstimatedCost() {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
     }
-    
+
     @Override
     public void setPrecomputableCost(float cost) {
-      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
+      //      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
     }
 
     @Override
     public float getPrecomputableCost() {
-      return parent.grammar.cache[parent.grammar.source[address + 2]];
+      return 0.0f;
+      //      return parent.grammar.cache[parent.grammar.source[address + 2]];
     }
 
     @Override
@@ -515,8 +525,8 @@ public class PackedGrammar extends BatchGrammar {
       for (int i = 0; i < num_blocks; i++)
         featureLookup[i] = features.getInt(8 + 4 * i);
 
-      DataInputStream target_lookup_stream =
-          new DataInputStream(new BufferedInputStream(new FileInputStream(target_lookup_file)));
+      DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
+          new FileInputStream(target_lookup_file)));
       targetLookup = new int[target_lookup_stream.readInt()];
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
@@ -541,21 +551,22 @@ public class PackedGrammar extends BatchGrammar {
       int parent;
       do {
         parent = target[pointer];
-        if (parent != -1) tgt[index++] = target[pointer + 1];
+        if (parent != -1)
+          tgt[index++] = target[pointer + 1];
         pointer = parent;
       } while (pointer != -1);
       return tgt;
     }
-    
+
     /**
      * NEW VERSION
-     *
+     * 
      * Returns a string version of the features associated with a rule (represented as a block ID).
-     * These features are in the form "feature1=value feature2=value...".  By default, unlabeled
+     * These features are in the form "feature1=value feature2=value...". By default, unlabeled
      * features are named using the pattern
      * 
-     *   tm_OWNER_INDEX
-     *   
+     * tm_OWNER_INDEX
+     * 
      * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
      * of the feature found in the grammar.
      * 
@@ -569,24 +580,18 @@ public class PackedGrammar extends BatchGrammar {
       /* The number of non-zero features stored with the rule. */
       int num_features = features.getInt(feature_position);
       /* The vector will have to grow but it will be at least this size. */
-      Vector<Float> denseFeatures = new Vector<Float>(num_features);
       feature_position += 4;
+      StringBuilder sb = new StringBuilder();
       for (int i = 0; i < num_features; i++) {
         int feature_id = features.getInt(feature_position);
         Quantizer quantizer = quantization.get(feature_id);
         int index = featureNameMap.get(feature_id);
-        while (denseFeatures.size() <= index)
-          denseFeatures.add(0.0f);
-        denseFeatures.set(index, quantizer.read(features, feature_position));
+        sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
+            quantizer.read(features, feature_position)));
         feature_position += 4 + quantizer.size();
       }
 
-      /* Now copy over the feature values. */
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < denseFeatures.size(); i++) {
-        sb.append(String.format(" %.5f", denseFeatures.get(i) == null ? 0.0 : denseFeatures.get(i)));
-      }
-      
+      // System.err.println("GETFEATURES() = " + sb.toString().trim());
       return sb.toString().trim();
     }
 
