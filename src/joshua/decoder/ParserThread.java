@@ -162,7 +162,9 @@ public class ParserThread extends Thread {
 
     Chart chart;
 
-    String[] sentencePair = sentence.sentence().split("\\|\\|\\|");
+    String[] sentencePair = new String[2];
+    sentencePair[0] = sentence.sentence();
+    sentencePair[1] = sentence.target();
     int sentenceId = sentence.id();
     for (int i = 0; i < sentencePair.length; i++)
       sentencePair[i] = sentencePair[i].trim();

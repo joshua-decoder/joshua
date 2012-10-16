@@ -105,8 +105,11 @@ public class Translation {
       }
 
     } else {
-
-      System.out.println(id() + " ||| " + getSourceSentence().sentence() + " |||  ||| 0.0");
+      String output = getSourceSentence().sentence();
+      if (getSourceSentence().target() != null)
+        output += " ||| " + getSourceSentence().target();
+      
+      System.out.println(id() + " ||| " + output + " |||  ||| 0.0");
     }
 
     System.out.flush();

@@ -171,10 +171,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.qtyRulesRead++;
     ruleIDCount++;
 
-    if (owner == -1) {
-      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
-      System.exit(1);
-    }
+//    if (owner == -1) {
+//      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
+//      System.exit(1);
+//    }
     rule.setOwner(owner);
 
     // === identify the position, and insert the trie nodes as necessary
