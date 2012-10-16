@@ -91,8 +91,6 @@ public class InputHandler implements Iterator<Sentence> {
         System.err.println("Can't find oracle file '" + oracleFile + "'");
         System.exit(1);
       }
-    } else {
-      System.err.println("oracle file is null");
     }
   }
 
