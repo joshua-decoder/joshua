@@ -2,7 +2,6 @@ package joshua.decoder.ff.lm.kenlm.jni;
 
 import java.util.List;
 
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 

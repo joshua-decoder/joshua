@@ -41,6 +41,9 @@ public class Vocabulary {
   private static final int UNKNOWN_ID;
   private static final String UNKNOWN_WORD;
 
+  public static final String START_SYM = "<s>";
+  public static final String STOP_SYM = "</s>";
+  
   static {
     logger = Logger.getLogger(Vocabulary.class.getName());
 

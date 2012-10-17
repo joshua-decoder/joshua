@@ -43,7 +43,7 @@ import joshua.lattice.Node;
  * [i,j-1] where i is in [0,n-1] and j is in [1,n]
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @author Matt Post <post@jhu.edu>
+ * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class Chart {
@@ -57,7 +57,6 @@ public class Chart {
    * chart.add_deduction_in_chart()
    */
   int nPreprunedEdges = 0;
-
   int nPreprunedFuzz1 = 0;
   int nPreprunedFuzz2 = 0;
   int nPrunedItems = 0;
@@ -169,6 +168,8 @@ public class Chart {
         // create a rule, but do not add into the grammar trie
         // TODO: which grammar should we use to create an OOV rule?
         int sourceWord = arc.getLabel();
+        if (sourceWord == Vocabulary.id(Vocabulary.START_SYM) || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
+          continue;
 
         // Determine if word is actual OOV.
         if (JoshuaConfiguration.true_oovs_only) {
@@ -260,11 +261,16 @@ public class Chart {
    */
   private void completeSpan(int i, int j) {
 
-//    System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
+    // System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
 
-    StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
-        sentence.target()) : null;
+//    StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
+//        Vocabulary.START_SYM + " " + sentence.target() + " " + Vocabulary.STOP_SYM) : null;
 
+    StateConstraint stateConstraint = null;
+    if (sentence.target() != null)
+//      stateConstraint = new StateConstraint(sentence.target());
+      stateConstraint = new StateConstraint(Vocabulary.START_SYM + " " + sentence.target() + " " + Vocabulary.STOP_SYM);
+    
     if (JoshuaConfiguration.pop_limit > 0) {
       /*
        * We want to implement proper cube-pruning at the span level, with pruning controlled with

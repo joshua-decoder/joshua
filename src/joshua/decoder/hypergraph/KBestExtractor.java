@@ -722,36 +722,36 @@ public class KBestExtractor {
       }
 
       // ### get hyp string recursively
-      StringBuffer res = new StringBuffer();
-      Rule rl = edge.getRule();
+      StringBuffer sb = new StringBuffer();
+      Rule rule = edge.getRule();
 
-      if (null == rl) { // hyperedges under "goal item" does not have rule
+      if (null == rule) { // hyperedges under "goal item" does not have rule
         if (useTreeFormat) {
           // res.append("(ROOT ");
-          res.append('(');
-          res.append(rootID);
+          sb.append('(');
+          sb.append(rootID);
           if (includeAlign) {
             // append "{i-j}"
-            res.append('{');
-            res.append(parentNode.i);
-            res.append('-');
-            res.append(parentNode.j);
-            res.append('}');
+            sb.append('{');
+            sb.append(parentNode.i);
+            sb.append('-');
+            sb.append(parentNode.j);
+            sb.append('}');
           }
-          res.append(' ');
+          sb.append(' ');
         }
         for (int id = 0; id < edge.getTailNodes().size(); id++) {
-          res.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(
+          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(
               kbestExtractor, useTreeFormat, features, models));
           if (id < edge.getTailNodes().size() - 1)
-            res.append(' ');
+            sb.append(' ');
         }
         if (useTreeFormat)
-          res.append(')');
+          sb.append(')');
       } else {
         if (useTreeFormat) {
-          res.append('(');
-          int lhs = rl.getLHS();
+          sb.append('(');
+          int lhs = rule.getLHS();
           if (lhs > 0) {
             System.err.printf("k-best: WARNING: rule LHS is greater than 0: %d\n", lhs);
           }
@@ -760,49 +760,50 @@ public class KBestExtractor {
             int max = GrammarBuilderWalkerFunction.MAX_NTS;
             lhs = (lhs % max);
           }
-          res.append(lhs);
+          sb.append(lhs);
           if (includeAlign) {
             // append "{i-j}"
-            res.append('{');
-            res.append(parentNode.i);
-            res.append('-');
-            res.append(parentNode.j);
-            res.append('}');
+            sb.append('{');
+            sb.append(parentNode.i);
+            sb.append('-');
+            sb.append(parentNode.j);
+            sb.append('}');
           }
-          res.append(' ');
+          sb.append(' ');
         }
         if (!isMonolingual) { // bilingual
-          int[] english = rl.getEnglish();
+          int[] english = rule.getEnglish();
           for (int c = 0; c < english.length; c++) {
             if (Vocabulary.idx(english[c])) {
               int index = -(english[c] + 1);
-              res.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
+              sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
                   kbestExtractor, useTreeFormat, features, models));
             } else {
-              res.append(english[c]);
+              if (english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
+                sb.append(english[c]);
             }
             if (c < english.length - 1)
-              res.append(' ');
+              sb.append(' ');
           }
         } else { // monolingual
-          int[] french = rl.getFrench();
+          int[] french = rule.getFrench();
           int nonTerminalID = 0;// the position of the non-terminal in the rule
           for (int c = 0; c < french.length; c++) {
             if (Vocabulary.nt(french[c])) {
-              res.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID)
+              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID)
                   .getHypothesis(kbestExtractor, useTreeFormat, features, models));
               nonTerminalID++;
             } else {
-              res.append(french[c]);
+              sb.append(french[c]);
             }
             if (c < french.length - 1)
-              res.append(' ');
+              sb.append(' ');
           }
         }
         if (useTreeFormat)
-          res.append(')');
+          sb.append(')');
       }
-      return res.toString();
+      return sb.toString().trim();
     }
 
     /**

@@ -79,10 +79,10 @@ public class Sentence {
     } else {
       if (inputSentence.indexOf(" ||| ") != -1) {
         String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
-        this.sentence = pieces[0];
+        this.sentence = Vocabulary.START_SYM + " " + pieces[0] + " " + Vocabulary.STOP_SYM;
         this.target = pieces[1];
       } else {
-        this.sentence = inputSentence;
+        this.sentence = Vocabulary.START_SYM + " " + inputSentence + " " + Vocabulary.STOP_SYM;
       }
       this.id = id;
     }
