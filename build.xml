@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
+<project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
@@ -16,8 +16,9 @@
   <property name="pmdOUT" value="${pmd}-output" />
   
   <!-- TODO: should these be made into 'path's instead of 'property's? -->
-  <property name="testng" value="${lib}/testng-5.8-jdk15.jar"/>
+  <property name="testng" value="${lib}/testng-6.7.jar"/>
   <!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
+
   <property name="cli"    value="commons-cli-2.0-SNAPSHOT.jar"/>
   
   <path id="compile.all.classpath">
@@ -51,7 +52,7 @@
   <!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Create the build directory for compiled class files -->
-  <target name="init" depends="set-joshua-home">
+  <target name="init" depends="set-joshua-home,resolve">
 	<tstamp/>
 	<mkdir dir="${build}"/>
 	<mkdir dir="${lib}"/>
@@ -72,7 +73,7 @@
 	<!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX --> 
   </target>
   
-  <target name="kenlm" depends="init, set-joshua-home">
+  <target name="kenlm" depends="set-joshua-home">
 	<exec executable="make">
 	  <arg value="-j" />
 	  <arg value="4" />
@@ -83,7 +84,7 @@
 	</exec>
   </target>
   
-  <target name="giza" depends="init, set-joshua-home">
+  <target name="giza" depends="set-joshua-home">
 	<exec executable="make">
 	  <arg value="-j" />
 	  <arg value="4" />
@@ -134,11 +135,11 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
-  <target name="all" depends="init,java,giza,kenlm,parallelize">
+  <target name="all" depends="java,giza,kenlm,parallelize">
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="init">
+  <target name="java" depends="thrax">
 	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
@@ -188,7 +189,7 @@
   </target>
   
   <!-- Create a versioned release -->
-  <target name="release" depends="set-joshua-version">
+  <target name="release" depends="set-joshua-version, resolve">
     <exec executable="./scripts/support/make-release.sh">
       <arg value="${env.JOSHUA_VERSION}" />
     </exec>
@@ -291,11 +292,11 @@
 
   <taskdef uri="antlib:org.doxygen.tools"
 		   resource="org/doxygen/tools/antlib.xml"
-		   classpath="${lib}/ant_doxygen.jar"/>
+		   classpath="${lib}/ant-doxygen-1.6.1.jar"/>
 
   <!-- Compile the Javadocs and Markdown documentation into web pages -->
-  <target name="documentation">
-	<doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+  <target name="documentation" depends="">
+    <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
   </target>
 
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -314,12 +315,12 @@
   
   <!-- Compile the unit test code -->
   <!-- FIXME: why is this broken out from the 'test' target? -->
-  <target name="compile-tests" depends="init"> 
+  <target name="compile-tests" depends=""> 
 	<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
 		   classpath="${testng}" debug="on" encoding="utf8"/> 
   </target>
-  
-  
+
+
   <!-- Run the unit tests -->
   <target name="testng" depends="all,compile-tests">
 	<testng classpath="${build}" sourcedir="${test}">
@@ -330,5 +331,40 @@
 	  <xmlfileset dir="." includes="testng.xml"/>
 	</testng>
   </target>
-  
+
+  <property name="ivy.install.version" value="2.2.0" />
+  <condition property="ivy.home" value="${env.IVY_HOME}">
+    <isset property="env.IVY_HOME" />
+  </condition>
+  <property name="ivy.home" value="${env.JOSHUA}" />
+  <property name="ivy.jar.dir" value="${ivy.home}/lib" />
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+  <target name="download-ivy" unless="offline">
+    <property name="ivy.default.ivy.user.dir" value="${env.JOSHUA}/lib"/>
+    <mkdir dir="${ivy.jar.dir}"/>
+    <!-- download Ivy from web site so that it can be used even without any special installation -->
+    <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+         dest="${ivy.jar.file}" usetimestamp="true"/>
+  </target>
+
+  <target name="init-ivy" depends="download-ivy">
+    <!-- try to load ivy here from ivy home, in case the user has not already dropped
+            it into ant's lib dir (note that the latter copy will always take precedence).
+            We will not fail as long as local lib dir exists (it may be empty) and
+            ivy is in at least one of ant's lib dir or the local lib dir. -->
+    <path id="ivy.lib.path">
+      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+    </path>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+  </target>
+
+  <!-- ================================= 
+          target: resolve              
+       ================================= -->
+  <target name="resolve" description="--> retrieve dependencies with ivy" depends="init-ivy">
+    <property name="ivy.default.ivy.user.dir" value="${env.JOSHUA}/lib"/>
+    <ivy:retrieve />
+  </target>
+
 </project>
