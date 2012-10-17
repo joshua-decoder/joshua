@@ -32,6 +32,11 @@ use File::Temp qw/ :mktemp /;
 use CachePipe;
 # use Thread::Pool;
 
+# Hadoop uses a stupid hacker trick to change directories, but (per Lane Schwartz) if CDPATH
+# contains ".", it triggers the printing of the directory, which kills the stupid hacker trick.
+# Thus we undefine CDPATH to ensure this doesn't happen.
+delete $ENV{CDPATH};
+
 my $HADOOP = $ENV{HADOOP};
 
 my $THRAX = "$JOSHUA/thrax";
