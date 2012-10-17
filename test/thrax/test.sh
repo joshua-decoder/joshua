@@ -13,7 +13,11 @@ export HADOOP=$(pwd)/hadoop-0.20.2
 $HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar thrax.conf thrax > thrax.log 2>&1 
 $HADOOP/bin/hadoop fs -getmerge thrax/final grammar
 
-size=$(stat -c"%s" grammar)
+if [[ $(uname -s) = "Darwin" ]]; then
+  size=$(gstat -c"%s" grammar)
+else
+  size=$(stat -c"%s" grammar)
+fi
 
 if [ $size -eq 6385751 ]; then
   echo PASSED
