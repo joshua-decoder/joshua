@@ -162,8 +162,11 @@ public class DecoderThread extends Thread {
 
     logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n"
         + sentence.sentence());
+    if (sentence.target() != null)
+      logger.info("Contraining to target sentence '" + sentence.target() + "'");
 
-    if (sentence.isEmpty()) return null;
+    if (sentence.isEmpty()) 
+      return null;
 
     long startTime = System.currentTimeMillis();
 
