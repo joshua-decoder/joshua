@@ -364,6 +364,8 @@
        ================================= -->
   <target name="resolve" description="--> retrieve dependencies with ivy" depends="init-ivy">
     <property name="ivy.default.ivy.user.dir" value="${env.JOSHUA}/lib"/>
+    <ivy:configure file="${env.JOSHUA}/lib/ivysettings.xml" />
+    <ivy:resolve file="${env.JOSHUA}/lib/ivy.xml"/>
     <ivy:retrieve />
   </target>
 
