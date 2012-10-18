@@ -16,5 +16,7 @@
 	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
 	<classpathentry kind="lib" path="lib/org.restlet-2.1.0.jar"/>
+  <classpathentry kind="lib" path="lib/org.restlet.ext.json-2.1.0.jar"/>
+  <classpathentry kind="lib" path="lib/org.restlet.lib.org.json-2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
