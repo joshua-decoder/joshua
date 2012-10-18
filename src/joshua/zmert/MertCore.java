@@ -17,6 +17,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -1457,9 +1458,10 @@ public class MertCore {
       println("Running external decoder...", 1);
 
       try {
-        String cmd = decoderCommandFileName;
+        ArrayList<String> cmd = new ArrayList<String>();
+        cmd.add(decoderCommandFileName);
         if (passIterationToDecoder)
-          cmd += " " + Integer.toString(iteration);
+          cmd.add(Integer.toString(iteration)
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         // this merges the error and output streams of the subprocess

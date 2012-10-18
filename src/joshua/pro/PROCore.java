@@ -1768,9 +1768,10 @@ public class PROCore {
       println("Running external decoder...", 1);
 
       try {
-        String cmd = decoderCommandFileName;
+        ArrayList<String> cmd = new ArrayList<String>();
+        cmd.add(decoderCommandFileName);
         if (passIterationToDecoder)
-          cmd = cmd + " " + iteration;
+          cmd.add(Integer.toString(iteration)
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         // this merges the error and output streams of the subprocess
