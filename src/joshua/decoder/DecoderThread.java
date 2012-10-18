@@ -176,10 +176,7 @@ public class DecoderThread extends Thread {
       return null;
     }
 
-    int numGrammars =
-        (JoshuaConfiguration.use_sent_specific_tm) ? grammarFactories.size() + 1 : grammarFactories
-            .size();
-
+    int numGrammars = grammarFactories.size();
     Grammar[] grammars = new Grammar[numGrammars];
 
     for (int i = 0; i < grammarFactories.size(); i++)

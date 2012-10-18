@@ -175,10 +175,7 @@ public class ParserThread extends Thread {
 
     Lattice<Integer> input_lattice = foreign.intLattice();
 
-    int numGrammars =
-        (JoshuaConfiguration.use_sent_specific_tm) ? grammarFactories.size() + 1 : grammarFactories
-            .size();
-
+    int numGrammars = grammarFactories.size();
     Grammar[] grammars = new Grammar[numGrammars];
 
     for (int i = 0; i < grammarFactories.size(); i++)
