@@ -6,7 +6,7 @@ set -u
 
 [[ ! -d hadoop-0.20.2 ]] && tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz
 
-unset HADOOP_HOME HADOOP_CONF_DIR
+unset HADOOP HADOOP_HOME HADOOP_CONF_DIR
 export HADOOP=$(pwd)/hadoop-0.20.2
 
 # run hadoop
@@ -19,7 +19,7 @@ else
   size=$(stat -c"%s" grammar)
 fi
 
-if [ $size -eq 6385751 ]; then
+if [[ $size -eq 6385751 ]]; then
   echo PASSED
   rm -rf thrax.log grammar thrax
   exit 0

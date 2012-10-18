@@ -161,9 +161,9 @@ public class DecoderThread extends Thread {
   public HyperGraph translate(Sentence sentence, String oracleSentence) throws IOException {
 
     logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n"
-        + sentence.sentence());
+        + sentence.source());
     if (sentence.target() != null)
-      logger.info("Contraining to target sentence '" + sentence.target() + "'");
+      logger.info("Constraining to target sentence '" + sentence.target() + "'");
 
     if (sentence.isEmpty()) 
       return null;
@@ -171,15 +171,12 @@ public class DecoderThread extends Thread {
     long startTime = System.currentTimeMillis();
 
     // skip blank sentences
-    if (sentence.sentence().matches("^\\s*$")) {
+    if (sentence.source().matches("^\\s*$")) {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
       return null;
     }
 
-    int numGrammars =
-        (JoshuaConfiguration.use_sent_specific_tm) ? grammarFactories.size() + 1 : grammarFactories
-            .size();
-
+    int numGrammars = grammarFactories.size();
     Grammar[] grammars = new Grammar[numGrammars];
 
     for (int i = 0; i < grammarFactories.size(); i++)

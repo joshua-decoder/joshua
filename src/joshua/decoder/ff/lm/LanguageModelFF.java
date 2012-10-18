@@ -32,9 +32,7 @@ public class LanguageModelFF extends StatefulFF {
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(LanguageModelFF.class.getName());
 
-  private final String START_SYM = "<s>";
   private final int START_SYM_ID;
-  private final String STOP_SYM = "</s>";
   private final int STOP_SYM_ID;
 
   /*
@@ -46,7 +44,7 @@ public class LanguageModelFF extends StatefulFF {
   static String NULL_RIGHT_LM_STATE_SYM = "<lzfrnull>";
   static public int NULL_RIGHT_LM_STATE_SYM_ID;// used for equivalent state
 
-  private final boolean addStartAndEndSymbol = true;
+  private final boolean addStartAndEndSymbol = false;
 
   /**
    * N-gram language model. We assume the language model is in ARPA format for equivalent state:
@@ -84,8 +82,8 @@ public class LanguageModelFF extends StatefulFF {
     super(weights, featureName, state);
     this.lmGrammar = lm;
     this.ngramOrder = lm.getOrder();
-    this.START_SYM_ID = Vocabulary.id(START_SYM);
-    this.STOP_SYM_ID = Vocabulary.id(STOP_SYM);
+    this.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
+    this.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
 
     LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = Vocabulary.id(BACKOFF_LEFT_LM_STATE_SYM);
     LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);

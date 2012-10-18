@@ -8,7 +8,7 @@ set -u
 cat output | awk -F\| '{print $4 " ||| " $10}' > output.scores
 
 # Compare
-diff output.scores gold.scores > diff
+diff -u output.scores gold.scores > diff
 
 if [ $? -eq 0 ]; then
 	echo PASSED
@@ -16,6 +16,6 @@ if [ $? -eq 0 ]; then
 	exit 0
 else
 	echo FAILED
-	cat diff
+	tail diff
 	exit 1
 fi

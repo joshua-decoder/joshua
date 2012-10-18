@@ -36,7 +36,8 @@ public class OOVFF extends StatelessFF {
    */
   @Override
   public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {
-    if (rule != null && this.ownerID == rule.getOwner()) return weight;
+    if (rule != null && this.ownerID == rule.getOwner()) 
+      return weight;
 
     return 0.0f;
   }
