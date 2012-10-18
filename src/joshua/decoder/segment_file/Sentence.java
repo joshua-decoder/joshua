@@ -51,8 +51,8 @@ public class Sentence {
    */
 
   private int id = -1;
-  private String sentence;
-  private String target = null;
+  protected String sentence;
+  protected String target = null;
 
   private List<ConstraintSpan> constraints;
 
@@ -79,10 +79,10 @@ public class Sentence {
     } else {
       if (inputSentence.indexOf(" ||| ") != -1) {
         String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
-        this.sentence = Vocabulary.START_SYM + " " + pieces[0] + " " + Vocabulary.STOP_SYM;
+        this.sentence = pieces[0];
         this.target = pieces[1];
       } else {
-        this.sentence = Vocabulary.START_SYM + " " + inputSentence + " " + Vocabulary.STOP_SYM;
+        this.sentence = inputSentence;
       }
       this.id = id;
     }
@@ -96,12 +96,12 @@ public class Sentence {
     return id;
   }
 
-  public String sentence() {
-    return sentence;
-  }
-
   public String source() {
     return this.sentence;
+  }
+  
+  public String annotatedSource() {
+    return Vocabulary.START_SYM + " " + this.sentence + " " + Vocabulary.STOP_SYM;
   }
 
   /**
@@ -119,7 +119,7 @@ public class Sentence {
   }
 
   public int[] intSentence() {
-    return Vocabulary.addAll(sentence());
+    return Vocabulary.addAll(annotatedSource());
   }
 
   public List<ConstraintSpan> constraints() {

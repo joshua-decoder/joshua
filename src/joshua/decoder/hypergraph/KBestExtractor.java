@@ -203,6 +203,7 @@ public class KBestExtractor {
    */
   private String convertHyp2String(int sentID, DerivationState state, List<FeatureFunction> models,
       String strHypNumeric, FeatureVector features) {
+    System.err.println("HYP: " + strHypNumeric);
     String[] tem = Regex.spaces.split(strHypNumeric);
     StringBuffer strHyp = new StringBuffer();
 
@@ -217,6 +218,7 @@ public class KBestExtractor {
     for (int t = 0; t < tem.length; t++) {
       tem[t] = tem[t].trim();
       if (extractNbestTree && (tem[t].startsWith("(") || tem[t].endsWith(")"))) { // tree tag
+        /* New node. */
         if (tem[t].startsWith("(")) {
           if (includeAlign) {
             // we must account for the {i-j} substring
@@ -231,6 +233,7 @@ public class KBestExtractor {
             strHyp.append(tag);
           }
         } else {
+//          System.err.println("TEM = " + t + " " + tem[t]);
           // note: it may have more than two ")", e.g., "3499))"
           int firstBracketPos = tem[t].indexOf(')');// TODO: assume the tag/terminal does not have
                                                     // ')'
@@ -779,7 +782,7 @@ public class KBestExtractor {
               sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
                   kbestExtractor, useTreeFormat, features, models));
             } else {
-              if (english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
+              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
                 sb.append(english[c]);
             }
             if (c < english.length - 1)

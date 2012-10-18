@@ -161,7 +161,7 @@ public class DecoderThread extends Thread {
   public HyperGraph translate(Sentence sentence, String oracleSentence) throws IOException {
 
     logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n"
-        + sentence.sentence());
+        + sentence.source());
     if (sentence.target() != null)
       logger.info("Constraining to target sentence '" + sentence.target() + "'");
 
@@ -171,7 +171,7 @@ public class DecoderThread extends Thread {
     long startTime = System.currentTimeMillis();
 
     // skip blank sentences
-    if (sentence.sentence().matches("^\\s*$")) {
+    if (sentence.source().matches("^\\s*$")) {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
       return null;
     }

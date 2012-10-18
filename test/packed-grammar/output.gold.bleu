@@ -1,14 +1,14 @@
 Processing 100 sentences...
 Evaluating set of 1'th candidate translations from output...
-BLEU_precision(1) = 1052 / 1487 = 0.7075
-BLEU_precision(2) = 509 / 1387 = 0.3670
-BLEU_precision(3) = 266 / 1293 = 0.2057
-BLEU_precision(4) = 146 / 1203 = 0.1214
-BLEU_precision = 0.2837
+BLEU_precision(1) = 1021 / 1453 = 0.7027
+BLEU_precision(2) = 478 / 1353 = 0.3533
+BLEU_precision(3) = 248 / 1259 = 0.1970
+BLEU_precision(4) = 143 / 1169 = 0.1223
+BLEU_precision = 0.2781
 
-Length of candidate corpus = 1487
-Effective length of reference corpus = 1443
+Length of candidate corpus = 1453
+Effective length of reference corpus = 1425
 BLEU_BP = 1.0000
 
-  => BLEU = 0.2837
+  => BLEU = 0.2781
 

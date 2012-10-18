@@ -60,7 +60,7 @@ public class Translation {
   public String translation() {
 
     if (this.hypergraph == null) {
-      return getSourceSentence().sentence();
+      return getSourceSentence().source();
 
     } else {
 
@@ -105,7 +105,7 @@ public class Translation {
       }
 
     } else {
-      String output = getSourceSentence().sentence();
+      String output = getSourceSentence().source();
       if (getSourceSentence().target() != null)
         output += " ||| " + getSourceSentence().target();
       

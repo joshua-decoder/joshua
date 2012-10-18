@@ -9,7 +9,7 @@ public class ParsedSentence extends Sentence {
 
   public ParsedSentence(String input, int id) {
     super(input, id);
-    syntaxTree = new ArraySyntaxTree(this.sentence());
+    syntaxTree = new ArraySyntaxTree(this.source());
   }
 
   public int[] intSentence() {
