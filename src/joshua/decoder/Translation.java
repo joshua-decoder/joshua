@@ -40,7 +40,7 @@ import joshua.decoder.segment_file.Sentence;
 public class Translation {
   private int id = -1;
   private Sentence source;
-  private String translation;
+  private String translation = null;
   private List<Double> modelScores = null;
   private double score;
   private HyperGraph hypergraph;
@@ -75,12 +75,19 @@ public class Translation {
   }
 
   /*
-   * Returns the 1-best translation from the hypergraph object.
+   * Returns the 1-best translation from the hypergraph object. Memoizes the result of the first
+   * time the translation is requested.
    */
   public String translation() {
 
+    if (this.translation != null) {
+      return this.translation;
+    }
+
+    String result;
+
     if (this.hypergraph == null) {
-      return getSourceSentence().sentence();
+      result = getSourceSentence().sentence();
 
     } else {
       KBestExtractor kBestExtractor =
@@ -98,8 +105,9 @@ public class Translation {
         e.printStackTrace();
       }
 
-      return sw.toString();
+      result = sw.toString();
     }
+    return result;
   }
 
   /*
@@ -136,6 +144,7 @@ public class Translation {
 
     System.out.flush();
   }
+
 
   public String toString() {
     StringBuffer sb = new StringBuffer();
