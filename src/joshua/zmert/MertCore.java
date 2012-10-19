@@ -1461,7 +1461,7 @@ public class MertCore {
         ArrayList<String> cmd = new ArrayList<String>();
         cmd.add(decoderCommandFileName);
         if (passIterationToDecoder)
-          cmd.add(Integer.toString(iteration)
+          cmd.add(Integer.toString(iteration));
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         // this merges the error and output streams of the subprocess
