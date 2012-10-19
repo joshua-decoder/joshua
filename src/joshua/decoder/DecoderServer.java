@@ -1,5 +1,8 @@
 package joshua.decoder;
 
+import java.io.IOException;
+import java.util.Iterator;
+
 import org.restlet.Server;
 import org.restlet.data.Protocol;
 import org.restlet.resource.Get;
@@ -15,7 +18,25 @@ public class DecoderServer extends ServerResource {
 
   @Get
   public String toString() {
-    return "hello, world";
+    String configFile = null;
+    String testFile = "hello_world_file";
+    String nbestFile = "-";
+    String oracleFile = null;
+    JoshuaDecoder decoder = new JoshuaDecoder(configFile);
+    try {
+      decoder.decodeTestSet(testFile, nbestFile, oracleFile);
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    String result = "";
+    for (Translation tr : decoder.getTranslations()) {
+      String s = tr.translation();
+      if (s != null) {
+        result += s;
+      }
+    }
+    return result;
   }
 
 }

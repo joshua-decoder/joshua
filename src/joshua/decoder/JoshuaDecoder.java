@@ -626,4 +626,11 @@ public class JoshuaDecoder {
     logger.info(String.format("Total running time: %d seconds",
         (System.currentTimeMillis() - startTime) / 1000));
   }
+
+  /**
+   * @return the translations
+   */
+  public List<Translation> getTranslations() {
+    return this.decoderFactory.getTranslations();
+  }
 }
