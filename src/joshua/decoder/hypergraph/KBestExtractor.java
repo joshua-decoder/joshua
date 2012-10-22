@@ -203,7 +203,6 @@ public class KBestExtractor {
    */
   private String convertHyp2String(int sentID, DerivationState state, List<FeatureFunction> models,
       String strHypNumeric, FeatureVector features) {
-    System.err.println("HYP: " + strHypNumeric);
     String[] tem = Regex.spaces.split(strHypNumeric);
     StringBuffer strHyp = new StringBuffer();
 
