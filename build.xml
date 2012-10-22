@@ -295,8 +295,8 @@
 		   classpath="${lib}/ant-doxygen-1.6.1.jar"/>
 
   <!-- Compile the Javadocs and Markdown documentation into web pages -->
-  <target name="documentation" depends="">
-    <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+  <target name="documentation">
+	  <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
   </target>
 
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

@@ -35,9 +35,16 @@ import joshua.decoder.JoshuaDecoder;
 import joshua.metrics.EvaluationMetric;
 import joshua.util.StreamGobbler;
 
+/**
+ * This code was originally written by Omar Zaidan.  In September of 2012, it was augmented to support
+ * a sparse feature implementation.
+ * 
+ * @author Omar Zaidan
+ * @author Matt Post <post@cs.jhu.edu>
+ */
+
 public class MertCore {
   private TreeSet<Integer>[] indicesOfInterest_all;
-
 
   private final static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
@@ -259,19 +266,19 @@ public class MertCore {
       println("", 1);
     }
 
-		if (refsPerSen > 1) {
-			String refFile = refFileName + "0";
-			if (! new File(refFile).exists())
-				refFile = refFileName + ".0";
-			if (! new File(refFile).exists()) {
-				System.err.println(String.format("* FATAL: can't find first reference file '%s{0,.0}'", refFileName));
-				System.exit(1);
-			}
+    if (refsPerSen > 1) {
+      String refFile = refFileName + "0";
+      if (! new File(refFile).exists())
+        refFile = refFileName + ".0";
+      if (! new File(refFile).exists()) {
+        System.err.println(String.format("* FATAL: can't find first reference file '%s{0,.0}'", refFileName));
+        System.exit(1);
+      }
 
-			numSentences = countLines(refFile);
-		} else {
-			numSentences = countLines(refFileName);
-		}
+      numSentences = countLines(refFile);
+    } else {
+      numSentences = countLines(refFileName);
+    }
 
     processDocInfo();
     // sets numDocuments and docOfSentence[]
@@ -307,7 +314,8 @@ public class MertCore {
         while (line != null && line.length() == 0) { // skip empty lines
           line = inFile_names.readLine();
         }
-        paramNames[c] = (line.substring(0, line.indexOf("|||"))).trim();
+        String paramName = (line.substring(0, line.indexOf("|||"))).trim();
+        paramNames[c] = paramName;
       }
 
       inFile_names.close();
@@ -330,23 +338,23 @@ public class MertCore {
     try {
 
       // read in reference sentences
-			BufferedReader reference_readers[] = new BufferedReader[refsPerSen];
-			if (refsPerSen == 1) {
-				reference_readers[0] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFileName)), "utf8"));
-			} else {
-				for (int i = 0; i < refsPerSen; i++) {
-					String refFile = refFileName + i;
-					if (! new File(refFile).exists())
-						refFile = refFileName + "." + i;
-					if (! new File(refFile).exists()) {
-						System.err.println(String.format("* FATAL: can't find reference file '%s'", refFile));
-						System.exit(1);
-					}
+      BufferedReader reference_readers[] = new BufferedReader[refsPerSen];
+      if (refsPerSen == 1) {
+        reference_readers[0] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFileName)), "utf8"));
+      } else {
+        for (int i = 0; i < refsPerSen; i++) {
+          String refFile = refFileName + i;
+          if (! new File(refFile).exists())
+            refFile = refFileName + "." + i;
+          if (! new File(refFile).exists()) {
+            System.err.println(String.format("* FATAL: can't find reference file '%s'", refFile));
+            System.exit(1);
+          }
 
-					reference_readers[i] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFile)), "utf8"));
-				}
-			}
-				
+          reference_readers[i] = new BufferedReader(new InputStreamReader(new FileInputStream(new File(refFile)), "utf8"));
+        }
+      }
+        
       for (int i = 0; i < numSentences; ++i) {
         for (int r = 0; r < refsPerSen; ++r) {
           // read the rth reference translation for the ith sentence
@@ -354,9 +362,9 @@ public class MertCore {
         }
       }
 
-			// close all the reference files
-			for (int i = 0; i < refsPerSen; i++) 
-				reference_readers[i].close();
+      // close all the reference files
+      for (int i = 0; i < refsPerSen; i++) 
+        reference_readers[i].close();
 
       // read in decoder command, if any
       decoderCommand = null;
@@ -887,11 +895,21 @@ public class MertCore {
 
                 featVal_str = feats_str.split("\\s+");
 
-                for (int c = 1; c <= numParams; ++c) {
-                  currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                /* Sparse (labeled) feature version */
+                if (feats_str.indexOf('=') != -1) {
+                  for (String featurePair: featVal_str) {
+                    String[] pair = featurePair.split("=");
+                    String name = pair[0];
+                    Double value = Double.parseDouble(pair[1]);
+                    currFeatVal[c_fromParamName(name)] = value;
+                  }
+                } else {
+                  for (int c = 1; c <= numParams; ++c) {
+                    currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
                   // print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
-                }
+                  }
                 // println("",4);
+                }
 
 
                 for (int j = 1; j <= initsPerIt; ++j) {
@@ -1123,9 +1141,18 @@ public class MertCore {
 
               featVal_str = feats_str.split("\\s+");
 
-              for (int c = 1; c <= numParams; ++c) {
-                currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+              if (feats_str.indexOf('=') != -1) {
+                for (String featurePair: featVal_str) {
+                  String[] pair = featurePair.split("=");
+                  String name = pair[0];
+                  Double value = Double.parseDouble(pair[1]);
+                  currFeatVal[c_fromParamName(name)] = value;
+                }
+              } else {
+                for (int c = 1; c <= numParams; ++c) {
+                  currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
                 // print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
+                }
               }
               // println("",4);
 
@@ -1418,7 +1445,10 @@ public class MertCore {
       // myDecoder.initialize(decoderConfigFileName);
       double[] zeroBased_lambda = new double[numParams];
       System.arraycopy(lambda, 1, zeroBased_lambda, 0, numParams);
-      myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
+      /* This is never used and doesn't work with sparse features, so we're commenting it out for
+       * the moment [MJP, 2012-09-07]
+       */
+      // myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
       myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
 
       retSA[0] = decoderOutFileName;
@@ -1504,6 +1534,9 @@ public class MertCore {
          * 
          * i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numParams_val
          * .*
+         * 
+         * Updated September 2012: features can now be named (for sparse feature compatibility).
+         * You must name all features or none of them.
          */
 
         // in a well formed file, we'd find the nth candidate for the ith sentence

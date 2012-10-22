@@ -1,6 +1,5 @@
 package joshua.decoder.ff.tm.format;
 
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -67,15 +66,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
     }
 
     // feature scores
-    String[] scores = fields[3].split("\\s+");
-    float[] feature_scores = new float[scores.length];
+    String sparseFeatures = fields[3];
 
-    int i = 0;
-    for (String score : scores) {
-      feature_scores[i++] = Float.parseFloat(score);
-    }
-
-    return new BilingualRule(lhs, french, english, feature_scores, arity);
+    return new BilingualRule(lhs, french, english, sparseFeatures, arity);
   }
 
   protected String cleanSamtNonTerminal(String word) {
@@ -98,34 +91,6 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
   }
 
   @Override
-  public String toTokenIds(BilingualRule rule) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(rule.getLHS());
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getFrench()));
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getEnglish()));
-    sb.append(" |||");
-
-    float[] feature_scores = rule.getFeatureScores();
-    for (int i = 0; i < feature_scores.length; i++) {
-      sb.append(String.format(" %.4f", feature_scores[i]));
-    }
-    return sb.toString();
-  }
-
-  @Override
-  public String toTokenIdsWithoutFeatureScores(BilingualRule rule) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(rule.getLHS());
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getFrench()));
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getEnglish()));
-    return sb.toString();
-  }
-
-  @Override
   public String toWords(BilingualRule rule) {
     StringBuffer sb = new StringBuffer();
     sb.append(Vocabulary.word(rule.getLHS()));
@@ -133,12 +98,8 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
     sb.append(Vocabulary.getWords(rule.getFrench()));
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(rule.getEnglish()));
-    sb.append(" |||");
+    sb.append(" ||| " + rule.getFeatureString());
 
-    float[] feature_scores = rule.getFeatureScores();
-    for (int i = 0; i < feature_scores.length; i++) {
-      sb.append(String.format(" %.4f", feature_scores[i]));
-    }
     return sb.toString();
   }
 

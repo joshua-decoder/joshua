@@ -85,7 +85,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
   }
 
   private BilingualRule getRuleWithSpans(HyperEdge edge, HGNode head) {
-    Rule edgeRule = edge.getRule();
+    BilingualRule edgeRule = (BilingualRule)edge.getRule();
     // System.err.printf("EdgeRule: %s\n", edgeRule);
     if (!(edgeRule instanceof BilingualRule)) {
       // System.err.println("edge rule is not a bilingual rule");
@@ -102,8 +102,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     if (source == null) return null;
     int[] target = getNewTargetFromSource(source);
     BilingualRule result =
-        new BilingualRule(headLabel, source, target, edgeRule.getFeatureScores(),
-            edgeRule.getArity());
+			new BilingualRule(headLabel, source, target, edgeRule.getFeatureString(), edgeRule.getArity());
     // System.err.printf("new rule is %s\n", result);
     return result;
   }
@@ -122,7 +121,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
         result[i] = curr;
       } else {
         int index = -curr - 1;
-        int label = getLabelWithSpan(edge.getAntNodes().get(index));
+        int label = getLabelWithSpan(edge.getTailNodes().get(index));
         result[i] = label * 2 - currNT;
         currNT++;
       }
@@ -151,7 +150,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
       System.err.println("getGoalSymbolNode: root node has no hyperedges");
       return null;
     }
-    return root.hyperedges.get(0).getAntNodes().get(0);
+    return root.hyperedges.get(0).getTailNodes().get(0);
   }
 
 

@@ -104,7 +104,7 @@ public class Node<Label> {
           }
 
           public Node<Label> next() {
-            return arcIterator.next().getTail();
+            return arcIterator.next().getHead();
           }
 
           public void remove() {

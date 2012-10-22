@@ -6,7 +6,7 @@
 #
 # Usage:
 #
-#    cat joshua.config | copy-config.pl -param` value -param2 "multi-word value" ...
+#    cat joshua.config | copy-config.pl -param1 value -param2 "multi-word value" ...
 
 use strict;
 use warnings;
@@ -46,6 +46,9 @@ while (my $line = <>) {
     my $norm_key = normalize_key($key);
     if (exists $params{$norm_key}) {
       print "$key = " . $params{$norm_key} . "\n";
+
+      # Deleting the parameter means it will only match the first time.  Useful for duplicated keys
+      # (like multiple "tm = ..." lines)
       delete $params{$norm_key};
     } else {
       # otherwise, print out the original line

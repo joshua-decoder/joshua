@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.lattice;
 
 import java.util.ArrayList;
@@ -32,7 +17,6 @@ import joshua.corpus.Vocabulary;
  * 
  * @author Lane Schwartz
  * @since 2008-07-08
- * @version $LastChangedDate$
  * 
  * @param Label Type of label associated with an arc.
  */
@@ -140,9 +124,12 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
     Matcher nodeMatcher = nodePattern.matcher(data);
 
-    int nodeID = -1;
     boolean latticeIsAmbiguous = false;
 
+    int nodeID = 0;
+    Node<Integer> startNode = new Node<Integer>(nodeID);
+    nodes.put(nodeID, startNode);
+    
     while (nodeMatcher.matches()) {
 
       String nodeData = nodeMatcher.group(2);
@@ -191,6 +178,21 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
       nodeMatcher = nodePattern.matcher(remainingData);
     }
+
+    /* Add <s> to the start of the lattice. */
+    if (nodes.containsKey(1)) {
+      Node<Integer> firstNode = nodes.get(1);
+      startNode.addArc(firstNode, 0.0f, Vocabulary.id(Vocabulary.START_SYM));
+    }
+    
+    /* Add </s> as a final state, and connect it to all end-state nodes. */
+    Node<Integer> endNode = new Node<Integer>(++nodeID);
+    for (Node<Integer> node: nodes.values()) {
+      if (node.outgoingArcs.size() == 0)
+        node.addArc(endNode, 0.0f, Vocabulary.id(Vocabulary.STOP_SYM));
+    }
+    // Add the endnode after the above loop so as to avoid a self-loop.
+    nodes.put(nodeID, endNode);
 
     List<Node<Integer>> nodeList = new ArrayList<Node<Integer>>(nodes.values());
     Collections.sort(nodeList, new NodeIdentifierComparator());

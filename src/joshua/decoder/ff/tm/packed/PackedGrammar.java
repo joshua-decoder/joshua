@@ -17,13 +17,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -50,8 +49,8 @@ public class PackedGrammar extends BatchGrammar {
 
   private final float maxId;
 
-  public PackedGrammar(String grammar_directory, int span_limit) throws FileNotFoundException,
-      IOException {
+  public PackedGrammar(String grammar_directory, int span_limit, String owner)
+      throws FileNotFoundException, IOException {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
@@ -66,7 +65,7 @@ public class PackedGrammar extends BatchGrammar {
     quantization.read(grammar_directory + File.separator + "quantization");
 
     // Set phrase owner.
-    owner = Vocabulary.id(JoshuaConfiguration.phrase_owner);
+    this.owner = Vocabulary.id(owner);
 
     // Read the dense feature name map.
     if (JoshuaConfiguration.dense_features)
@@ -115,13 +114,6 @@ public class PackedGrammar extends BatchGrammar {
     }
   }
 
-  // @Override
-  // public void sortGrammar(List<FeatureFunction> models) {
-  // for (PackedSlice slice : slices) {
-  // slice.sort(models);
-  // }
-  // }
-
   @Override
   public Trie getTrieRoot() {
     return root;
@@ -138,19 +130,6 @@ public class PackedGrammar extends BatchGrammar {
     for (PackedSlice ps : slices)
       num_rules += ps.featureSize;
     return num_rules;
-  }
-
-  // TODO: need to decide how online-generated rules are to be treated. Can't
-  // add them to a packed grammar. Probably best to have a hash-based grammar
-  // just for OOVs and other auto-generated rules.
-  public Rule constructOOVRule(int num_feats, int source_word, int target_word,
-      boolean use_max_lm_cost) {
-    return null;
-  }
-
-  public Rule constructLabeledOOVRule(int num_feats, int source_word, int target_word, int lhs,
-      boolean use_max_lm_cost) {
-    return null;
   }
 
   public Rule constructManualRule(int lhs, int[] src, int[] tgt, float[] scores, int arity) {
@@ -180,12 +159,14 @@ public class PackedGrammar extends BatchGrammar {
       System.arraycopy(parent_src, 0, src, 0, parent_src.length);
       src[src.length - 1] = symbol;
       arity = parent_arity;
-      if (Vocabulary.nt(symbol)) arity++;
+      if (Vocabulary.nt(symbol))
+        arity++;
     }
 
     public final Trie match(int token_id) {
       int num_children = grammar.source[position];
-      if (num_children == 0) return null;
+      if (num_children == 0)
+        return null;
       if (num_children == 1 && token_id == grammar.source[position + 1])
         return new PackedTrie(grammar, grammar.source[position + 2], src, arity, token_id);
       int top = 0;
@@ -204,7 +185,8 @@ public class PackedGrammar extends BatchGrammar {
         } else {
           bottom = candidate - 1;
         }
-        if (bottom < top) return null;
+        if (bottom < top)
+          return null;
       }
     }
 
@@ -283,7 +265,6 @@ public class PackedGrammar extends BatchGrammar {
       ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
       for (int i = 0; i < num_rules; i++) {
         rules.add(new PackedRule(this, rule_position + 3 * i));
-        // rules.add(grammar.assembleRule(rule_position + 3 * i, src, arity));
       }
       return rules;
     }
@@ -303,18 +284,18 @@ public class PackedGrammar extends BatchGrammar {
         rules[i] = rule_position + 2 + 3 * i;
         block_id = grammar.source[rules[i]];
 
-        BilingualRule rule =
-            new BilingualRule(grammar.source[rule_position + 3 * i], src,
-                grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner, 0,
-                rule_position + 3 * i);
+        BilingualRule rule = new BilingualRule(grammar.source[rule_position + 3 * i], src,
+            grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
         grammar.cache[block_id] = rule.estimateRuleCost(models);
+        // System.err.println(String.format("COST(%s) = %.5f", rule, grammar.cache[block_id]));
       }
 
       Arrays.sort(rules, new Comparator<Integer>() {
         public int compare(Integer a, Integer b) {
           float a_cost = grammar.cache[grammar.source[a]];
           float b_cost = grammar.cache[grammar.source[b]];
-          if (a_cost == b_cost) return 0;
+          if (a_cost == b_cost)
+            return 0;
           return (a_cost > b_cost ? 1 : -1);
         }
       });
@@ -401,7 +382,7 @@ public class PackedGrammar extends BatchGrammar {
     int address;
 
     int[] tgt = null;
-    float[] features = null;
+    FeatureVector features = null;
 
     public PackedRule(PackedTrie parent, int address) {
       this.parent = parent;
@@ -409,16 +390,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setRuleID(int id) {}
-
-    @Override
-    public int getRuleID() {
-      // TODO: Doesn't factor in the slice.
-      return address;
+    public void setArity(int arity) {
     }
-
-    @Override
-    public void setArity(int arity) {}
 
     @Override
     public int getArity() {
@@ -426,7 +399,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setOwner(int ow) {}
+    public void setOwner(int ow) {
+    }
 
     @Override
     public int getOwner() {
@@ -434,7 +408,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setLHS(int lhs) {}
+    public void setLHS(int lhs) {
+    }
 
     @Override
     public int getLHS() {
@@ -442,7 +417,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setEnglish(int[] eng) {}
+    public void setEnglish(int[] eng) {
+    }
 
     @Override
     public int[] getEnglish() {
@@ -453,7 +429,8 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setFrench(int[] french) {}
+    public void setFrench(int[] french) {
+    }
 
     @Override
     public int[] getFrench() {
@@ -461,62 +438,40 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public void setFeatureScores(float[] scores) {}
-
-    @Override
-    public float[] getFeatureScores() {
+    public FeatureVector getFeatureVector() {
       if (features == null) {
-        features = parent.grammar.getFeatures(parent.grammar.source[address + 2]);
+        features = new FeatureVector(parent.grammar.getFeatures(parent.grammar.source[address + 2]),
+            "");
+        features.times(-1);
       }
+
       return features;
     }
 
     @Override
-    public void setFeatureCost(int column, float cost) {}
-
-    @Override
-    public float getFeatureCost(int column) {
-      return 0;
-    }
-
-    @Override
-    public float incrementFeatureScore(int column, double score) {
-      return 0;
-    }
-
-    @Override
-    public void setLatticeCost(float cost) {}
-
-    @Override
-    public float getLatticeCost() {
-      return 0;
-    }
-
-    @Override
-    public void setEstCost(float cost) {
+    public void setEstimatedCost(float cost) {
       parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
     }
 
     @Override
-    public float getEstCost() {
+    public float getEstimatedCost() {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
     }
 
     @Override
-    public float estimateRuleCost(List<FeatureFunction> featureFunctions) {
+    public void setPrecomputableCost(float cost) {
+      //      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
+    }
+
+    @Override
+    public float getPrecomputableCost() {
+      return 0.0f;
+      //      return parent.grammar.cache[parent.grammar.source[address + 2]];
+    }
+
+    @Override
+    public float estimateRuleCost(List<FeatureFunction> models) {
       return parent.grammar.cache[parent.grammar.source[address + 2]];
-    }
-
-    @Override
-    @Deprecated
-    public String toString(Map<Integer, String> ntVocab) {
-      return null;
-    }
-
-    @Override
-    @Deprecated
-    public String toStringWithoutFeatScores() {
-      return null;
     }
   }
 
@@ -570,8 +525,8 @@ public class PackedGrammar extends BatchGrammar {
       for (int i = 0; i < num_blocks; i++)
         featureLookup[i] = features.getInt(8 + 4 * i);
 
-      DataInputStream target_lookup_stream =
-          new DataInputStream(new BufferedInputStream(new FileInputStream(target_lookup_file)));
+      DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
+          new FileInputStream(target_lookup_file)));
       targetLookup = new int[target_lookup_stream.readInt()];
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
@@ -586,61 +541,6 @@ public class PackedGrammar extends BatchGrammar {
       return array;
     }
 
-    void sort(List<FeatureFunction> models) {
-      Stack<Integer> positions = new Stack<Integer>();
-      Stack<Integer> src_path = new Stack<Integer>();
-      int arity = 0;
-
-      int current = 0;
-      while (current < source.length) {
-        sortRules(models, current, makeArray(src_path), arity);
-        int num_children = source[current];
-
-        // TODO: finish sort implementation.
-      }
-    }
-
-    public void sortRules(List<FeatureFunction> models, int position, int[] src, int arity) {
-      int num_children = source[position];
-      int rule_position = position + 2 * (num_children + 1);
-      int num_rules = source[rule_position - 1];
-
-      Integer[] rules = new Integer[num_rules];
-
-      int target_address;
-      int block_id;
-      for (int i = 0; i < num_rules; i++) {
-        target_address = source[rule_position + 1 + 3 * i];
-        rules[i] = rule_position + 2 + 3 * i;
-        block_id = source[rules[i]];
-
-        BilingualRule rule =
-            new BilingualRule(source[rule_position + 3 * i], src, getTarget(target_address),
-                getFeatures(block_id), arity, owner, 0, rule_position + 3 * i);
-        cache[block_id] = rule.estimateRuleCost(models);
-      }
-
-      Arrays.sort(rules, new Comparator<Integer>() {
-        public int compare(Integer a, Integer b) {
-          float a_cost = cache[source[a]];
-          float b_cost = cache[source[b]];
-          if (a_cost == b_cost) return 0;
-          return (a_cost > b_cost ? 1 : -1);
-        }
-      });
-
-      int[] sorted = new int[3 * num_rules];
-      int j = 0;
-      for (int i = 0; i < rules.length; i++) {
-        int address = rules[i];
-        sorted[j++] = source[address - 2];
-        sorted[j++] = source[address - 1];
-        sorted[j++] = source[address];
-      }
-      for (int i = 0; i < sorted.length; i++)
-        source[rule_position + i] = sorted[i];
-    }
-
     final int[] getTarget(int pointer) {
       // Figure out level.
       int tgt_length = 1;
@@ -651,39 +551,48 @@ public class PackedGrammar extends BatchGrammar {
       int parent;
       do {
         parent = target[pointer];
-        if (parent != -1) tgt[index++] = target[pointer + 1];
+        if (parent != -1)
+          tgt[index++] = target[pointer + 1];
         pointer = parent;
       } while (pointer != -1);
       return tgt;
     }
 
-    final float[] getFeatures(int block_id, float[] feature_vector) {
+    /**
+     * NEW VERSION
+     * 
+     * Returns a string version of the features associated with a rule (represented as a block ID).
+     * These features are in the form "feature1=value feature2=value...". By default, unlabeled
+     * features are named using the pattern
+     * 
+     * tm_OWNER_INDEX
+     * 
+     * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
+     * of the feature found in the grammar.
+     * 
+     * @param block_id
+     * @return
+     */
+
+    final String getFeatures(int block_id) {
       int feature_position = featureLookup[block_id];
+
+      /* The number of non-zero features stored with the rule. */
       int num_features = features.getInt(feature_position);
+      /* The vector will have to grow but it will be at least this size. */
       feature_position += 4;
+      StringBuilder sb = new StringBuilder();
       for (int i = 0; i < num_features; i++) {
         int feature_id = features.getInt(feature_position);
         Quantizer quantizer = quantization.get(feature_id);
-        feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
+        int index = featureNameMap.get(feature_id);
+        sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
+            quantizer.read(features, feature_position)));
         feature_position += 4 + quantizer.size();
       }
-      return feature_vector;
-    }
 
-    final float[] getFeatures(int block_id) {
-      float[] feature_vector = new float[JoshuaConfiguration.num_phrasal_features];
-      return getFeatures(block_id, feature_vector);
-    }
-
-    final Rule assembleRule(int address, int[] src, int arity) {
-      int lhs = source[address];
-      int tgt_address = source[address + 1];
-      int data_block = source[address + 2];
-      BilingualRule rule =
-          new BilingualRule(lhs, src, getTarget(tgt_address), getFeatures(data_block), arity,
-              owner, 0, address);
-      if (cache[data_block] != Float.NEGATIVE_INFINITY) rule.setEstCost(cache[data_block]);
-      return rule;
+      // System.err.println("GETFEATURES() = " + sb.toString().trim());
+      return sb.toString().trim();
     }
 
     public String toString() {

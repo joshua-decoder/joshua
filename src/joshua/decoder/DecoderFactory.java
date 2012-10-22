@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.io.IOException;
@@ -21,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -31,24 +17,24 @@ import joshua.decoder.segment_file.Sentence;
  * and merge the decoding results (2) non-parallel decoding is a special case of parallel decoding
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class DecoderFactory {
   private List<GrammarFactory> grammarFactories = null;
   private List<FeatureFunction> featureFunctions = null;
+  private FeatureVector weights = null;
   private List<StateComputer> stateComputers;
-  private boolean useMaxLMCostForOOV = false;
 
   private Thread[] decoderThreads;
 
   private static final Logger logger = Logger.getLogger(DecoderFactory.class.getName());
 
 
-  public DecoderFactory(List<GrammarFactory> grammarFactories, boolean useMaxLMCostForOOV,
-      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers) {
+  public DecoderFactory(List<GrammarFactory> grammarFactories,
+      List<FeatureFunction> featureFunctions, FeatureVector weights,
+      List<StateComputer> stateComputers) {
     this.grammarFactories = grammarFactories;
-    this.useMaxLMCostForOOV = useMaxLMCostForOOV;
     this.featureFunctions = featureFunctions;
+    this.weights = weights;
     this.stateComputers = stateComputers;
   }
 
@@ -76,12 +62,12 @@ public class DecoderFactory {
         Thread thread;
         if (JoshuaConfiguration.parse) {
           thread =
-              new ParserThread(this.grammarFactories, this.featureFunctions, this.stateComputers,
-                  inputHandler);
+              new ParserThread(this.grammarFactories, this.weights, this.featureFunctions,
+                  this.stateComputers, inputHandler);
         } else {
           thread =
-              new DecoderThread(this.grammarFactories, this.featureFunctions, this.stateComputers,
-                  inputHandler);
+              new DecoderThread(this.grammarFactories, this.weights, this.featureFunctions,
+                  this.stateComputers, inputHandler);
         }
 
         this.decoderThreads[threadno] = thread;
@@ -105,11 +91,6 @@ public class DecoderFactory {
           logger.warning("thread " + threadno + " was interupted");
       }
     }
-
-    // if (JoshuaConfiguration.save_disk_hg) {
-    // pdecoder.hypergraphSerializer.writeRulesNonParallel(
-    // nbestFile + ".hg.rules");
-
   }
 
   /**
@@ -118,23 +99,12 @@ public class DecoderFactory {
   public HyperGraph getHyperGraphForSentence(String sentence) {
     try {
       DecoderThread decoder =
-          new DecoderThread(this.grammarFactories, this.featureFunctions, this.stateComputers, null);
+          new DecoderThread(this.grammarFactories, this.weights, this.featureFunctions,
+              this.stateComputers, null);
       return decoder.translate(new Sentence(sentence, 0), null);
     } catch (IOException e) {
       e.printStackTrace();
     }
     return null;
   }
-
-  // merge the grammar rules for disk hyper-graphs
-  // if (JoshuaConfiguration.save_disk_hg) {
-  // HashMap<Integer,Integer> tblDone = new HashMap<Integer,Integer>();
-  // BufferedWriter rulesWriter = FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
-  // for (DecoderThread decoder : this.decoderThreads) {
-  // decoder.hypergraphSerializer.writeRulesParallel(rulesWriter, tblDone);
-  // //decoder.hypergraphSerializer.closeReaders();
-  // }
-  // rulesWriter.flush();
-  // rulesWriter.close();
-  // }
 }

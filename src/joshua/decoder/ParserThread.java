@@ -1,34 +1,16 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
-import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -36,7 +18,6 @@ import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-import edu.jhu.thrax.util.TestSetFilter;
 
 /**
  * This class handles parsing of individual Sentence objects (which can represent plain sentences or
@@ -61,14 +42,13 @@ public class ParserThread extends Thread {
   private final List<GrammarFactory> grammarFactories;
   private final List<FeatureFunction> featureFunctions;
   private final List<StateComputer> stateComputers;
+  private FeatureVector weights;
 
   // more test set specific
   private final InputHandler inputHandler;
   // final String nbestFile; // package-private for DecoderFactory
   private BufferedWriter nbestWriter; // set in decodeTestFile
   private final KBestExtractor kbestExtractor;
-  DiskHyperGraph hypergraphSerializer; // package-private for DecoderFactory
-
 
   private static final Logger logger = Logger.getLogger(ParserThread.class.getName());
 
@@ -76,10 +56,11 @@ public class ParserThread extends Thread {
   // ===============================================================
   // Constructor
   // ===============================================================
-  public ParserThread(List<GrammarFactory> grammarFactories,
+  public ParserThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
       List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
       InputHandler inputHandler) throws IOException {
 
+    this.weights = weights;
     this.grammarFactories = grammarFactories;
     this.featureFunctions = featureFunctions;
     this.stateComputers = stateComputers;
@@ -87,36 +68,9 @@ public class ParserThread extends Thread {
     this.inputHandler = inputHandler;
 
     this.kbestExtractor =
-        new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
-            JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-            JoshuaConfiguration.add_combined_cost, false, true);
-
-    // if (JoshuaConfiguration.save_disk_hg) {
-    // FeatureFunction languageModel = null;
-    // for (FeatureFunction ff : this.featureFunctions) {
-    // if (ff instanceof LanguageModelFF) {
-    // languageModel = ff;
-    // break;
-    // }
-    // }
-    // int lmFeatID = -1;
-    // if (null == languageModel) {
-    // logger.warning("No language model feature function found, but save disk hg");
-    // } else {
-    // lmFeatID = languageModel.getFeatureID();
-    // }
-
-    // this.hypergraphSerializer = new DiskHyperGraph(
-    // Vocabulary,
-    // lmFeatID,
-    // true, // always store model cost
-    // this.featureFunctions);
-
-    // this.hypergraphSerializer.initWrite(
-    // "out." + Integer.toString(sentence.id()) + ".hg.items",
-    // JoshuaConfiguration.forest_pruning,
-    // JoshuaConfiguration.forest_pruning_threshold);
-    // }
+      new KBestExtractor(weights, JoshuaConfiguration.use_unique_nbest,
+        JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
+        JoshuaConfiguration.add_combined_cost, false, true);
   }
 
 
@@ -202,13 +156,13 @@ public class ParserThread extends Thread {
   public HyperGraph parse(Sentence sentence, String oracleSentence) throws IOException {
 
     logger.info("Parsing sentence pair #" + sentence.id() + " [thread " + getId() + "]\n"
-        + sentence.sentence());
+        + sentence.source());
 
     long startTime = System.currentTimeMillis();
 
-    Chart chart;
-
-    String[] sentencePair = sentence.sentence().split("\\|\\|\\|");
+    String[] sentencePair = new String[2];
+    sentencePair[0] = sentence.source();
+    sentencePair[1] = sentence.target();
     int sentenceId = sentence.id();
     for (int i = 0; i < sentencePair.length; i++)
       sentencePair[i] = sentencePair[i].trim();
@@ -217,73 +171,17 @@ public class ParserThread extends Thread {
     Sentence foreign = new Sentence(sentencePair[0], sentenceId);
     Sentence english = new Sentence(sentencePair[1], sentenceId);
 
-    Lattice<Integer> input_lattice = foreign.intLattice();
-
-    int numGrammars =
-        (JoshuaConfiguration.use_sent_specific_tm) ? grammarFactories.size() + 1 : grammarFactories
-            .size();
-
+    int numGrammars = grammarFactories.size();
     Grammar[] grammars = new Grammar[numGrammars];
 
     for (int i = 0; i < grammarFactories.size(); i++)
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(foreign);
 
-    // load the sentence-specific grammar
-    boolean alreadyExisted = true; // whether it already existed
-    String tmFile = null;
-    if (JoshuaConfiguration.use_sent_specific_tm) {
-      // figure out the sentence-level file name
-      tmFile = JoshuaConfiguration.tm_file;
-      tmFile =
-          tmFile.endsWith(".gz") ? tmFile.substring(0, tmFile.length() - 3) + "." + sentence.id()
-              + ".gz" : tmFile + "." + sentence.id();
-
-      // look in a subdirectory named "filtered" e.g.,
-      // /some/path/grammar.gz will have sentence-level
-      // grammars in /some/path/filtered/grammar.SENTNO.gz
-      int lastSlashPos = tmFile.lastIndexOf('/');
-      String dirPart = tmFile.substring(0, lastSlashPos + 1);
-      String filePart = tmFile.substring(lastSlashPos + 1);
-      tmFile = dirPart + "filtered/" + filePart;
-
-      File filteredDir = new File(dirPart + "filtered");
-      if (!filteredDir.exists()) {
-        logger.info("Creating sentence-level grammar directory '" + dirPart + "filtered'");
-        filteredDir.mkdirs();
-      }
-
-      logger.info("Using sentence-specific TM file '" + tmFile + "'");
-
-      if (!new File(tmFile).exists()) {
-        alreadyExisted = false;
-
-        // filter grammar and write it to a file
-        if (logger.isLoggable(Level.INFO)) logger.info("Automatically producing file " + tmFile);
-
-        new TestSetFilter().filterGrammarToFile(JoshuaConfiguration.tm_file, sentence.sentence(),
-            tmFile, true);
-      } else {
-        if (logger.isLoggable(Level.INFO))
-          logger.info("Using existing sentence-specific tm file " + tmFile);
-      }
-
-
-      grammars[numGrammars - 1] =
-          new MemoryBasedBatchGrammar(JoshuaConfiguration.tm_format, tmFile,
-              JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal,
-              JoshuaConfiguration.span_limit, JoshuaConfiguration.oov_feature_cost);
-
-      // sort the sentence-specific grammar
-      grammars[numGrammars - 1].sortGrammar(this.featureFunctions);
-
-    }
-
     /* Seeding: the chart only sees the grammars, not the factories */
-    chart =
-        new Chart(foreign, this.featureFunctions, this.stateComputers, grammars, false,
-            JoshuaConfiguration.goal_symbol);
+    Chart chart =
+      new Chart(foreign, this.featureFunctions, this.stateComputers, grammars, JoshuaConfiguration.goal_symbol);
 
-    /* Parsing */
+    /* Parse as normal */
     HyperGraph hypergraph = chart.expand();
     long firstParseTime = System.currentTimeMillis();
     System.err.printf("First-pass parse took %d seconds.\n", (firstParseTime - startTime) / 1000);
@@ -292,7 +190,7 @@ public class ParserThread extends Thread {
       return hypergraph;
     }
 
-    Lattice<Integer> english_lattice = english.intLattice();
+    /* Walk the hypergraph and build an instantiated target-side grammar. */
     Grammar[] newGrammar = new Grammar[1];
     newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
     long traversalTime = System.currentTimeMillis();
@@ -304,11 +202,14 @@ public class ParserThread extends Thread {
     int numRules = newGrammar[0].getNumRules();
     System.err.printf("New grammar has %d rules.\n", numRules);
     System.err.println("Expanding second chart.\n");
+
+    /* Now create a new chart and parse with the instantiated grammar. */
     chart =
-        new Chart(english, this.featureFunctions, this.stateComputers, newGrammar, false, "GOAL");
+      new Chart(english, this.featureFunctions, this.stateComputers, newGrammar, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     System.err.printf("goal symbol is %d.\n", goalSymbol);
     chart.setGoalSymbolID(goalSymbol);
+
     /* Parsing */
     HyperGraph englishParse = chart.expand();
     long secondParseTime = System.currentTimeMillis();

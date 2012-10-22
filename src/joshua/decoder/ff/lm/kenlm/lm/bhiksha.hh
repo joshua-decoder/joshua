@@ -10,16 +10,20 @@
  *  Currently only used for next pointers.  
  */
 
-#include <inttypes.h>
+#ifndef LM_BHIKSHA__
+#define LM_BHIKSHA__
 
-#include "lm/binary_format.hh"
+#include <stdint.h>
+#include <assert.h>
+
+#include "lm/model_type.hh"
 #include "lm/trie.hh"
 #include "util/bit_packing.hh"
 #include "util/sorted_uniform.hh"
 
 namespace lm {
 namespace ngram {
-class Config;
+struct Config;
 
 namespace trie {
 
@@ -29,7 +33,7 @@ class DontBhiksha {
 
     static void UpdateConfigFromBinary(int /*fd*/, Config &/*config*/) {}
 
-    static std::size_t Size(uint64_t /*max_offset*/, uint64_t /*max_next*/, const Config &/*config*/) { return 0; }
+    static uint64_t Size(uint64_t /*max_offset*/, uint64_t /*max_next*/, const Config &/*config*/) { return 0; }
 
     static uint8_t InlineBits(uint64_t /*max_offset*/, uint64_t max_next, const Config &/*config*/) {
       return util::RequiredBits(max_next);
@@ -63,7 +67,7 @@ class ArrayBhiksha {
 
     static void UpdateConfigFromBinary(int fd, Config &config);
 
-    static std::size_t Size(uint64_t max_offset, uint64_t max_next, const Config &config);
+    static uint64_t Size(uint64_t max_offset, uint64_t max_next, const Config &config);
 
     static uint8_t InlineBits(uint64_t max_offset, uint64_t max_next, const Config &config);
 
@@ -78,6 +82,7 @@ class ArrayBhiksha {
         util::ReadInt57(base, bit_offset, next_inline_.bits, next_inline_.mask);
       out.end = ((end_it - offset_begin_) << next_inline_.bits) | 
         util::ReadInt57(base, bit_offset + total_bits, next_inline_.bits, next_inline_.mask);
+      //assert(out.end >= out.begin);
     }
 
     void WriteNext(void *base, uint64_t bit_offset, uint64_t index, uint64_t value) {
@@ -106,3 +111,5 @@ class ArrayBhiksha {
 } // namespace trie
 } // namespace ngram
 } // namespace lm
+
+#endif // LM_BHIKSHA__

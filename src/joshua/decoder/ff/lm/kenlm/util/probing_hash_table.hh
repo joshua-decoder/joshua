@@ -8,6 +8,7 @@
 #include <functional>
 
 #include <assert.h>
+#include <inttypes.h>
 
 namespace util {
 
@@ -18,27 +19,33 @@ class ProbingSizeException : public Exception {
     ~ProbingSizeException() throw() {}
 };
 
+// std::identity is an SGI extension :-(
+struct IdentityHash {
+  template <class T> T operator()(T arg) const { return arg; }
+};
+
 /* Non-standard hash table
  * Buckets must be set at the beginning and must be greater than maximum number
- * of elements, else an infinite loop happens.
+ * of elements, else it throws ProbingSizeException.
  * Memory management and initialization is externalized to make it easier to
  * serialize these to disk and load them quickly.
  * Uses linear probing to find value.
  * Only insert and lookup operations.  
  */
 
-template <class PackingT, class HashT, class EqualT = std::equal_to<typename PackingT::Key> > class ProbingHashTable {
+template <class EntryT, class HashT, class EqualT = std::equal_to<typename EntryT::Key> > class ProbingHashTable {
   public:
-    typedef PackingT Packing;
-    typedef typename Packing::Key Key;
-    typedef typename Packing::MutableIterator MutableIterator;
-    typedef typename Packing::ConstIterator ConstIterator;
-
+    typedef EntryT Entry;
+    typedef typename Entry::Key Key;
+    typedef const Entry *ConstIterator;
+    typedef Entry *MutableIterator;
     typedef HashT Hash;
     typedef EqualT Equal;
 
-    static std::size_t Size(std::size_t entries, float multiplier) {
-      return std::max(entries + 1, static_cast<std::size_t>(multiplier * static_cast<float>(entries))) * Packing::kBytes;
+  public:
+    static uint64_t Size(uint64_t entries, float multiplier) {
+      uint64_t buckets = std::max(entries + 1, static_cast<uint64_t>(multiplier * static_cast<float>(entries)));
+      return buckets * sizeof(Entry);
     }
 
     // Must be assigned to later.  
@@ -49,9 +56,9 @@ template <class PackingT, class HashT, class EqualT = std::equal_to<typename Pac
     {}
 
     ProbingHashTable(void *start, std::size_t allocated, const Key &invalid = Key(), const Hash &hash_func = Hash(), const Equal &equal_func = Equal())
-      : begin_(Packing::FromVoid(start)),
-        buckets_(allocated / Packing::kBytes),
-        end_(begin_ + (allocated / Packing::kBytes)),
+      : begin_(reinterpret_cast<MutableIterator>(start)),
+        buckets_(allocated / sizeof(Entry)),
+        end_(begin_ + buckets_),
         invalid_(invalid),
         hash_(hash_func),
         equal_(equal_func),
@@ -61,16 +68,33 @@ template <class PackingT, class HashT, class EqualT = std::equal_to<typename Pac
 #endif
     {}
 
-    template <class T> void Insert(const T &t) {
-      if (++entries_ >= buckets_)
-        UTIL_THROW(ProbingSizeException, "Hash table with " << buckets_ << " buckets is full.");
+    template <class T> MutableIterator Insert(const T &t) {
+#ifdef DEBUG
+      assert(initialized_);
+#endif
+      UTIL_THROW_IF(++entries_ >= buckets_, ProbingSizeException, "Hash table with " << buckets_ << " buckets is full.");
+      for (MutableIterator i(begin_ + (hash_(t.GetKey()) % buckets_));;) {
+        if (equal_(i->GetKey(), invalid_)) { *i = t; return i; }
+        if (++i == end_) { i = begin_; }
+      }
+    }
+
+    // Return true if the value was found (and not inserted).  This is consistent with Find but the opposite if hash_map!
+    template <class T> bool FindOrInsert(const T &t, MutableIterator &out) {
 #ifdef DEBUG
       assert(initialized_);
 #endif
       for (MutableIterator i(begin_ + (hash_(t.GetKey()) % buckets_));;) {
-        if (equal_(i->GetKey(), invalid_)) { *i = t; return; }
-        if (++i == end_) { i = begin_; }
-      }
+        Key got(i->GetKey());
+        if (equal_(got, t.GetKey())) { out = i; return true; }
+        if (equal_(got, invalid_)) {
+          UTIL_THROW_IF(++entries_ >= buckets_, ProbingSizeException, "Hash table with " << buckets_ << " buckets is full.");
+          *i = t;
+          out = i;
+          return false;
+        }
+        if (++i == end_) i = begin_;
+      }   
     }
 
     void FinishedInserting() {}
@@ -79,12 +103,15 @@ template <class PackingT, class HashT, class EqualT = std::equal_to<typename Pac
 
     // Don't change anything related to GetKey,  
     template <class Key> bool UnsafeMutableFind(const Key key, MutableIterator &out) {
+#ifdef DEBUG
+      assert(initialized_);
+#endif
       for (MutableIterator i(begin_ + (hash_(key) % buckets_));;) {
         Key got(i->GetKey());
         if (equal_(got, key)) { out = i; return true; }
         if (equal_(got, invalid_)) return false;
         if (++i == end_) i = begin_;
-      }    
+      }   
     }
 
     template <class Key> bool Find(const Key key, ConstIterator &out) const {

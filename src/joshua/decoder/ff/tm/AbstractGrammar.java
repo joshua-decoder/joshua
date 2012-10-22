@@ -1,25 +1,8 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -119,8 +102,8 @@ public abstract class AbstractGrammar implements Grammar {
           StringBuilder s = new StringBuilder();
           for (Rule r : rules.getSortedRules()) {
             s.append("\n\t" + r.getLHS() + " ||| " + Arrays.toString(r.getFrench()) + " ||| "
-                + Arrays.toString(r.getEnglish()) + " ||| " + Arrays.toString(r.getFeatureScores())
-                + " ||| " + r.getEstCost() + "  " + r.getClass().getName() + "@"
+                + Arrays.toString(r.getEnglish()) + " ||| " + r.getFeatureVector()
+                + " ||| " + r.getEstimatedCost() + "  " + r.getClass().getName() + "@"
                 + Integer.toHexString(System.identityHashCode(r)));
           }
           logger.finest(s.toString());
@@ -139,55 +122,5 @@ public abstract class AbstractGrammar implements Grammar {
 
   // write grammar to disk
   public void writeGrammarOnDisk(String file) {}
-
-  // change the feature weight in the grammar
-  public void changeGrammarCosts(Map<String, Double> weightTbl,
-      HashMap<String, Integer> featureMap, double[] scores, String prefix, int column,
-      boolean negate) {
-    changeGrammarCosts(this.getTrieRoot(), featureMap, scores, prefix, column, negate);
-  }
-
-  private void changeGrammarCosts(Trie trie, HashMap<String, Integer> featureMap, double[] scores,
-      String prefix, int column, boolean negate) {
-    if (trie.hasRules()) {
-      RuleCollection rlCollection = trie.getRuleCollection();
-      for (Rule rl : rlCollection.getSortedRules()) {
-        String featName = prefix + rl.getRuleID();
-        float weight = (float) scores[featureMap.get(featName)];
-        if (negate) weight *= -1.0;
-        rl.setFeatureCost(column, weight);
-      }
-    }
-
-    if (trie.hasExtensions()) {
-      Object[] tem = trie.getExtensions().toArray();
-
-      for (int i = 0; i < tem.length; i++) {
-        changeGrammarCosts((Trie) tem[i], featureMap, scores, prefix, column, negate);
-      }
-    }
-  }
-
-  // obtain RulesIDTable in the grammar, accumalative
-  public void obtainRulesIDTable(Map<String, Integer> rulesIDTable) {
-    obtainRulesIDTable(this.getTrieRoot(), rulesIDTable);
-  }
-
-  private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable) {
-    if (trie.hasRules()) {
-      RuleCollection rlCollection = trie.getRuleCollection();
-      for (Rule rl : rlCollection.getRules()) {
-        rulesIDTable.put(rl.toStringWithoutFeatScores(), rl.getRuleID());
-      }
-    }
-
-    if (trie.hasExtensions()) {
-      Object[] tem = trie.getExtensions().toArray();
-
-      for (int i = 0; i < tem.length; i++) {
-        obtainRulesIDTable((Trie) tem[i], rulesIDTable);
-      }
-    }
-  }
 
 }

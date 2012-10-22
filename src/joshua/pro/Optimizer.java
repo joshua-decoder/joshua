@@ -173,7 +173,7 @@ public class Optimizer {
       // find out the 1-best candidate for each sentence
       // this depends on the training mode
       maxModelScore = -99999999999.0;
-      for (Iterator it = candSet.iterator(); it.hasNext();) {
+      for (Iterator<String> it = candSet.iterator(); it.hasNext();) {
         modelScore = 0.0;
         candStr = it.next().toString();
 

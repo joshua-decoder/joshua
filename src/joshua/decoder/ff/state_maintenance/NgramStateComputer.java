@@ -11,39 +11,38 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 
-public class NgramStateComputer implements StateComputer<NgramDPState> {
+public class NgramStateComputer implements StateComputer<NgramDPState>, Comparable {
 
   private int ngramOrder;
-  private int stateID;
 
   private static final Logger logger = Logger.getLogger(NgramStateComputer.class.getName());
 
   // StateID should be any integer except -1.
-  public NgramStateComputer(int nGramOrder, int stateID) {
+  public NgramStateComputer(int nGramOrder) {
     this.ngramOrder = nGramOrder;
-    this.stateID = stateID;
-    logger.info("NgramStateComputer: stateID=" + stateID + "; ngramOrder=" + this.ngramOrder);
+    logger.info("NgramStateComputer, order=" + this.ngramOrder);
   }
 
-  public int getStateID() {
-    return stateID;
+  public int getOrder() {
+    return ngramOrder;
   }
 
-
-  public void setStateID(int stateID) {
-    this.stateID = stateID;
+  @Override
+  public int compareTo(Object otherState) {
+    if (this == otherState)
+      return 0;
+    else
+      return -1;
   }
 
-
-  public NgramDPState computeFinalState(HGNode antNode, int spanStart, int spanEnd,
+  public NgramDPState computeFinalState(HGNode tailNode, int i, int j,
       SourcePath srcPath) {
     // no state is required
     return null;
   }
 
 
-  public NgramDPState computeState(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-      SourcePath srcPath) {
+  public NgramDPState computeState(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd, SourcePath srcPath) {
 
     List<Integer> leftStateSequence = new ArrayList<Integer>();
     List<Integer> currentNgram = new ArrayList<Integer>();
@@ -57,11 +56,12 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
         // == get left- and right-context
         int index = -(curID + 1);
 
-        if (logger.isLoggable(Level.FINEST)) logger.finest("Looking up state at: " + index);
+        if (logger.isLoggable(Level.FINEST)) 
+          logger.finest("Looking up state at: " + index);
 
-        NgramDPState antState = (NgramDPState) antNodes.get(index).getDPState(this.getStateID());// TODO
-        List<Integer> leftContext = antState.getLeftLMStateWords();
-        List<Integer> rightContext = antState.getRightLMStateWords();
+        NgramDPState tailState = (NgramDPState) tailNodes.get(index).getDPState(this);
+        List<Integer> leftContext = tailState.getLeftLMStateWords();
+        List<Integer> rightContext = tailState.getRightLMStateWords();
 
         if (leftContext.size() != rightContext.size()) {
           throw new RuntimeException(
