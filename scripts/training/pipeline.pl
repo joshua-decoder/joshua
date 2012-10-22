@@ -9,13 +9,10 @@ my $HADOOP;
 
 BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
-      ! exists $ENV{HADOOP} || $ENV{HADOOP} eq "" ||
       ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "") {
                 print "Several environment variables must be set before running the pipeline.  Please set:\n";
                 print "* \$JOSHUA to the root of the Joshua source code.\n"
                                 if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
-                print "* \$HADOOP to the directory of your local hadoop installation.\n"
-                                if (! exists $ENV{HADOOP} || $ENV{HADOOP} eq "");
                 print "* \$JAVA_HOME to the directory of your local java installation. \n"
                                 if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
                 exit;
@@ -24,8 +21,6 @@ BEGIN {
   unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
   unshift(@INC,"$JOSHUA/lib");
 }
-
-
 
 use strict;
 use warnings;
@@ -78,6 +73,7 @@ my $JOSHUA_CONFIG_ORIG   = "$TUNECONFDIR/joshua.config";
 my %TUNEFILES = (
   'decoder_command' => "$TUNECONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
+  'weights'         => "$TUNECONFDIR/weights",
   'mert.config'     => "$TUNECONFDIR/mert.config",
   'pro.config'      => "$TUNECONFDIR/pro.config",
   'params.txt'      => "$TUNECONFDIR/params.txt",
@@ -966,10 +962,10 @@ for my $i (0..$#LMFILES) {
   my $configstring = "lm = $LM_TYPE $LM_ORDER false false 100 $lmfile";
   push (@configstrings, $configstring);
 
-  my $weightstring = "lm $i 1.0";
+  my $weightstring = "lm_$i 1.0";
   push (@weightstrings, $weightstring);
 
-  my $lmparamstring = "lm $i               |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
+  my $lmparamstring = "lm_$i        |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
   push (@lmparamstrings, $lmparamstring);
 }
 
@@ -980,18 +976,18 @@ my $lmparams  = join($/, @lmparamstrings);
 my $num_tm_features = count_num_features($TUNE_GRAMMAR);
 my (@tmparamstrings, @tmweightstrings);
 for my $i (0..($num_tm_features-1)) {
-  push (@tmparamstrings, "phrasemodel pt $i |||  1.0 Opt -Inf +Inf -1 +1");
-	push (@tmweightstrings, "phrasemodel pt $i 1.0");
+  push (@tmparamstrings, "tm_pt_$i |||  1.0 Opt -Inf +Inf -1 +1");
+	push (@tmweightstrings, "tm_pt_$i 1.0");
 }
 
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
 
 my $latticeparam = ($DOING_LATTICES == 1) 
-		? "latticecost ||| 1.0 Opt -Inf +Inf -1 +1"
+		? "SourcePath ||| 1.0 Opt -Inf +Inf -1 +1"
 		: "";
 my $latticeweight = ($DOING_LATTICES == 1)
-		? "latticecost 1.0"
+		? "SourcePath 1.0"
 		: "";
 
 for my $run (1..$OPTIMIZER_RUNS) {
@@ -1012,6 +1008,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
+      s/<WEIGHTS_FILE>/$tunedir\/weights/g;
 			s/<LATTICEWEIGHT>/$latticeweight/g;
 			s/<LATTICEPARAM>/$latticeparam/g;
 			s/<LMFILE>/$LMFILES[0]/g;
@@ -1045,20 +1042,20 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		$cachepipe->cmd("mert-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR,
-										"$tunedir/joshua.config.ZMERT.final",
+										"$tunedir/weights.ZMERT.final",
 										"$tunedir/decoder_command",
 										"$tunedir/mert.config",
 										"$tunedir/params.txt");
-		system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
+		system("ln -sf weights.ZMERT.final $tunedir/weights.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/bin joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR,
-										"$tunedir/joshua.config.PRO.final",
+										"$tunedir/weights.PRO.final",
 										"$tunedir/decoder_command",
 										"$tunedir/pro.config",
 										"$tunedir/params.txt");
-		system("ln -sf joshua.config.PRO.final $tunedir/joshua.config.final");
+		system("ln -sf weights.PRO.final $tunedir/weights.final");
   }
 }
 
@@ -1152,9 +1149,14 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # copy the config file over
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-									"cat $tunedir/joshua.config.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=0/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > $testrun/joshua.config",
-									"$tunedir/joshua.config.final",
+									"cat $tunedir/joshua.config | $SCRIPTDIR/copy-config.pl -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
+									"$tunedir/joshua.config",
 									"$testrun/joshua.config");
+
+  $cachepipe->cmd("test-joshua-weights-from-tune-$run",
+									"cp $tunedir/weights.final $testrun/weights",
+									"$tunedir/weights.final",
+									"$testrun/weights");
 
   $cachepipe->cmd("test-decode-$run",
 									"./$testrun/decoder_command",

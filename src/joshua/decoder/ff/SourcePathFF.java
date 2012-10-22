@@ -1,52 +1,41 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff;
-
-import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.hypergraph.HGNode;
 
 /**
+ * This feature returns the scored path through the source lattice, which is recorded in a
+ * SourcePath object.
  * 
- * @author Chris Dyer, <redpony@umd.edu>
- * @version $LastChangedDate: 2009-05-11 11:31:33 -0400 (Mon, 11 May 2009) $
+ * @author Chris Dyer <redpony@umd.edu>
+ * @author Matt Post <post@cs.jhu.edu>
  */
-public final class SourcePathFF extends DefaultStatelessFF {
+public final class SourcePathFF extends StatelessFF {
 
-  public SourcePathFF(final int featureID, final double weight) {
-    super(weight, -1, featureID);
+  /*
+   * This is a single-value feature template, so we cache the weight here.
+   */
+  private float weight;
+
+  public SourcePathFF(FeatureVector weights) {
+    super(weights, "SourcePath", ""); // this sets name
+
+    // Find the weight for this feature in the weights hash and cache it.
+    if (weights.containsKey(name)) {
+      weight = weights.get(name);
+    } else {
+      System.err.println("* WARNING: no weight for feature '" + name + "'");
+      weight = 0.0f;
+    }
+  }
+  
+  @Override
+  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+    return new FeatureVector(name, -sourcePath.getPathCost());
   }
 
-
-  public double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart,
-      int spanEnd, SourcePath srcPath, int sentID) {
-
-      return transitionLogP(rule, antNodes, spanStart, spanEnd, srcPath, sentID);
-  }
-
-
-  public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-      SourcePath srcPath, int sentID) {
-      return -srcPath.getPathCost();
-  }
-
-
-  public double estimateLogP(final Rule rule, int sentID) {
-    return 0.0;
+  @Override
+  public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
+    return weight * -sourcePath.getPathCost();
   }
 }

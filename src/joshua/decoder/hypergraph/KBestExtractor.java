@@ -1,20 +1,4 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.hypergraph;
-
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -23,14 +7,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.util.CoIterator;
 import joshua.util.Regex;
 import joshua.util.io.UncheckedIOException;
@@ -48,7 +33,6 @@ import joshua.util.io.UncheckedIOException;
  * to store all these model cost at each hyperedge.)
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class KBestExtractor {
 
@@ -70,10 +54,14 @@ public class KBestExtractor {
 
   private int sentID;
 
-  public KBestExtractor(boolean extractUniqueNbest, boolean extractNbestTree, boolean includeAlign,
-      boolean addCombinedScore, boolean isMonolingual, boolean performSanityCheck) {
+  private FeatureVector weights;
+
+  public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest,
+      boolean extractNbestTree, boolean includeAlign, boolean addCombinedScore,
+      boolean isMonolingual, boolean performSanityCheck) {
     rootID = Vocabulary.id(rootSym);
 
+    this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
     this.extractNbestTree = extractNbestTree;
     this.includeAlign = includeAlign;
@@ -83,67 +71,29 @@ public class KBestExtractor {
     // System.out.println("===============sanitycheck="+performSanityCheck);
   }
 
-
   // k start from 1
   // ***************** you may need to reset_state() before you call this function for the first
   // time
-  public String getKthHyp(HGNode it, int k, int sentID, List<FeatureFunction> models,
-      int[] numNodesAndEdges) {
+  public String getKthHyp(HGNode node, int k, int sentID, List<FeatureFunction> models) {
 
     this.sentID = sentID;
-    VirtualNode virtualNode = addVirtualNode(it);
+    VirtualNode virtualNode = addVirtualNode(node);
 
     // ==== setup the kbest at each hgnode
-    DerivationState cur = virtualNode.lazyKBestExtractOnNode(this, k);
-    if (cur == null)
+    DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
+    if (derivationState == null) {
       return null;
-    else {
+    } else {
+
       // ==== read the kbest from each hgnode and convert to output format
-      double[] modelCost = null;
-      if (models != null) modelCost = new double[models.size()];
-      String strHypNumeric =
-          cur.getHypothesis(this, extractNbestTree, modelCost, models, numNodesAndEdges);
-      // for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
-      String strHypStr = convertHyp2String(sentID, cur, models, strHypNumeric, modelCost);
-      return strHypStr;
-    }
-  }
+      FeatureVector features = new FeatureVector();
 
-  // ================= extract kbest into trivial kbest hypergraphs
-  public HyperGraph extractKbestIntoHyperGraph(HyperGraph inHG, int topN) {
-    if (inHG.goalNode == null) {
-      logger.severe("Goal node is null");
-      System.exit(1);
-    }
-    resetState();
-
-    List<HyperGraph> hgs = new ArrayList<HyperGraph>();
-    int nextN = 0;
-    while (true) {
-      int[] numNodesAndEdges = new int[2];
-      HGNode newGoalNode = getKthHyp(inHG.goalNode, ++nextN, numNodesAndEdges);
-
-      if (newGoalNode != null) {
-        hgs.add(new HyperGraph(newGoalNode, numNodesAndEdges[0], numNodesAndEdges[1], inHG.sentID,
-            inHG.sentLen));
-      }
-
-      if (null == newGoalNode || nextN >= topN) break;
-    }
-    // System.out.println("numHgs=" + hgs.size() + " for topn="+topN);
-    return HyperGraph.mergeHyperGraphs(hgs);
-  }
-
-  // k start from 1
-  public HGNode getKthHyp(HGNode it, int k, int[] numNodesAndEdges) {
-    // ==== setup the kbest at each hgnode
-    VirtualNode virtualNode = addVirtualNode(it);
-    DerivationState cur = virtualNode.lazyKBestExtractOnNode(this, k);
-    if (cur == null)
-      return null;
-    else {
-      // ==== recursive setup hgnodes
-      return cur.getHypothesis(this, numNodesAndEdges);
+//      return derivationState.getDerivation(this, features, models, 0);
+       String strHypNumeric = derivationState.getHypothesis(this, extractNbestTree, features,
+       models);
+       String strHypStr =
+       convertHyp2String(sentID, derivationState, models, strHypNumeric, features);
+       return strHypStr;
     }
   }
 
@@ -154,42 +104,7 @@ public class KBestExtractor {
    * numNodesAndEdges[1]=0; }else{ cur.getNumNodesAndEdges(this, numNodesAndEdges); } }
    */
 
-  /**
-   * Filter out those hypotheses that are already in uniqueHyps
-   * */
-  public void filterKbestHypergraph(HyperGraph hg, Set<String> uniqueHyps) {
-    resetState();
-
-    for (int i = 0; i < hg.goalNode.hyperedges.size(); i++) {
-      HyperEdge goalEdge = hg.goalNode.hyperedges.get(i);
-      if (goalEdge.getAntNodes().size() != 1) {
-        logger.severe("gaol edge does not have exactly one child, must be wrong");
-        System.exit(1);
-      }
-      HGNode childNode = goalEdge.getAntNodes().get(0);
-
-
-      // get the yield and number of nodes and edges in the tree
-      int[] numNodesAndEdges = new int[2];
-      String hypStr = getKthHyp(childNode, 1, hg.sentID, null, numNodesAndEdges);
-      if (hypStr == null || (numNodesAndEdges[0] == 0 && numNodesAndEdges[1] == 0)) {
-        logger.severe("hypStr==null or numNodesAndEdges==0, must be wrong");
-        System.exit(1);
-      }
-
-      if (uniqueHyps.contains(hypStr)) {// skip this edge
-        hg.numNodes -= numNodesAndEdges[0];
-        hg.numEdges -= (numNodesAndEdges[1] + 1);
-        hg.goalNode.hyperedges.remove(i);
-        i--;
-      } else {
-        uniqueHyps.add(hypStr);
-      }
-    }
-  }
-
   // =========================== end kbestHypergraph
-
 
   public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
       int sentID, final List<String> out) {
@@ -200,12 +115,12 @@ public class KBestExtractor {
         out.add(hypStr);
       }
 
-      public void finish() {}
+      public void finish() {
+      }
     };
 
     this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
   }
-
 
   public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
       int sentID, BufferedWriter out) throws IOException {
@@ -230,7 +145,8 @@ public class KBestExtractor {
           }
         }
 
-        public void finish() {}
+        public void finish() {
+        }
       };
 
       this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
@@ -239,23 +155,33 @@ public class KBestExtractor {
     }
   }
 
-
+  /**
+   * This is the private entry point for extracting k-best hypotheses.
+   * 
+   * @param hg
+   * @param featureFunctions
+   * @param topN
+   * @param sentID
+   * @param coit
+   */
   private void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions,
       int topN, int sentID, CoIterator<String> coit) {
 
     this.sentID = sentID;
     resetState();
 
-    if (null == hg.goalNode) return;
+    if (null == hg.goalNode)
+      return;
 
     // VirtualItem virtual_goal_item = add_virtual_item(hg.goal_item);
     try {
-      int nextN = 0;
-      while (true) {
-        String hypStr = getKthHyp(hg.goalNode, ++nextN, sentID, featureFunctions, null);
-        if (hypStr != null) coit.coNext(hypStr);
+      for (int k = 1;; k++) {
+        String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
 
-        if (null == hypStr || nextN >= topN) break;
+        if (null == hypStr || k > topN)
+          break;
+
+        coit.coNext(hypStr);
       }
       // g_time_kbest_extract += System.currentTimeMillis()-start;
     } finally {
@@ -263,19 +189,20 @@ public class KBestExtractor {
     }
   }
 
-
+  /**
+   * This clears the virtualNodesTbl, which maintains a list of virtual nodes.
+   */
   public void resetState() {
     virtualNodesTbl.clear();
   }
-
 
   /*
    * non-recursive function format: sent_id ||| hyp ||| individual model cost ||| combined cost
    * sent_id<0: do not add sent_id l_models==null: do not add model cost add_combined_score==f: do
    * not add combined model cost
    */
-  private String convertHyp2String(int sentID, DerivationState cur, List<FeatureFunction> models,
-      String strHypNumeric, double[] modelCost) {
+  private String convertHyp2String(int sentID, DerivationState state, List<FeatureFunction> models,
+      String strHypNumeric, FeatureVector features) {
     String[] tem = Regex.spaces.split(strHypNumeric);
     StringBuffer strHyp = new StringBuffer();
 
@@ -290,6 +217,7 @@ public class KBestExtractor {
     for (int t = 0; t < tem.length; t++) {
       tem[t] = tem[t].trim();
       if (extractNbestTree && (tem[t].startsWith("(") || tem[t].endsWith(")"))) { // tree tag
+        /* New node. */
         if (tem[t].startsWith("(")) {
           if (includeAlign) {
             // we must account for the {i-j} substring
@@ -304,6 +232,7 @@ public class KBestExtractor {
             strHyp.append(tag);
           }
         } else {
+//          System.err.println("TEM = " + t + " " + tem[t]);
           // note: it may have more than two ")", e.g., "3499))"
           int firstBracketPos = tem[t].indexOf(')');// TODO: assume the tag/terminal does not have
                                                     // ')'
@@ -323,31 +252,29 @@ public class KBestExtractor {
     }
 
     // ####individual model cost, and final transition cost
-    if (null != modelCost) {
-      strHyp.append(" |||");
+    if (null != features) {
+      strHyp.append(" ||| " + features.toString());
       double temSum = 0.0;
-      for (int k = 0; k < modelCost.length; k++) {
-        strHyp.append(String.format(" %.3f", -modelCost[k]));
-        temSum += modelCost[k] * models.get(k).getWeight();
 
-        // System.err.println("tem_sum: " + tem_sum + " += " + model_cost[k] + " * " +
-        // l_models.get(k).getWeight());
+      for (String feature : features.keySet()) {
+        temSum += features.get(feature) * weights.get(feature);
       }
 
-      int x = 0;
-      x++;
-
       // sanity check
-			if (performSanityCheck) {
-        if (Math.abs(cur.cost - temSum) > 1e-2) {
+      if (performSanityCheck) {
+        if (Math.abs(state.cost - temSum) > 1e-2) {
           StringBuilder error = new StringBuilder();
-          error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost
+          error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + state.cost
               + "; temsum: " + temSum + "\n");
           // System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost +
           // "; temsum: " +tem_sum);
-          for (int k = 0; k < modelCost.length; k++) {
-            error.append("model weight: " + models.get(k).getWeight() + "; cost: " + modelCost[k]
-                + "\n");
+          for (String feature : features.keySet()) {
+            error.append(String.format("model weight: %.3f; cost: %.3f\n", weights.get(feature),
+                features.get(feature)));
+
+            // for (int k = 0; k < modelCost.length; k++) {
+            // error.append("model weight: " + models.get(k).getWeight() + "; cost: " + modelCost[k]
+            // + "\n");
             // System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: "
             // +model_cost[k]);
           }
@@ -358,14 +285,11 @@ public class KBestExtractor {
 
     // ####combined model cost
     if (addCombinedScore) {
-      strHyp.append(String.format(" ||| %.3f", -cur.cost));
+      strHyp.append(String.format(" ||| %.3f", -state.cost));
     }
-
-    // System.err.println("Writing hyp");
 
     return strHyp.toString();
   }
-
 
   private String escapeTerminalForTree(String terminal) {
     if (JoshuaConfiguration.escape_trees) {
@@ -376,19 +300,28 @@ public class KBestExtractor {
     return terminal;
   }
 
-
-  private VirtualNode addVirtualNode(HGNode it) {
-    VirtualNode res = virtualNodesTbl.get(it);
-    if (null == res) {
-      res = new VirtualNode(it);
-      virtualNodesTbl.put(it, res);
+  /**
+   * Adds an entry to a global hash of virtual nodes. This hash contains all virtual nodes across
+   * all spans. It maps HGNode instances to VirtualNode instances, so that if an HGNode is
+   * encountered more than once, it will give back the same VirtualNode.
+   * 
+   * @param hgnode
+   * @return
+   */
+  private VirtualNode addVirtualNode(HGNode hgnode) {
+    VirtualNode virtualNode = virtualNodesTbl.get(hgnode);
+    if (null == virtualNode) {
+      virtualNode = new VirtualNode(hgnode);
+      virtualNodesTbl.put(hgnode, virtualNode);
     }
-    return res;
+    return virtualNode;
   }
 
-
   // =========================== class VirtualNode ===========================
-  /*
+  /**
+   * This class is essentially a wrapper around an HGNode, annotating it with information needed to
+   * record which hypotheses have been explored from this point.
+   * 
    * to seed the kbest extraction, it only needs that each hyperedge should have the best_cost
    * properly set, and it does not require any list being sortedinstead, the priority queue
    * heap_cands will do internal sorting
@@ -396,55 +329,78 @@ public class KBestExtractor {
 
   private class VirtualNode {
 
-    public List<DerivationState> nbests = new ArrayList<DerivationState>();// sorted ArrayList of
-                                                                           // DerivationState, in
-                                                                           // the paper is: D(^) [v]
-    private PriorityQueue<DerivationState> candHeap = null; // remember frontier states, best-first;
-                                                            // in the paper, it is called cand[v]
-    private HashMap<String, Integer> derivationTbl = null; // rememeber which DerivationState has
-                                                           // been explored; why duplicate, e.g., 1
-                                                           // 2 + 1 0 == 2 1 + 0 1
-    private HashMap<String, Integer> nbestStrTbl = null; // reember unique *string* at each item,
-                                                         // used for unique-nbest-string extraction
-    HGNode pNode = null;
+    // sorted ArrayList of DerivationState, in the paper is: D(^) [v]
+    public List<DerivationState> nbests = new ArrayList<DerivationState>();
+
+    // remember frontier states, best-first; in the paper, it is called cand[v]
+    private PriorityQueue<DerivationState> candHeap = null;
+
+    // remember which DerivationState has been explored; why duplicate,
+    // e.g., 1 2 + 1 0 == 2 1 + 0 1
+    private HashMap<String, Integer> derivationTable = null;
+
+    // This records unique *strings* at each item, used for unique-nbest-string extraction.
+    private HashMap<String, Integer> uniqueStringsTable = null;
+
+    // The node being annotated.
+    HGNode node = null;
 
     public VirtualNode(HGNode it) {
-      this.pNode = it;
+      this.node = it;
     }
 
+    /**
+     * 
+     * @param kbestExtractor
+     * @param k (indexed from one)
+     * @return the k-th best (1-indexed) hypothesis, or null if there are no more.
+     */
     // return: the k-th hyp or null; k is started from one
-    private DerivationState lazyKBestExtractOnNode(KBestExtractor kbestExtator, int k) {
+    private DerivationState lazyKBestExtractOnNode(KBestExtractor kbestExtractor, int k) {
       if (nbests.size() >= k) { // no need to continue
         return nbests.get(k - 1);
       }
 
       // ### we need to fill in the l_nest in order to get k-th hyp
-      DerivationState res = null;
+      DerivationState derivationState = null;
+
+      /*
+       * The first time this is called, the heap of candidates (the frontier of the cube) is
+       * uninitialized. This recursive call will seed the candidates at each node.
+       */
       if (null == candHeap) {
-        getCandidates(kbestExtator);
+        getCandidates(kbestExtractor);
       }
+
+      /*
+       * Now build the kbest list by repeatedly popping the best candidate and then placing all
+       * extensions of that hypothesis back on the candidates list.
+       */
       int tAdded = 0; // sanity check
       while (nbests.size() < k) {
         if (candHeap.size() > 0) {
-          res = candHeap.poll();
+          derivationState = candHeap.poll();
           // derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state
           // may be tied because the cost is the same
           if (extractUniqueNbest) {
             boolean useTreeFormat = false;
-            String res_str = res.getHypothesis(kbestExtator, useTreeFormat, null, null, null);
+            String res_str = derivationState.getHypothesis(kbestExtractor, useTreeFormat, null,
+                null);
             // We pass false for extract_nbest_tree because we want;
             // to check that the hypothesis *strings* are unique,
             // not the trees.
             // @todo zhifei: this causes trouble to monolingual grammar as there is only one
             // *string*, need to fix it
-            if (!nbestStrTbl.containsKey(res_str)) {
-              nbests.add(res);
-              nbestStrTbl.put(res_str, 1);
+            if (!uniqueStringsTable.containsKey(res_str)) {
+              nbests.add(derivationState);
+              uniqueStringsTable.put(res_str, 1);
             }
           } else {
-            nbests.add(res);
+            nbests.add(derivationState);
           }
-          lazyNext(kbestExtator, res);// always extend the last, add all new hyp into heap_cands
+
+          // Add all extensions of this hypothesis to the candidates list.
+          lazyNext(kbestExtractor, derivationState);
 
           // debug: sanity check
           tAdded++;
@@ -458,82 +414,124 @@ public class KBestExtractor {
         }
       }
       if (nbests.size() < k) {
-        res = null;// in case we do not get to the depth of k
+        derivationState = null;// in case we do not get to the depth of k
       }
       // debug: sanity check
       // if (l_nbest.size() >= k && l_nbest.get(k-1) != res) {
       // throw new RuntimeException("In lazy_k_best_extract, ranking is not correct ");
       // }
 
-      return res;
+      return derivationState;
     }
 
-    // last: the last item that has been selected, we need to extend it
-    // get the next hyp at the "last" hyperedge
-    private void lazyNext(KBestExtractor kbestExtator, DerivationState last) {
-      if (null == last.edge.getAntNodes()) {
+    /**
+     * This function extends the current hypothesis, adding each extended item to the list of
+     * candidates (assuming they have not been added before). It does this by, in turn, extending
+     * each of the tail node items.
+     * 
+     * @param kbestExtractor
+     * @param previousState
+     */
+    private void lazyNext(KBestExtractor kbestExtractor, DerivationState previousState) {
+      /* If there are no tail nodes, there is nothing to do. */
+      if (null == previousState.edge.getTailNodes())
         return;
-      }
-      for (int i = 0; i < last.edge.getAntNodes().size(); i++) { // slide the ant item
-        HGNode it = (HGNode) last.edge.getAntNodes().get(i);
-        VirtualNode virtualIT = kbestExtator.addVirtualNode(it);
-        int[] newRanks = new int[last.ranks.length];
+
+      /* For each tail node, create a new state candidate by "sliding" that item one position. */
+      for (int i = 0; i < previousState.edge.getTailNodes().size(); i++) {
+        /* Create a new virtual node that is a copy of the current node */
+        HGNode tailNode = (HGNode) previousState.edge.getTailNodes().get(i);
+        VirtualNode virtualTailNode = kbestExtractor.addVirtualNode(tailNode);
+        // Copy over the ranks.
+        int[] newRanks = new int[previousState.ranks.length];
         for (int c = 0; c < newRanks.length; c++) {
-          newRanks[c] = last.ranks[c];
+          newRanks[c] = previousState.ranks[c];
         }
+        // Now increment/slide the current tail node by one
+        newRanks[i] = previousState.ranks[i] + 1;
 
-        newRanks[i] = last.ranks[i] + 1;
-        String newSig = getDerivationStateSignature(last.edge, newRanks, last.edgePos);
+        // Create a new state so we can see if it's new. The cost will be set below if it is.
+        DerivationState nextState = new DerivationState(previousState.parentNode,
+            previousState.edge, newRanks, 0.0f, previousState.edgePos);
 
-        // why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1
-        if (derivationTbl.containsKey(newSig)) {
-          continue;
-        }
-        virtualIT.lazyKBestExtractOnNode(kbestExtator, newRanks[i]);
-        if (newRanks[i] <= virtualIT.nbests.size() // exist the new_ranks[i] derivation
-        /* && "t" is not in heap_cands */) { // already checked before, check this condition
-          double cost =
-              last.cost - virtualIT.nbests.get(last.ranks[i] - 1).cost
-                  + virtualIT.nbests.get(newRanks[i] - 1).cost;
-          DerivationState t =
-              new DerivationState(last.parentNode, last.edge, newRanks, cost, last.edgePos);
-          candHeap.add(t);
-          derivationTbl.put(newSig, 1);
+        // Don't add the state to the list of candidates if it's already been added.
+        if (!derivationTable.containsKey(nextState.getSignature())) {
+          // Make sure that next candidate exists
+          virtualTailNode.lazyKBestExtractOnNode(kbestExtractor, newRanks[i]);
+          // System.err.println(String.format("  newRanks[%d] = %d and tail size %d", i,
+          // newRanks[i], virtualTailNode.nbests.size()));
+          if (newRanks[i] <= virtualTailNode.nbests.size()) {
+            // System.err.println("NODE: " + this.node);
+            // System.err.println("  tail is " + virtualTailNode.node);
+            double cost = previousState.cost
+                - virtualTailNode.nbests.get(previousState.ranks[i] - 1).cost
+                + virtualTailNode.nbests.get(newRanks[i] - 1).cost;
+            nextState.setCost(cost);
+            candHeap.add(nextState);
+            derivationTable.put(nextState.getSignature(), 1);
+
+            // System.err.println(String.format("  LAZYNEXT(%s", nextState));
+          }
         }
       }
     }
 
-    // this is the seeding function, for example, it will get down to the leaf, and sort the
-    // terminals
-    // get a 1best from each hyperedge, and add them into the heap_cands
-    private void getCandidates(KBestExtractor kbestExtator) {
+    /**
+     * this is the seeding function, for example, it will get down to the leaf, and sort the
+     * terminals get a 1best from each hyperedge, and add them into the heap_cands
+     * 
+     * @param kbestExtractor
+     */
+    private void getCandidates(KBestExtractor kbestExtractor) {
+      /* The list of candidates extending from this (virtual) node. */
       candHeap = new PriorityQueue<DerivationState>();
-      derivationTbl = new HashMap<String, Integer>();
+
+      /*
+       * When exploring the cube frontier, there are multiple paths to each candidate. For example,
+       * going down 1 from grid position (2,1) is the same as going right 1 from grid position
+       * (1,2). To avoid adding states more than once, we keep a list of derivation states we have
+       * already added to the candidates heap.
+       * 
+       * TODO: these should really be keyed on the states themselves instead of a string
+       * representation of them.
+       */
+      derivationTable = new HashMap<String, Integer>();
+
+      /*
+       * A Joshua configuration option allows the decoder to output only unique strings. In that
+       * case, we keep an list of the frontiers of derivation states extending from this node.
+       */
       if (extractUniqueNbest) {
-        nbestStrTbl = new HashMap<String, Integer>();
+        uniqueStringsTable = new HashMap<String, Integer>();
       }
-      // sanity check
-      if (null == pNode.hyperedges) {
-        throw new RuntimeException("l_hyperedges is null in get_candidates, must be wrong");
-      }
+
+      /*
+       * Get the single-best derivation along each of the incoming hyperedges, and add the lot of
+       * them to the priority queue of candidates in the form of DerivationState objects.
+       * 
+       * Note that since the hyperedges are not sorted according to score, the first derivation
+       * computed here may not be the best. But since the loop over all hyperedges seeds the entire
+       * candidates list with the one-best along each of them, when the candidate heap is polled
+       * afterwards, we are guaranteed to have the best one.
+       */
       int pos = 0;
-      for (HyperEdge edge : pNode.hyperedges) {
-        DerivationState t = getBestDerivation(kbestExtator, pNode, edge, pos);
+      for (HyperEdge edge : node.hyperedges) {
+        DerivationState t = getBestDerivation(kbestExtractor, node, edge, pos);
         // why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 , but here we should not get duplicate
-        if (!derivationTbl.containsKey(t.getSignature())) {
+        if (!derivationTable.containsKey(t.getSignature())) {
           candHeap.add(t);
-          derivationTbl.put(t.getSignature(), 1);
+          derivationTable.put(t.getSignature(), 1);
         } else { // sanity check
           throw new RuntimeException(
               "get duplicate derivation in get_candidates, this should not happen"
                   + "\nsignature is " + t.getSignature() + "\nl_hyperedge size is "
-                  + pNode.hyperedges.size());
+                  + node.hyperedges.size());
         }
         pos++;
       }
 
       // TODO: if tem.size is too large, this may cause unnecessary computation, we comment the
-      // segment to accormodate the unique nbest extraction
+      // segment to accommodate the unique nbest extraction
       /*
        * if(tem.size()>global_n){ heap_cands=new PriorityQueue<DerivationState>(); for(int i=1;
        * i<=global_n; i++) heap_cands.add(tem.poll()); }else heap_cands=tem;
@@ -542,30 +540,47 @@ public class KBestExtractor {
 
     // get my best derivation, and recursively add 1best for all my children, used by get_candidates
     // only
-    private DerivationState getBestDerivation(KBestExtractor kbestExtator, HGNode parentNode,
+    /**
+     * This computes the best derivation along a particular hyperedge. It is only called by
+     * getCandidates() to initialize the candidates priority queue at each (virtual) node.
+     * 
+     * @param kbestExtractor
+     * @param parentNode
+     * @param hyperEdge
+     * @param edgePos
+     * @return an object representing the best derivation from this node
+     */
+    private DerivationState getBestDerivation(KBestExtractor kbestExtractor, HGNode parentNode,
         HyperEdge hyperEdge, int edgePos) {
       int[] ranks;
-      double cost = 0;
-      if (hyperEdge.getAntNodes() == null) {// axiom
+      float cost = 0.0f;
+
+      /*
+       * There are two cases: (1) leaf nodes and (2) internal nodes. A leaf node is represented by a
+       * hyperedge with no tail nodes.
+       */
+      if (hyperEdge.getTailNodes() == null) {
         ranks = null;
-        cost = -hyperEdge.bestDerivationLogP;// seeding: this hyperedge only have one single
-                                             // translation for the terminal symbol
-      } else {// best combination
-        ranks = new int[hyperEdge.getAntNodes().size()];
-        for (int i = 0; i < hyperEdge.getAntNodes().size(); i++) {// make sure the 1best at my
-                                                                  // children is ready
-          ranks[i] = 1;// rank start from one
-          HGNode child_it = (HGNode) hyperEdge.getAntNodes().get(i);// add the 1best for my children
-          VirtualNode virtual_child_it = kbestExtator.addVirtualNode(child_it);
-          virtual_child_it.lazyKBestExtractOnNode(kbestExtator, ranks[i]);
+
+      } else {
+        // "ranks" records which derivation to take at each of the tail nodes. Ranks are 1-indexed.
+        ranks = new int[hyperEdge.getTailNodes().size()];
+
+        /* Initialize the one-best at each tail node. */
+        for (int i = 0; i < hyperEdge.getTailNodes().size(); i++) { // children is ready
+          ranks[i] = 1;
+          VirtualNode childVirtualNode = kbestExtractor.addVirtualNode((HGNode) hyperEdge
+              .getTailNodes().get(i));
+          // recurse
+          childVirtualNode.lazyKBestExtractOnNode(kbestExtractor, ranks[i]);
         }
-        cost = -hyperEdge.bestDerivationLogP;// seeding
       }
-      DerivationState t = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
-      return t;
+      cost = (float) -hyperEdge.bestDerivationLogP;
+
+      DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
+      return state;
     }
   };
-
 
   // ===============================================
   // class DerivationState
@@ -575,15 +590,27 @@ public class KBestExtractor {
    * children's ranks. remember the ranks of a hyperedge node used for kbest extraction
    */
 
-  // each DerivationState roughly correponds to a hypothesis
+  // each DerivationState roughly corresponds to a hypothesis
   private class DerivationState implements Comparable<DerivationState> {
-    HGNode parentNode;// the parentNode of the edge
-    HyperEdge edge;// in the paper, it is "e"
-    // **lesson: once we define this as a static variable, which cause big trouble
-    int edgePos; // this is my position in my parent's Item.l_hyperedges, used for signature
-                 // calculation
-    int[] ranks;// in the paper, it is "j", which is a ArrayList of size |e|
-    double cost;// the cost of this hypthesis
+    /* The edge ("e" in the paper) */
+    HyperEdge edge;
+
+    /* The edge's parent node */
+    HGNode parentNode;
+
+    /*
+     * This state's position in its parent's Item.l_hyperedges (used for signature calculation).
+     */
+    int edgePos;
+
+    /*
+     * The rank item to select from each of the incoming tail nodes ("j" in the paper, an ArrayList
+     * of size |e|)
+     */
+    int[] ranks;
+
+    // the cost of this hypothesis
+    double cost;
 
     public DerivationState(HGNode pa, HyperEdge e, int[] r, double c, int pos) {
       parentNode = pa;
@@ -593,6 +620,26 @@ public class KBestExtractor {
       edgePos = pos;
     }
 
+    public void setCost(double cost2) {
+      this.cost = cost2;
+    }
+
+    public String toString() {
+      StringBuilder sb = new StringBuilder(String.format("DS[[ %s (%d,%d)/%d ||| ",
+          Vocabulary.word(parentNode.lhs), parentNode.i, parentNode.j, edgePos));
+      sb.append("ranks=[ ");
+      if (ranks != null)
+        for (int i = 0; i < ranks.length; i++)
+          sb.append(ranks[i] + " ");
+      sb.append("] ||| " + String.format("%.5f ]]", cost));
+      return sb.toString();
+    }
+
+    /**
+     * TODO: This should not be using strings!
+     * 
+     * @return
+     */
     private String getSignature() {
       StringBuffer res = new StringBuffer();
       // res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as
@@ -607,46 +654,106 @@ public class KBestExtractor {
       return res.toString();
     }
 
+    /**
+     * Returns a string representing the derivation of a hypothesis.
+     * 
+     * @param kbestExtractor
+     * @param useTreeFormat
+     * @param features
+     * @param models
+     * @return
+     */
+    private String getDerivation(KBestExtractor kbestExtractor, FeatureVector features,
+        List<FeatureFunction> models, int indent) {
 
-
-    // get the numeric sequence of the particular hypothesis
-    // if want to get model cost, then have to set model_cost and l_models
-    private String getHypothesis(KBestExtractor kbestExtator, boolean useTreeFormat,
-        double[] modelCost, List<FeatureFunction> models, int[] numNodesAndEdges) {
-      // ### accumulate cost of p_edge into model_cost if necessary
-      if (null != modelCost) {
-        computeCost(parentNode, edge, modelCost, models);
+      FeatureVector transitionFeatures = new FeatureVector();
+      if (null != features) {
+        computeCost(parentNode, edge, transitionFeatures, models);
+        features.add(transitionFeatures);
       }
 
       // ### get hyp string recursively
-      StringBuffer res = new StringBuffer();
-      Rule rl = edge.getRule();
+      StringBuffer sb = new StringBuffer();
+      Rule rule = edge.getRule();
 
-      if (null == rl) { // hyperedges under "goal item" does not have rule
+      for (int i = 0; i < indent; i++)
+        sb.append(" ");
+
+      /* The top-level item. */
+      if (null == rule) {
+        StringBuilder childString = new StringBuilder();
+        childString.append(getChildDerivationState(kbestExtractor, edge, 0).getDerivation(
+            kbestExtractor, features, models, indent + 2));
+
+        sb.append(Vocabulary.word(rootID)).append(
+            " ||| " + transitionFeatures + " ||| " + features + " ||| "
+                + KBestExtractor.this.weights.innerProduct(features));
+        sb.append("\n");
+        sb.append(childString);
+
+      } else {
+
+        StringBuilder childStrings = new StringBuilder();
+        if (edge.getTailNodes() != null) {
+          for (int id = 0; id < edge.getTailNodes().size(); id++) {
+            childStrings.append(getChildDerivationState(kbestExtractor, edge, id).getDerivation(
+                kbestExtractor, features, models, indent + 2));
+          }
+        }
+
+        // sb.append(rule).append(" ||| " + features + " ||| " +
+        // KBestExtractor.this.weights.innerProduct(features));
+        sb.append(String.format("(%d-%d) ", parentNode.i, parentNode.j));
+        sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> "
+            + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglish());
+        sb.append(" ||| " + transitionFeatures);
+        sb.append(" ||| " + KBestExtractor.this.weights.innerProduct(transitionFeatures));
+        sb.append("\n");
+        sb.append(childStrings);
+      }
+      return sb.toString();
+    }
+
+    // get the numeric sequence of the particular hypothesis
+    // if want to get model cost, then have to set model_cost and l_models
+    private String getHypothesis(KBestExtractor kbestExtractor, boolean useTreeFormat,
+        FeatureVector features, List<FeatureFunction> models) {
+      // ### accumulate cost of p_edge into model_cost if necessary
+      if (null != features) {
+        computeCost(parentNode, edge, features, models);
+      }
+
+      // ### get hyp string recursively
+      StringBuffer sb = new StringBuffer();
+      Rule rule = edge.getRule();
+
+      if (null == rule) { // hyperedges under "goal item" does not have rule
         if (useTreeFormat) {
           // res.append("(ROOT ");
-          res.append('(');
-          res.append(rootID);
+          sb.append('(');
+          sb.append(rootID);
           if (includeAlign) {
             // append "{i-j}"
-            res.append('{');
-            res.append(parentNode.i);
-            res.append('-');
-            res.append(parentNode.j);
-            res.append('}');
+            sb.append('{');
+            sb.append(parentNode.i);
+            sb.append('-');
+            sb.append(parentNode.j);
+            sb.append('}');
           }
-          res.append(' ');
+          sb.append(' ');
         }
-        for (int id = 0; id < edge.getAntNodes().size(); id++) {
-          res.append(getChildDerivationState(kbestExtator, edge, id).getHypothesis(kbestExtator,
-              useTreeFormat, modelCost, models, numNodesAndEdges));
-          if (id < edge.getAntNodes().size() - 1) res.append(' ');
+        for (int id = 0; id < edge.getTailNodes().size(); id++) {
+          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(
+              kbestExtractor, useTreeFormat, features, models));
+          if (id < edge.getTailNodes().size() - 1)
+            sb.append(' ');
         }
-        if (useTreeFormat) res.append(')');
+        if (useTreeFormat)
+          sb.append(')');
       } else {
         if (useTreeFormat) {
-          res.append('(');
-          int lhs = rl.getLHS();
+          sb.append('(');
+          int lhs = rule.getLHS();
           if (lhs > 0) {
             System.err.printf("k-best: WARNING: rule LHS is greater than 0: %d\n", lhs);
           }
@@ -655,130 +762,112 @@ public class KBestExtractor {
             int max = GrammarBuilderWalkerFunction.MAX_NTS;
             lhs = (lhs % max);
           }
-          res.append(lhs);
+          sb.append(lhs);
           if (includeAlign) {
             // append "{i-j}"
-            res.append('{');
-            res.append(parentNode.i);
-            res.append('-');
-            res.append(parentNode.j);
-            res.append('}');
+            sb.append('{');
+            sb.append(parentNode.i);
+            sb.append('-');
+            sb.append(parentNode.j);
+            sb.append('}');
           }
-          res.append(' ');
+          sb.append(' ');
         }
         if (!isMonolingual) { // bilingual
-          int[] english = rl.getEnglish();
+          int[] english = rule.getEnglish();
           for (int c = 0; c < english.length; c++) {
             if (Vocabulary.idx(english[c])) {
               int index = -(english[c] + 1);
-              res.append(getChildDerivationState(kbestExtator, edge, index).getHypothesis(
-                  kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges));
+              sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
+                  kbestExtractor, useTreeFormat, features, models));
             } else {
-              res.append(english[c]);
+              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
+                sb.append(english[c]);
             }
-            if (c < english.length - 1) res.append(' ');
+            if (c < english.length - 1)
+              sb.append(' ');
           }
         } else { // monolingual
-          int[] french = rl.getFrench();
+          int[] french = rule.getFrench();
           int nonTerminalID = 0;// the position of the non-terminal in the rule
           for (int c = 0; c < french.length; c++) {
             if (Vocabulary.nt(french[c])) {
-              res.append(getChildDerivationState(kbestExtator, edge, nonTerminalID).getHypothesis(
-                  kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges));
+              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID)
+                  .getHypothesis(kbestExtractor, useTreeFormat, features, models));
               nonTerminalID++;
             } else {
-              res.append(french[c]);
+              sb.append(french[c]);
             }
-            if (c < french.length - 1) res.append(' ');
+            if (c < french.length - 1)
+              sb.append(' ');
           }
         }
-        if (useTreeFormat) res.append(')');
+        if (useTreeFormat)
+          sb.append(')');
       }
-      if (numNodesAndEdges != null) {
-        numNodesAndEdges[0]++;
-        numNodesAndEdges[1]++;
-      }
-      return res.toString();
+      return sb.toString().trim();
     }
 
-    private HGNode getHypothesis(KBestExtractor kbestExtator, int[] numNodesAndEdges) {
-
+    /**
+     * This function does the actual hypothesis extraction.
+     * 
+     * @param kbestExtractor
+     * @return
+     */
+    private HGNode getHypothesis(KBestExtractor kbestExtractor) {
       List<HGNode> newAntNodes = null;
-      if (edge.getAntNodes() != null) {
+      if (edge.getTailNodes() != null) {
         newAntNodes = new ArrayList<HGNode>();
-        for (int id = 0; id < edge.getAntNodes().size(); id++) {
-          HGNode newNode =
-              getChildDerivationState(kbestExtator, edge, id).getHypothesis(kbestExtator,
-                  numNodesAndEdges);
+        for (int id = 0; id < edge.getTailNodes().size(); id++) {
+          HGNode newNode = getChildDerivationState(kbestExtractor, edge, id).getHypothesis(
+              kbestExtractor);
           newAntNodes.add(newNode);
         }
       }
 
-      HyperEdge newEdge =
-          new HyperEdge(edge.getRule(), this.cost, edge.getTransitionLogP(false), newAntNodes,
-              edge.getSourcePath());
-      numNodesAndEdges[1]++;
+      HyperEdge newEdge = new HyperEdge(edge.getRule(), this.cost, edge.getTransitionLogP(false),
+          newAntNodes, edge.getSourcePath());
 
-      HGNode newNode =
-          new HGNode(parentNode.i, parentNode.j, parentNode.lhs, parentNode.dpStates, newEdge,
-              parentNode.getEstTotalLogP());
-      numNodesAndEdges[0]++;
+      HGNode newNode = new HGNode(parentNode.i, parentNode.j, parentNode.lhs, parentNode.dpStates,
+          newEdge, parentNode.getEstTotalLogP());
 
       return newNode;
     }
 
     /*
-     * private void getNumNodesAndEdges(KBestExtractor kbestExtator, int[] numNodesAndEdges) {
+     * private void getNumNodesAndEdges(KBestExtractor kbestExtractor, int[] numNodesAndEdges) {
      * if(edge.getAntNodes()!=null){ for (int id = 0; id < edge.getAntNodes().size(); id++) {
-     * getChildDerivationState(kbestExtator, edge, id).getNumNodesAndEdges(kbestExtator,
+     * getChildDerivationState(kbestExtractor, edge, id).getNumNodesAndEdges(kbestExtractor,
      * numNodesAndEdges) ; } } numNodesAndEdges[0]++; numNodesAndEdges[1]++; }
      */
 
-    private DerivationState getChildDerivationState(KBestExtractor kbestExtator, HyperEdge edge,
+    private DerivationState getChildDerivationState(KBestExtractor kbestExtractor, HyperEdge edge,
         int id) {
-      HGNode child = edge.getAntNodes().get(id);
-      VirtualNode virtualChild = kbestExtator.addVirtualNode(child);
+      HGNode child = edge.getTailNodes().get(id);
+      VirtualNode virtualChild = kbestExtractor.addVirtualNode(child);
       return virtualChild.nbests.get(ranks[id] - 1);
     }
 
-    /*
-     * //TODO: we assume at most one lm, and the LM is the only non-stateles model //another
-     * potential difficulty in handling multiple LMs: symbol synchronization among the LMs
-     * //accumulate hyperedge cost into model_cost[], used by get_hyp() private void
-     * compute_cost_not_used(HyperEdge dt, double[] model_cost, ArrayList l_models){
-     * if(model_cost==null) return;
-     * 
-     * //System.out.println("Rule is: " + dt.rule.toString()); double stateless_transition_cost =0;
-     * FeatureFunction lm_model =null; int lm_model_index = -1; for(int k=0; k< l_models.size();
-     * k++){ FeatureFunction m = (FeatureFunction) l_models.get(k); double t_res =0;
-     * if(m.isStateful() == false){//stateless feature if(dt.get_rule()!=null){//hyperedges under
-     * goal item do not have rules FFTransitionResult tem_tbl = m.transition(dt.get_rule(), null,
-     * -1, -1); t_res = tem_tbl.getTransitionCost(); }else{//final transtion t_res =
-     * m.finalTransition(null); } model_cost[k] += t_res; stateless_transition_cost +=
-     * t_res*m.getWeight(); }else{ lm_model = m; lm_model_index = k; } }
-     * if(lm_model_index!=-1)//have lm model model_cost[lm_model_index] +=
-     * (dt.get_transition_cost(false)-stateless_transition_cost)/lm_model.getWeight(); }
-     */
-
-
     // accumulate cost into modelCost
-    private void computeCost(HGNode parentNode, HyperEdge dt, double[] modelCost,
+    private void computeCost(HGNode parentNode, HyperEdge edge, FeatureVector features,
         List<FeatureFunction> models) {
-      if (null == modelCost) return;
+      if (null == features)
+        return;
       // System.out.println("Rule is: " + dt.rule.toString());
       // double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models,
       // dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
-      double[] transitionCosts =
-          ComputeNodeResult.computeModelTransitionLogPs(models, dt, parentNode.i, parentNode.j,
-              sentID);
+      // System.err.println(String.format("kbest::computeCost (START) computing features"));
 
-      for (int i = 0; i < transitionCosts.length; i++) {
-        modelCost[i] -= transitionCosts[i];
-      }
+      FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
+          parentNode.i, parentNode.j, sentID);
+
+      // System.err.println(String.format("kbest::computeCost (STOP) features on edge were '%s'",
+      // transitionCosts));
+
+      features.subtract(transitionCosts);
     }
 
-
-    // natual order by cost
+    // natural order by cost
     public int compareTo(DerivationState another) {
       if (this.cost < another.cost) {
         return -1;
@@ -788,20 +877,5 @@ public class KBestExtractor {
         return 1;
       }
     }
-
-  }// end of Class DerivationState
-
-  private String getDerivationStateSignature(HyperEdge edge2, int[] ranks2, int pos) {
-    StringBuffer sb = new StringBuffer();
-    // sb.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as it
-    // represent the class name and hashcode which my be equal for different objects)
-    sb.append(pos);
-    if (null != ranks2) {
-      for (int i = 0; i < ranks2.length; i++) {
-        sb.append(' ');
-        sb.append(ranks2[i]);
-      }
-    }
-    return sb.toString();
-  }
+  } // end of Class DerivationState
 }

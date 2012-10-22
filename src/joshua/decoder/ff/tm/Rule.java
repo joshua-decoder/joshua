@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
 import java.util.Comparator;
@@ -20,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 
 
 /**
@@ -27,17 +13,12 @@ import joshua.decoder.ff.FeatureFunction;
  * *cost* (i.e., -LogP), so that the feature weight should be positive.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public interface Rule {
 
   // ===============================================================
   // Attributes
   // ===============================================================
-
-  void setRuleID(int id);
-
-  int getRuleID();
 
   void setArity(int arity);
 
@@ -59,28 +40,40 @@ public interface Rule {
 
   int[] getFrench();
 
-  void setFeatureScores(float[] scores);
-
-  float[] getFeatureScores();
-
+  /**
+   * This function returns the dense (phrasal) features discovered when the rule was loaded. Dense
+   * features are the list of unlabeled features that preceded labeled ones. They can also be
+   * specified as labeled features of the form "tm_OWNER_INDEX", but the former format is preferred.
+   */
+  public FeatureVector getFeatureVector();
 
   /**
-   * @param column start from zero
+   * This allows the estimated cost of a rule to be applied from the outside.
+   * 
+   * @param cost
    */
-  void setFeatureCost(int column, float cost);
+  void setEstimatedCost(float cost);
 
-  float getFeatureCost(int column);
+  /**
+   * This function is called by the rule comparator when sorting the grammar. As such it may be
+   * called many times and any implementation of it should be a cached implementation.
+   * 
+   * @return the estimated cost of the rule (a lower bound on the true cost)
+   */
+  float getEstimatedCost();
 
-  float incrementFeatureScore(int column, double score);
+  /**
+   * Precomputable costs is the inner product of the weights found on each grammar rule and the
+   * weight vector. This is slightly different from the estimated rule cost, which can include other
+   * features (such as a language model estimate). This getter and setter should also be cached, and
+   * is basically provided to allow the PhraseModel feature to cache its (expensive) computation for
+   * each rule.
+   * 
+   * @return the precomputable cost of each rule
+   */
+  float getPrecomputableCost();
 
-  void setLatticeCost(float cost);
-
-  float getLatticeCost();
-
-  void setEstCost(float cost);
-
-  float getEstCost();
-
+  void setPrecomputableCost(float cost);
 
   // ===============================================================
   // Methods
@@ -89,16 +82,16 @@ public interface Rule {
   /**
    * Set a lower-bound estimate inside the rule returns full estimate.
    */
-  float estimateRuleCost(List<FeatureFunction> featureFunctions);
+  float estimateRuleCost(List<FeatureFunction> models);
 
 
   /**
    * In order to provide sorting for cube-pruning, we need to provide this Comparator.
    */
-  Comparator<Rule> NegtiveCostComparator = new Comparator<Rule>() {
+  Comparator<Rule> NegativeCostComparator = new Comparator<Rule>() {
     public int compare(Rule rule1, Rule rule2) {
-      float cost1 = rule1.getEstCost();
-      float cost2 = rule2.getEstCost();
+      float cost1 = rule1.getEstimatedCost();
+      float cost2 = rule2.getEstimatedCost();
       if (cost1 > cost2) {
         return -1;
       } else if (cost1 == cost2) {
@@ -109,12 +102,5 @@ public interface Rule {
     }
   };
 
-  @Deprecated
-  String toString(Map<Integer, String> ntVocab);
-
-  @Deprecated
   String toString();
-
-  @Deprecated
-  String toStringWithoutFeatScores();
 }

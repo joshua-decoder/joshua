@@ -1,32 +1,17 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 
 /**
- * this class implements MonolingualRule
+ * This class implements MonolingualRule.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class MonolingualRule implements Rule {
 
@@ -39,39 +24,37 @@ public class MonolingualRule implements Rule {
   /*
    * The string format of Rule is: [Phrase] ||| french ||| english ||| feature scores
    */
-  private int ruleID;
   private int lhs; // tag of this rule
   private int[] pFrench; // pointer to the RuleCollection, as all the rules under it share the same
                          // Source side
-  private int arity;
-  private float[] featScores; // the feature scores for this rule
+  protected int arity;
+
+  // And a string containing the sparse ones
+  protected String sparseFeatures;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
    * of the feature function
    */
-  private int owner;
-
-  // TODO: consider remove this from the general class, and
-  // create a new specific Rule class
-  private float latticeCost;
+  private int owner = -1;
 
   /**
-   * estimate_cost depends on rule itself: statelesscost +
-   * transition_cost(non-stateless/non-contexual* models), we need this variable in order to provide
-   * sorting for cube-pruning
+   * This is the cost computed only from the features present with the grammar rule. This cost is
+   * needed to sort the rules in the grammar for cube pruning, but isn't the full cost of applying
+   * the rule (which will include contextual features that can't be computed until the rule is
+   * applied).
    */
-  private float est_cost = 0;
+  private float estimatedCost = Float.NEGATIVE_INFINITY;
 
-  // ===============================================================
-  // Static Fields
-  // ===============================================================
+  private float precomputableCost = Float.NEGATIVE_INFINITY;
 
-  // TODO: Ideally, we shouldn't have to have dummy rule IDs
-  // and dummy owners. How can this need be eliminated?
-  public static final int DUMMY_RULE_ID = 1;
-  public static final int DUMMY_OWNER = 1;
+  public final float getPrecomputableCost() {
+    return precomputableCost;
+  }
 
+  public final void setPrecomputableCost(float cost) {
+    this.precomputableCost = cost;
+  }
 
   // ===============================================================
   // Constructors
@@ -86,48 +69,29 @@ public class MonolingualRule implements Rule {
    * @param featureScores Feature value scores for the rule.
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
-   * @param latticeCost
-   * @param ruleID
    */
-  public MonolingualRule(int lhs, int[] sourceRhs, float[] featureScores, int arity, int owner,
-      float latticeCost, int ruleID) {
+  public MonolingualRule(int lhs, int[] sourceRhs, String sparseFeatures, int arity, int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.featScores = featureScores;
+    this.sparseFeatures = sparseFeatures;
     this.arity = arity;
-    this.latticeCost = latticeCost;
-    this.ruleID = ruleID;
     this.owner = owner;
   }
 
-
-  // called by class who does not care about lattice_cost,
-  // rule_id, and owner
-  public MonolingualRule(int lhs_, int[] source_rhs, float[] feature_scores, int arity_) {
+  /**
+   * Sparse feature version.
+   */
+  public MonolingualRule(int lhs_, int[] source_rhs, String sparse_features, int arity_) {
     this.lhs = lhs_;
     this.pFrench = source_rhs;
-    this.featScores = feature_scores;
+    this.sparseFeatures = sparse_features;
     this.arity = arity_;
-
-    // ==== dummy values
-    this.latticeCost = 0;
-    this.ruleID = DUMMY_RULE_ID;
-    this.owner = DUMMY_OWNER;
+    this.owner = -1;
   }
-
 
   // ===============================================================
   // Attributes
   // ===============================================================
-
-  public final void setRuleID(int id) {
-    this.ruleID = id;
-  }
-
-  public final int getRuleID() {
-    return this.ruleID;
-  }
-
 
   public final void setArity(int arity) {
     this.arity = arity;
@@ -137,7 +101,6 @@ public class MonolingualRule implements Rule {
     return this.arity;
   }
 
-
   public final void setOwner(int owner) {
     this.owner = owner;
   }
@@ -146,7 +109,6 @@ public class MonolingualRule implements Rule {
     return this.owner;
   }
 
-
   public final void setLHS(int lhs) {
     this.lhs = lhs;
   }
@@ -154,7 +116,6 @@ public class MonolingualRule implements Rule {
   public final int getLHS() {
     return this.lhs;
   }
-
 
   public void setEnglish(int[] eng) {
     // TODO: do nothing
@@ -165,7 +126,6 @@ public class MonolingualRule implements Rule {
     return null;
   }
 
-
   public final void setFrench(int[] french) {
     this.pFrench = french;
   }
@@ -174,80 +134,101 @@ public class MonolingualRule implements Rule {
     return this.pFrench;
   }
 
-
-  public final void setFeatureScores(float[] scores) {
-    this.featScores = scores;
+  /*
+   * This function returns the feature vector found in the rule's grammar file.
+   */
+  public final FeatureVector getFeatureVector() {
+    return computeFeatures();
   }
 
-  public final float[] getFeatureScores() {
-    return this.featScores;
-  }
-
-
-  public final void setLatticeCost(float cost) {
-    this.latticeCost = cost;
-  }
-
-  public final float getLatticeCost() {
-    return this.latticeCost;
-  }
-
-
-  public final float getEstCost() {
-    if (est_cost <= Double.NEGATIVE_INFINITY) {
-      logger.warning("The est cost is neg infinity; must be bad rule; rule is:\n" + toString());
-    }
-    return est_cost;
-  }
-
-  public final void setEstCost(float cost) {
-    if (cost <= Double.NEGATIVE_INFINITY) {
-      logger.warning("The cost is being set to -infinity in " + "rule:\n" + toString());
-    }
-    est_cost = cost;
+  public final String getFeatureString() {
+    return sparseFeatures;
   }
 
   /**
-   * Set a lower-bound estimate inside the rule returns full estimate.
+   * Sets the estimated cost. Calling estimateRuleCost(models) will also set the cost, but this
+   * function can be used if the cost is computed elsewhere.
    */
-  public final float estimateRuleCost(List<FeatureFunction> featureFunctions) {
-    if (null == featureFunctions) {
-      return 0;
-    } else {
-      float estcost = 0.0f;
-      for (FeatureFunction ff : featureFunctions) {
-        double mdcost = -ff.estimateLogP(this, -1) * ff.getWeight();
-        estcost += mdcost;
-      }
-
-      this.est_cost = estcost;
-      return estcost;
+  public final void setEstimatedCost(float cost) {
+    if (cost <= Float.NEGATIVE_INFINITY) {
+      logger.warning("The cost is being set to -infinity in " + "rule:\n" + toString());
     }
+    estimatedCost = cost;
+  }
+
+  /**
+   * This function returns the estimated cost of a rule, which should have been computed when the
+   * grammar was first sorted via a call to Rule::estimateRuleCost(). This function is a getter
+   * only; it will not compute the value if it has not already been set. It is necessary in addition
+   * to estimateRuleCost(models) because sometimes the value needs to be retrieved from contexts
+   * that do not have access to the feature functions.
+   */
+  public final float getEstimatedCost() {
+    return estimatedCost;
+  }
+
+  /**
+   * This function estimates the cost of a rule, which is used for sorting the rules for cube
+   * pruning. The estimated cost is basically the set of precomputable features (features listed
+   * along with the rule in the grammar file) along with any other estimates that other features
+   * would like to contribute (e.g., a language model estimate). This cost will be a lower bound on
+   * the rule's actual cost.
+   * 
+   * The value of this function is used only for sorting the rules. When the rule is later applied
+   * in context to particular hypernodes, the rule's actual cost is computed.
+   * 
+   * @param models the list of models available to the decoder
+   * @return estimated cost of the rule
+   */
+  public final float estimateRuleCost(List<FeatureFunction> models) {
+    if (null == models)
+      return 0.0f;
+
+    if (this.estimatedCost <= Float.NEGATIVE_INFINITY) {
+      this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
+      // StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
+
+      for (FeatureFunction ff : models) {
+        this.estimatedCost -= ff.estimateCost(this, -1);
+        // sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
+        // -ff.estimateCost(this, -1)));
+      }
+      // sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
+      // System.err.println(sb.toString());
+    }
+
+    return estimatedCost;
   }
 
   // ===============================================================
   // Methods
   // ===============================================================
 
-  public float incrementFeatureScore(int column, double score) {
-    synchronized (this) {
-      featScores[column] += score;
-      return featScores[column];
+  /**
+   * This function does the work of turning the string version of the sparse features (passed in
+   * when the rule was created) into an actual set of features. This is a bit complicated because we
+   * support intermingled labeled and unlabeled features, where the unlabeled features are mapped to
+   * a default name template of the form "tm_OWNER_INDEX".
+   */
+  public FeatureVector computeFeatures() {
+
+    /*
+     * Now read the feature scores, which can be any number of dense features and sparse features.
+     * Any unlabeled feature becomes a dense feature. By convention, dense features should precede
+     * sparse (labeled) ones, but it's not required.
+     */
+
+    if (owner == -1) {
+      System.err
+          .println("* FATAL: You asked me to compute the features for a rule, but haven't told me the rule's owner.");
+      System.err.println("* RULE: " + this.toString());
+      System.exit(1);
     }
-  }
 
-
-  public void setFeatureCost(int column, float score) {
-    synchronized (this) {
-      featScores[column] = score;
-    }
-  }
-
-
-  public float getFeatureCost(int column) {
-    synchronized (this) {
-      return featScores[column];
-    }
+    FeatureVector features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
+    features.times(-1);
+    
+    return features;
   }
 
   // ===============================================================
@@ -255,59 +236,26 @@ public class MonolingualRule implements Rule {
   // ===============================================================
   // BUG: These are all far too redundant. Should be refactored to share.
 
-  // Caching this method significantly improves performance
-  // We mark it transient because it is, though cf
-  // java.io.Serializable
-  private transient String cachedToString = null;
-
-  @Deprecated
-  public String toString(Map<Integer, String> ntVocab) {
-    if (null == this.cachedToString) {
-      StringBuffer sb = new StringBuffer();
-      sb.append(ntVocab.get(this.lhs));
-      sb.append(" ||| ");
-      sb.append(Vocabulary.getWords(this.pFrench));
-      sb.append(" |||");
-      for (int i = 0; i < this.featScores.length; i++) {
-        // sb.append(String.format(" %.4f", this.feat_scores[i]));
-        sb.append(' ').append(Float.toString(this.featScores[i]));
-      }
-      this.cachedToString = sb.toString();
-    }
-    return this.cachedToString;
-  }
-
-  // do not use cachedToString
-  @Deprecated
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(Vocabulary.word(this.lhs));
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(this.pFrench));
-    sb.append(" |||");
-    for (int i = 0; i < this.featScores.length; i++) {
-      sb.append(String.format(" %.4f", this.featScores[i]));
-    }
+    sb.append(" ||| " + sparseFeatures);
+    // FeatureVector features = this.getFeatureVector();
+    // for (String feature: features.keySet()) {
+    // sb.append(String.format(" %s=%.5f", feature, features.get(feature)));
+    // }
     return sb.toString();
   }
-
-
-  @Deprecated
-  public String toStringWithoutFeatScores() {
-    StringBuffer sb = new StringBuffer();
-    sb.append(Vocabulary.word(this.getLHS()));
-
-    return sb.append(" ||| ").append(convertToString(this.getFrench())).toString();
-  }
-
-
 
   public String convertToString(int[] words) {
     StringBuffer sb = new StringBuffer();
     for (int i = 0; i < words.length; i++) {
       sb.append(Vocabulary.word(words[i]));
 
-      if (i < words.length - 1) sb.append(" ");
+      if (i < words.length - 1)
+        sb.append(" ");
     }
     return sb.toString();
   }

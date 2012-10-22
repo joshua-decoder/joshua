@@ -1,22 +1,7 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 import joshua.corpus.Vocabulary;
 
@@ -25,7 +10,7 @@ import joshua.corpus.Vocabulary;
  * weight should be positive
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class BilingualRule extends MonolingualRule {
 
@@ -37,28 +22,29 @@ public class BilingualRule extends MonolingualRule {
 
   /**
    * Constructs a new rule using the provided parameters. The owner and rule id for this rule are
-   * undefined.
+   * undefined. Note that some of the sparse features may be unlabeled, but they cannot be mapped to
+   * their default names ("tm_OWNER_INDEX") until later, when we know the owner of the rule. This is
+   * not known until the rule is actually added to a grammar in Grammar::addRule().
    * 
    * @param lhs Left-hand side of the rule.
    * @param sourceRhs Source language right-hand side of the rule.
    * @param targetRhs Target language right-hand side of the rule.
-   * @param featureScores Feature value scores for the rule.
+   * @param sparseFeatures Feature value scores for the rule.
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
-   * @param latticeCost
-   * @param ruleID
    */
-  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity,
-      int owner, float latticeCost, int ruleID) {
-    super(lhs, sourceRhs, featureScores, arity, owner, latticeCost, ruleID);
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity,
+      int owner) {
+    super(lhs, sourceRhs, sparseFeatures, arity, owner);
     this.english = targetRhs;
   }
 
-  // called by class who does not care about lattice_cost, rule_id, and owner
-  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity) {
-    super(lhs, sourceRhs, featureScores, arity);
+  // Sparse feature version
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
+    super(lhs, sourceRhs, sparseFeatures, arity);
     this.english = targetRhs;
   }
+
 
   // ===============================================================
   // Attributes
@@ -72,57 +58,29 @@ public class BilingualRule extends MonolingualRule {
     return this.english;
   }
 
-  // ===============================================================
-  // Serialization Methods
-  // ===============================================================
-  // TODO: remove these methods
+  /**
+   * The nonterminals on the English side are pointers to the source side nonterminals (-1 and -2),
+   * rather than being directly encoded. These number indicate the correspondence between the
+   * nonterminals on each side, introducing a level of indirection however when we want to resolve
+   * them. So to get the ID, we need to look up the corresponding source side ID.
+   * 
+   * @return The string of English words
+   */
+  public String getEnglishWords() {
+    ArrayList<String> foreignNTs = new ArrayList<String>();
+    for (int i = 0; i < this.getFrench().length; i++)
+      if (this.getFrench()[i] < 0) foreignNTs.add(Vocabulary.word(this.getFrench()[i]));
 
-  // Caching this method significantly improves performance
-  // We mark it transient because it is, though cf java.io.Serializable
-  private transient String cachedToString = null;
-
-  public String toString(Map<Integer, String> ntVocab) {
-    if (null == this.cachedToString) {
-      StringBuffer sb = new StringBuffer("[");
-      sb.append(ntVocab.get(this.getLHS()));
-      sb.append("] ||| ");
-      sb.append(Vocabulary.getWords(this.getFrench()));
-      sb.append(" ||| ");
-      sb.append(Vocabulary.getWords(this.english));
-      // sb.append(java.util.Arrays.toString(this.english));
-      sb.append(" |||");
-      for (int i = 0; i < this.getFeatureScores().length; i++) {
-        // sb.append(String.format(" %.12f", this.getFeatureScores()[i]));
-        sb.append(' ');
-        sb.append(Float.toString(this.getFeatureScores()[i]));
-      }
-      this.cachedToString = sb.toString();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < this.getEnglish().length; i++) {
+      if (this.getEnglish()[i] >= 0)
+        sb.append(Vocabulary.word(this.getEnglish()[i]) + " ");
+      else
+        sb.append(foreignNTs.get(Math.abs(this.getEnglish()[i]) - 1) + "," + Math.abs(this.getEnglish()[i]) + " ");
     }
-    return this.cachedToString;
-  }
 
-//   public String toString() {
-//     if (null == this.cachedToString) {
-//       StringBuffer sb = new StringBuffer();
-//       sb.append(this.getEstCost() + " | ");
-//       sb.append(Vocabulary.word(this.getLHS()));
-//       sb.append(" ||| ");
-//       sb.append(Vocabulary.getWords(this.getFrench()));
-//       sb.append(" |||");
-//       for (int i = 0; i < english.length; i++) {
-//         if (english[i] < 0)
-//           sb.append(" ").append("NT" + english[i]);
-//         else
-//           sb.append(" ").append(Vocabulary.word(english[i]));
-//       }
-//       sb.append(" |||");
-//       for (int i = 0; i < this.getFeatureScores().length; i++) {
-//         sb.append(String.format(" %.4f", this.getFeatureScores()[i]));
-//       }
-//       this.cachedToString = sb.toString();
-//     }
-//     return this.cachedToString;
-//   }
+    return sb.toString().trim();
+  }
 
   public String toString() {
     StringBuffer sb = new StringBuffer();
@@ -130,20 +88,11 @@ public class BilingualRule extends MonolingualRule {
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(this.getFrench()));
     sb.append(" ||| ");
-    sb.append(Vocabulary.getWords(this.getEnglish()));
+    sb.append(getEnglishWords());
     sb.append(" |||");
-    for (int i = 0; i < this.getFeatureScores().length; i++) {                                  
-      sb.append(String.format(" %.4f", this.getFeatureScores()[i]));                            
-    }  
-    sb.append(String.format(" ||| %.3f", getEstCost()));
+    sb.append(" " + getFeatureVector());
+    sb.append(String.format(" ||| %.3f", getEstimatedCost()));
     return sb.toString();
-  }
-
-  public String toStringWithoutFeatScores() {
-    StringBuffer sb = new StringBuffer();
-    sb.append(Vocabulary.word(this.getLHS()));
-    return sb.append(" ||| ").append(convertToString(this.getFrench())).append(" ||| ")
-        .append(convertToString(this.getEnglish())).toString();
   }
 
   /**

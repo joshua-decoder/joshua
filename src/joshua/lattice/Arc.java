@@ -35,13 +35,13 @@ public class Arc<Label> {
   final double cost;
 
   /**
-   * Node where this arc begins. Package-private scope so that Node and Lattice can quickly access
+   * Node where this arc ends. Package-private scope so that Node and Lattice can quickly access
    * this variable.
    */
   final Node<Label> head;
 
   /**
-   * Node where this arc ends. Package-private scope so that Node and Lattice can quickly access
+   * Node where this arc begins. Package-private scope so that Node and Lattice can quickly access
    * this variable.
    */
   final Node<Label> tail;
@@ -60,9 +60,9 @@ public class Arc<Label> {
    * @param cost The cost of this arc.
    * @param label The label associated with this arc.
    */
-  public Arc(Node<Label> head, Node<Label> tail, double cost, Label label) {
-    this.head = head;
+  public Arc(Node<Label> tail, Node<Label> head, double cost, Label label) {
     this.tail = tail;
+    this.head = head;
     this.cost = cost;
     this.label = label;
   }
@@ -78,21 +78,21 @@ public class Arc<Label> {
   }
 
   /**
-   * Gets the head of this arc (the node where this arc begins).
-   * 
-   * @return The head of this arc.
-   */
-  public Node<Label> getHead() {
-    return head;
-  }
-
-  /**
-   * Gets the tail of this arc (the node where this arc ends).
+   * Gets the tail of this arc (the node where this arc begins).
    * 
    * @return The tail of this arc.
    */
   public Node<Label> getTail() {
     return tail;
+  }
+
+  /**
+   * Gets the head of this arc (the node where this arc ends).
+   * 
+   * @return The head of this arc.
+   */
+  public Node<Label> getHead() {
+    return head;
   }
 
   /**
@@ -110,9 +110,9 @@ public class Arc<Label> {
 
     s.append(label.toString());
     s.append("  :  ");
-    s.append(head.toString());
-    s.append(" ==> ");
     s.append(tail.toString());
+    s.append(" ==> ");
+    s.append(head.toString());
     s.append("  :  ");
     s.append(cost);
 

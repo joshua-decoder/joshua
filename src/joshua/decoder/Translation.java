@@ -33,8 +33,7 @@ import joshua.decoder.segment_file.Sentence;
  * sentence and id and contains the decoded hypergraph. Translation objects are returned by
  * DecoderThread instances to the InputHandler, where they are assembled in order for output.
  * 
- * @author Matt Post <post@jhu.edu>
- * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
+ * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class Translation {
@@ -87,13 +86,13 @@ public class Translation {
     String result;
 
     if (this.hypergraph == null) {
-      result = getSourceSentence().sentence();
+      result = getSourceSentence().source();
 
     } else {
       KBestExtractor kBestExtractor =
-          new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
-              JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-              JoshuaConfiguration.add_combined_cost, false, false);
+        new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
+          JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
+          JoshuaConfiguration.add_combined_cost, false, false);
 
       StringWriter sw = new StringWriter();
       BufferedWriter out = new BufferedWriter(sw);
@@ -107,6 +106,7 @@ public class Translation {
 
       result = sw.toString();
     }
+    this.translation = result;
     return result;
   }
 
@@ -120,8 +120,8 @@ public class Translation {
       }
 
       KBestExtractor kBestExtractor =
-          new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
-              JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
+        new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
+          JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
               JoshuaConfiguration.add_combined_cost, false, false);
 
       try {
@@ -132,19 +132,15 @@ public class Translation {
       }
 
     } else {
-
-      System.out.print(id() + " ||| " + getSourceSentence().sentence() + " ||| ");
-
-      for (FeatureFunction ff : featureFunctions)
-        System.out.print(" 0");
-
-      System.out.println(" ||| 0.0");
-
+      String output = getSourceSentence().source();
+      if (getSourceSentence().target() != null)
+        output += " ||| " + getSourceSentence().target();
+      
+      System.out.println(id() + " ||| " + output + " |||  ||| 0.0");
     }
 
     System.out.flush();
   }
-
 
   public String toString() {
     StringBuffer sb = new StringBuffer();
@@ -152,11 +148,6 @@ public class Translation {
     sb.append(" ||| ");
     sb.append(translation());
     sb.append(" ||| ");
-    for (double score : modelScores) {
-      sb.append(score);
-      sb.append(" ");
-    }
-    sb.append("||| ");
     sb.append(score);
 
     return sb.toString();

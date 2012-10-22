@@ -1,15 +1,17 @@
 #ifndef LM_SEARCH_HASHED__
 #define LM_SEARCH_HASHED__
 
-#include "lm/binary_format.hh"
+#include "lm/model_type.hh"
 #include "lm/config.hh"
 #include "lm/read_arpa.hh"
+#include "lm/return.hh"
 #include "lm/weights.hh"
 
-#include "util/key_value_packing.hh"
+#include "util/bit_packing.hh"
 #include "util/probing_hash_table.hh"
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 namespace util { class FilePiece; }
@@ -17,6 +19,7 @@ namespace util { class FilePiece; }
 namespace lm {
 namespace ngram {
 struct Backing;
+class ProbingVocabulary;
 namespace detail {
 
 inline uint64_t CombineWordHash(uint64_t current, const WordIndex next) {
@@ -24,54 +27,55 @@ inline uint64_t CombineWordHash(uint64_t current, const WordIndex next) {
   return ret;
 }
 
-struct HashedSearch {
-  typedef uint64_t Node;
-
-  class Unigram {
-    public:
-      Unigram() {}
-
-      Unigram(void *start, std::size_t /*allocated*/) : unigram_(static_cast<ProbBackoff*>(start)) {}
-
-      static std::size_t Size(uint64_t count) {
-        return (count + 1) * sizeof(ProbBackoff); // +1 for hallucinate <unk>
-      }
-
-      const ProbBackoff &Lookup(WordIndex index) const { return unigram_[index]; }
-
-      ProbBackoff &Unknown() { return unigram_[0]; }
-
-      void LoadedBinary() {}
-
-      // For building.
-      ProbBackoff *Raw() { return unigram_; }
-
-    private:
-      ProbBackoff *unigram_;
-  };
-
-  Unigram unigram;
-
-  void LookupUnigram(WordIndex word, float &prob, float &backoff, Node &next) const {
-    const ProbBackoff &entry = unigram.Lookup(word);
-    prob = entry.prob;
-    backoff = entry.backoff;
-    next = static_cast<Node>(word);
+#pragma pack(push)
+#pragma pack(4)
+struct ProbEntry {
+  uint64_t key;
+  Prob value;
+  typedef uint64_t Key;
+  typedef Prob Value;
+  uint64_t GetKey() const {
+    return key;
   }
 };
 
-template <class MiddleT, class LongestT> class TemplateHashedSearch : public HashedSearch {
-  public:
-    typedef MiddleT Middle;
+#pragma pack(pop)
 
-    typedef LongestT Longest;
-    Longest longest;
+class LongestPointer {
+  public:
+    explicit LongestPointer(const float &to) : to_(&to) {}
+
+    LongestPointer() : to_(NULL) {}
+
+    bool Found() const {
+      return to_ != NULL;
+    }
+
+    float Prob() const {
+      return *to_;
+    }
+
+  private:
+    const float *to_;
+};
+
+template <class Value> class HashedSearch {
+  public:
+    typedef uint64_t Node;
+
+    typedef typename Value::ProbingProxy UnigramPointer;
+    typedef typename Value::ProbingProxy MiddlePointer;
+    typedef ::lm::ngram::detail::LongestPointer LongestPointer;
+
+    static const ModelType kModelType = Value::kProbingModelType;
+    static const bool kDifferentRest = Value::kDifferentRest;
+    static const unsigned int kVersion = 0;
 
     // TODO: move probing_multiplier here with next binary file format update.  
     static void UpdateConfigFromBinary(int, const std::vector<uint64_t> &, Config &) {}
 
-    static std::size_t Size(const std::vector<uint64_t> &counts, const Config &config) {
-      std::size_t ret = Unigram::Size(counts[0]);
+    static uint64_t Size(const std::vector<uint64_t> &counts, const Config &config) {
+      uint64_t ret = Unigram::Size(counts[0]);
       for (unsigned char n = 1; n < counts.size() - 1; ++n) {
         ret += Middle::Size(counts[n], config.probing_multiplier);
       }
@@ -80,39 +84,55 @@ template <class MiddleT, class LongestT> class TemplateHashedSearch : public Has
 
     uint8_t *SetupMemory(uint8_t *start, const std::vector<uint64_t> &counts, const Config &config);
 
-    template <class Voc> void InitializeFromARPA(const char *file, util::FilePiece &f, const std::vector<uint64_t> &counts, const Config &config, Voc &vocab, Backing &backing);
-
-    const Middle *MiddleBegin() const { return &*middle_.begin(); }
-    const Middle *MiddleEnd() const { return &*middle_.end(); }
-
-    bool LookupMiddle(const Middle &middle, WordIndex word, float &prob, float &backoff, Node &node) const {
-      node = CombineWordHash(node, word);
-      typename Middle::ConstIterator found;
-      if (!middle.Find(node, found)) return false;
-      prob = found->GetValue().prob;
-      backoff = found->GetValue().backoff;
-      return true;
-    }
+    void InitializeFromARPA(const char *file, util::FilePiece &f, const std::vector<uint64_t> &counts, const Config &config, ProbingVocabulary &vocab, Backing &backing);
 
     void LoadedBinary();
 
-    bool LookupMiddleNoProb(const Middle &middle, WordIndex word, float &backoff, Node &node) const {
+    unsigned char Order() const {
+      return middle_.size() + 2;
+    }
+
+    typename Value::Weights &UnknownUnigram() { return unigram_.Unknown(); }
+
+    UnigramPointer LookupUnigram(WordIndex word, Node &next, bool &independent_left, uint64_t &extend_left) const {
+      extend_left = static_cast<uint64_t>(word);
+      next = extend_left;
+      UnigramPointer ret(unigram_.Lookup(word));
+      independent_left = ret.IndependentLeft();
+      return ret;
+    }
+
+#pragma GCC diagnostic ignored "-Wuninitialized"
+    MiddlePointer Unpack(uint64_t extend_pointer, unsigned char extend_length, Node &node) const {
+      node = extend_pointer;
+      typename Middle::ConstIterator found;
+      bool got = middle_[extend_length - 2].Find(extend_pointer, found);
+      assert(got);
+      (void)got;
+      return MiddlePointer(found->value);
+    }
+
+    MiddlePointer LookupMiddle(unsigned char order_minus_2, WordIndex word, Node &node, bool &independent_left, uint64_t &extend_pointer) const {
       node = CombineWordHash(node, word);
       typename Middle::ConstIterator found;
-      if (!middle.Find(node, found)) return false;
-      backoff = found->GetValue().backoff;
-      return true;
+      if (!middle_[order_minus_2].Find(node, found)) {
+        independent_left = true;
+        return MiddlePointer();
+      }
+      extend_pointer = node;
+      MiddlePointer ret(found->value);
+      independent_left = ret.IndependentLeft();
+      return ret;
     }
 
-    bool LookupLongest(WordIndex word, float &prob, Node &node) const {
-      node = CombineWordHash(node, word);
+    LongestPointer LookupLongest(WordIndex word, const Node &node) const {
+      // Sign bit is always on because longest n-grams do not extend left.  
       typename Longest::ConstIterator found;
-      if (!longest.Find(node, found)) return false;
-      prob = found->GetValue().prob;
-      return true;
+      if (!longest_.Find(CombineWordHash(node, word), found)) return LongestPointer();
+      return LongestPointer(found->value.prob);
     }
 
-    // Geenrate a node without necessarily checking that it actually exists.  
+    // Generate a node without necessarily checking that it actually exists.  
     // Optionally return false if it's know to not exist.  
     bool FastMakeNode(const WordIndex *begin, const WordIndex *end, Node &node) const {
       assert(begin != end);
@@ -124,19 +144,54 @@ template <class MiddleT, class LongestT> class TemplateHashedSearch : public Has
     }
 
   private:
+    // Interpret config's rest cost build policy and pass the right template argument to ApplyBuild.  
+    void DispatchBuild(util::FilePiece &f, const std::vector<uint64_t> &counts, const Config &config, const ProbingVocabulary &vocab, PositiveProbWarn &warn);
+
+    template <class Build> void ApplyBuild(util::FilePiece &f, const std::vector<uint64_t> &counts, const Config &config, const ProbingVocabulary &vocab, PositiveProbWarn &warn, const Build &build);
+
+    class Unigram {
+      public:
+        Unigram() {}
+
+        Unigram(void *start, uint64_t count, std::size_t /*allocated*/) : 
+          unigram_(static_cast<typename Value::Weights*>(start))
+#ifdef DEBUG
+         ,  count_(count)
+#endif
+      {}
+
+        static uint64_t Size(uint64_t count) {
+          return (count + 1) * sizeof(typename Value::Weights); // +1 for hallucinate <unk>
+        }
+
+        const typename Value::Weights &Lookup(WordIndex index) const {
+#ifdef DEBUG
+          assert(index < count_);
+#endif
+          return unigram_[index];
+        }
+
+        typename Value::Weights &Unknown() { return unigram_[0]; }
+
+        void LoadedBinary() {}
+
+        // For building.
+        typename Value::Weights *Raw() { return unigram_; }
+
+      private:
+        typename Value::Weights *unigram_;
+#ifdef DEBUG
+        uint64_t count_;
+#endif
+    };
+
+    Unigram unigram_;
+
+    typedef util::ProbingHashTable<typename Value::ProbingEntry, util::IdentityHash> Middle;
     std::vector<Middle> middle_;
-};
 
-// std::identity is an SGI extension :-(
-struct IdentityHash : public std::unary_function<uint64_t, size_t> {
-  size_t operator()(uint64_t arg) const { return static_cast<size_t>(arg); }
-};
-
-struct ProbingHashedSearch : public TemplateHashedSearch<
-  util::ProbingHashTable<util::ByteAlignedPacking<uint64_t, ProbBackoff>, IdentityHash>,
-  util::ProbingHashTable<util::ByteAlignedPacking<uint64_t, Prob>, IdentityHash> > {
-
-  static const ModelType kModelType = HASH_PROBING;
+    typedef util::ProbingHashTable<ProbEntry, util::IdentityHash> Longest;
+    Longest longest_;
 };
 
 } // namespace detail
