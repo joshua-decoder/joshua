@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import joshua.corpus.Vocabulary;
 import joshua.metrics.EvaluationMetric;
 
 // this class implements the PRO tuning method
@@ -121,12 +122,12 @@ public class Optimizer {
           result = "Final lambda(first 10 sparse feats): {";
           sparseNumToPrint = 10 < paramDim ? 10 : paramDim;
 
-          for (int i = 1; i < sparseNumToPrint; i++)
+          for (int i = 1; i <= sparseNumToPrint; i++)
             result += finalLambda[i] + " ";
         }
       }
 
-      output.add(result + finalLambda[numParamToPrint] + "}\n" + "Initial "
+      output.add(result + "}\nInitial "
           + evalMetric.get_metricName() + ": " + initMetricScore + "\nFinal "
           + evalMetric.get_metricName() + ": " + finalMetricScore);
 
@@ -134,8 +135,8 @@ public class Optimizer {
 
       if (trainMode.equals("3")) {
         // finalLambda = baseline(unchanged)+disc
-        for (int i = 0; i < paramDim; i++)
-          copyLambda[i + regParamDim + 1] = finalLambda[i];
+        for (int i = 0; i <= paramDim; i++)
+          copyLambda[i + regParamDim] = finalLambda[i];
 
         finalLambda = copyLambda;
       }
@@ -172,42 +173,35 @@ public class Optimizer {
 
       // find out the 1-best candidate for each sentence
       // this depends on the training mode
-      maxModelScore = -99999999999.0;
+      maxModelScore = NegInf;
       for (Iterator<String> it = candSet.iterator(); it.hasNext();) {
         modelScore = 0.0;
         candStr = it.next().toString();
 
         feat_str = feat_hash[i].get(candStr).split("\\s+");
 
-        if (nbestFormat.equals("dense")) {
-          for (int f = 0; f < feat_str.length; f++)
-            modelScore += Double.parseDouble(feat_str[f]) * finalLambda[f + 1];
+        if (!trainMode.equals("3")) {
+          for (int f = 0; f < feat_str.length; f++) {
+            String[] feat_info = feat_str[f].split("[=:]");
+            modelScore +=
+                Double.parseDouble(feat_info[1]) * finalLambda[Vocabulary.id(feat_info[0])];
+          }
         } else {
-          String[] feat_info;
+          int new_feat_id = 0;
 
-          if (!trainMode.equals("3")) {
-            for (int f = 0; f < feat_str.length; f++) {
-              feat_info = feat_str[f].split(":");
-              modelScore +=
-                  Double.parseDouble(feat_info[1]) * finalLambda[Integer.parseInt(feat_info[0])];
-            }
-          } else {
-            int new_feat_id = 0;
+          for (int f = 0; f < feat_str.length; f++) {
+            String[] feat_info = feat_str[f].split(":");
 
-            for (int f = 0; f < feat_str.length; f++) {
-              feat_info = feat_str[f].split(":");
+            // System.out.println(feat_info[0]+" "+Double.parseDouble(feat_info[1]));
 
-              // System.out.println(feat_info[0]+" "+Double.parseDouble(feat_info[1]));
+            new_feat_id = Integer.parseInt(feat_info[0]) - regParamDim; // for mode 3, re-index
+            // the sparse feature
+            // to make it start from 1, so as to match
+            // the lambda vector
 
-              new_feat_id = Integer.parseInt(feat_info[0]) - regParamDim; // for mode 3, re-index
-                                                                          // the sparse feature
-              // to make it start from 1, so as to match
-              // the lambda vector
-
-              // only care about sparse features
-              if (new_feat_id >= 1)
-                modelScore += Double.parseDouble(feat_info[1]) * finalLambda[new_feat_id];
-            }
+            // only care about sparse features
+            if (new_feat_id >= 1)
+              modelScore += Double.parseDouble(feat_info[1]) * finalLambda[new_feat_id];
           }
         }
 
@@ -337,65 +331,57 @@ public class Optimizer {
         featDiff = "";
         neg_featDiff = "";
 
-        if (nbestFormat.equals("dense")) {
-          for (int i = 0; i < feat_str_j1.length; i++) {
-            featDiff +=
-                (i + 1) + ":"
-                    + (Double.parseDouble(feat_str_j1[i]) - Double.parseDouble(feat_str_j2[i]))
-                    + " ";
-            neg_featDiff +=
-                (i + 1) + ":"
-                    + (Double.parseDouble(feat_str_j2[i]) - Double.parseDouble(feat_str_j1[i]))
-                    + " ";
+        HashMap<String, String> feat_diff = new HashMap<String, String>();
+        String[] feat_info;
+
+        for (int i = 0; i < feat_str_j1.length; i++) {
+          feat_info = feat_str_j1[i].split("[:=]");
+          feat_diff.put(feat_info[0], feat_info[1]);
+        }
+
+        if (!trainMode.equals("3")) {
+          for (int i = 0; i < feat_str_j2.length; i++) {
+            feat_info = feat_str_j2[i].split("[:=]");
+
+            if (feat_diff.containsKey(feat_info[0]))
+              feat_diff.put( feat_info[0],
+                  Double.toString(Double.parseDouble(feat_diff.get(feat_info[0]))-Double.parseDouble(feat_info[1])) );
+            else //only fired in the cand 2
+              feat_diff.put( feat_info[0], Double.toString(-1.0*Double.parseDouble(feat_info[1])));
           }
+
+          for (String id: feat_diff.keySet()) {
+            featDiff += id + ":" + feat_diff.get(id) + " ";
+            neg_featDiff += id + ":" + -1.0*Double.parseDouble(feat_diff.get(id)) + " ";
+          }
+
         } else {
-          HashMap<String, String> firing_feat = new HashMap<String, String>();
-          String[] feat_info;
+          int new_feat_id = 0;
 
-          for (int i = 0; i < feat_str_j1.length; i++) {
-            feat_info = feat_str_j1[i].split(":");
-            firing_feat.put(feat_info[0], feat_info[1]);
-          }
+          for (int i = 0; i < feat_str_j2.length; i++) {
+            feat_info = feat_str_j2[i].split(":");
+            new_feat_id = Integer.parseInt(feat_info[0]) - regParamDim; // for mode 3, re-index
+            // the sparse feature
+            // to make it start from 1, so as to match
+            // the lambda vector
 
-          if (!trainMode.equals("3")) {
-            for (int i = 0; i < feat_str_j2.length; i++) {
-              feat_info = feat_str_j2[i].split(":");
+            // only cares about sparse features
+            if (feat_diff.containsKey(feat_info[0]) && new_feat_id >= 1) //overlapping features
+              feat_diff.put(
+                  feat_info[0],
+                  Double.toString(Double.parseDouble(feat_diff.get(feat_info[0]))
+                      - Double.parseDouble(feat_info[1])));
+            else
+              // only firing in cand 2
+              feat_diff.put(feat_info[0],
+                  Double.toString(-1.0 * Double.parseDouble(feat_info[1])));
 
-              if (firing_feat.containsKey(feat_info[0])) {
-                featDiff +=
-                    feat_info[0]
-                        + ":"
-                        + (Double.parseDouble(firing_feat.get(feat_info[0])) - Double
-                            .parseDouble(feat_info[1])) + " ";
-                neg_featDiff +=
-                    feat_info[0]
-                        + ":"
-                        + (Double.parseDouble(feat_info[1]) - Double.parseDouble(firing_feat
-                            .get(feat_info[0]))) + " ";
-              }
-            }
-          } else {
-            int new_feat_id = 0;
-
-            for (int i = 0; i < feat_str_j2.length; i++) {
-              feat_info = feat_str_j2[i].split(":");
-              new_feat_id = Integer.parseInt(feat_info[0]) - regParamDim; // for mode 3, re-index
-                                                                          // the sparse feature
-              // to make it start from 1, so as to match
-              // the lambda vector
-
-              // only cares about sparse features
-              if (firing_feat.containsKey(feat_info[0]) && new_feat_id >= 1) {
-                featDiff +=
-                    new_feat_id
-                        + ":"
-                        + (Double.parseDouble(firing_feat.get(feat_info[0])) - Double
-                            .parseDouble(feat_info[1])) + " ";
-                neg_featDiff +=
-                    new_feat_id
-                        + ":"
-                        + (Double.parseDouble(feat_info[1]) - Double.parseDouble(firing_feat
-                            .get(feat_info[0]))) + " ";
+            for (String id: feat_diff.keySet()) {
+              new_feat_id = Integer.parseInt(id) - regParamDim;
+              if (new_feat_id >= 1) {
+                featDiff += new_feat_id + ":" + feat_diff.get(id) + " ";
+                neg_featDiff += new_feat_id + ":" + -1.0 * Double.parseDouble(feat_diff.get(id))
+                    + " ";
               }
             }
           }
@@ -571,13 +557,14 @@ public class Optimizer {
 }
 
 
-class ValueComparator implements Comparator {
-  Map base;
+class ValueComparator implements Comparator<Object> {
+  Map<String,Double> base;
 
-  public ValueComparator(Map base) {
+  public ValueComparator(Map<String,Double> base) {
     this.base = base;
   }
 
+  @Override
   public int compare(Object a, Object b) {
     if ((Double) base.get(a) <= (Double) base.get(b))
       return 1;

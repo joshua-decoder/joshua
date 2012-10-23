@@ -31,6 +31,7 @@ import java.util.zip.GZIPOutputStream;
 import joshua.decoder.JoshuaDecoder;
 import joshua.metrics.EvaluationMetric;
 import joshua.util.StreamGobbler;
+import joshua.corpus.Vocabulary;
 
 /**
  * This code was originally written by Yuan Cao, who copied the MERT code to produce this file.
@@ -110,9 +111,6 @@ public class PROCore {
   /* *********************************************************** */
   /* NOTE: indexing starts at 1 in the following few arrays: */
   /* *********************************************************** */
-
-  private String[] paramNames;
-  // feature names, needed to read/create config file
 
   private double[] lambda;
   // the current weight vector. NOTE: indexing starts at 1.
@@ -292,9 +290,7 @@ public class PROCore {
     // COUNT THE NUMBER OF PARAMETERS
     numParamsInFile = countNonEmptyLines(paramsFileName) - 1;
 
-    paramNames = new String[1 + numParamsInFile];
-
-    // START TO READ IN PARAMETER DEFINITION AND INITIALIZATION INFO
+        // START TO READ IN PARAMETER DEFINITION AND INITIALIZATION INFO
     try {
       // read parameter names
       BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
@@ -308,7 +304,8 @@ public class PROCore {
 
           // SAVE THE PARAMETER NAMES
           String paramName = (line.substring(0, line.indexOf("|||"))).trim();
-          paramNames[c] = paramName;
+          int id = Vocabulary.id(paramName);
+          System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
         }
       } else if (trainingMode.equals("2") || trainingMode.equals("3") || trainingMode.equals("4")) {
         for (int c = 1; c <= numParamsInFile; ++c) // REGULAR FEATURES + DISC
@@ -319,7 +316,7 @@ public class PROCore {
           }
 
           // SAVE THE PARAMETER NAMES
-          paramNames[c] = (line.substring(0, line.indexOf("|||"))).trim();
+          Vocabulary.id((line.substring(0, line.indexOf("|||"))).trim());
 
           if (c == numParamsInFile) // READ THE DISC DEF FILE
           {
@@ -444,15 +441,17 @@ public class PROCore {
       println("Number of documents: " + numDocuments, 1);
       println("Optimizing " + metricName_display, 1);
 
+      /*
       print("docSubsetInfo: {", 1);
       for (int f = 0; f < 6; ++f)
         print(docSubsetInfo[f] + ", ", 1);
       println(docSubsetInfo[6] + "}", 1);
+      */
 
       println("Number of features: " + numParams, 1);
       print("Feature names: {", 1);
       for (int c = 1; c <= numParamsInFile; ++c) {
-        print("\"" + paramNames[c] + "\"", 1);
+        print("\"" + Vocabulary.word(c) + "\"", 1);
         if (c < numParams) print(",", 1);
       }
       println("}", 1);
@@ -489,7 +488,7 @@ public class PROCore {
       if (normalizationOptions[0] == 0) {
         println("none.", 1);
       } else if (normalizationOptions[0] == 1) {
-        println("weights will be scaled so that the \"" + paramNames[(int) normalizationOptions[1]]
+        println("weights will be scaled so that the \"" + Vocabulary.word((int) normalizationOptions[1])
             + "\" weight has an absolute value of " + normalizationOptions[2] + ".", 1);
       } else if (normalizationOptions[0] == 2) {
         println("weights will be scaled so that the maximum absolute value is "
@@ -541,6 +540,30 @@ public class PROCore {
   }
 
   public void run_PRO(int minIts, int maxIts, int prevIts) {
+    //FIRST, CLEAN ALL PREVIOUS TEMP FILES
+    String dir;
+    int k = tmpDirPrefix.lastIndexOf("/");
+    if (k >= 0) {
+      dir = tmpDirPrefix.substring(0, k + 1);
+    } else {
+      dir = "./";
+    }
+    String files;
+    File folder = new File(dir);
+
+    if (folder.exists()) {
+      File[] listOfFiles = folder.listFiles();
+
+      for (int i = 0; i < listOfFiles.length; i++) {
+        if (listOfFiles[i].isFile()) {
+          files = listOfFiles[i].getName();
+          if (files.startsWith("PRO.temp")) {
+            deleteFile(files);
+          }
+        }
+      }
+    }
+
     println("----------------------------------------------------", 1);
     println("PRO run started @ " + (new Date()), 1);
     // printMemoryUsage();
@@ -803,8 +826,8 @@ public class PROCore {
       }
 
       // SCORES CORRESPONDING TO EACH WEIGHT VECTOR CANDIDATE
-      double[] initialScore = new double[1 + initsPerIt]; // BLEU SCORE
-      double[] finalScore = new double[1 + initsPerIt]; // COMPUTED BY "IntermediateOptimizer.java"
+      //double[] initialScore = new double[1 + initsPerIt]; // BLEU SCORE
+      //double[] finalScore = new double[1 + initsPerIt]; // COMPUTED BY "IntermediateOptimizer.java"
 
       double[][] best1Score = new double[1 + initsPerIt][numSentences]; // MODEL SCORE
       int[][][] best1Cand_suffStats = new int[1 + initsPerIt][numSentences][suffStatsCount]; // SUFF
@@ -1054,7 +1077,7 @@ public class PROCore {
                       String[] pair = featurePair.split("=");
                       String name = pair[0];
                       Double value = Double.parseDouble(pair[1]);
-                      currFeatVal[c_fromParamName(name)] = value;
+                      currFeatVal[Vocabulary.id(name)] = value;
                     }
                   } else {
                     for (int c = 1; c <= numParams; ++c) {
@@ -1069,7 +1092,7 @@ public class PROCore {
 
                   if (!trainingMode.equals("4")) {
                     for (int c = 0; c < featVal_str.length; c++) {
-                      feat_info = featVal_str[c].split(":");
+                      feat_info = featVal_str[c].split("[:=]");
                       currFeatVal[Integer.parseInt(feat_info[0])] =
                           Double.parseDouble(feat_info[1]); // INDEX STARTS FROM 1
                     }
@@ -1080,7 +1103,7 @@ public class PROCore {
                     String updated_feat_str = "";
 
                     for (int c = 0; c < featVal_str.length; c++) {
-                      feat_info = featVal_str[c].split(":");
+                      feat_info = featVal_str[c].split("[:=]");
                       featId = Integer.parseInt(feat_info[0]);
 
                       if (1 <= featId && featId <= (numParamsInFile - 1)) // REGULAR FEATURE
@@ -1346,7 +1369,7 @@ public class PROCore {
                     String[] pair = featurePair.split("=");
                     String name = pair[0];
                     Double value = Double.parseDouble(pair[1]);
-                    currFeatVal[c_fromParamName(name)] = value;
+                    currFeatVal[Vocabulary.id(name)] = value;
                   }
                 } else {
                   for (int c = 1; c <= numParams; ++c) {
@@ -1700,11 +1723,11 @@ public class PROCore {
         retStr += "(Mode " + trainingMode + ": listing first 10 sparse feature weights)";
 
         int numToPrint = 10 < numSparseParams ? 10 : numSparseParams;
-        for (int c = 0; c < numToPrint - 1; c++) {
+        for (int c = 0; c <= numToPrint - 1; c++) {
           retStr += lambdaA[c + numParamsInFile] + ", ";
         }
 
-        retStr += lambdaA[numParamsInFile + numToPrint - 1] + "}";
+        retStr += lambdaA[numParamsInFile + numToPrint] + "}";
       }
     }
 
@@ -1924,7 +1947,7 @@ public class PROCore {
         while (line != null) {
           int c_match = -1;
           for (int c = 1; c <= numParamsInFile; ++c) {
-            if (line.startsWith(paramNames[c] + " ")) {
+            if (line.startsWith(Vocabulary.word(c) + " ")) {
               c_match = c;
               break;
             }
@@ -1933,7 +1956,7 @@ public class PROCore {
           if (c_match == -1) {
             outFile.println(line);
           } else {
-            outFile.println(paramNames[c_match] + " " + params[c_match]);
+            outFile.println(Vocabulary.word(c_match) + " " + params[c_match]);
           }
 
           line = inFile.readLine();
@@ -1946,7 +1969,7 @@ public class PROCore {
         while (line != null) {
           int c_match = -1;
           for (int c = 1; c <= numParamsInFile; ++c) {
-            if (line.startsWith(paramNames[c] + " ")) {
+            if (line.startsWith(Vocabulary.word(c) + " ")) {
               c_match = c;
               break;
             }
@@ -1956,9 +1979,9 @@ public class PROCore {
             outFile.println(line);
           } else {
             if (c_match == numParamsInFile)
-              outFile.println(paramNames[c_match] + " " + 1.0); // DISC SUMMARY FEATURE WEIGHT
+              outFile.println(Vocabulary.word(c_match) + " " + 1.0); // DISC SUMMARY FEATURE WEIGHT
             else
-              outFile.println(paramNames[c_match] + " " + params[c_match]);
+              outFile.println(Vocabulary.word(c_match) + " " + params[c_match]);
           }
 
           line = inFile.readLine();
@@ -2027,7 +2050,7 @@ public class PROCore {
           lambda[c] = inFile_init.nextDouble();
           defaultLambda[c] = lambda[c];
         } else {
-          String[] discFeatFields = paramNames[numParamsInFile].split("\\s+");
+          String[] discFeatFields = Vocabulary.word(numParamsInFile).split("\\s+");
           discDefFile = discFeatFields[1];
 
           // READ DISC FEATURE WEIGHTS
@@ -2216,7 +2239,7 @@ public class PROCore {
       for (int i = 3; i < dummyA.length; ++i) { // in case parameter name has multiple words
         pName = pName + " " + dummyA[i];
       }
-      normalizationOptions[2] = c_fromParamName(pName);;
+      normalizationOptions[2] = Vocabulary.id(pName);;
 
       if (normalizationOptions[1] <= 0) {
         println("Value for the absval normalization method must be positive.");
@@ -2469,7 +2492,7 @@ public class PROCore {
       try {
         PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
         for (int c = 1; c <= numParams; ++c) {
-          outFile_lambdas.println(paramNames[c] + " ||| " + lambda[c]);
+          outFile_lambdas.println(Vocabulary.word(c) + " ||| " + lambda[c]);
         }
         outFile_lambdas.close();
 
@@ -3567,13 +3590,6 @@ public class PROCore {
     }
 
     return retLambda;
-  }
-
-  private int c_fromParamName(String pName) {
-    for (int c = 1; c <= numParams; ++c) {
-      if (paramNames[c].equals(pName)) return c;
-    }
-    return 0; // no parameter with that name!
   }
 
   private void setFeats(double[][][] featVal_array, int i, int[] lastUsedIndex, int[] maxIndex,
