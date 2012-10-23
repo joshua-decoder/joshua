@@ -53,11 +53,12 @@ public class JoshuaDecoder {
    */
   /** The DecoderFactory is the main thread of decoding */
   private DecoderFactory decoderFactory;
-  private List<GrammarFactory> grammarFactories;
+  private final List<GrammarFactory> grammarFactories;
   private ArrayList<FeatureFunction> featureFunctions;
   private ArrayList<NGramLanguageModel> languageModels;
 
   private List<StateComputer> stateComputers;
+  private static ArgsParser userArgs;
 
   /* The feature weights. */
   public static FeatureVector weights;
@@ -121,7 +122,7 @@ public class JoshuaDecoder {
         float newWeight = newWeights.get(feature);
         JoshuaDecoder.weights.put(feature, newWeights.get(feature));
         logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature,
-            oldWeight, newWeight));
+          oldWeight, newWeight));
       }
     }
 
@@ -164,7 +165,7 @@ public class JoshuaDecoder {
   // }
 
   public static void writeConfigFile(double[] newWeights, String template, String outputFile,
-      String newDiscriminativeModel) {
+                                     String newDiscriminativeModel) {
     try {
       int columnID = 0;
 
@@ -298,7 +299,7 @@ public class JoshuaDecoder {
 
             weights.put(name, weight);
             JoshuaConfiguration.features.set(i,
-                String.format("feature_function = %s %s %d %d", name, owner, min, max));
+              String.format("feature_function = %s %s %d %d", name, owner, min, max));
           } else if (type.equals("wordpenalty")) {
             String name = "WordPenalty";
             float weight = Float.parseFloat(fields[1]);
@@ -319,7 +320,7 @@ public class JoshuaDecoder {
 
             weights.put(name, weight);
             JoshuaConfiguration.features.set(i,
-                String.format("feature_function = %s %s %d", name, host, port));
+              String.format("feature_function = %s %s %d", name, host, port));
           }
         }
       }
@@ -327,7 +328,7 @@ public class JoshuaDecoder {
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
       logger.info(String.format("Grammar loading took: %d seconds.",
-          (System.currentTimeMillis() - pre_load_time) / 1000));
+        (System.currentTimeMillis() - pre_load_time) / 1000));
 
       // Initialize features that contribute to state (currently only n-grams).
       this.initializeStateComputers();
@@ -347,10 +348,10 @@ public class JoshuaDecoder {
         }
       }
       logger.info(String.format("Grammar sorting took: %d seconds.",
-          (System.currentTimeMillis() - pre_sort_time) / 1000));
+        (System.currentTimeMillis() - pre_sort_time) / 1000));
 
       this.decoderFactory = new DecoderFactory(this.grammarFactories, this.featureFunctions,
-          JoshuaDecoder.weights, this.stateComputers);
+        JoshuaDecoder.weights, this.stateComputers);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -409,17 +410,17 @@ public class JoshuaDecoder {
         logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
 
         this.languageModels.add(new LMGrammarJAVA(lm_order, lm_file, left_equiv_state,
-            right_equiv_state));
+          right_equiv_state));
       }
     }
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
       this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm,
-          ngramStateComputers.get(lm.getOrder())));
+        ngramStateComputers.get(lm.getOrder())));
 
       logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", i, languageModels.get(i)
-          .getOrder(), weights.get(String.format("lm_%d", i))));
+        .getOrder(), weights.get(String.format("lm_%d", i))));
     }
   }
 
@@ -444,14 +445,14 @@ public class JoshuaDecoder {
 
         } else {
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
-              JoshuaConfiguration.default_non_terminal, span_limit);
+            JoshuaConfiguration.default_non_terminal, span_limit);
         }
         this.grammarFactories.add(grammar);
 
         // Record the owner so we can create a feature function for her.
         ownersSeen.add(owner);
       }
-      
+
       /*
        * Create and add a feature function for this owner, the first time we see each owner.
        * 
@@ -466,9 +467,9 @@ public class JoshuaDecoder {
       // TODO: this should initialize the grammar dynamically so that the goal symbol and default
       // non terminal match
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(
-          JoshuaConfiguration.glue_format, System.getenv().get("JOSHUA") + "/data/"
-              + "glue-grammar", JoshuaConfiguration.glue_owner,
-          JoshuaConfiguration.default_non_terminal, -1);
+        JoshuaConfiguration.glue_format, System.getenv().get("JOSHUA") + "/data/"
+            + "glue-grammar", JoshuaConfiguration.glue_owner,
+            JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
 
@@ -557,18 +558,18 @@ public class JoshuaDecoder {
 
         weights.put("aritypenalty", weight);
         this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
-            owner, startArity, endArity)));
+          owner, startArity, endArity)));
 
         logger.info(String.format(
-            "FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity,
-            endArity, weight));
+          "FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity,
+          endArity, weight));
       }
 
       else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
 
         logger
-            .info(String.format("FEATURE: WordPenalty (weight %.3f)", weights.get("WordPenalty")));
+        .info(String.format("FEATURE: WordPenalty (weight %.3f)", weights.get("WordPenalty")));
       }
 
       else if (feature.equals("oovpenalty")) {
@@ -594,14 +595,14 @@ public class JoshuaDecoder {
 
         try {
           this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host,
-              port));
+            port));
           weights.put("EdgePhraseSimilarity", weight);
         } catch (Exception e) {
           e.printStackTrace();
           System.exit(1);
         }
         logger.info(String.format("FEATURE: edge similarity (weight %.3f)",
-            weights.get("edgephrasesimilarity")));
+          weights.get("edgephrasesimilarity")));
       } else if (feature.equals("phrasemodel") || feature.equals("tm")) {
         String owner = fields[1].trim();
         String index = fields[2].trim();
@@ -619,6 +620,8 @@ public class JoshuaDecoder {
   // ===============================================================
   public static void main(String[] args) throws IOException {
 
+    userArgs = new ArgsParser(args);
+
     String logFile = System.getenv().get("JOSHUA") + "/logging.properties";
     try {
       java.util.logging.LogManager.getLogManager().readConfiguration(new FileInputStream(logFile));
@@ -628,73 +631,20 @@ public class JoshuaDecoder {
 
     long startTime = System.currentTimeMillis();
 
-    // if (args.length < 1) {
-    // System.out.println("Usage: java " + JoshuaDecoder.class.getName()
-    // + " -c configFile [other args]");
-    // System.exit(1);
-    // }
-
-    String configFile = null;
-    String testFile = "-";
-    String nbestFile = "-";
-    String oracleFile = null;
-
-    // Step-0: Process the configuration file. We accept two use
-    // cases. (1) For backwards compatility, Joshua can be called
-    // with as "Joshua configFile [testFile [outputFile
-    // [oracleFile]]]". (2) Command-line options can be used, in
-    // which case we look for an argument to the "-config" flag.
-    // We can distinguish these two cases by looking at the first
-    // argument; if it starts with a hyphen, the new format has
-    // been invoked.
-
-    if (args.length >= 1) {
-      if (args[0].startsWith("-")) {
-
-        // Search for the configuration file
-        for (int i = 0; i < args.length; i++) {
-          if (args[i].equals("-c") || args[i].equals("-config")) {
-
-            configFile = args[i + 1].trim();
-            JoshuaConfiguration.readConfigFile(configFile);
-
-            break;
-          }
-        }
-
-        // now process all the command-line args
-        JoshuaConfiguration.processCommandLineOptions(args);
-
-        oracleFile = JoshuaConfiguration.oracleFile;
-
-      } else {
-
-        configFile = args[0].trim();
-
-        JoshuaConfiguration.readConfigFile(configFile);
-
-        if (args.length >= 2)
-          testFile = args[1].trim();
-        if (args.length >= 3)
-          nbestFile = args[2].trim();
-        if (args.length == 4)
-          oracleFile = args[3].trim();
-      }
-    }
-
     /* Step-0: some sanity checking */
     JoshuaConfiguration.sanityCheck();
 
     /* Step-1: initialize the decoder, test-set independent */
-    JoshuaDecoder decoder = new JoshuaDecoder(configFile);
+    JoshuaDecoder decoder = new JoshuaDecoder(userArgs.getConfigFile());
 
     logger.info(String.format("Model loading took %d seconds",
-        (System.currentTimeMillis() - startTime) / 1000));
+      (System.currentTimeMillis() - startTime) / 1000));
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
 
     /* Step-2: Decoding */
-    decoder.decodeTestSet(testFile, nbestFile, oracleFile);
+    decoder
+        .decodeTestSet(userArgs.getTestFile(), userArgs.getNbestFile(), userArgs.getOracleFile());
 
     logger.info("Decoding completed.");
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
@@ -703,7 +653,7 @@ public class JoshuaDecoder {
     /* Step-3: clean up */
     decoder.cleanUp();
     logger.info(String.format("Total running time: %d seconds",
-        (System.currentTimeMillis() - startTime) / 1000));
+      (System.currentTimeMillis() - startTime) / 1000));
   }
 
   /**
@@ -711,5 +661,10 @@ public class JoshuaDecoder {
    */
   public List<Translation> getTranslations() {
     return this.decoderFactory.getTranslations();
+  }
+
+  public String translateString(String value) {
+    // TODO: Instantiate a new translator that runs translations through the pool of threads.
+    return "hola , mundo .";
   }
 }

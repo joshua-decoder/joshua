@@ -1,49 +1,29 @@
 package joshua.decoder;
 
-import java.io.IOException;
 import org.restlet.Server;
 import org.restlet.data.Protocol;
-import org.restlet.resource.Get;
+import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
 
 public class DecoderServer extends ServerResource {
 
-  private final JoshuaDecoder decoder;
+  JoshuaDecoder decoder;
+  private static ArgsParser cliArgs;
 
   public DecoderServer() {
-    String configFile = null;
-    this.decoder = new JoshuaDecoder(configFile);
+    decoder = new JoshuaDecoder(cliArgs.getConfigFile());
   }
 
   public static void main(String[] args) throws Exception {
-
+    cliArgs = new ArgsParser(args);
     // Create the HTTP server and listen on port 8182
     new Server(Protocol.HTTP, 8182, DecoderServer.class).start();
   }
 
-  @Override
-  @Get
-  public String toString() {
-
-    String testFile = "hello_world_file";
-    String nbestFile = "-";
-    String oracleFile = null;
-
-    try {
-      this.decoder.decodeTestSet(testFile, nbestFile, oracleFile);
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    String result = "";
-    for (Translation tr : decoder.getTranslations()) {
-      String s = tr.translation();
-      if (s != null) {
-        result += s;
-      }
-    }
-    return result;
+  @Post("json")
+  public String acceptJson(String value) {
+    return decoder.translateString(value);
   }
 
 }
