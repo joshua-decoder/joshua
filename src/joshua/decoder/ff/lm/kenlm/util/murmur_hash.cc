@@ -7,9 +7,11 @@
  * placed in namespace util
  * add MurmurHashNative
  * default option = 0 for seed
+ * ARM port from NICT
  */
 
 #include "util/murmur_hash.hh"
+#include <string.h>
 
 namespace util {
 
@@ -21,19 +23,31 @@ namespace util {
 
 // 64-bit hash for 64-bit platforms
 
-uint64_t MurmurHash64A ( const void * key, std::size_t len, unsigned int seed )
+uint64_t MurmurHash64A ( const void * key, std::size_t len, uint64_t seed )
 {
   const uint64_t m = 0xc6a4a7935bd1e995ULL;
   const int r = 47;
 
   uint64_t h = seed ^ (len * m);
 
+#if defined(__arm) || defined(__arm__)
+  const size_t ksize = sizeof(uint64_t);
+  const unsigned char * data = (const unsigned char *)key;
+  const unsigned char * end = data + (std::size_t)(len/8) * ksize;
+#else
   const uint64_t * data = (const uint64_t *)key;
   const uint64_t * end = data + (len/8);
+#endif
 
   while(data != end)
   {
+#if defined(__arm) || defined(__arm__)
+    uint64_t k;
+    memcpy(&k, data, ksize);
+    data += ksize;
+#else
     uint64_t k = *data++;
+#endif
 
     k *= m; 
     k ^= k >> r; 
@@ -67,7 +81,7 @@ uint64_t MurmurHash64A ( const void * key, std::size_t len, unsigned int seed )
 
 // 64-bit hash for 32-bit platforms
 
-uint64_t MurmurHash64B ( const void * key, std::size_t len, unsigned int seed )
+uint64_t MurmurHash64B ( const void * key, std::size_t len, uint64_t seed )
 {
   const unsigned int m = 0x5bd1e995;
   const int r = 24;
@@ -75,16 +89,30 @@ uint64_t MurmurHash64B ( const void * key, std::size_t len, unsigned int seed )
   unsigned int h1 = seed ^ len;
   unsigned int h2 = 0;
 
+#if defined(__arm) || defined(__arm__)
+  size_t ksize = sizeof(unsigned int);
+  const unsigned char * data = (const unsigned char *)key;
+#else
   const unsigned int * data = (const unsigned int *)key;
+#endif
 
+  unsigned int k1, k2;
   while(len >= 8)
   {
-    unsigned int k1 = *data++;
+#if defined(__arm) || defined(__arm__)
+    memcpy(&k1, data, ksize);
+    data += ksize;
+    memcpy(&k2, data, ksize);
+    data += ksize;
+#else
+    k1 = *data++;
+    k2 = *data++;
+#endif
+
     k1 *= m; k1 ^= k1 >> r; k1 *= m;
     h1 *= m; h1 ^= k1;
     len -= 4;
 
-    unsigned int k2 = *data++;
     k2 *= m; k2 ^= k2 >> r; k2 *= m;
     h2 *= m; h2 ^= k2;
     len -= 4;
@@ -92,7 +120,12 @@ uint64_t MurmurHash64B ( const void * key, std::size_t len, unsigned int seed )
 
   if(len >= 4)
   {
-    unsigned int k1 = *data++;
+#if defined(__arm) || defined(__arm__)
+    memcpy(&k1, data, ksize);
+    data += ksize;
+#else
+    k1 = *data++;
+#endif
     k1 *= m; k1 ^= k1 >> r; k1 *= m;
     h1 *= m; h1 ^= k1;
     len -= 4;
@@ -118,12 +151,18 @@ uint64_t MurmurHash64B ( const void * key, std::size_t len, unsigned int seed )
   return h;
 }
 
-uint64_t MurmurHashNative(const void * key, std::size_t len, unsigned int seed) {
-  if (sizeof(int) == 4) {
-    return MurmurHash64B(key, len, seed);
-  } else {
-    return MurmurHash64A(key, len, seed);
-  }
+// Trick to test for 64-bit architecture at compile time.  
+namespace {
+template <unsigned L> inline uint64_t MurmurHashNativeBackend(const void * key, std::size_t len, uint64_t seed) {
+  return MurmurHash64A(key, len, seed);
+}
+template <> inline uint64_t MurmurHashNativeBackend<4>(const void * key, std::size_t len, uint64_t seed) {
+  return MurmurHash64B(key, len, seed);
+}
+} // namespace
+
+uint64_t MurmurHashNative(const void * key, std::size_t len, uint64_t seed) {
+  return MurmurHashNativeBackend<sizeof(void*)>(key, len, seed);
 }
 
 } // namespace util

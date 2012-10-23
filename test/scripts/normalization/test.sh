@@ -7,10 +7,11 @@ diff -U 1 output data/train.en.norm > diff
 
 if [[ $? -eq 0 ]]; then
 	echo PASSED
+	rm -f output diff
 	exit 0
 else
 	echo FAILED NORMALIZATION TEST
-	cat diff
+	tail diff
 	exit 1
 fi
 

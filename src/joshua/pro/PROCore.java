@@ -30,6 +30,8 @@ import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.JoshuaDecoder;
 import joshua.metrics.EvaluationMetric;
+import joshua.util.StreamGobbler;
+import joshua.corpus.Vocabulary;
 
 /**
  * This code was originally written by Yuan Cao, who copied the MERT code to produce this file.
@@ -109,9 +111,6 @@ public class PROCore {
   /* *********************************************************** */
   /* NOTE: indexing starts at 1 in the following few arrays: */
   /* *********************************************************** */
-
-  private String[] paramNames;
-  // feature names, needed to read/create config file
 
   private double[] lambda;
   // the current weight vector. NOTE: indexing starts at 1.
@@ -217,9 +216,8 @@ public class PROCore {
   private String tmpDirPrefix;
   // prefix for the ZMERT.temp.* files
 
-  private int passIterationToDecoder;
+  private boolean passIterationToDecoder;
   // should the iteration number be passed as an argument to decoderCommandFileName?
-  // If 1, iteration number is passed. If 0, launch with no arguments.
 
   // USED FOR PRO
   private String classifierAlg; // THE CLASSIFICATION ALGORITHM(PERCEP, MEGAM, MAXENT ...)
@@ -292,9 +290,7 @@ public class PROCore {
     // COUNT THE NUMBER OF PARAMETERS
     numParamsInFile = countNonEmptyLines(paramsFileName) - 1;
 
-    paramNames = new String[1 + numParamsInFile];
-
-    // START TO READ IN PARAMETER DEFINITION AND INITIALIZATION INFO
+        // START TO READ IN PARAMETER DEFINITION AND INITIALIZATION INFO
     try {
       // read parameter names
       BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
@@ -308,7 +304,8 @@ public class PROCore {
 
           // SAVE THE PARAMETER NAMES
           String paramName = (line.substring(0, line.indexOf("|||"))).trim();
-          paramNames[c] = paramName;
+          int id = Vocabulary.id(paramName);
+          System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
         }
       } else if (trainingMode.equals("2") || trainingMode.equals("3") || trainingMode.equals("4")) {
         for (int c = 1; c <= numParamsInFile; ++c) // REGULAR FEATURES + DISC
@@ -319,7 +316,7 @@ public class PROCore {
           }
 
           // SAVE THE PARAMETER NAMES
-          paramNames[c] = (line.substring(0, line.indexOf("|||"))).trim();
+          Vocabulary.id((line.substring(0, line.indexOf("|||"))).trim());
 
           if (c == numParamsInFile) // READ THE DISC DEF FILE
           {
@@ -444,15 +441,17 @@ public class PROCore {
       println("Number of documents: " + numDocuments, 1);
       println("Optimizing " + metricName_display, 1);
 
+      /*
       print("docSubsetInfo: {", 1);
       for (int f = 0; f < 6; ++f)
         print(docSubsetInfo[f] + ", ", 1);
       println(docSubsetInfo[6] + "}", 1);
+      */
 
       println("Number of features: " + numParams, 1);
       print("Feature names: {", 1);
       for (int c = 1; c <= numParamsInFile; ++c) {
-        print("\"" + paramNames[c] + "\"", 1);
+        print("\"" + Vocabulary.word(c) + "\"", 1);
         if (c < numParams) print(",", 1);
       }
       println("}", 1);
@@ -489,7 +488,7 @@ public class PROCore {
       if (normalizationOptions[0] == 0) {
         println("none.", 1);
       } else if (normalizationOptions[0] == 1) {
-        println("weights will be scaled so that the \"" + paramNames[(int) normalizationOptions[1]]
+        println("weights will be scaled so that the \"" + Vocabulary.word((int) normalizationOptions[1])
             + "\" weight has an absolute value of " + normalizationOptions[2] + ".", 1);
       } else if (normalizationOptions[0] == 2) {
         println("weights will be scaled so that the maximum absolute value is "
@@ -541,6 +540,30 @@ public class PROCore {
   }
 
   public void run_PRO(int minIts, int maxIts, int prevIts) {
+    //FIRST, CLEAN ALL PREVIOUS TEMP FILES
+    String dir;
+    int k = tmpDirPrefix.lastIndexOf("/");
+    if (k >= 0) {
+      dir = tmpDirPrefix.substring(0, k + 1);
+    } else {
+      dir = "./";
+    }
+    String files;
+    File folder = new File(dir);
+
+    if (folder.exists()) {
+      File[] listOfFiles = folder.listFiles();
+
+      for (int i = 0; i < listOfFiles.length; i++) {
+        if (listOfFiles[i].isFile()) {
+          files = listOfFiles[i].getName();
+          if (files.startsWith("PRO.temp")) {
+            deleteFile(files);
+          }
+        }
+      }
+    }
+
     println("----------------------------------------------------", 1);
     println("PRO run started @ " + (new Date()), 1);
     // printMemoryUsage();
@@ -803,8 +826,8 @@ public class PROCore {
       }
 
       // SCORES CORRESPONDING TO EACH WEIGHT VECTOR CANDIDATE
-      double[] initialScore = new double[1 + initsPerIt]; // BLEU SCORE
-      double[] finalScore = new double[1 + initsPerIt]; // COMPUTED BY "IntermediateOptimizer.java"
+      //double[] initialScore = new double[1 + initsPerIt]; // BLEU SCORE
+      //double[] finalScore = new double[1 + initsPerIt]; // COMPUTED BY "IntermediateOptimizer.java"
 
       double[][] best1Score = new double[1 + initsPerIt][numSentences]; // MODEL SCORE
       int[][][] best1Cand_suffStats = new int[1 + initsPerIt][numSentences][suffStatsCount]; // SUFF
@@ -1054,7 +1077,7 @@ public class PROCore {
                       String[] pair = featurePair.split("=");
                       String name = pair[0];
                       Double value = Double.parseDouble(pair[1]);
-                      currFeatVal[c_fromParamName(name)] = value;
+                      currFeatVal[Vocabulary.id(name)] = value;
                     }
                   } else {
                     for (int c = 1; c <= numParams; ++c) {
@@ -1069,7 +1092,7 @@ public class PROCore {
 
                   if (!trainingMode.equals("4")) {
                     for (int c = 0; c < featVal_str.length; c++) {
-                      feat_info = featVal_str[c].split(":");
+                      feat_info = featVal_str[c].split("[:=]");
                       currFeatVal[Integer.parseInt(feat_info[0])] =
                           Double.parseDouble(feat_info[1]); // INDEX STARTS FROM 1
                     }
@@ -1080,7 +1103,7 @@ public class PROCore {
                     String updated_feat_str = "";
 
                     for (int c = 0; c < featVal_str.length; c++) {
-                      feat_info = featVal_str[c].split(":");
+                      feat_info = featVal_str[c].split("[:=]");
                       featId = Integer.parseInt(feat_info[0]);
 
                       if (1 <= featId && featId <= (numParamsInFile - 1)) // REGULAR FEATURE
@@ -1346,7 +1369,7 @@ public class PROCore {
                     String[] pair = featurePair.split("=");
                     String name = pair[0];
                     Double value = Double.parseDouble(pair[1]);
-                    currFeatVal[c_fromParamName(name)] = value;
+                    currFeatVal[Vocabulary.id(name)] = value;
                   }
                 } else {
                   for (int c = 1; c <= numParams; ++c) {
@@ -1700,11 +1723,11 @@ public class PROCore {
         retStr += "(Mode " + trainingMode + ": listing first 10 sparse feature weights)";
 
         int numToPrint = 10 < numSparseParams ? 10 : numSparseParams;
-        for (int c = 0; c < numToPrint - 1; c++) {
+        for (int c = 0; c <= numToPrint - 1; c++) {
           retStr += lambdaA[c + numParamsInFile] + ", ";
         }
 
-        retStr += lambdaA[numParamsInFile + numToPrint - 1] + "}";
+        retStr += lambdaA[numParamsInFile + numToPrint] + "}";
       }
     }
 
@@ -1768,20 +1791,18 @@ public class PROCore {
       println("Running external decoder...", 1);
 
       try {
-        Runtime rt = Runtime.getRuntime();
-        String cmd = decoderCommandFileName;
-        if (passIterationToDecoder == 1) {
-          cmd = cmd + " " + iteration;
-        }
+        ArrayList<String> cmd = new ArrayList<String>();
+        cmd.add(decoderCommandFileName);
+        if (passIterationToDecoder)
+          cmd.add(Integer.toString(iteration));
 
-        // RUN DECODER
-        Process p = rt.exec(cmd);
-
-        StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
-        StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
-
-        errorGobbler.start();
-        outputGobbler.start();
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        // this merges the error and output streams of the subprocess
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+ 
+        // capture the sub-command's output
+        new StreamGobbler(p.getInputStream(), decVerbosity).start();
 
         int decStatus = p.waitFor();
         if (decStatus != validDecoderExitValue) {
@@ -1926,7 +1947,7 @@ public class PROCore {
         while (line != null) {
           int c_match = -1;
           for (int c = 1; c <= numParamsInFile; ++c) {
-            if (line.startsWith(paramNames[c] + " ")) {
+            if (line.startsWith(Vocabulary.word(c) + " ")) {
               c_match = c;
               break;
             }
@@ -1935,7 +1956,7 @@ public class PROCore {
           if (c_match == -1) {
             outFile.println(line);
           } else {
-            outFile.println(paramNames[c_match] + " " + params[c_match]);
+            outFile.println(Vocabulary.word(c_match) + " " + params[c_match]);
           }
 
           line = inFile.readLine();
@@ -1948,7 +1969,7 @@ public class PROCore {
         while (line != null) {
           int c_match = -1;
           for (int c = 1; c <= numParamsInFile; ++c) {
-            if (line.startsWith(paramNames[c] + " ")) {
+            if (line.startsWith(Vocabulary.word(c) + " ")) {
               c_match = c;
               break;
             }
@@ -1958,9 +1979,9 @@ public class PROCore {
             outFile.println(line);
           } else {
             if (c_match == numParamsInFile)
-              outFile.println(paramNames[c_match] + " " + 1.0); // DISC SUMMARY FEATURE WEIGHT
+              outFile.println(Vocabulary.word(c_match) + " " + 1.0); // DISC SUMMARY FEATURE WEIGHT
             else
-              outFile.println(paramNames[c_match] + " " + params[c_match]);
+              outFile.println(Vocabulary.word(c_match) + " " + params[c_match]);
           }
 
           line = inFile.readLine();
@@ -2029,7 +2050,7 @@ public class PROCore {
           lambda[c] = inFile_init.nextDouble();
           defaultLambda[c] = lambda[c];
         } else {
-          String[] discFeatFields = paramNames[numParamsInFile].split("\\s+");
+          String[] discFeatFields = Vocabulary.word(numParamsInFile).split("\\s+");
           discDefFile = discFeatFields[1];
 
           // READ DISC FEATURE WEIGHTS
@@ -2218,7 +2239,7 @@ public class PROCore {
       for (int i = 3; i < dummyA.length; ++i) { // in case parameter name has multiple words
         pName = pName + " " + dummyA[i];
       }
-      normalizationOptions[2] = c_fromParamName(pName);;
+      normalizationOptions[2] = Vocabulary.id(pName);;
 
       if (normalizationOptions[1] <= 0) {
         println("Value for the absval normalization method must be positive.");
@@ -2471,7 +2492,7 @@ public class PROCore {
       try {
         PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
         for (int c = 1; c <= numParams; ++c) {
-          outFile_lambdas.println(paramNames[c] + " ||| " + lambda[c]);
+          outFile_lambdas.println(Vocabulary.word(c) + " ||| " + lambda[c]);
         }
         outFile_lambdas.close();
 
@@ -2627,7 +2648,7 @@ public class PROCore {
     // useDisk = 2;
     // Decoder specs
     decoderCommandFileName = null;
-    passIterationToDecoder = 0;
+    passIterationToDecoder = false;
     decoderOutFileName = "output.nbest";
     validDecoderExitValue = 0;
     decoderConfigFileName = "dec_cfg.txt";
@@ -2858,11 +2879,12 @@ public class PROCore {
       else if (option.equals("-cmd")) {
         decoderCommandFileName = args[i + 1];
       } else if (option.equals("-passIt")) {
-        passIterationToDecoder = Integer.parseInt(args[i + 1]);
-        if (passIterationToDecoder < 0 || passIterationToDecoder > 1) {
+        int val = Integer.parseInt(args[i+1]);
+        if (val < 0 || val > 1) {
           println("passIterationToDecoder should be either 0 or 1");
           System.exit(10);
         }
+        passIterationToDecoder = (val == 1) ? true : false;
       } else if (option.equals("-decOut")) {
         decoderOutFileName = args[i + 1];
       } else if (option.equals("-decExit")) {
@@ -3570,13 +3592,6 @@ public class PROCore {
     return retLambda;
   }
 
-  private int c_fromParamName(String pName) {
-    for (int c = 1; c <= numParams; ++c) {
-      if (paramNames[c].equals(pName)) return c;
-    }
-    return 0; // no parameter with that name!
-  }
-
   private void setFeats(double[][][] featVal_array, int i, int[] lastUsedIndex, int[] maxIndex,
       double[] featVal) {
     int k = lastUsedIndex[i] + 1;
@@ -3849,81 +3864,3 @@ public class PROCore {
   }
 
 }
-
-
-// based on:
-// http://www.javaworld.com/javaworld/jw-12-2000/jw-1229-traps.html?page=4
-class StreamGobbler extends Thread {
-  InputStream istream;
-  boolean verbose;
-
-  StreamGobbler(InputStream is, int p) {
-    istream = is;
-    verbose = (p != 0);
-  }
-
-  public void run() {
-    try {
-      InputStreamReader isreader = new InputStreamReader(istream);
-      BufferedReader br = new BufferedReader(isreader);
-      String line = null;
-      while ((line = br.readLine()) != null) {
-        if (verbose) System.out.println(line);
-      }
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
-    }
-  }
-}
-
-
-/*
- * 
- * fake: ----- ex2_N300: java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir
- * MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt
- * -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed
- * 1226091488390 -save 1 -fake nbest_ex2.out.N300.it >
- * ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
- * 
- * ex2_N500: java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example
- * -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut
- * nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390
- * -save 1 -fake nbest_ex2.out.N500.it >
- * ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
- * 
- * exL_N300__600max: java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.ZMERT.ZMERT -dir
- * MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg
- * config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0
- * -seed 1226091488390 -save 1 -fake nbest_exL.out.it >
- * exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
- * 
- * exL_N300__300max: java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir
- * MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg
- * config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0
- * -seed 1226091488390 -save 1 -fake nbest_exL.out.it >
- * exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
- * 
- * gen: ---- ex2_N300: make sure top_n=300 in MERT_example\config_ex2.txt java
- * -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r
- * ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p
- * params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
- * 
- * ex2_N500: make sure top_n=500 in MERT_example\config_ex2.txt java -javaagent:shiftone-jrat.jar
- * -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd
- * decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25
- * -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
- * 
- * exL_N300__600max: run on CLSP machines only! (e.g. z12) $JAVA_bin/java
- * -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.ZMERT.ZMERT -dir YOURDIR -s mt06_source.txt
- * -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300
- * -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
- * 
- * exL_N300__300max: run on CLSP machines only! (e.g. z12) $JAVA_bin/java
- * -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir YOURDIR -s mt06_source.txt
- * -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300
- * -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 >
- * exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
- */

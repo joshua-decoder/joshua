@@ -1,11 +1,17 @@
 == 4.01 ==
 
-Bugfixes:
+- Bugfixes:
 
-- If the training data were split into 10 or more pieces, the alignments were combined
-  in the wrong order (due to a lexicographic instead of numeric sort on a file glob).
+   - If the training data were split into 10 or more pieces, the alignments were combined
+     in the wrong order (due to a lexicographic instead of numeric sort on a file glob).
 
-- Removed "thrax" dependency from "all" target
+   - Removed "thrax" dependency from "all" target
+
+   - Fixed bug in MERT and PRO that waited for all the decoder STDOUT before moving on
+     to STDERR.  With large enough dev sets, this could hang indefinitely.
+
+- Updated berkeleyLM to version 1.1 (r463) with built-in thread-safe caching.
+
 
 == 4.0 (July 2, 2012) ===========================================
 

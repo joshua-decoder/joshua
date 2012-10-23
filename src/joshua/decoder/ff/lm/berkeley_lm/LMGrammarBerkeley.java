@@ -97,7 +97,6 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
       lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String>readLmBinary(lm_file);
     } else {
       ConfigOptions opts = new ConfigOptions();
-      opts.unknownWordLogProb = -1.0f * JoshuaConfiguration.lm_ceiling_cost;
       logger.info("Loading Berkeley LM from ARPA file " + lm_file);
       final StringWordIndexer wordIndexer = new StringWordIndexer();
       ArrayEncodedNgramLanguageModel<String> berkeleyLm =
@@ -105,7 +104,6 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
       lm = ArrayEncodedCachingLmWrapper.wrapWithCacheThreadSafe(berkeleyLm);
     }
-    lm.setOovWordLogProb((float) (-1.0f * JoshuaConfiguration.lm_ceiling_cost));
     this.unkIndex = lm.getWordIndexer().getOrAddIndex(lm.getWordIndexer().getUnkSymbol());
   }
 
@@ -119,7 +117,7 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
     }
     mappingLength = Math.max(mappingLength, id + 1);
-    vocabIdToMyIdMapping[id] = myid == unkIndex ? -1 : myid;
+    vocabIdToMyIdMapping[id] = myid;
 
     return false;
   }
@@ -165,8 +163,7 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
       arrayScratch.set(mappedNgram = new int[mappedNgram.length * 2]);
     }
     for (int i = 0; i < ngram.length; ++i) {
-      mappedNgram[i] =
-          (ngram[i] == unkIndex || ngram[i] >= mappingLength) ? -1 : vocabIdToMyIdMapping[ngram[i]];
+      mappedNgram[i] = vocabIdToMyIdMapping[ngram[i]];
     }
 
     if (log && logRequests) {
@@ -180,12 +177,9 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     return res;
   }
 
-
-
   public static void setLogRequests(Handler handler) {
     logRequests = true;
     logHandler = handler;
-
   }
 
   public double ngramLogProbability(int[] ngram) {

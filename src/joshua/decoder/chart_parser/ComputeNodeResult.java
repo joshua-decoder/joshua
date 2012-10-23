@@ -158,7 +158,6 @@ public class ComputeNodeResult {
     return this.pruningCostEstimate;
   }
 
-
   float getFinalizedTotalLogP() {
     return getViterbiCost();
   }
@@ -166,7 +165,6 @@ public class ComputeNodeResult {
   float getViterbiCost() {
     return this.viterbiCost;
   }
-
 
   float getTransitionTotalLogP() {
     return getTransitionCost();
@@ -176,11 +174,9 @@ public class ComputeNodeResult {
     return this.transitionCost;
   }
 
-
   TreeMap<StateComputer, DPState> getDPStates() {
     return this.dpStates;
   }
-
 
   public void printInfo() {
     System.out.println("scores: " + transitionCost + "; " + viterbiCost + "; "

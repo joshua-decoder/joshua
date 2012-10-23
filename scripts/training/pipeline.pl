@@ -1149,7 +1149,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # copy the config file over
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-									"cat $tunedir/joshua.config | $SCRIPTDIR/copy-config.pl -mark-oovs true -use-sent-specific-tm false -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
+									"cat $tunedir/joshua.config | $SCRIPTDIR/copy-config.pl -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config",
 									"$testrun/joshua.config");
 

@@ -30,18 +30,6 @@ public class NgramDPState implements DPState {
     this.rightLMStateWords = intArrayToList(Vocabulary.addAll(states[1]));
   }
 
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<");
-    for (int id: leftLMStateWords)
-      sb.append(" " + Vocabulary.word(id));
-    sb.append(" |");
-    for (int id: rightLMStateWords)
-      sb.append(" " + Vocabulary.word(id));
-    sb.append(" >");
-    return sb.toString();
-  }
-
   public void setLeftLMStateWords(List<Integer> words_) {
     this.leftLMStateWords = words_;
   }
@@ -114,4 +102,15 @@ public class NgramDPState implements DPState {
     return res;
   }
 
-}
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<");
+    for (int id: leftLMStateWords)
+      sb.append(" " + Vocabulary.word(id));
+    sb.append(" |");
+    for (int id: rightLMStateWords)
+      sb.append(" " + Vocabulary.word(id));
+    sb.append(" >");
+    return sb.toString();
+  }
+ }

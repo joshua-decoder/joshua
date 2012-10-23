@@ -19,7 +19,12 @@ use warnings;
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
 
-my $grammar = shift;
+sub usage {
+  print "Usage: grammar-packer.pl input-grammar [output-dir=grammar.packed [packer-config]]\n";
+  exit;
+}
+
+my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 my $config  = shift || undef;
 

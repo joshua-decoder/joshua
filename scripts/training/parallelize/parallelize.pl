@@ -312,7 +312,7 @@ sub launch_job {
       push @errors,$errorfile;
       push @outs,$outfile;
     }
-    my $todo = qsub_args($pmem,$queue) . " -N $clientname -o $outfile -e $errorfile $qsub_args";
+    my $todo = qsub_args($pmem,$queue) . " -V -N $clientname -o $outfile -e $errorfile $qsub_args";
     push @cmds,$todo;
 
     print STDERR "Running: $todo\n";

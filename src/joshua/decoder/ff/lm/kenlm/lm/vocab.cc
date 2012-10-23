@@ -1,15 +1,19 @@
 #include "lm/vocab.hh"
 
+#include "lm/binary_format.hh"
 #include "lm/enumerate_vocab.hh"
 #include "lm/lm_exception.hh"
 #include "lm/config.hh"
 #include "lm/weights.hh"
 #include "util/exception.hh"
+#include "util/file.hh"
 #include "util/joint_sort.hh"
 #include "util/murmur_hash.hh"
 #include "util/probing_hash_table.hh"
 
 #include <string>
+
+#include <string.h>
 
 namespace lm {
 namespace ngram {
@@ -28,23 +32,30 @@ const uint64_t kUnknownHash = detail::HashForVocab("<unk>", 5);
 // Sadly some LMs have <UNK>.  
 const uint64_t kUnknownCapHash = detail::HashForVocab("<UNK>", 5);
 
-WordIndex ReadWords(int fd, EnumerateVocab *enumerate) {
-  if (!enumerate) return std::numeric_limits<WordIndex>::max();
+void ReadWords(int fd, EnumerateVocab *enumerate, WordIndex expected_count) {
+  // Check that we're at the right place by reading <unk> which is always first.
+  char check_unk[6];
+  util::ReadOrThrow(fd, check_unk, 6);
+  UTIL_THROW_IF(
+      memcmp(check_unk, "<unk>", 6),
+      FormatLoadException, 
+      "Vocabulary words are in the wrong place.  This could be because the binary file was built with stale gcc and old kenlm.  Stale gcc, including the gcc distributed with RedHat and OS X, has a bug that ignores pragma pack for template-dependent types.  New kenlm works around this, so you'll save memory but have to rebuild any binary files using the probing data structure.");
+  if (!enumerate) return;
+  enumerate->Add(0, "<unk>");
+
+  // Read all the words after unk.
   const std::size_t kInitialRead = 16384;
   std::string buf;
   buf.reserve(kInitialRead + 100);
   buf.resize(kInitialRead);
-  WordIndex index = 0;
+  WordIndex index = 1; // Read <unk> already.
   while (true) {
-    ssize_t got = read(fd, &buf[0], kInitialRead);
-    UTIL_THROW_IF(got == -1, util::ErrnoException, "Reading vocabulary words");
-    if (got == 0) return index;
+    std::size_t got = util::ReadOrEOF(fd, &buf[0], kInitialRead);
+    if (got == 0) break;
     buf.resize(got);
     while (buf[buf.size() - 1]) {
       char next_char;
-      ssize_t ret = read(fd, &next_char, 1);
-      UTIL_THROW_IF(ret == -1, util::ErrnoException, "Reading vocabulary words");
-      UTIL_THROW_IF(ret == 0, FormatLoadException, "Missing null terminator on a vocab word.");
+      util::ReadOrThrow(fd, &next_char, 1);
       buf.push_back(next_char);
     }
     // Ok now we have null terminated strings.  
@@ -54,16 +65,8 @@ WordIndex ReadWords(int fd, EnumerateVocab *enumerate) {
       i += length + 1 /* null byte */;
     }
   }
-}
 
-void WriteOrThrow(int fd, const void *data_void, std::size_t size) {
-  const uint8_t *data = static_cast<const uint8_t*>(data_void);
-  while (size) {
-    ssize_t ret = write(fd, data, size);
-    if (ret < 1) UTIL_THROW(util::ErrnoException, "Write failed");
-    data += ret;
-    size -= ret;
-  }
+  UTIL_THROW_IF(expected_count != index, FormatLoadException, "The binary file has the wrong number of words at the end.  This could be caused by a truncated binary file.");
 }
 
 } // namespace
@@ -77,15 +80,14 @@ void WriteWordsWrapper::Add(WordIndex index, const StringPiece &str) {
   buffer_.push_back(0);
 }
 
-void WriteWordsWrapper::Write(int fd) {
-  if ((off_t)-1 == lseek(fd, 0, SEEK_END))
-    UTIL_THROW(util::ErrnoException, "Failed to seek in binary to vocab words");
-  WriteOrThrow(fd, buffer_.data(), buffer_.size());
+void WriteWordsWrapper::Write(int fd, uint64_t start) {
+  util::SeekOrThrow(fd, start);
+  util::WriteOrThrow(fd, buffer_.data(), buffer_.size());
 }
 
 SortedVocabulary::SortedVocabulary() : begin_(NULL), end_(NULL), enumerate_(NULL) {}
 
-std::size_t SortedVocabulary::Size(std::size_t entries, const Config &/*config*/) {
+uint64_t SortedVocabulary::Size(uint64_t entries, const Config &/*config*/) {
   // Lead with the number of entries.  
   return sizeof(uint64_t) + sizeof(uint64_t) * entries;
 }
@@ -123,8 +125,10 @@ WordIndex SortedVocabulary::Insert(const StringPiece &str) {
 
 void SortedVocabulary::FinishedLoading(ProbBackoff *reorder_vocab) {
   if (enumerate_) {
-    util::PairedIterator<ProbBackoff*, std::string*> values(reorder_vocab + 1, &*strings_to_enumerate_.begin());
-    util::JointSort(begin_, end_, values);
+    if (!strings_to_enumerate_.empty()) {
+      util::PairedIterator<ProbBackoff*, std::string*> values(reorder_vocab + 1, &*strings_to_enumerate_.begin());
+      util::JointSort(begin_, end_, values);
+    }
     for (WordIndex i = 0; i < static_cast<WordIndex>(end_ - begin_); ++i) {
       // <unk> strikes again: +1 here.  
       enumerate_->Add(i + 1, strings_to_enumerate_[i]);
@@ -140,21 +144,35 @@ void SortedVocabulary::FinishedLoading(ProbBackoff *reorder_vocab) {
   bound_ = end_ - begin_ + 1;
 }
 
-void SortedVocabulary::LoadedBinary(int fd, EnumerateVocab *to) {
+void SortedVocabulary::LoadedBinary(bool have_words, int fd, EnumerateVocab *to) {
   end_ = begin_ + *(reinterpret_cast<const uint64_t*>(begin_) - 1);
-  ReadWords(fd, to);
   SetSpecial(Index("<s>"), Index("</s>"), 0);
+  bound_ = end_ - begin_ + 1;
+  if (have_words) ReadWords(fd, to, bound_);
 }
+
+namespace {
+const unsigned int kProbingVocabularyVersion = 0;
+} // namespace
+
+namespace detail {
+struct ProbingVocabularyHeader {
+  // Lowest unused vocab id.  This is also the number of words, including <unk>.  
+  unsigned int version;
+  WordIndex bound;
+};
+} // namespace detail
 
 ProbingVocabulary::ProbingVocabulary() : enumerate_(NULL) {}
 
-std::size_t ProbingVocabulary::Size(std::size_t entries, const Config &config) {
-  return Lookup::Size(entries, config.probing_multiplier);
+uint64_t ProbingVocabulary::Size(uint64_t entries, const Config &config) {
+  return ALIGN8(sizeof(detail::ProbingVocabularyHeader)) + Lookup::Size(entries, config.probing_multiplier);
 }
 
 void ProbingVocabulary::SetupMemory(void *start, std::size_t allocated, std::size_t /*entries*/, const Config &/*config*/) {
-  lookup_ = Lookup(start, allocated);
-  available_ = 1;
+  header_ = static_cast<detail::ProbingVocabularyHeader*>(start);
+  lookup_ = Lookup(static_cast<uint8_t*>(start) + ALIGN8(sizeof(detail::ProbingVocabularyHeader)), allocated);
+  bound_ = 1;
   saw_unk_ = false;
 }
 
@@ -172,21 +190,25 @@ WordIndex ProbingVocabulary::Insert(const StringPiece &str) {
     saw_unk_ = true;
     return 0;
   } else {
-    if (enumerate_) enumerate_->Add(available_, str);
-    lookup_.Insert(Lookup::Packing::Make(hashed, available_));
-    return available_++;
+    if (enumerate_) enumerate_->Add(bound_, str);
+    lookup_.Insert(ProbingVocabuaryEntry::Make(hashed, bound_));
+    return bound_++;
   }
 }
 
-void ProbingVocabulary::FinishedLoading(ProbBackoff * /*reorder_vocab*/) {
+void ProbingVocabulary::InternalFinishedLoading() {
   lookup_.FinishedInserting();
+  header_->bound = bound_;
+  header_->version = kProbingVocabularyVersion;
   SetSpecial(Index("<s>"), Index("</s>"), 0);
 }
 
-void ProbingVocabulary::LoadedBinary(int fd, EnumerateVocab *to) {
+void ProbingVocabulary::LoadedBinary(bool have_words, int fd, EnumerateVocab *to) {
+  UTIL_THROW_IF(header_->version != kProbingVocabularyVersion, FormatLoadException, "The binary file has probing version " << header_->version << " but the code expects version " << kProbingVocabularyVersion << ".  Please rerun build_binary using the same version of the code.");
   lookup_.LoadedBinary();
-  available_ = ReadWords(fd, to);
+  bound_ = header_->bound;
   SetSpecial(Index("<s>"), Index("</s>"), 0);
+  if (have_words) ReadWords(fd, to, bound_);
 }
 
 void MissingUnknown(const Config &config) throw(SpecialWordMissingException) {

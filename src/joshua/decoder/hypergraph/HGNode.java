@@ -1,5 +1,7 @@
 package joshua.decoder.hypergraph;
 
+import joshua.corpus.Vocabulary;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -71,29 +73,9 @@ public class HGNode implements Prunable<HGNode> {
     this.dpStates = states;
   }
 
-
   // ===============================================================
   // Methods
   // ===============================================================
-
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-
-    sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j, bestHyperedge.bestDerivationLogP));
-    if (dpStates != null)
-      for (DPState state: dpStates.values())
-        sb.append(" <" + state + ">");
-    
-//    if (this.hyperedges != null) {
-//      sb.append(" hyperedges: " + hyperedges.size());
-//      for (HyperEdge edge: hyperedges) {
-//        sb.append("\n\t" + edge.getRule() + " ||| pathcost=" + edge.getSourcePath() + " ref="+ Integer.toHexString(edge.hashCode()));
-//      }
-//    }
-        
-//    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
-    return sb.toString();
-  }
 
   /**
    * Adds the hyperedge to the list of incoming hyperedges (i.e., ways to form this node), creating
@@ -112,7 +94,6 @@ public class HGNode implements Prunable<HGNode> {
 //      System.err.println(String.format("ADD_EDGES_TO_NODE: adding \n\tEDGE %s to \n\tNODE %s", hyperEdge, this));
     }
   }
-
 
   /**
    * Convenience function to add a list of hyperedges one at a time.
@@ -271,6 +252,25 @@ public class HGNode implements Prunable<HGNode> {
 
   public void setPruneLogP(double estTotalLogP) {
     this.estTotalLogP = estTotalLogP;
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j, bestHyperedge.bestDerivationLogP));
+    if (dpStates != null)
+      for (DPState state: dpStates.values())
+        sb.append(" <" + state + ">");
+    
+    //    if (this.hyperedges != null) {
+    //      sb.append(" hyperedges: " + hyperedges.size());
+    //      for (HyperEdge edge: hyperedges) {
+    //        sb.append("\n\t" + edge.getRule() + " ||| pathcost=" + edge.getSourcePath() + " ref="+ Integer.toHexString(edge.hashCode()));
+    //      }
+    //    }
+        
+    //    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
+    return sb.toString();
   }
 
   public List<HyperEdge> getHyperEdges() {

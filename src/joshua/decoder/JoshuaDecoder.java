@@ -116,11 +116,12 @@ public class JoshuaDecoder {
   public void changeFeatureWeightVector(FeatureVector newWeights) {
     if (newWeights != null) {
 
-      for (String feature: JoshuaDecoder.weights.keySet()) {
+      for (String feature : JoshuaDecoder.weights.keySet()) {
         float oldWeight = JoshuaDecoder.weights.get(feature);
         float newWeight = newWeights.get(feature);
         JoshuaDecoder.weights.put(feature, newWeights.get(feature));
-        logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature, oldWeight, newWeight));
+        logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature,
+            oldWeight, newWeight));
       }
     }
 
@@ -130,7 +131,6 @@ public class JoshuaDecoder {
       // }
     }
   }
-
 
   /**
    * Decode a whole test set. This may be parallel.
@@ -148,24 +148,20 @@ public class JoshuaDecoder {
     this.decoderFactory.decodeTestSet(testFile, nbestFile, null);
   }
 
-
   /** Decode a sentence. This must be non-parallel. */
   public void decodeSentence(String testSentence, String[] nbests) {
     // TODO
   }
-
 
   public void cleanUp() {
     // TODO
     // this.languageModel.end_lm_grammar(); //end the threads
   }
 
-
   // public void visualizeHyperGraphForSentence(String sentence) {
-  //   HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory
-  //       .getHyperGraphForSentence(sentence));
+  // HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory
+  // .getHyperGraphForSentence(sentence));
   // }
-
 
   public static void writeConfigFile(double[] newWeights, String template, String outputFile,
       String newDiscriminativeModel) {
@@ -224,8 +220,6 @@ public class JoshuaDecoder {
     }
   }
 
-
-
   // ===============================================================
   // Initialization Methods
   // ===============================================================
@@ -246,20 +240,21 @@ public class JoshuaDecoder {
 
       this.featureFunctions = new ArrayList<FeatureFunction>();
 
-      /* Backwards compatibility.  Before initializing the grammars, the language models, or the
+      /*
+       * Backwards compatibility. Before initializing the grammars, the language models, or the
        * other feature functions, we need to take a pass through features and their weights
        * initialized in the old style, which was accomplished for many of the features simply by
-       * setting a weight.  The new style puts all the weights in the weights file above, and has a
-       * separate line that initializes the feature function.  Here, we look for the old-style, and
+       * setting a weight. The new style puts all the weights in the weights file above, and has a
+       * separate line that initializes the feature function. Here, we look for the old-style, and
        * (1) add the weight for it and (2) trigger the feature with a new-style line.
        */
-      for (int i = 0; i < JoshuaConfiguration.features.size(); i++ ) {
+      for (int i = 0; i < JoshuaConfiguration.features.size(); i++) {
         String featureLine = JoshuaConfiguration.features.get(i);
 
-//        System.err.println("PROCESSING FEATURE(" + featureLine + ")");
-        
+        // System.err.println("PROCESSING FEATURE(" + featureLine + ")");
+
         // Check if this is an old-style feature.
-        if (! featureLine.startsWith("feature_function")) {
+        if (!featureLine.startsWith("feature_function")) {
           String fields[] = featureLine.split("\\s+");
           String type = fields[0].toLowerCase();
 
@@ -272,8 +267,7 @@ public class JoshuaDecoder {
             // No feature_function lines are created for LMs
             JoshuaConfiguration.features.remove(i);
             i--;
-          } 
-          else if (type.equals("lm")) {
+          } else if (type.equals("lm")) {
             String name = "";
             float weight = 0.0f;
             if (fields.length == 3) {
@@ -289,15 +283,13 @@ public class JoshuaDecoder {
             // No feature_function lines are created for LMs
             JoshuaConfiguration.features.remove(i);
             i--;
-          }
-          else if (type.equals("latticecost")) {
+          } else if (type.equals("latticecost")) {
             String name = "SourcePath";
             float weight = Float.parseFloat(fields[1]);
 
             weights.put(name, weight);
             JoshuaConfiguration.features.set(i, "feature_function = " + name);
-          }
-          else if (type.equals("arityphrasepenalty")) {
+          } else if (type.equals("arityphrasepenalty")) {
             String name = "ArityPenalty";
             String owner = fields[1];
             int min = Integer.parseInt(fields[2]);
@@ -305,30 +297,29 @@ public class JoshuaDecoder {
             float weight = Float.parseFloat(fields[4]);
 
             weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d %d", name, owner, min, max));
-          }
-          else if (type.equals("wordpenalty")) {
+            JoshuaConfiguration.features.set(i,
+                String.format("feature_function = %s %s %d %d", name, owner, min, max));
+          } else if (type.equals("wordpenalty")) {
             String name = "WordPenalty";
             float weight = Float.parseFloat(fields[1]);
 
             weights.put(name, weight);
             JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-          }
-          else if (type.equals("oovpenalty")) {
+          } else if (type.equals("oovpenalty")) {
             String name = "OOVPenalty";
             float weight = Float.parseFloat(fields[1]);
 
             weights.put(name, weight);
             JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-          }
-          else if (type.equals("edge-sim")) {
+          } else if (type.equals("edge-sim")) {
             String name = "EdgePhraseSimilarity";
             String host = fields[1];
             int port = Integer.parseInt(fields[2]);
             float weight = Float.parseFloat(fields[3]);
 
             weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, String.format("feature_function = %s %s %d", name, host, port));
+            JoshuaConfiguration.features.set(i,
+                String.format("feature_function = %s %s %d", name, host, port));
           }
         }
       }
@@ -358,8 +349,8 @@ public class JoshuaDecoder {
       logger.info(String.format("Grammar sorting took: %d seconds.",
           (System.currentTimeMillis() - pre_sort_time) / 1000));
 
-      this.decoderFactory =
-          new DecoderFactory(this.grammarFactories, this.featureFunctions, JoshuaDecoder.weights, this.stateComputers);
+      this.decoderFactory = new DecoderFactory(this.grammarFactories, this.featureFunctions,
+          JoshuaDecoder.weights, this.stateComputers);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -385,7 +376,7 @@ public class JoshuaDecoder {
       boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
       String lm_file = tokens[5];
 
-      if (! ngramStateComputers.containsKey(lm_order)) {
+      if (!ngramStateComputers.containsKey(lm_order)) {
         // Create a new state computer.
         NgramStateComputer ngramState = new NgramStateComputer(lm_order);
         // Record that we've created it.
@@ -424,86 +415,96 @@ public class JoshuaDecoder {
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm, ngramStateComputers.get(lm.getOrder())));
+      this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm,
+          ngramStateComputers.get(lm.getOrder())));
 
-      logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", 
-          i, languageModels.get(i).getOrder(), weights.get(String.format("lm_%d",i))));
+      logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", i, languageModels.get(i)
+          .getOrder(), weights.get(String.format("lm_%d", i))));
     }
   }
 
   private void initializeTranslationGrammars() throws IOException {
 
     if (JoshuaConfiguration.tms.size() > 0) {
-      
-      // Records which PhraseModelFF's have been instantiated (one is needed for each owner). 
+
+      // Records which PhraseModelFF's have been instantiated (one is needed for each owner).
       HashSet<String> ownersSeen = new HashSet<String>();
 
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
-      for (String tmLine: JoshuaConfiguration.tms) {
+      for (String tmLine : JoshuaConfiguration.tms) {
         String tokens[] = tmLine.split("\\s+");
         String format = tokens[0];
         String owner = tokens[1];
         int span_limit = Integer.parseInt(tokens[2]);
         String file = tokens[3];
 
-        // Create and add a feature function for this owner, the first time we see each owner.
-        if (! ownersSeen.contains(owner)) {
-          this.featureFunctions.add(new PhraseModelFF(weights, owner));
-          ownersSeen.add(owner);
-        }
-        
-        logger.info("Using grammar read from file " + file);
-
         GrammarFactory grammar = null;
         if (format.equals("packed")) {
           grammar = new PackedGrammar(file, span_limit, owner);
 
         } else {
-          grammar = new MemoryBasedBatchGrammar(format, file, owner, 
-            JoshuaConfiguration.default_non_terminal, span_limit);
+          grammar = new MemoryBasedBatchGrammar(format, file, owner,
+              JoshuaConfiguration.default_non_terminal, span_limit);
         }
-
         this.grammarFactories.add(grammar);
+
+        // Record the owner so we can create a feature function for her.
+        ownersSeen.add(owner);
       }
+      
+      /*
+       * Create and add a feature function for this owner, the first time we see each owner.
+       * 
+       * Warning! This needs to be done *after* initializing the grammars, in case there is a
+       * packed grammar, since it resets the vocabulary.
+       */
+      for (String owner: ownersSeen)
+        this.featureFunctions.add(new PhraseModelFF(weights, owner));
+
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       // TODO: this should initialize the grammar dynamically so that the goal symbol and default
       // non terminal match
-      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, 
-        System.getenv().get("JOSHUA") + "/data/" + "glue-grammar",
-        JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1);
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(
+          JoshuaConfiguration.glue_format, System.getenv().get("JOSHUA") + "/data/"
+              + "glue-grammar", JoshuaConfiguration.glue_owner,
+          JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
 
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
   }
-  
 
   private void initializeStateComputers() {
     stateComputers = new ArrayList<StateComputer>();
   }
 
-  /* This function reads the weights for the model.  For backwards compatibility, weights may be
+  /*
+   * This function reads the weights for the model. For backwards compatibility, weights may be
    * listed in the Joshua configuration file, but the preferred method is to list the weights in a
    * separate file, specified by the Joshua parameter "weights-file".
-   *
+   * 
    * Feature names and their weights are listed one per line in the following format
-   *
+   * 
    * FEATURE NAME WEIGHT
-   *
-   * Fields are space delimited.  The first k-1 fields are concatenated with underscores to form the
+   * 
+   * Fields are space delimited. The first k-1 fields are concatenated with underscores to form the
    * feature name (putting them there explicitly is preferred, but the concatenation is in place for
    * backwards compatibility
    */
   private FeatureVector readWeights(String fileName) {
     FeatureVector weights = new FeatureVector();
 
+    if (fileName.equals(""))
+      return new FeatureVector();
+
     try {
       LineReader lineReader = new LineReader(fileName);
 
-      for (String line: lineReader) {
-        if (line.equals("") || line.startsWith("#") || line.startsWith("//") || line.indexOf(' ') == -1)
+      for (String line : lineReader) {
+        if (line.equals("") || line.startsWith("#") || line.startsWith("//")
+            || line.indexOf(' ') == -1)
           continue;
 
         String feature = line.substring(0, line.lastIndexOf(' ')).replaceAll(" ", "_");
@@ -512,25 +513,26 @@ public class JoshuaDecoder {
         weights.put(feature, value);
       }
     } catch (FileNotFoundException ioe) {
-      System.err.println("* WARNING: Can't find weights-file '" + fileName + "'");
+      System.err.println("* FATAL: Can't find weights-file '" + fileName + "'");
+      System.exit(1);
     } catch (IOException ioe) {
-      System.err.println("* FATAL: Can't read file weights-file '" + fileName + "'");
+      System.err.println("* FATAL: Can't read weights-file '" + fileName + "'");
       ioe.printStackTrace();
       System.exit(1);
     }
-    
+
     logger.info(String.format("Read %d weights from file '%s'", weights.size(), fileName));
-    
+
     return weights;
   }
 
   /**
-   * This function supports two means of activating features.  (1) The old format turns on a feature
+   * This function supports two means of activating features. (1) The old format turns on a feature
    * when it finds a line of the form "FEATURE OPTIONS WEIGHTS" (lines with an = sign, which signify
-   * configuration options).  (2) The new format requires lines that are of the form
+   * configuration options). (2) The new format requires lines that are of the form
    * "feature_function = FEATURE OPTIONS", and expects to find the weights loaded separately in the
    * weights file.
-   *
+   * 
    */
   private void initializeFeatureFunctions() {
 
@@ -554,15 +556,19 @@ public class JoshuaDecoder {
         float weight = Float.parseFloat(fields[4].trim());
 
         weights.put("aritypenalty", weight);
-        this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d", owner, startArity, endArity)));
+        this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
+            owner, startArity, endArity)));
 
-        logger.info(String.format("FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity, endArity, weight));
+        logger.info(String.format(
+            "FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity,
+            endArity, weight));
       }
 
       else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
 
-        logger.info(String.format("FEATURE: WordPenalty (weight %.3f)", weights.get("WordPenalty")));
+        logger
+            .info(String.format("FEATURE: WordPenalty (weight %.3f)", weights.get("WordPenalty")));
       }
 
       else if (feature.equals("oovpenalty")) {
@@ -578,34 +584,35 @@ public class JoshuaDecoder {
         // Find the language model with the largest state.
         int maxOrder = 0;
         NgramStateComputer ngramStateComputer = null;
-        for (StateComputer stateComputer: this.stateComputers) {
+        for (StateComputer stateComputer : this.stateComputers) {
           if (stateComputer instanceof NgramStateComputer)
-            if (((NgramStateComputer)stateComputer).getOrder() > maxOrder) {
-              maxOrder = ((NgramStateComputer)stateComputer).getOrder();
-              ngramStateComputer = (NgramStateComputer)stateComputer;
+            if (((NgramStateComputer) stateComputer).getOrder() > maxOrder) {
+              maxOrder = ((NgramStateComputer) stateComputer).getOrder();
+              ngramStateComputer = (NgramStateComputer) stateComputer;
             }
         }
 
         try {
-          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host, port));
+          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host,
+              port));
           weights.put("EdgePhraseSimilarity", weight);
         } catch (Exception e) {
           e.printStackTrace();
           System.exit(1);
         }
-        logger.info(String.format("FEATURE: edge similarity (weight %.3f)", weights.get("edgephrasesimilarity")));
+        logger.info(String.format("FEATURE: edge similarity (weight %.3f)",
+            weights.get("edgephrasesimilarity")));
       } else if (feature.equals("phrasemodel") || feature.equals("tm")) {
         String owner = fields[1].trim();
         String index = fields[2].trim();
         Float weight = Float.parseFloat(fields[3]);
-        
+
         weights.put(String.format("tm_%s_%s", owner, index), weight);
       } else {
         System.err.println("* WARNING: invalid feature '" + featureLine + "'");
       }
     }
   }
-
 
   // ===============================================================
   // Main
@@ -622,9 +629,9 @@ public class JoshuaDecoder {
     long startTime = System.currentTimeMillis();
 
     // if (args.length < 1) {
-    //   System.out.println("Usage: java " + JoshuaDecoder.class.getName()
-    //       + " -c configFile [other args]");
-    //   System.exit(1);
+    // System.out.println("Usage: java " + JoshuaDecoder.class.getName()
+    // + " -c configFile [other args]");
+    // System.exit(1);
     // }
 
     String configFile = null;
@@ -666,9 +673,12 @@ public class JoshuaDecoder {
 
         JoshuaConfiguration.readConfigFile(configFile);
 
-        if (args.length >= 2) testFile = args[1].trim();
-        if (args.length >= 3) nbestFile = args[2].trim();
-        if (args.length == 4) oracleFile = args[3].trim();
+        if (args.length >= 2)
+          testFile = args[1].trim();
+        if (args.length >= 3)
+          nbestFile = args[2].trim();
+        if (args.length == 4)
+          oracleFile = args[3].trim();
       }
     }
 

@@ -15,13 +15,14 @@ use File::Basename;
 use Getopt::Std;
 
 my %opts;
-getopts("i:d:",\%opts);
+getopts("i:d:x",\%opts);
 
-my $moses_ini_file = $opts{i} || usage();
-my $outdir         = $opts{d} || "joshua";
+my $moses_ini_file  = $opts{i} || usage();
+my $outdir          = $opts{d} || "joshua";
+my $SKIP_GRAMMAR    = $opts{x} || 0;
 
 sub usage {
-  print "Usage: moses2joshua.pl [-i] moses.ini -d outputdir\n";
+  print "Usage: moses2joshua.pl -i moses.ini [-x] [-d outputdir=joshua]\n";
   exit;
 }
 
@@ -114,6 +115,7 @@ while (my $line = <MOSES>) {
   } elsif (header($line) eq "weight-w") {
 
     chomp(my $weight = <MOSES>);
+    print JOSHUA "feature-function = WordPenalty\n";
     print WEIGHTS "WordPenalty $weight\n";
 
   } elsif (header($line) eq "cube-pruning-pop-limit") {
@@ -128,8 +130,8 @@ while (my $line = <MOSES>) {
     # this is used for unknown words and for the source-side (if
     # unspecified in a rule); Joshua only supports its use for unknown
     # words
-    print JOSHUA "default-non-terminal=X\n";
-    print JOSHUA "goal-symbol=GOAL\n";
+    print JOSHUA "default-non-terminal = X\n";
+    print JOSHUA "goal-symbol = GOAL\n";
     print JOSHUA "\n";
 
   } elsif (header($line) eq "search-algorithm") {
@@ -143,9 +145,11 @@ while (my $line = <MOSES>) {
   }
 }
 
-print JOSHUA "top-n=1\n\n";
-print JOSHUA "weights-file = weights\n";
+print JOSHUA "top-n = 1\n\n";
+print JOSHUA "mark-oovs = false\n";
+print JOSHUA "weights-file = $outdir/weights\n";
 
+print JOSHUA "feature-function = OOVPenalty\n";
 print WEIGHTS "OOVPenalty -100\n";
 
 close(MOSES);
@@ -190,124 +194,125 @@ sub convert_grammar {
     $grammarfile = "$grammarfile.gz";
   }
 
-  if ($grammarfile =~ /\.gz$/) {
-    open GRAMMAR, "gzip -cd $grammarfile|" or error("can't read grammar '$grammarfile'");
-  } else {
-    open GRAMMAR, $grammarfile or error("can't read grammar '$grammarfile'");
-  }
-
   my $filename = "$outdir/" . basename($grammarfile);
-
-
-  if ($filename =~ /\.gz$/) {
-    open OUT, "| gzip -9 > $filename" or error("can't write grammar to '$filename'");
-  } else {
-    open OUT, ">", $filename or error("can't write grammar to '$filename'");
-  }
-
 
   # Rules look like these:
   # <s> [X] ||| <s> [S] ||| 1 ||| ||| 0
   # [X][S] </s> [X] ||| [X][S] </s> [S] ||| 1 ||| 0-0 ||| 0
   # [X][S] [X][X] [X] ||| [X][S] [X][X] [S] ||| 2.718 ||| 0-0 1-1 ||| 0
 
-  while (my $rule = <GRAMMAR>) {
-    chomp($rule);
+  if (! $SKIP_GRAMMAR) {
 
-    # skip the rule with <s>
-    next if ($rule =~ /<s>/);
+    if ($grammarfile =~ /\.gz$/) {
+      open GRAMMAR, "gzip -cd $grammarfile|" or error("can't read grammar '$grammarfile'");
+    } else {
+      open GRAMMAR, $grammarfile or error("can't read grammar '$grammarfile'");
+    }
 
-    my $orig_rule = $rule;
+    if ($filename =~ /\.gz$/) {
+      open OUT, "| gzip -9 > $filename" or error("can't write grammar to '$filename'");
+    } else {
+      open OUT, ">", $filename or error("can't write grammar to '$filename'");
+    }
 
-    my ($l1, $l2, $probs, $alignment) = split(/ *\|\|\| */, $rule, 4);
+    while (my $rule = <GRAMMAR>) {
+      chomp($rule);
 
-    # the </s> rule triggers a nonterminal change, which has a very
-    # different format; (I'm not sure if this is the most general way
-    # to handle this, and I think now)
-    if ($rule =~ /<\/s>/) {
+      # skip the rule with <s>
+      next if ($rule =~ /<s>/);
+
+      my $orig_rule = $rule;
+
+      my ($l1, $l2, $probs, $alignment) = split(/ *\|\|\| */, $rule, 4);
+
+      # the </s> rule triggers a nonterminal change, which has a very
+      # different format; (I'm not sure if this is the most general way
+      # to handle this, and I think now)
+      if ($rule =~ /<\/s>/) {
+
+        my @probs = map { transform($_) } (split(' ',$probs));
+        my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
+
+        print OUT "[GOAL] ||| [X,1] ||| [X,1] ||| $scores\n";
+        next;
+      }
+
+      # e.g., [X][S] </s> [X]
+      # l1tokens = ("[X][S]", "</s>", "[X]")
+      # l1nt = "[X]"
+      # l1rhs = "[X][S] </s>"
+      my (@l1tokens) = split(' ', $l1);
+      my $l1lhs = pop(@l1tokens);
+      my $l1rhs = join(" ",@l1tokens);
+      my (@l2tokens) = split(' ', $l2);
+      my $l2lhs = pop(@l2tokens);
+      my $l2rhs = join(" ",@l2tokens);
+
+      # e.g., "[X][S] [X][X] [X]"
+      my (@l1nts);
+      while ($l1rhs =~ /\[(\S+?)\]\[(\S+?)\]/g) {
+        my $source_symbol = $1;
+        my $target_symbol = $2;
+
+        push(@l1nts, get_symbol($target_symbol));
+      }
+
+      my (@l2nts);
+      while ($l2rhs =~ /\[(\S+?)\]\[(\S+?)\]/g) {
+        my $source_symbol = $1;
+        my $target_symbol = $2;
+
+        push(@l2nts, get_symbol($target_symbol));
+      }
+
+      if (scalar @l1nts != scalar @l2nts) {
+        print STDERR "* WARNING: nonterminal count mismatch on RHS\n";
+        next;
+      }
+
+      if (scalar @l1nts == 1) {
+
+        # unary rule
+        $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[0],1]/;
+        $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[0],1]/;
+
+      } elsif (scalar @l1nts == 2) {
+
+        # binary rule
+        $alignment =~ /(\d+)-(\d+) (\d+)-(\d+)/;
+        if ($1 < $3 and $2 < $4) {
+          # straight rule
+          $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[0],1]/;
+          $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[1],2]/;
+          $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[0],1]/;
+          $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[1],2]/;
+        } else {
+          # inverted rule
+          $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[0],1]/;
+          $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[1],2]/;
+          $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[1],2]/;
+          $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[0],1]/;
+        }
+      } elsif (scalar @l1nts > 2) {
+        warning("Skipping rule ($rule) with more than two nonterminals");
+        next;
+      }
+
+      if ($l1rhs eq "" or $l2rhs eq "") {
+        warning("skipping rule $orig_rule");
+        next;
+      }
 
       my @probs = map { transform($_) } (split(' ',$probs));
-      my $scores = join(" ", @probs);
+      my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
-      print OUT "[GOAL] ||| [X,1] ||| [X,1] ||| $scores\n";
-      next;
+      my $lhs = ($l2lhs eq "[S]") ? "[GOAL]" : $l2lhs;
+      print OUT "$lhs ||| $l1rhs ||| $l2rhs ||| $scores\n";
+
     }
-
-    # e.g., [X][S] </s> [X]
-    # l1tokens = ("[X][S]", "</s>", "[X]")
-    # l1nt = "[X]"
-    # l1rhs = "[X][S] </s>"
-    my (@l1tokens) = split(' ', $l1);
-    my $l1lhs = pop(@l1tokens);
-    my $l1rhs = join(" ",@l1tokens);
-    my (@l2tokens) = split(' ', $l2);
-    my $l2lhs = pop(@l2tokens);
-    my $l2rhs = join(" ",@l2tokens);
-
-    # e.g., "[X][S] [X][X] [X]"
-    my (@l1nts);
-    while ($l1rhs =~ /\[(\S+?)\]\[(\S+?)\]/g) {
-      my $source_symbol = $1;
-      my $target_symbol = $2;
-
-      push(@l1nts, get_symbol($target_symbol));
-    }
-
-    my (@l2nts);
-    while ($l2rhs =~ /\[(\S+?)\]\[(\S+?)\]/g) {
-      my $source_symbol = $1;
-      my $target_symbol = $2;
-
-      push(@l2nts, get_symbol($target_symbol));
-    }
-
-    if (scalar @l1nts != scalar @l2nts) {
-      print STDERR "* WARNING: nonterminal count mismatch on RHS\n";
-      next;
-    }
-
-    if (scalar @l1nts == 1) {
-
-      # unary rule
-      $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[0],1]/;
-      $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[0],1]/;
-
-    } elsif (scalar @l1nts == 2) {
-
-      # binary rule
-      $alignment =~ /(\d+)-(\d+) (\d+)-(\d+)/;
-      if ($1 < $3 and $2 < $4) {
-        # straight rule
-        $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[0],1]/;
-        $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[1],2]/;
-        $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[0],1]/;
-        $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[1],2]/;
-      } else {
-        # inverted rule
-        $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[0],1]/;
-        $l1rhs =~ s/\[\w*?\]\[\w*?\]/[$l1nts[1],2]/;
-        $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[1],2]/;
-        $l2rhs =~ s/\[\w*?\]\[\w*?\]/[$l2nts[0],1]/;
-      }
-    } elsif (scalar @l1nts > 2) {
-      warning("Skipping rule ($rule) with more than two nonterminals");
-      next;
-    }
-
-    if ($l1rhs eq "" or $l2rhs eq "") {
-      warning("skipping rule $orig_rule");
-      next;
-    }
-
-    my @probs = map { transform($_) } (split(' ',$probs));
-    my $scores = join(" ", @probs);
-
-    my $lhs = ($l2lhs eq "[S]") ? "[GOAL]" : $l2lhs;
-    print OUT "$lhs ||| $l1rhs ||| $l2rhs ||| $scores\n";
-
+    close(OUT);
+    close(GRAMMAR);
   }
-  close(OUT);
-  close(GRAMMAR);
 
   return $filename;
 }
@@ -327,7 +332,8 @@ sub select_symbol {
 sub transform {
   my ($weight) = @_;
 
-  return "99999" if ($weight == 0.0);
+  # Moses defines the log_e() of non-positive weights as -100
+  return "-100" if ($weight <= 0.0);
   
   # if ($weight eq "2.718") {
   # 	return $weight;

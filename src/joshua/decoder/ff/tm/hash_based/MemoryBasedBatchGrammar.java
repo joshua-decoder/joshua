@@ -30,17 +30,24 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // Instance Fields
   // ===============================================================
 
-  static private double temEstcost = 0.0;
-
+  /* The number of rules read. */
   private int qtyRulesRead = 0;
+
+  /* The number of distinct source sides. */
   private int qtyRuleBins = 0;
+
+  /* The trie root. */
   private MemoryBasedTrie root = null;
 
-  // protected ArrayList<FeatureFunction> featureFunctions = null;
+  /* The grammar's owner, used to determine which weights are applicable to the dense features found
+   * within. 
+   */
   private int owner = -1;
 
+  /* The file containing the grammar. */
   private String grammarFile;
 
+  /* The maximum span of the input this rule can be applied to. */
   private int spanLimit = JoshuaConfiguration.span_limit;
 
   private GrammarReader<BilingualRule> modelReader;
@@ -164,14 +171,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.qtyRulesRead++;
     ruleIDCount++;
 
-    if (owner == -1) {
-      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
-      System.exit(1);
-    }
+//    if (owner == -1) {
+//      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
+//      System.exit(1);
+//    }
     rule.setOwner(owner);
-
-    // TODO: make sure costs are calculated here or in reader
-    temEstcost += rule.getEstimatedCost();
 
     // === identify the position, and insert the trie nodes as necessary
     MemoryBasedTrie pos = root;
@@ -211,13 +215,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     pos.ruleBin.addRule(rule);
   }
 
-
-
-  // BUG: This always prints 0 for all fields
   protected void printGrammar() {
-    logger.info("Grammar '" + grammarFile + "'");
-    logger.info(String.format("   num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",
-        this.qtyRulesRead, this.qtyRuleBins, 0, temEstcost));
+    logger.info(String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", this.qtyRulesRead, this.qtyRuleBins, grammarFile));
   }
-
 }

@@ -36,7 +36,7 @@ public class JoshuaConfiguration {
   public static boolean use_left_equivalent_state = false;
   public static boolean use_right_equivalent_state = false;
   public static int lm_order = 3;
-  public static boolean use_sent_specific_lm = false;
+
   public static String lm_file = null;
   
   /* The file to read the weights from (part of the sparse features implementation).
@@ -59,8 +59,6 @@ public class JoshuaConfiguration {
   // Default symbols.  The symbol here should be enclosed in square brackets.
   public static String default_non_terminal = "[X]";
   public static String goal_symbol = "[GOAL]";
-
-  public static boolean use_sent_specific_tm = false;
 
   public static boolean dense_features = true;
 
@@ -203,6 +201,10 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);
 
+          } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
+            hypergraphFilePattern = fds[1].trim();
+            logger.finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
+
           } else if (parameter.equals(normalize_key("lm_file"))) {
             lm_file = fds[1].trim();
             logger.finest(String.format("lm file: %s", lm_file));
@@ -261,14 +263,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("order"))) {
             lm_order = Integer.parseInt(fds[1]);
             logger.finest(String.format("g_lm_order: %s", lm_order));
-
-          } else if (parameter.equals(normalize_key("use_sent_specific_lm"))) {
-            use_sent_specific_lm = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
-
-          } else if (parameter.equals(normalize_key("use_sent_specific_tm"))) {
-            use_sent_specific_tm = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 
           } else if (parameter.equals(normalize_key("span_limit"))) {
             span_limit = Integer.parseInt(fds[1]);

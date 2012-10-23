@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Vector;
 
+import joshua.util.StreamGobbler;
+
 public class ClassifierSVM implements ClassifierInterface {
   @Override
   public double[] runClassifier(Vector<String> samples, double[] initialLambda, int featDim) {

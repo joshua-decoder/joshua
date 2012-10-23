@@ -156,13 +156,13 @@ public class ParserThread extends Thread {
   public HyperGraph parse(Sentence sentence, String oracleSentence) throws IOException {
 
     logger.info("Parsing sentence pair #" + sentence.id() + " [thread " + getId() + "]\n"
-        + sentence.sentence());
+        + sentence.source());
 
     long startTime = System.currentTimeMillis();
 
-    Chart chart;
-
-    String[] sentencePair = sentence.sentence().split("\\|\\|\\|");
+    String[] sentencePair = new String[2];
+    sentencePair[0] = sentence.source();
+    sentencePair[1] = sentence.target();
     int sentenceId = sentence.id();
     for (int i = 0; i < sentencePair.length; i++)
       sentencePair[i] = sentencePair[i].trim();
@@ -171,22 +171,17 @@ public class ParserThread extends Thread {
     Sentence foreign = new Sentence(sentencePair[0], sentenceId);
     Sentence english = new Sentence(sentencePair[1], sentenceId);
 
-    Lattice<Integer> input_lattice = foreign.intLattice();
-
-    int numGrammars =
-        (JoshuaConfiguration.use_sent_specific_tm) ? grammarFactories.size() + 1 : grammarFactories
-            .size();
-
+    int numGrammars = grammarFactories.size();
     Grammar[] grammars = new Grammar[numGrammars];
 
     for (int i = 0; i < grammarFactories.size(); i++)
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(foreign);
 
     /* Seeding: the chart only sees the grammars, not the factories */
-    chart =
+    Chart chart =
       new Chart(foreign, this.featureFunctions, this.stateComputers, grammars, JoshuaConfiguration.goal_symbol);
 
-    /* Parsing */
+    /* Parse as normal */
     HyperGraph hypergraph = chart.expand();
     long firstParseTime = System.currentTimeMillis();
     System.err.printf("First-pass parse took %d seconds.\n", (firstParseTime - startTime) / 1000);
@@ -195,7 +190,7 @@ public class ParserThread extends Thread {
       return hypergraph;
     }
 
-    Lattice<Integer> english_lattice = english.intLattice();
+    /* Walk the hypergraph and build an instantiated target-side grammar. */
     Grammar[] newGrammar = new Grammar[1];
     newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
     long traversalTime = System.currentTimeMillis();
@@ -207,11 +202,14 @@ public class ParserThread extends Thread {
     int numRules = newGrammar[0].getNumRules();
     System.err.printf("New grammar has %d rules.\n", numRules);
     System.err.println("Expanding second chart.\n");
+
+    /* Now create a new chart and parse with the instantiated grammar. */
     chart =
       new Chart(english, this.featureFunctions, this.stateComputers, newGrammar, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     System.err.printf("goal symbol is %d.\n", goalSymbol);
     chart.setGoalSymbolID(goalSymbol);
+
     /* Parsing */
     HyperGraph englishParse = chart.expand();
     long secondParseTime = System.currentTimeMillis();

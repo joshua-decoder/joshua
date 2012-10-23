@@ -5,6 +5,9 @@ set -u
 # pack the grammar
 $JOSHUA/scripts/support/grammar-packer.pl grammar.gz grammar.packed 2> packer.log
 
+# generate the glue grammar
+gzip -cd grammar.gz | $JOSHUA/thrax/scripts/create_glue_grammar.sh > grammar.glue
+
 # decode
 ./decoder_command 2> log
 
@@ -14,7 +17,7 @@ diff -u output.bleu output.gold.bleu > diff
 
 if [ $? -eq 0 ]; then
 	echo PASSED
-	rm -f diff log output.bleu output 
+	rm -f diff log output.bleu output grammar.glue
 	rm -rf grammar.packed
 	exit 0
 else

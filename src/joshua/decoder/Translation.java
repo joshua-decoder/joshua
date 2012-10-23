@@ -60,7 +60,7 @@ public class Translation {
   public String translation() {
 
     if (this.hypergraph == null) {
-      return getSourceSentence().sentence();
+      return getSourceSentence().source();
 
     } else {
 
@@ -91,7 +91,7 @@ public class Translation {
       if (! JoshuaConfiguration.hypergraphFilePattern.equals("")) {
         this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
       }
-            
+
       KBestExtractor kBestExtractor =
         new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
           JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
@@ -105,8 +105,11 @@ public class Translation {
       }
 
     } else {
-
-      System.out.println(id() + " ||| " + getSourceSentence().sentence() + " |||  ||| 0.0");
+      String output = getSourceSentence().source();
+      if (getSourceSentence().target() != null)
+        output += " ||| " + getSourceSentence().target();
+      
+      System.out.println(id() + " ||| " + output + " |||  ||| 0.0");
     }
 
     System.out.flush();
