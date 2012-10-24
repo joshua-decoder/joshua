@@ -25,9 +25,11 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JList;
 
 import joshua.ui.tree_visualizer.DerivationTree;
 import joshua.ui.tree_visualizer.DerivationViewer;
+import joshua.ui.tree_visualizer.tree.Tree;
 
 /**
  * A frame that displays a derivation tree.
@@ -93,7 +95,7 @@ class DerivationTreeFrame extends JFrame {
   /**
    * Index to determine which data set (which n-best file) this frame brings its graphs from.
    */
-  private int dataSetIndex;
+  private final int dataSetIndex;
 
   private static final int DEFAULT_WIDTH = 640;
   private static final int DEFAULT_HEIGHT = 480;
@@ -103,11 +105,14 @@ class DerivationTreeFrame extends JFrame {
    */
   private Color targetColor;
 
+	private JList mainList;
+
   /**
    * The default constructor.
    */
-  public DerivationTreeFrame(int index) {
+  public DerivationTreeFrame(int index, JList mainList) {
     super("Joshua Derivation Tree");
+		this.mainList = mainList;
     setLayout(new BorderLayout());
     setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     controlPanel = new JPanel(new BorderLayout());
@@ -169,13 +174,17 @@ class DerivationTreeFrame extends JFrame {
 
     nextSource.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Browser.incrementCurrentSourceIndex();
+        int index = mainList.getSelectedIndex();
+				mainList.setSelectedIndex(index + 1);
         return;
       }
     });
     previousSource.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Browser.decrementCurrentSourceIndex();
+        int index = mainList.getSelectedIndex();
+				if (index > 0) {
+					mainList.setSelectedIndex(index - 1);
+				}
         return;
       }
     });
@@ -200,27 +209,23 @@ class DerivationTreeFrame extends JFrame {
    * translation is whichever translation is currently highlighted in the Derivation Browser's
    * chooser frame.
    */
-  public void drawGraph() {
+  public void drawGraph(TranslationInfo ti) {
     viewPanel.removeAll();
-    String src = Browser.getCurrentSourceSentence();
-    String tgt = Browser.getCurrentCandidateTranslations().get(dataSetIndex);
+    String src = ti.sourceSentence();
+    Tree tgt = ti.translations().get(dataSetIndex);
+		String ref = ti.reference();
 
-    sourceLabel.setText(Browser.getCurrentSourceSentence());
-    referenceLabel.setText(Browser.getCurrentReferenceTranslation());
-    oneBestLabel.setText(Browser.getCurrentOneBests().get(dataSetIndex));
+    sourceLabel.setText(src);
+    referenceLabel.setText(ref);
+    oneBestLabel.setText(tgt.yield());
 
-    if ((src == null) || (tgt == null)) {
-      return;
-    }
-
-    DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
+    DerivationTree tree = new DerivationTree(tgt, src);
     if (dv == null) {
       dv =
           new DerivationViewer(tree, viewPanel.getSize(), targetColor,
               DerivationViewer.AnchorType.ANCHOR_LEFTMOST_LEAF);
     } else {
       dv.setGraph(tree);
-      tree.addCorrespondences();
     }
     viewPanel.add(dv, BorderLayout.CENTER);
     dv.revalidate();
