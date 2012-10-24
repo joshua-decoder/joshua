@@ -13,5 +13,17 @@ or under Windows:
 
     tree_visualizer.cmd tree.fr tree.ref tree.en
 
+To invoke the tree visualizer, you need at least three arguments:
+
+1) a file with source sentences, one per line
+2) a file with reference translations, one per line
+3) an n-best file like the one produced by Joshua.
+
+Note that the n-best file needs to have source-aligned derivation trees, so
+you should run the Joshua decoder with use_tree_nbest = true and
+include_align_index = true.
+
+Additional arguments should be more n-best files to compare to the first one.
+
 Click on the sentence that displays, and you will be presented
 with the visualization in a second window.
