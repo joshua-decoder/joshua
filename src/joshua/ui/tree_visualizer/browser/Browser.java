@@ -158,6 +158,12 @@ public class Browser {
 
 		searchBox = new JTextField("search");
 		searchBox.getDocument().addDocumentListener(new SearchListener());
+		searchBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				final int selectedIndex = oneBestList.getSelectedIndex();
+				Browser.search(selectedIndex < 0 ? 0 : selectedIndex + 1);
+			}
+		});
     oneBestList = new JList(new DefaultListModel());
     oneBestList.setFixedCellWidth(200);
     oneBestList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -198,28 +204,40 @@ public class Browser {
     return;
   }
 
+	private static void search(int fromIndex) {
+		final String query = searchBox.getText();
+		DefaultListModel oneBestListModel =
+			(DefaultListModel) oneBestList.getModel();
+		for (int i = fromIndex; i < oneBestListModel.getSize(); i++) {
+			String reference = (String) oneBestListModel.getElementAt(i);
+			if (reference.indexOf(query) != -1) {
+				// found the query
+				oneBestList.setSelectedIndex(i);
+				oneBestList.ensureIndexIsVisible(i);
+				searchBox.setBackground(Color.white);
+				return;
+			}
+		}
+		searchBox.setBackground(Color.red);
+	}
+
 	private static class SearchListener implements DocumentListener {
 
 		public void insertUpdate(DocumentEvent e) {
-			String query = searchBox.getText();
-			DefaultListModel oneBestListModel =
-				(DefaultListModel) oneBestList.getModel();
 			final int selectedIndex = oneBestList.getSelectedIndex();
-			int i = selectedIndex < 0 ? 0 : selectedIndex;
-			for (; i < oneBestListModel.getSize(); i++) {
-				String reference = (String) oneBestListModel.getElementAt(i);
-				if (reference.indexOf(query) != -1) {
-					// found the query
-					oneBestList.setSelectedIndex(i);
-					break;
-				}
+			Browser.search(selectedIndex < 0 ? 0 : selectedIndex);
+		}
+		public void removeUpdate(DocumentEvent e) {
+			final String query = searchBox.getText();
+			if (query.equals("")) {
+				return;
+			} else {
+				insertUpdate(e);
 			}
 		}
 
-		public void removeUpdate(DocumentEvent e) {
-		}
-
 		public void changedUpdate(DocumentEvent e) {
+			final String query = searchBox.getText();
 		}
 	}
 }
