@@ -12,8 +12,10 @@ set -o errexit
 
 # Get variables from the command line.
 SOURCE=$1
-REFERENCE=$2
-N_BEST=$3
+shift
+REFERENCE=$1
+shift
+N_BEST="$*"
 
 LIB=$JOSHUA/lib
 
