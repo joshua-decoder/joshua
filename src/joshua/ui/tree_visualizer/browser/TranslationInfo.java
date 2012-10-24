@@ -16,41 +16,20 @@
 package joshua.ui.tree_visualizer.browser;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import joshua.ui.tree_visualizer.tree.Tree;
 
 class TranslationInfo {
   private String sourceSentence;
-  private String referenceTranslation;
-  private ArrayList<String> oneBest;
-  private ArrayList<ArrayList<String>> translations;
+  private String reference;
+  private ArrayList<Tree> translations;
 
   public TranslationInfo() {
-    oneBest = new ArrayList<String>();
-    translations = new ArrayList<ArrayList<String>>();
+    translations = new ArrayList<Tree>();
   }
 
-  public void addTranslations(ArrayList<String> candidates) {
-    oneBest.add(extractTerminals(candidates.get(0)));
-    translations.add(candidates);
-    return;
-  }
-
-  public ArrayList<ArrayList<String>> getAllTranslations() {
-    return translations;
-  }
-
-  public ArrayList<String> getAllTranslationsByIndex(int index) {
-    ArrayList<String> ret = new ArrayList<String>();
-    for (ArrayList<String> dataSet : translations) {
-      ret.add(dataSet.get(index));
-    }
-    return ret;
-  }
-
-  public ArrayList<String> getOneTranslationList(int index) {
-    return translations.get(index);
-  }
-
-  public String getSourceSentence() {
+  public String sourceSentence() {
     return sourceSentence;
   }
 
@@ -59,36 +38,16 @@ class TranslationInfo {
     return;
   }
 
-  public String getReferenceTranslation() {
-    return referenceTranslation;
+  public String reference() {
+    return reference;
   }
 
-  public void setReferenceTranslation(String ref) {
-    referenceTranslation = ref;
+  public void setReference(String ref) {
+    reference = ref;
     return;
   }
 
-  public ArrayList<String> getAllOneBest() {
-    if (translations.isEmpty()) {
-      ArrayList<String> ret = new ArrayList<String>();
-      ret.add("** LIST OF CANDIDATE TRANSLATIONS IS EMPTY");
-      return ret;
-    }
-    return oneBest;
-  }
-
-  private static String extractTerminals(String candidate) {
-    StringBuilder ret = new StringBuilder();
-    String[] treeTokens = candidate.split("\\|\\|\\|")[1].replaceAll("\\)", "\n)").split("\\s+");
-    for (String tok : treeTokens) {
-      if (tok.startsWith("(") || tok.equals(")")) {
-        continue;
-      }
-      if (ret.length() > 0) {
-        ret.append(" ");
-      }
-      ret.append(tok);
-    }
-    return ret.toString();
+  public List<Tree> translations() {
+    return translations;
   }
 }
