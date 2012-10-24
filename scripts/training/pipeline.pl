@@ -239,14 +239,6 @@ if (scalar @LMFILES == 0) {
 
 ## Sanity Checking ###################################################
 
-# make sure the LMs exist
-foreach my $lmfile (@LMFILES) {
-  if (! -e $lmfile) {
-    print "* FATAL: couldn't find language model file '$lmfile'\n";
-    exit 1;
-  }
-}
-
 # If a language model was specified and no corpus was given to build another one from the target
 # side of the training data (which could happen, for example, when starting at the tuning step with
 # an existing LM), turn off building an LM from the corpus.  The user could have done this
@@ -260,6 +252,14 @@ if (scalar @LMFILES && ! scalar(@CORPORA)) {
 map {
   $LMFILES[$_] = get_absolute_path($LMFILES[$_]);
 } 0..$#LMFILES;
+
+# make sure the LMs exist
+foreach my $lmfile (@LMFILES) {
+  if (! -e $lmfile) {
+    print "* FATAL: couldn't find language model file '$lmfile'\n";
+    exit 1;
+  }
+}
 
 # case-normalize this
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
