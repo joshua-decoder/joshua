@@ -1,6 +1,7 @@
 package joshua.decoder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +29,7 @@ public class DecoderFactory {
 
   private static final Logger logger = Logger.getLogger(DecoderFactory.class.getName());
 
+  private List<Translation> translations;
 
   public DecoderFactory(List<GrammarFactory> grammarFactories,
       List<FeatureFunction> featureFunctions, FeatureVector weights,
@@ -36,6 +38,7 @@ public class DecoderFactory {
     this.featureFunctions = featureFunctions;
     this.weights = weights;
     this.stateComputers = stateComputers;
+    this.translations = new ArrayList<Translation>();
   }
 
 
@@ -84,11 +87,25 @@ public class DecoderFactory {
 
     // wait for them to complete
     for (int threadno = 0; threadno < decoderThreads.length; threadno++) {
-      try {
-        this.decoderThreads[threadno].join();
-      } catch (InterruptedException e) {
-        if (logger.isLoggable(Level.WARNING))
-          logger.warning("thread " + threadno + " was interupted");
+      if (JoshuaConfiguration.parse) {
+        ParserThread thread = (ParserThread) this.decoderThreads[threadno];
+        try {
+          thread.join();
+        } catch (InterruptedException e) {
+          if (logger.isLoggable(Level.WARNING))
+            logger.warning("thread " + threadno + " was interupted");
+        }
+      } else {
+        DecoderThread thread = (DecoderThread) this.decoderThreads[threadno];
+        try {
+          thread.join();
+          for (Translation tr : thread.getTranslations()) {
+            this.translations.add(tr);
+          }
+        } catch (InterruptedException e) {
+          if (logger.isLoggable(Level.WARNING))
+            logger.warning("thread " + threadno + " was interupted");
+        }
       }
     }
   }
@@ -107,4 +124,12 @@ public class DecoderFactory {
     }
     return null;
   }
+
+  /**
+   * @return the translations
+   */
+  public List<Translation> getTranslations() {
+    return translations;
+  }
+
 }

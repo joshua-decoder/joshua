@@ -76,3 +76,24 @@ Here's an example of building a release versioned "2012-07-18".  It will be plac
     cd $JOSHUA
     ant release
 
+## Adding dependencies
+
+Dependencies such as JAR archives are automatically downloaded by the
+[Apache Ivy](http://ant.apache.org/ivy/) dependency management tool,
+which is designed to interact with the `ant` build tool.
+
+To add a new dependency to the list of automatically downloaded archive
+libraries, follow these steps:
+
+1.  Search for the library in 
+    [Maven Central Repository](http://search.maven.org/) or 
+    [MVN Repository](http://mvnrepository.com/). 
+2.  If the desired library is found, both websites provide the line that
+    you would add under `<dependencies>` in `ivy.xml`. E.g. for
+    **asm-3.1.jar**, the line that would be added is:
+
+        <dependency org="asm" name="asm" rev="3.1"/>
+
+More obscure libraries can be found to be hosted in less common
+repositories. Additional repositories can be added to the
+`$JOSHUA/ivysettings.xml` file.

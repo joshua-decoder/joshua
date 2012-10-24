@@ -39,6 +39,7 @@ public class DecoderThread extends Thread {
   private final List<GrammarFactory> grammarFactories;
   private final List<FeatureFunction> featureFunctions;
   private final List<StateComputer> stateComputers;
+  private List<Translation> translations;
 
   // more test set specific
   private final InputHandler inputHandler;
@@ -58,6 +59,7 @@ public class DecoderThread extends Thread {
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
     this.inputHandler = inputHandler;
+    this.translations = new ArrayList<Translation>();
 
     this.featureFunctions = new ArrayList<FeatureFunction>();
     for (FeatureFunction ff : featureFunctions) {
@@ -137,6 +139,7 @@ public class DecoderThread extends Thread {
       }
 
       inputHandler.register(translation);
+      this.translations.add(translation);
 
       /*
        * //debug if (JoshuaConfiguration.use_variational_decoding) { ConstituentVariationalDecoder
@@ -193,4 +196,13 @@ public class DecoderThread extends Thread {
 
     return hypergraph;
   }
+
+
+  /**
+   * @return the translations
+   */
+  public List<Translation> getTranslations() {
+    return translations;
+  }
+
 }

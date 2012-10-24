@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Joshua server invocation script.
+# 
+# This script starts a restful server and takes care of passing arguments to
+# Java and to the Joshua decoder.  Usage:
+#
+# ./joshua-server [Joshua arguments]
+#
+# Once the server is running, test the connection in another terminal with the
+# command
+#
+# curl http://localhost:8182
+
+
+set -u
+
+java \
+	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar:$JOSHUA/lib/org.restlet-2.1.0.jar \
+	-Dfile.encoding=utf8 \
+	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
+	-Djava.library.path=$JOSHUA/lib \
+	joshua.decoder.DecoderServer $@
+
