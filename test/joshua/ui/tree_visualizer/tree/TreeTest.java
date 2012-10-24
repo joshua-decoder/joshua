@@ -18,12 +18,6 @@ public class TreeTest {
 		Assert.assertEquals(tree.size(), 0);
 	}
 
-	@Test(expectedExceptions = { IllegalArgumentException.class })
-	public void ctor_TooManyCloseParens_IllegalArgument() {
-		Tree tree = new Tree("(A{0-1} foo))");
-		Assert.assertEquals(tree.size(), 0);
-	}
-
 	@Test
 	public void simpleTree_correctSize() {
 		Tree tree = new Tree("(A{0-1} foo)");
