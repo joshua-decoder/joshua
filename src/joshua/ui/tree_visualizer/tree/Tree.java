@@ -102,35 +102,38 @@ public class Tree {
 		} catch (Exception e) {
 			// This will catch most formatting errors.
 			throw new IllegalArgumentException(
-					String.format("couldn't create tree from string: \"%s\"", s));
+					String.format("couldn't create tree from string: \"%s\"", s),
+					e);
 		}
 	}
 
 	private void initialize(String [] tokens) {
 		final Stack<Integer> stack = new Stack<Integer>();
-		for (int i = 0; i < tokens.length; i++) {
-			String token = tokens[i];
+		int nodeIndex = 0;
+		for (String token : tokens) {
 			final Matcher matcher = NONTERMINAL_PATTERN.matcher(token);
 			if (matcher.matches()) {
 				// new non-terminal node
-				labels[i] = matcher.group(1);
-				sourceStartIndices[i] = Integer.parseInt(matcher.group(2));
-				sourceEndIndices[i] = Integer.parseInt(matcher.group(3));
-				stack.push(i);
+				labels[nodeIndex] = matcher.group(1);
+				sourceStartIndices[nodeIndex] = Integer.parseInt(matcher.group(2));
+				sourceEndIndices[nodeIndex] = Integer.parseInt(matcher.group(3));
+				stack.push(nodeIndex);
+				nodeIndex++;
 			} else if (token.equals(")")) {
 				// finished a subtree
 				stack.pop();
-				if (i == tokens.length - 1) {
-					continue;
+				if (stack.empty()) {
+					break;
 				} else {
 					numChildren[stack.peek()]++;
 				}
 			} else {
 				// otherwise, it's a new leaf node
-				labels[i] = token;
-				sourceStartIndices[i] = -1;
-				sourceEndIndices[i] = -1;
+				labels[nodeIndex] = token;
+				sourceStartIndices[nodeIndex] = -1;
+				sourceEndIndices[nodeIndex] = -1;
 				numChildren[stack.peek()]++;
+				nodeIndex++;
 			}
 		}
 		if (!stack.empty()) {
@@ -170,6 +173,19 @@ public class Tree {
 		int remainingChildren = numChildren[index];
 		for (int i = 0; i < remainingChildren; i++) {
 			result = nextSiblingIndex(result);
+		}
+		return result;
+	}
+
+	public String yield() {
+		String result = "";
+		for (int i = 0; i < labels.length; i++) {
+			if (numChildren[i] == 0) {
+				if (!result.equals("")) {
+					result += " ";
+				}
+				result += labels[i];
+			}
 		}
 		return result;
 	}
