@@ -2,12 +2,12 @@ These examples demonstrate how to use the tree visualizer.
 Build the visualizer by running the following commmand in the
 $JOSHUA directory:
 
-    ant tree_visualizer
+    ant
 
 You can run the visualizer by using the visualizer invocation 
 script under UNIX/Linux/OS-X:
 
-    tree_visualizer.sh tree.fr tree.ref tree.en
+    $JOSHUA/scripts/analysis/tree_visualizer tree.fr tree.ref tree.en
 
 or under Windows:
 
