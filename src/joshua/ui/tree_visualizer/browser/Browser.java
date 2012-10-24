@@ -35,9 +35,12 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 
 public class Browser {
 
@@ -45,6 +48,8 @@ public class Browser {
    * A list that contains the one best translation of each source sentence.
    */
   private static JList oneBestList;
+
+	private static JTextField searchBox;
 
   /**
    * The current frame that displays a derivation tree.
@@ -151,6 +156,8 @@ public class Browser {
     chooserFrame.setJMenuBar(mb);
 		*/
 
+		searchBox = new JTextField("search");
+		searchBox.getDocument().addDocumentListener(new SearchListener());
     oneBestList = new JList(new DefaultListModel());
     oneBestList.setFixedCellWidth(200);
     oneBestList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -164,6 +171,7 @@ public class Browser {
         return;
       }
     });
+    chooserFrame.getContentPane().add(searchBox, BorderLayout.NORTH);
     chooserFrame.getContentPane().add(new JScrollPane(oneBestList), BorderLayout.CENTER);
 
     refreshLists();
@@ -189,4 +197,29 @@ public class Browser {
     }
     return;
   }
+
+	private static class SearchListener implements DocumentListener {
+
+		public void insertUpdate(DocumentEvent e) {
+			String query = searchBox.getText();
+			DefaultListModel oneBestListModel =
+				(DefaultListModel) oneBestList.getModel();
+			final int selectedIndex = oneBestList.getSelectedIndex();
+			int i = selectedIndex < 0 ? 0 : selectedIndex;
+			for (; i < oneBestListModel.getSize(); i++) {
+				String reference = (String) oneBestListModel.getElementAt(i);
+				if (reference.indexOf(query) != -1) {
+					// found the query
+					oneBestList.setSelectedIndex(i);
+					break;
+				}
+			}
+		}
+
+		public void removeUpdate(DocumentEvent e) {
+		}
+
+		public void changedUpdate(DocumentEvent e) {
+		}
+	}
 }
