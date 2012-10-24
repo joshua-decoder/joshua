@@ -41,10 +41,10 @@ public class DerivationTreeTransformer implements Transformer<Node, Point2D> {
     anchorPoint = new Point2D.Double(0, 0);
     graph = t;
     DelegateForest<Node, DerivationTreeEdge> del = new DelegateForest<Node, DerivationTreeEdge>(t);
-    del.setRoot(t.getRoot());
-    del.setRoot(t.getSourceRoot());
-    root = t.getRoot();
-    sourceRoot = t.getSourceRoot();
+    del.setRoot(t.root);
+    del.setRoot(t.sourceRoot);
+    root = t.root;
+    sourceRoot = t.sourceRoot;
     Y_DIST = d.getHeight() / (2 * (1 + distanceToLeaf(root)));
     int leafCount = 0;
     for (Node n : t.getVertices()) {
@@ -58,7 +58,7 @@ public class DerivationTreeTransformer implements Transformer<Node, Point2D> {
   public Point2D transform(Node n) {
     double x, y;
     Point2D t = treeLayout.transform(n);
-    if (n.isSource()) {
+    if (n.isSource) {
       x =
           /* treeLayout.transform(root).getX() + */(t.getX()
               - treeLayout.transform(sourceRoot).getX() + treeLayout.transform(root).getX());
