@@ -315,9 +315,9 @@
   
   <!-- Compile the unit test code -->
   <!-- FIXME: why is this broken out from the 'test' target? -->
-  <target name="compile-tests" depends=""> 
-	<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
-		   classpath="${testng}" debug="on" encoding="utf8"/> 
+  <target name="compile-tests" depends="java"> 
+		<javac compiler="javac1.5" srcdir="${test}/joshua/ui" destdir="${build}" 
+		classpath="${testng}:${build}" debug="on" encoding="utf8"/> 
   </target>
 
 
@@ -325,10 +325,9 @@
   <target name="testng" depends="all,compile-tests">
 	<testng classpath="${build}" sourcedir="${test}">
 	  <jvmarg value="-Dfile.encoding=UTF8"/>
-	  <jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
 	  <jvmarg value="-Xms256m" />
 	  <jvmarg value="-Xmx256m" />
-	  <xmlfileset dir="." includes="testng.xml"/>
+		<xmlfileset dir="${test}" includes="testng.xml"/>
 	</testng>
   </target>
 

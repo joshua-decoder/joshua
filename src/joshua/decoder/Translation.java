@@ -92,6 +92,7 @@ public class Translation {
         this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
       }
 
+      long startTime = System.currentTimeMillis();
       KBestExtractor kBestExtractor =
         new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
           JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
@@ -103,6 +104,9 @@ public class Translation {
       } catch (IOException e) {
         e.printStackTrace();
       }
+
+      float seconds = (float)(System.currentTimeMillis() - startTime) / 1000.0f;
+      System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(), JoshuaConfiguration.topN, seconds));
 
     } else {
       String output = getSourceSentence().source();

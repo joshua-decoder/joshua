@@ -70,7 +70,7 @@ public class DerivationViewer extends VisualizationViewer<Node, DerivationTreeEd
     graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
     setGraphMouse(graphMouse);
     addKeyListener(graphMouse.getModeKeyListener());
-    this.setPickedVertexState(new DerivationTreePickedState(g));
+    // this.setPickedVertexState(new DerivationTreePickedState(g));
 
     getRenderContext().setVertexFillPaintTransformer(vp);
     getRenderContext().setEdgeStrokeTransformer(es);
@@ -89,8 +89,8 @@ public class DerivationViewer extends VisualizationViewer<Node, DerivationTreeEd
 
   private Transformer<Node, Paint> vp = new Transformer<Node, Paint>() {
     public Paint transform(Node n) {
-      if (n.isHighlighted()) return HIGHLIGHT;
-      if (n.isSource())
+      if (n.isHighlighted) return HIGHLIGHT;
+      if (n.isSource)
         return SRC;
       else
         return TGT;
@@ -100,11 +100,16 @@ public class DerivationViewer extends VisualizationViewer<Node, DerivationTreeEd
   private static Transformer<DerivationTreeEdge, Stroke> es =
       new Transformer<DerivationTreeEdge, Stroke>() {
         public Stroke transform(DerivationTreeEdge e) {
-          if (e.pointsToSource())
-            return new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f,
-                new float[] {10.0f}, 0.0f);
-          else
+          if (e.pointsToSource) {
+            return new BasicStroke(1.0f,
+								                   BasicStroke.CAP_BUTT,
+																	 BasicStroke.JOIN_MITER,
+																	 10.0f,
+																	 new float[] {10.0f},
+																	 0.0f);
+					} else {
             return new BasicStroke(1.0f);
+					}
         }
       };
 
