@@ -13,6 +13,8 @@ import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.hypergraph.ForestWalker;
+import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.segment_file.Sentence;
 
@@ -110,6 +112,43 @@ public class DecoderThread extends Thread {
     logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",
         sentence.id(), seconds, getId()));
 
-    return new Translation(sentence, hypergraph, featureFunctions);
+		if (!JoshuaConfiguration.parse || hypergraph == null) {
+			return new Translation(sentence, hypergraph, featureFunctions);
+		}
+
+		/* Synchronous parsing.
+		 *
+		 * Step 1. Traverse the hypergraph to create a grammar for the second-pass parse.
+		 */
+    Grammar newGrammar = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
+    newGrammar.sortGrammar(this.featureFunctions);
+    long sortTime = System.currentTimeMillis();
+    logger.info(String.format("New grammar has %d rules.\n", newGrammar.getNumRules()));
+
+    /* Step 2. Create a new chart and parse with the instantiated grammar. */
+		Grammar [] newGrammarArray = new Grammar[] { newGrammar };
+		Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
+    chart =
+      new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
+    int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
+    logger.info(String.format("goal symbol is %d.\n", goalSymbol));
+    chart.setGoalSymbolID(goalSymbol);
+
+    /* Parsing */
+    HyperGraph englishParse = chart.expand();
+    long secondParseTime = System.currentTimeMillis();
+    logger.info(String.format("Finished second chart expansion (%d seconds).\n",
+        (secondParseTime - sortTime) / 1000));
+    logger.info(String.format("Total time: %d seconds.\n", (secondParseTime - startTime) / 1000));
+
+    return new Translation(sentence, englishParse, featureFunctions); // or do something else
+ 
+  }
+
+  private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) throws IOException {
+    GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal);
+    ForestWalker walker = new ForestWalker();
+    walker.walk(hg.goalNode, f);
+    return f.getGrammar();
   }
 }
