@@ -8,11 +8,11 @@ import org.restlet.resource.ServerResource;
 
 public class DecoderServer extends ServerResource {
 
-  JoshuaDecoder decoder;
+  Decoder decoder;
   private static ArgsParser cliArgs;
 
   public DecoderServer() {
-    decoder = new JoshuaDecoder(cliArgs.getConfigFile());
+    decoder = new Decoder(cliArgs.getConfigFile());
   }
 
   public static void main(String[] args) throws Exception {
@@ -23,7 +23,7 @@ public class DecoderServer extends ServerResource {
 
   @Post("json")
   public String acceptJson(String value) {
-    return decoder.translateString(value);
+    return null;  // decoder.translateString(value);
   }
 
 }

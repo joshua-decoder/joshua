@@ -14,9 +14,7 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
-import joshua.oracle.OracleExtractor;
 
 /**
  * This class handles decoding of individual Sentence objects (which can represent plain sentences
@@ -41,24 +39,17 @@ public class DecoderThread extends Thread {
   private final List<StateComputer> stateComputers;
   private List<Translation> translations;
 
-  // more test set specific
-  private final InputHandler inputHandler;
-  // final String nbestFile; // package-private for DecoderFactory
-  private BufferedWriter nbestWriter; // set in decodeTestFile
-  private final KBestExtractor kbestExtractor;
-
   private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
 
   // ===============================================================
   // Constructor
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-    List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
-    InputHandler inputHandler) throws IOException {
+      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers)
+      throws IOException {
 
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
-    this.inputHandler = inputHandler;
     this.translations = new ArrayList<Translation>();
 
     this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -69,106 +60,29 @@ public class DecoderThread extends Thread {
         this.featureFunctions.add(ff);
       }
     }
-
-    this.kbestExtractor =
-      new KBestExtractor(weights, JoshuaConfiguration.use_unique_nbest,
-        JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-        JoshuaConfiguration.add_combined_cost, false, false);
   }
-
 
   // ===============================================================
   // Methods
   // ===============================================================
-  // Overriding of Thread.run() cannot throw anything
+
   public void run() {
-    try {
-      this.translateAll();
-      // this.hypergraphSerializer.closeReaders();
-    } catch (Throwable e) {
-      // if we throw anything (e.g. OutOfMemoryError)
-      // we should stop all threads
-      // because it is impossible for decoding
-      // to finish successfully
-      e.printStackTrace();
-      System.exit(1);
-    }
+    // Nothing to do but wait.
   }
-
-
-  /**
-   * Repeatedly fetches input sentences and calls translate() on them, registering the results with
-   * the InputManager upon completion.
-   */
-  public void translateAll() throws IOException {
-
-    for (;;) {
-
-      Sentence sentence = inputHandler.next();
-      if (sentence == null) break;
-
-      HyperGraph hypergraph = translate(sentence, null);
-      Translation translation = null;
-
-      // if (JoshuaConfiguration.visualize_hypergraph) {
-      //   HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
-      // }
-
-      String oracleSentence = inputHandler.oracleSentence(sentence.id());
-      if (!sentence.isEmpty() && oracleSentence != null) {
-        OracleExtractor extractor = new OracleExtractor();
-        HyperGraph oracle =
-            extractor.getOracle(hypergraph, JoshuaConfiguration.lm_order, oracleSentence);
-
-        translation = new Translation(sentence, oracle, featureFunctions);
-
-      } else {
-
-        translation = new Translation(sentence, hypergraph, featureFunctions);
-
-        // if (null != this.hypergraphSerializer) {
-        // if(JoshuaConfiguration.use_kbest_hg){
-        // HyperGraph kbestHG = this.kbestExtractor.extractKbestIntoHyperGraph(hypergraph,
-        // JoshuaConfiguration.topN);
-        // this.hypergraphSerializer.saveHyperGraph(kbestHG);
-        // }else{
-        // this.hypergraphSerializer.saveHyperGraph(hypergraph);
-        // }
-        // }
-
-      }
-
-      inputHandler.register(translation);
-      this.translations.add(translation);
-
-      /*
-       * //debug if (JoshuaConfiguration.use_variational_decoding) { ConstituentVariationalDecoder
-       * vd = new ConstituentVariationalDecoder(); vd.decoding(hypergraph);
-       * System.out.println("#### new 1best is #####\n" +
-       * HyperGraph.extract_best_string(p_main_controller.p_symbol, hypergraph.goal_item)); } // end
-       */
-
-      // debug
-      // g_con.get_confusion_in_hyper_graph_cell_specific(hypergraph, hypergraph.sent_len);
-
-    }
-  }
-
 
   /**
    * Translate a sentence.
    * 
    * @param sentence The sentence to be translated.
-   * @param oracleSentence
    */
-  public HyperGraph translate(Sentence sentence, String oracleSentence) throws IOException {
+  public Translation translate(Sentence sentence) throws IOException {
 
     logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n"
         + sentence.source());
     if (sentence.target() != null)
       logger.info("Constraining to target sentence '" + sentence.target() + "'");
 
-    if (sentence.isEmpty()) 
+    if (sentence.isEmpty())
       return null;
 
     long startTime = System.currentTimeMillis();
@@ -186,23 +100,16 @@ public class DecoderThread extends Thread {
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 
     /* Seeding: the chart only sees the grammars, not the factories */
-    Chart chart = new Chart(sentence, this.featureFunctions, this.stateComputers, grammars, JoshuaConfiguration.goal_symbol);
+    Chart chart = new Chart(sentence, this.featureFunctions, this.stateComputers, grammars,
+        JoshuaConfiguration.goal_symbol);
 
     /* Parsing */
     HyperGraph hypergraph = chart.expand();
 
-    float seconds = (float)(System.currentTimeMillis() - startTime) / 1000.0f;
-    logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]", sentence.id(), seconds, getId()));
+    float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
+    logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",
+        sentence.id(), seconds, getId()));
 
-    return hypergraph;
+    return new Translation(sentence, hypergraph, featureFunctions);
   }
-
-
-  /**
-   * @return the translations
-   */
-  public List<Translation> getTranslations() {
-    return translations;
-  }
-
 }

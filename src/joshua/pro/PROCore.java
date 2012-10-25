@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import joshua.decoder.JoshuaDecoder;
+import joshua.decoder.Decoder;
 import joshua.metrics.EvaluationMetric;
 import joshua.util.StreamGobbler;
 import joshua.corpus.Vocabulary;
@@ -141,7 +141,7 @@ public class PROCore {
   /* *********************************************************** */
   /* *********************************************************** */
 
-  private JoshuaDecoder myDecoder;
+  private Decoder myDecoder;
   // COMMENT OUT if decoder is not Joshua
 
   private String decoderCommand;
@@ -517,7 +517,7 @@ public class PROCore {
     // BY DEFAULT, LOAD JOSHUA DECODER
     if (decoderCommand == null && fakeFileNameTemplate == null) {
       println("Loading Joshua decoder...", 1);
-      myDecoder = new JoshuaDecoder(decoderConfigFileName + ".PRO.orig");
+      myDecoder = new Decoder(decoderConfigFileName + ".PRO.orig");
       println("...finished loading @ " + (new Date()), 1);
       println("");
     } else {
@@ -1758,36 +1758,7 @@ public class PROCore {
       retSA[0] = fakeFileName;
       retSA[1] = "2";
 
-    }
-
-    // BY DEFAULT USE JOSHUA DECODER
-    else if (decoderCommand == null) {
-
-      if (myDecoder == null) {
-        println("Loading Joshua decoder...", 1);
-        myDecoder = new JoshuaDecoder(decoderConfigFileName + ".PRO.orig");
-        println("...finished loading @ " + (new Date()), 1);
-        println("");
-      }
-
-      println("Running Joshua decoder on source file " + sourceFileName + "...", 1);
-      // myDecoder.initialize(decoderConfigFileName);
-      double[] zeroBased_lambda = new double[numParams];
-      System.arraycopy(lambda, 1, zeroBased_lambda, 0, numParams);
-      /*
-       * This is never used and doesn't work with sparse features, so we're commenting it out for
-       * the moment [MJP, 2012-09-07]
-       */
-      // myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
-      myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
-
-      retSA[0] = decoderOutFileName;
-      retSA[1] = "3";
-
-    }
-
-    // RUN EXTERNAL DECODER SPECIFIED BY THE COMMAND FILE
-    else {
+    } else {
       println("Running external decoder...", 1);
 
       try {

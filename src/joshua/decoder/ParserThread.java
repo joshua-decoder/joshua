@@ -1,6 +1,5 @@
 package joshua.decoder;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -14,10 +13,7 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
-import joshua.lattice.Lattice;
-import joshua.oracle.OracleExtractor;
 
 /**
  * This class handles parsing of individual Sentence objects (which can represent plain sentences or
@@ -31,7 +27,6 @@ import joshua.oracle.OracleExtractor;
  * @author Jonny Weese <jonny@cs.jhu.edu>
  * @author Matt Post <post@jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */
 // BUG: known synchronization problem: LM cache; srilm call;
 public class ParserThread extends Thread {
@@ -44,33 +39,19 @@ public class ParserThread extends Thread {
   private final List<StateComputer> stateComputers;
   private FeatureVector weights;
 
-  // more test set specific
-  private final InputHandler inputHandler;
-  // final String nbestFile; // package-private for DecoderFactory
-  private BufferedWriter nbestWriter; // set in decodeTestFile
-  private final KBestExtractor kbestExtractor;
-
   private static final Logger logger = Logger.getLogger(ParserThread.class.getName());
-
 
   // ===============================================================
   // Constructor
   // ===============================================================
   public ParserThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers,
-      InputHandler inputHandler) throws IOException {
+      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers) 
+          throws IOException {
 
     this.weights = weights;
     this.grammarFactories = grammarFactories;
     this.featureFunctions = featureFunctions;
     this.stateComputers = stateComputers;
-
-    this.inputHandler = inputHandler;
-
-    this.kbestExtractor =
-      new KBestExtractor(weights, JoshuaConfiguration.use_unique_nbest,
-        JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-        JoshuaConfiguration.add_combined_cost, false, true);
   }
 
 
@@ -101,23 +82,13 @@ public class ParserThread extends Thread {
 
     for (;;) {
 
-      Sentence sentence = inputHandler.next();
-      if (sentence == null) break;
+      Sentence sentence = null;
+      if (sentence == null) 
+        break;
 
       HyperGraph hypergraph = parse(sentence, null);
-      Translation translation = null;
-
-      String oracleSentence = inputHandler.oracleSentence(sentence.id());
-
-      if (oracleSentence != null) {
-        OracleExtractor extractor = new OracleExtractor();
-        HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
-
-        translation = new Translation(sentence, oracle, featureFunctions);
-
-      } else {
-
-        translation = new Translation(sentence, hypergraph, featureFunctions);
+      
+      Translation translation = new Translation(sentence, hypergraph, featureFunctions);
 
         // if (null != this.hypergraphSerializer) {
         // if(JoshuaConfiguration.use_kbest_hg){
@@ -128,10 +99,6 @@ public class ParserThread extends Thread {
         // this.hypergraphSerializer.saveHyperGraph(hypergraph);
         // }
         // }
-
-      }
-
-      inputHandler.register(translation);
 
       /*
        * //debug if (JoshuaConfiguration.use_variational_decoding) { ConstituentVariationalDecoder

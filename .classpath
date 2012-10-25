@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="lib/asm-3.1.jar"/>
-	<classpathentry kind="lib" path="lib/collections-generic-4.01.jar"/>
-	<classpathentry kind="lib" path="lib/commons-cli-2.0-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="lib/jaxen-1.1.1.jar"/>
-	<classpathentry kind="lib" path="lib/jung-algorithms-2.0.jar"/>
-	<classpathentry kind="lib" path="lib/jung-api-2.0.jar"/>
-	<classpathentry kind="lib" path="lib/jung-graph-impl-2.0.jar"/>
-	<classpathentry kind="lib" path="lib/jung-visualization-2.0.jar"/>
-	<classpathentry kind="lib" path="lib/pmd-4.2.5.jar"/>
-	<classpathentry kind="lib" path="lib/testng-5.8-jdk15.jar"/>
-	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
-	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
-	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
-	<classpathentry kind="lib" path="lib/org.restlet-2.1.0.jar"/>
-  <classpathentry kind="lib" path="lib/org.restlet.ext.json-2.1.0.jar"/>
-  <classpathentry kind="lib" path="lib/org.restlet.lib.org.json-2.0.jar"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-3.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/collections-generic-4.01.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-cli-2.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jaxen-1.1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jung-algorithms-2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jung-api-2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jung-graph-impl-2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jung-visualization-2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pmd-4.2.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="thrax/bin/thrax.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/berkeleyaligner.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/berkeleylm.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.restlet-2.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.restlet.ext.json-2.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.restlet.lib.org.json-2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

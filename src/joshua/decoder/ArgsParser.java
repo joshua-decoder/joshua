@@ -1,6 +1,3 @@
-/**
- * 
- */
 package joshua.decoder;
 
 import java.io.IOException;
@@ -61,8 +58,6 @@ public class ArgsParser {
         // now process all the command-line args
         JoshuaConfiguration.processCommandLineOptions(args);
 
-        setOracleFile(JoshuaConfiguration.oracleFile);
-
       } else {
 
         setConfigFile(args[0].trim());
@@ -75,8 +70,6 @@ public class ArgsParser {
         }
 
         if (args.length >= 2) setTestFile(args[1].trim());
-        if (args.length >= 3) setNbestFile(args[2].trim());
-        if (args.length == 4) setOracleFile(args[3].trim());
       }
     }
 
@@ -108,33 +101,5 @@ public class ArgsParser {
    */
   public void setTestFile(String testFile) {
     this.testFile = testFile;
-  }
-
-  /**
-   * @return the nbestFile
-   */
-  public String getNbestFile() {
-    return nbestFile;
-  }
-
-  /**
-   * @param nbestFile the nbestFile to set
-   */
-  public void setNbestFile(String nbestFile) {
-    this.nbestFile = nbestFile;
-  }
-
-  /**
-   * @return the oracleFile
-   */
-  public String getOracleFile() {
-    return oracleFile;
-  }
-
-  /**
-   * @param oracleFile the oracleFile to set
-   */
-  public void setOracleFile(String oracleFile) {
-    this.oracleFile = oracleFile;
   }
 }
