@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<!-- test suite for joshua -->
+
+<suite name="Joshua" verbose="2">
+
+    <test name="Visualization">
+        <packages>
+					<package name="joshua.ui.tree_visualizer.tree"/>
+        </packages>
+    </test>
+
+</suite>

@@ -33,6 +33,7 @@ import joshua.util.io.UncheckedIOException;
  * to store all these model cost at each hyperedge.)
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class KBestExtractor {
 
@@ -89,11 +90,18 @@ public class KBestExtractor {
       FeatureVector features = new FeatureVector();
 
 //      return derivationState.getDerivation(this, features, models, 0);
-       String strHypNumeric = derivationState.getHypothesis(this, extractNbestTree, features,
-       models);
-       String strHypStr =
-       convertHyp2String(sentID, derivationState, models, strHypNumeric, features);
-       return strHypStr;
+      StringBuffer candidate = new StringBuffer();
+      if (sentID >= 0)
+        candidate.append(sentID + " ||| ");
+        
+      candidate.append(derivationState.getHypothesis(this, extractNbestTree, features, models));
+      if (null != features)
+        candidate.append(" ||| " + features.toString());
+
+      if (addCombinedScore)
+        candidate.append(String.format(" ||| %.3f", -derivationState.cost));
+
+      return candidate.toString();
     }
   }
 
@@ -194,110 +202,6 @@ public class KBestExtractor {
    */
   public void resetState() {
     virtualNodesTbl.clear();
-  }
-
-  /*
-   * non-recursive function format: sent_id ||| hyp ||| individual model cost ||| combined cost
-   * sent_id<0: do not add sent_id l_models==null: do not add model cost add_combined_score==f: do
-   * not add combined model cost
-   */
-  private String convertHyp2String(int sentID, DerivationState state, List<FeatureFunction> models,
-      String strHypNumeric, FeatureVector features) {
-    String[] tem = Regex.spaces.split(strHypNumeric);
-    StringBuffer strHyp = new StringBuffer();
-
-    // ####sent id
-    if (sentID >= 0) { // valid sent id must be >=0
-      strHyp.append(sentID);
-      strHyp.append(" ||| ");
-    }
-
-    // TODO: consider_start_sym
-    // ####hyp words
-    for (int t = 0; t < tem.length; t++) {
-      tem[t] = tem[t].trim();
-      if (extractNbestTree && (tem[t].startsWith("(") || tem[t].endsWith(")"))) { // tree tag
-        /* New node. */
-        if (tem[t].startsWith("(")) {
-          if (includeAlign) {
-            // we must account for the {i-j} substring
-            int ijStrIndex = tem[t].indexOf('{');
-            String tag = Vocabulary.word(Integer.parseInt(tem[t].substring(1, ijStrIndex)));
-            strHyp.append('(');
-            strHyp.append(tag);
-            strHyp.append(tem[t].substring(ijStrIndex)); // append {i-j}
-          } else {
-            String tag = Vocabulary.word(Integer.parseInt(tem[t].substring(1)));
-            strHyp.append('(');
-            strHyp.append(tag);
-          }
-        } else {
-//          System.err.println("TEM = " + t + " " + tem[t]);
-          // note: it may have more than two ")", e.g., "3499))"
-          int firstBracketPos = tem[t].indexOf(')');// TODO: assume the tag/terminal does not have
-                                                    // ')'
-          String tag = Vocabulary.word(Integer.parseInt(tem[t].substring(0, firstBracketPos)));
-          strHyp.append(tag);
-          String terminal = tem[t].substring(firstBracketPos);
-          strHyp.append(escapeTerminalForTree(terminal));
-        }
-      } else { // terminal symbol
-        String terminal = Vocabulary.word(Integer.parseInt(tem[t]));
-        terminal = escapeTerminalForTree(terminal);
-        strHyp.append(terminal);
-      }
-      if (t < tem.length - 1) {
-        strHyp.append(' ');
-      }
-    }
-
-    // ####individual model cost, and final transition cost
-    if (null != features) {
-      strHyp.append(" ||| " + features.toString());
-      double temSum = 0.0;
-
-      for (String feature : features.keySet()) {
-        temSum += features.get(feature) * weights.get(feature);
-      }
-
-      // sanity check
-      if (performSanityCheck) {
-        if (Math.abs(state.cost - temSum) > 1e-2) {
-          StringBuilder error = new StringBuilder();
-          error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + state.cost
-              + "; temsum: " + temSum + "\n");
-          // System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost +
-          // "; temsum: " +tem_sum);
-          for (String feature : features.keySet()) {
-            error.append(String.format("model weight: %.3f; cost: %.3f\n", weights.get(feature),
-                features.get(feature)));
-
-            // for (int k = 0; k < modelCost.length; k++) {
-            // error.append("model weight: " + models.get(k).getWeight() + "; cost: " + modelCost[k]
-            // + "\n");
-            // System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: "
-            // +model_cost[k]);
-          }
-          throw new RuntimeException(error.toString());
-        }
-      }
-    }
-
-    // ####combined model cost
-    if (addCombinedScore) {
-      strHyp.append(String.format(" ||| %.3f", -state.cost));
-    }
-
-    return strHyp.toString();
-  }
-
-  private String escapeTerminalForTree(String terminal) {
-    if (JoshuaConfiguration.escape_trees) {
-      // any paren that is not part of the tree structure
-      // can cause an error when parsing the resulting tree
-      terminal = terminal.replace("(", "-LRB-").replace(")", "-RRB-");
-    }
-    return terminal;
   }
 
   /**
@@ -731,7 +635,7 @@ public class KBestExtractor {
         if (useTreeFormat) {
           // res.append("(ROOT ");
           sb.append('(');
-          sb.append(rootID);
+          sb.append(Vocabulary.word(rootID));
           if (includeAlign) {
             // append "{i-j}"
             sb.append('{');
@@ -762,7 +666,7 @@ public class KBestExtractor {
             int max = GrammarBuilderWalkerFunction.MAX_NTS;
             lhs = (lhs % max);
           }
-          sb.append(lhs);
+          sb.append(Vocabulary.word(lhs));
           if (includeAlign) {
             // append "{i-j}"
             sb.append('{');
@@ -782,7 +686,7 @@ public class KBestExtractor {
                   kbestExtractor, useTreeFormat, features, models));
             } else {
               if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
-                sb.append(english[c]);
+                sb.append(Vocabulary.word(english[c]));
             }
             if (c < english.length - 1)
               sb.append(' ');
@@ -796,7 +700,7 @@ public class KBestExtractor {
                   .getHypothesis(kbestExtractor, useTreeFormat, features, models));
               nonTerminalID++;
             } else {
-              sb.append(french[c]);
+              sb.append(Vocabulary.word(french[c]));
             }
             if (c < french.length - 1)
               sb.append(' ');

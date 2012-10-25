@@ -40,7 +40,6 @@ import joshua.util.StreamGobbler;
  * a sparse feature implementation.
  * 
  * @author Omar Zaidan
- * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class MertCore {

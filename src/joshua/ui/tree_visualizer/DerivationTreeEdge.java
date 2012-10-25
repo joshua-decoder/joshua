@@ -16,13 +16,9 @@
 package joshua.ui.tree_visualizer;
 
 public class DerivationTreeEdge {
-  private boolean pointsToSource;
+  public final boolean pointsToSource;
 
   public DerivationTreeEdge(boolean pts) {
     pointsToSource = pts;
-  }
-
-  public boolean pointsToSource() {
-    return pointsToSource;
   }
 }

@@ -19,6 +19,8 @@ import java.awt.Color;
 
 import javax.swing.JApplet;
 
+import joshua.ui.tree_visualizer.tree.Tree;
+
 /**
  * An applet for viewing DerivationTrees. It consists of a DerivationViewer inside of the applet's
  * Panel.
@@ -34,9 +36,12 @@ public class DerivationViewerApplet extends JApplet {
   public void init() {
     String source = getParameter("sourceSentence");
     String derivation = getParameter("derivationTree");
+		Tree tree = new Tree(derivation);
 
-    add(new DerivationViewer(new DerivationTree(derivation, source), getSize(), Color.red,
-        DerivationViewer.AnchorType.ANCHOR_ROOT));
+    add(new DerivationViewer(new DerivationTree(tree, source),
+					                   getSize(),
+														 Color.red,
+														 DerivationViewer.AnchorType.ANCHOR_ROOT));
     return;
   }
 }
