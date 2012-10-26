@@ -1,7 +1,6 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -36,14 +34,27 @@ import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
 import joshua.decoder.segment_file.Sentence;
-// import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
 /**
- * Implements decoder initialization, including interaction with <code>JoshuaConfiguration</code>
- * and <code>DecoderThread</code>.
+ * This class handles decoder initialization and the complication introduced by multithreading.
+ * 
+ * After initialization, the main entry point to the Decoder object is
+ * decodeAll(TranslationRequest), which returns a set of Translation objects wrapped in an iterable
+ * Translations object. It is important that we support multithreading both (a) across the sentences
+ * within a request and (b) across requests, in a round-robin fashion. This is done by maintaining a
+ * fixed sized concurrent thread pool. When a new request comes in, a RequestHandler thread is
+ * launched. This object reads iterates over the request's sentences, obtaining a thread from the
+ * thread pool, and using that thread to decode the sentence. If a decoding thread is not available,
+ * it will block until one is in a fair (FIFO) manner. This maintains fairness across requests so
+ * long as each request only requests thread when it has a sentence ready.
+ * 
+ * A decoding thread is handled by DecoderThread and launched from DecoderThreadRunner. The purpose
+ * of the runner is to record where to place the translated sentence when it is done (i.e., which
+ * Translations object). Translations itself is an iterator whose next() call blocks until the next
+ * translation is available.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -68,8 +79,6 @@ public class Decoder {
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Decoder.class.getName());
-
-  private Thread[] decoderThreads;
 
   private BlockingQueue<DecoderThread> threadPool = null;
 
@@ -96,7 +105,8 @@ public class Decoder {
    */
   private Decoder() {
     this.grammarFactories = new ArrayList<GrammarFactory>();
-    this.threadPool = new ArrayBlockingQueue<DecoderThread>(JoshuaConfiguration.num_parallel_decoders, true);
+    this.threadPool = new ArrayBlockingQueue<DecoderThread>(
+        JoshuaConfiguration.num_parallel_decoders, true);
   }
 
   /**
@@ -141,67 +151,268 @@ public class Decoder {
     }
   }
 
+  /**
+   * This class is responsible for getting sentences from the TranslationRequest and procuring a
+   * DecoderThreadRunner to translate it. Each call to decodeAll(TranslationRequest) launches a
+   * thread that will read the request's sentences, obtain a DecoderThread to translate them, and
+   * then place the Translation in the appropriate place.
+   * 
+   * @author Matt Post <post@cs.jhu.edu>
+   * 
+   */
+  private class RequestHandler extends Thread {
+    /* Source of sentences to translate. */
+    private TranslationRequest request;
+
+    /* Where to put translated sentences. */
+    private Translations response;
+
+    RequestHandler(TranslationRequest request, Translations response) {
+      this.request = request;
+      this.response = response;
+    }
+
+    public void run() {
+      /*
+       * Repeatedly get an input sentence, wait for a DecoderThread, and then start a new thread to
+       * translate the sentence. We start a new thread (via DecoderRunnerThread) as opposed to
+       * blocking, so that the RequestHandler can go on to the next sentence in this request, which
+       * allows parallelization across the sentences of the request.
+       */
+      while (request.hasNext()) {
+        Sentence sentence = request.next();
+        // This will block until a DecoderThread becomes available.
+        DecoderThread thread = Decoder.this.getThread();
+        new DecoderThreadRunner(thread, sentence, response).start();
+      }
+    }
+  }
+
+  /**
+   * Retrieve a thread from the thread pool, blocking until one is available. The blocking occurs in
+   * a fair fashion (i.e,. FIFO across requests).
+   * 
+   * @return a thread that can be used for decoding.
+   */
+  public DecoderThread getThread() {
+    try {
+      return threadPool.take();
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  /**
+   * This class handles running a DecoderThread (which takes care of the actual translation of an
+   * input Sentence, returning a Translation object when its done). This is done in a thread so as
+   * not to tie up the RequestHandler that launched it, freeing it to go on to the next sentence in
+   * the TranslationRequest, in turn permitting parallelization across the sentences of a request.
+   * 
+   * When the decoder thread is finshed, the Translation object is placed in the correct place in
+   * the corresponding Translations object that was returned to the caller of
+   * Decoder.decodeAll(TranslationRequest).
+   * 
+   * @author Matt Post <post@cs.jhu.edu>
+   */
+  private class DecoderThreadRunner extends Thread {
+
+    private DecoderThread decoderThread;
+    private Sentence sentence;
+    private Translations translations;
+
+    DecoderThreadRunner(DecoderThread thread, Sentence sentence, Translations translations) {
+      this.decoderThread = thread;
+      this.sentence = sentence;
+      this.translations = translations;
+    }
+
+    @Override
+    public void run() {
+      /*
+       * Use the thread to translate the sentence. Then record the translation with the
+       * corresponding Translations object, and return the thread to the pool.
+       */
+      Translation translation = decoderThread.translate(this.sentence);
+      translations.record(translation);
+      try {
+        /*
+         * This is crucial! It's what makes the thread available for the next sentence to be
+         * translated.
+         */
+        threadPool.put(decoderThread);
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+  }
+
+  /**
+   * This class represents a set of translations that can be iterated over. It is returned by the
+   * main entry point to the Decoder object, the call to decodeAll. The translations here are
+   * parallel to the input sentences in the corresponding TranslationRequest object. The object is
+   * iterable so that translations can be output as they are obtained, saving the need to keep them
+   * all in memory.
+   * 
+   * Because of parallelization, the translated sentences might be computed out of order. Each
+   * Translation is sent to this Translations object by a DecoderThreadRunner via the record()
+   * function, which places the Translation in the right place. When the next translation in a
+   * sequence is available, next() is notified.
+   * 
+   * This object is Iterable, which means that it returns an Iterator<Translation> object that knows
+   * how to iterate over it. Currently, all Translations are saved, so you could have multiple
+   * Iterators. Really, though, translations that have been printed should be garbage collected,
+   * which means that the object should support only one iterator, meaning it should implement both
+   * Iterator and Iterable (generally frowned upon).
+   * 
+   * @author Matt Post <post@cs.jhu.edu>
+   */
   public class Translations implements Iterable<Translation> {
 
+    /* The source sentences to be translated. */
     private TranslationRequest request = null;
+
+    /*
+     * Since sentences might be translated out of order, we need to record the last one that was
+     * safely translated in order to know when next() should block on the corresponding iterator.
+     */
+    private int lastAvailable = -1;
+
+    /* The set of translated sentences. */
+    private ArrayList<Translation> translations = null;
+
+    /*
+     * next() may be called before the next Translation has been produced. next() will then wait()
+     * on this object until the next translation is added, which will then notify() it.
+     */
+    private Object head = new Object();
 
     public Translations(TranslationRequest request) {
       this.request = request;
+      this.translations = new ArrayList<Translation>();
     }
 
+    public synchronized void record(Translation translation) {
+      /* Pad the set of translations with nulls to accommodate the new translation. */
+      if (translation.id() >= translations.size())
+        for (int i = translations.size(); i <= translation.id(); i++)
+          translations.add(null);
+      translations.set(translation.id(), translation);
+
+      /*
+       * If the id of the current translation is one past the last, we've triggered an update
+       * available for next(). But we have to see how far we can go since other threads might have
+       * translated IDs ahead of this one.
+       */
+      if (translation.id() == lastAvailable + 1) {
+        while (lastAvailable + 1 < translations.size()
+            && translations.get(lastAvailable + 1) != null)
+          lastAvailable++;
+        synchronized (head) {
+          head.notify();
+        }
+      }
+    }
+
+    /**
+     * An iterator over Translations.
+     */
     @Override
     public Iterator<Translation> iterator() {
-      return new TranslationIterator(request);
+      return new TranslationsIterator();
     }
 
+    /**
+     * This is the iterator over a (streaming) Translations object. It really could probably be
+     * combined into Translations, so that Translations would implement both Iterator (return this)
+     * and Iterable.
+     * 
+     * @author Matt Post <post@cs.jhu.edu>
+     */
+    private class TranslationsIterator implements Iterator<Translation> {
+
+      private int currentPos = -1;
+
+      public TranslationsIterator() {
+      }
+
+      /**
+       * There will (one day) be another Translation available if the size of the request set is
+       * larger than our current position.
+       */
+      @Override
+      public boolean hasNext() {
+        return currentPos + 1 < Translations.this.request.size();
+      }
+
+      /**
+       * Returns the next Translation, blocking if necessary until it's available.
+       */
+      @Override
+      public Translation next() {
+        /*
+         * If the current position is past the position of the last translated sentence, we have to
+         * wait
+         */
+        if (currentPos + 1 > Translations.this.lastAvailable) {
+          synchronized (head) {
+            try {
+              head.wait();
+            } catch (InterruptedException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            }
+          }
+        }
+
+        return Translations.this.translations.get(++currentPos);
+      }
+
+      @Override
+      public void remove() {
+        // unimplemented
+      }
+    }
   }
 
-  public class TranslationIterator implements Iterator<Translation> {
-
-    private TranslationRequest request = null;
-    private Translation nextTranslation = null;
-
-    public TranslationIterator(TranslationRequest request) {
-      this.request = request;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return request.hasNext();
-    }
-
-    @Override
-    public Translation next() {
-      return Decoder.this.decode(request.next());
-    }
-
-    @Override
-    public void remove() {
-      // unimplemented
-    }
-  }
-
+  /**
+   * This function is the main entry point into the decoder. It translates all the sentences in a
+   * (possibly boundless) set of input sentences. Each request launches its own thread to read the
+   * sentences of the request.
+   * 
+   * @param request
+   * @return an iterable set of Translation objects
+   */
   public Translations decodeAll(TranslationRequest request) {
-    return new Translations(request);
+    Translations translations = new Translations(request);
+
+    new RequestHandler(request, translations).start();
+
+    return translations;
   }
 
+  /**
+   * We can also just decode a single sentence.
+   * 
+   * @param sentence
+   * @return The translated sentence
+   */
   public Translation decode(Sentence sentence) {
     // Get a thread.
 
     try {
       DecoderThread thread = threadPool.take();
-      System.err.println(String.format("Sentence %d: got thread %d", sentence.id(), thread.getId()));
       Translation translation = thread.translate(sentence);
       threadPool.put(thread);
-      
+
       return translation;
-     
+
     } catch (InterruptedException e) {
       e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
-    
+
     return null;
   }
 
@@ -395,10 +606,9 @@ public class Decoder {
       }
       logger.info(String.format("Grammar sorting took: %d seconds.",
           (System.currentTimeMillis() - pre_sort_time) / 1000));
-      
+
       /* Create the threads */
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
-        System.err.println("Creating thread " + i);
         this.threadPool.put(new DecoderThread(this.grammarFactories, this.weights,
             this.featureFunctions, this.stateComputers));
       }

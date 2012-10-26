@@ -1,6 +1,5 @@
 package joshua.decoder;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,6 @@ public class DecoderThread extends Thread {
   private final List<GrammarFactory> grammarFactories;
   private final List<FeatureFunction> featureFunctions;
   private final List<StateComputer> stateComputers;
-  private List<Translation> translations;
 
   private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
 
@@ -52,7 +50,6 @@ public class DecoderThread extends Thread {
 
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
-    this.translations = new ArrayList<Translation>();
 
     this.featureFunctions = new ArrayList<FeatureFunction>();
     for (FeatureFunction ff : featureFunctions) {
@@ -77,7 +74,7 @@ public class DecoderThread extends Thread {
    * 
    * @param sentence The sentence to be translated.
    */
-  public Translation translate(Sentence sentence) throws IOException {
+  public Translation translate(Sentence sentence) {
 
     logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n"
         + sentence.source());
@@ -112,24 +109,24 @@ public class DecoderThread extends Thread {
     logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",
         sentence.id(), seconds, getId()));
 
-		if (!JoshuaConfiguration.parse || hypergraph == null) {
-			return new Translation(sentence, hypergraph, featureFunctions);
-		}
+    if (!JoshuaConfiguration.parse || hypergraph == null) {
+      return new Translation(sentence, hypergraph, featureFunctions);
+    }
 
-		/* Synchronous parsing.
-		 *
-		 * Step 1. Traverse the hypergraph to create a grammar for the second-pass parse.
-		 */
+    /*
+     * Synchronous parsing.
+     * 
+     * Step 1. Traverse the hypergraph to create a grammar for the second-pass parse.
+     */
     Grammar newGrammar = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
     newGrammar.sortGrammar(this.featureFunctions);
     long sortTime = System.currentTimeMillis();
     logger.info(String.format("New grammar has %d rules.\n", newGrammar.getNumRules()));
 
     /* Step 2. Create a new chart and parse with the instantiated grammar. */
-		Grammar [] newGrammarArray = new Grammar[] { newGrammar };
-		Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
-    chart =
-      new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
+    Grammar[] newGrammarArray = new Grammar[] { newGrammar };
+    Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
+    chart = new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     logger.info(String.format("goal symbol is %d.\n", goalSymbol));
     chart.setGoalSymbolID(goalSymbol);
@@ -142,10 +139,10 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Total time: %d seconds.\n", (secondParseTime - startTime) / 1000));
 
     return new Translation(sentence, englishParse, featureFunctions); // or do something else
- 
+
   }
 
-  private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) throws IOException {
+  private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {
     GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal);
     ForestWalker walker = new ForestWalker();
     walker.walk(hg.goalNode, f);

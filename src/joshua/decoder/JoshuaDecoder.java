@@ -1,41 +1,10 @@
 package joshua.decoder;
 
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.HashMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.ArityPhrasePenaltyFF;
-import joshua.decoder.ff.OOVFF;
-import joshua.decoder.ff.PhraseModelFF;
-import joshua.decoder.ff.SourcePathFF;
-import joshua.decoder.ff.WordPenaltyFF;
-import joshua.decoder.ff.lm.LanguageModelFF;
-import joshua.decoder.ff.lm.NGramLanguageModel;
-import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
-import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
-import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
-import joshua.decoder.ff.state_maintenance.NgramStateComputer;
-import joshua.decoder.ff.state_maintenance.StateComputer;
-import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
-import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
-// import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
-import joshua.util.FileUtility;
-import joshua.util.Regex;
-import joshua.util.io.LineReader;
 
 /**
  * Implements decoder initialization, including interaction with <code>JoshuaConfiguration</code>
@@ -80,7 +49,7 @@ public class JoshuaDecoder {
     // create a server if requested, which will create TranslationRequest objects
     
     // create a TranslationRequest object on STDIN
-    TranslationRequest fileRequest = new TranslationRequest(System.in, System.out);
+    TranslationRequest fileRequest = new TranslationRequest(System.in);
     for (Translation translation: decoder.decodeAll(fileRequest)) {
       translation.print();
     }
