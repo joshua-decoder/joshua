@@ -316,7 +316,7 @@
   
   <!-- Compile the unit test code -->
   <!-- FIXME: why is this broken out from the 'test' target? -->
-  <target name="compile-tests" depends="init,java"> 
+  <target name="compile-tests" depends="java"> 
 		<javac compiler="javac1.5" srcdir="${test}/joshua/ui" destdir="${build}" 
 		classpath="${testng}:${build}" debug="on" encoding="utf8"/> 
   </target>
