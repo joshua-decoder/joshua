@@ -2,7 +2,7 @@
 
 set -u
 
-./decoder_command 2> log
+./decoder_command > output 2> log
 
 # Extract the translations and model scores
 cat output | awk -F\| '{print $4 " ||| " $10}' > output.scores
