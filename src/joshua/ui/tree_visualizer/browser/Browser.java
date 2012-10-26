@@ -96,7 +96,7 @@ public class Browser {
 		Scanner scanner = new Scanner(new File(path), "UTF-8");
 		while (scanner.hasNextLine()) {
 			TranslationInfo ti = new TranslationInfo();
-			ti.setSourceSentence(scanner.nextLine());
+			ti.setSourceSentence("<s> " + scanner.nextLine() + " </s>");
 			translations.add(ti);
 		}
 	}
