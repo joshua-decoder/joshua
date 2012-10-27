@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -250,38 +251,34 @@ public class Decoder {
   }
 
   /**
-   * This class represents a set of translations that can be iterated over. It is returned by the
+   * This class represents a streaming sequence of translations. It is returned by the
    * main entry point to the Decoder object, the call to decodeAll. The translations here are
-   * parallel to the input sentences in the corresponding TranslationRequest object. The object is
-   * iterable so that translations can be output as they are obtained, saving the need to keep them
-   * all in memory.
-   * 
+   * parallel to the input sentences in the corresponding TranslationRequest object. 
    * Because of parallelization, the translated sentences might be computed out of order. Each
    * Translation is sent to this Translations object by a DecoderThreadRunner via the record()
    * function, which places the Translation in the right place. When the next translation in a
    * sequence is available, next() is notified.
    * 
-   * This object is Iterable, which means that it returns an Iterator<Translation> object that knows
-   * how to iterate over it. Currently, all Translations are saved, so you could have multiple
-   * Iterators. Really, though, translations that have been printed should be garbage collected,
-   * which means that the object should support only one iterator, meaning it should implement both
-   * Iterator and Iterable (generally frowned upon).
+   * The object is both iterable and an iterator.  Normally this is frowned upon, because something that is 
+   * iterable is different from the (state-keeping) iterator used to iterate over it.  However, the Translations
+   * object removes old Translations for efficiency reasons (they can be large objects, retaining the complete
+   * hypergraph), which really supports only one iterator.
    * 
    * @author Matt Post <post@cs.jhu.edu>
    */
-  public class Translations implements Iterable<Translation> {
+  public class Translations implements Iterable<Translation>, Iterator<Translation> {
 
     /* The source sentences to be translated. */
     private TranslationRequest request = null;
 
     /*
-     * Since sentences might be translated out of order, we need to record the last one that was
-     * safely translated in order to know when next() should block on the corresponding iterator.
+     * This records the index of the sentence at the head of the underlying list. The iterator's
+     * next() blocks when the value at this position in the translations LinkedList is null.
      */
-    private int lastAvailable = -1;
+    private int currentID = 0;
 
     /* The set of translated sentences. */
-    private ArrayList<Translation> translations = null;
+    private LinkedList<Translation> translations = null;
 
     /*
      * next() may be called before the next Translation has been produced. next() will then wait()
@@ -291,89 +288,79 @@ public class Decoder {
 
     public Translations(TranslationRequest request) {
       this.request = request;
-      this.translations = new ArrayList<Translation>();
+      this.translations = new LinkedList<Translation>();
     }
 
-    public synchronized void record(Translation translation) {
-      /* Pad the set of translations with nulls to accommodate the new translation. */
-      if (translation.id() >= translations.size())
-        for (int i = translations.size(); i <= translation.id(); i++)
+    public void record(Translation translation) {
+      synchronized (this) {
+        /* Pad the set of translations with nulls to accommodate the new translation. */
+        int offset = translation.id() - currentID;
+        while (offset >= translations.size())
           translations.add(null);
-      translations.set(translation.id(), translation);
+        translations.set(offset, translation);
 
-      /*
-       * If the id of the current translation is one past the last, we've triggered an update
-       * available for next(). But we have to see how far we can go since other threads might have
-       * translated IDs ahead of this one.
-       */
-      if (translation.id() == lastAvailable + 1) {
-        while (lastAvailable + 1 < translations.size()
-            && translations.get(lastAvailable + 1) != null)
-          lastAvailable++;
-        synchronized (head) {
-          head.notify();
+        /*
+         * If the id of the current translation is at the head of the list (first element), then we
+         * have the next Translation to be return, and we should notify anyone waiting on next(),
+         * which will then remove the item and increment the currentID.
+         */
+        if (translation.id() == currentID) {
+          synchronized (head) {
+            head.notify();
+          }
         }
       }
     }
 
     /**
-     * An iterator over Translations.
+     * An iterator over Translations. This is a stream of translations so only one iterator is
+     * permitted, so we just have this class implement both Iterable and Iterator.
      */
     @Override
     public Iterator<Translation> iterator() {
-      return new TranslationsIterator();
+      return this;
     }
 
     /**
-     * This is the iterator over a (streaming) Translations object. It really could probably be
-     * combined into Translations, so that Translations would implement both Iterator (return this)
-     * and Iterable.
-     * 
-     * @author Matt Post <post@cs.jhu.edu>
+     * There will be another Translation available if the size of the request set is larger than our
+     * current position.
      */
-    private class TranslationsIterator implements Iterator<Translation> {
-
-      private int currentPos = -1;
-
-      public TranslationsIterator() {
+    @Override
+    public boolean hasNext() {
+      synchronized (this) {
+        return currentID == 0 || currentID < request.size();
       }
+    }
 
-      /**
-       * There will (one day) be another Translation available if the size of the request set is
-       * larger than our current position.
+    /**
+     * Returns the next Translation, blocking if necessary until it's available.
+     */
+    @Override
+    public Translation next() {
+      /*
+       * If the current position is past the position of the last translated sentence, we have to
+       * wait
        */
-      @Override
-      public boolean hasNext() {
-        return currentPos + 1 < Translations.this.request.size();
-      }
-
-      /**
-       * Returns the next Translation, blocking if necessary until it's available.
-       */
-      @Override
-      public Translation next() {
-        /*
-         * If the current position is past the position of the last translated sentence, we have to
-         * wait
-         */
-        if (currentPos + 1 > Translations.this.lastAvailable) {
-          synchronized (head) {
-            try {
-              head.wait();
-            } catch (InterruptedException e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-            }
+      if (translations.size() == 0 || translations.peek() == null) {
+        synchronized (head) {
+          try {
+            head.wait();
+            System.err.println("  got it");
+          } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
           }
         }
-
-        return Translations.this.translations.get(++currentPos);
       }
 
-      @Override
-      public void remove() {
-        // unimplemented
-      }
+      currentID++;
+      return translations.poll();
+
+    }
+
+    @Override
+    public void remove() {
+      // unimplemented
     }
   }
 
