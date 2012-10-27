@@ -251,18 +251,18 @@ public class Decoder {
   }
 
   /**
-   * This class represents a streaming sequence of translations. It is returned by the
-   * main entry point to the Decoder object, the call to decodeAll. The translations here are
-   * parallel to the input sentences in the corresponding TranslationRequest object. 
-   * Because of parallelization, the translated sentences might be computed out of order. Each
-   * Translation is sent to this Translations object by a DecoderThreadRunner via the record()
-   * function, which places the Translation in the right place. When the next translation in a
-   * sequence is available, next() is notified.
+   * This class represents a streaming sequence of translations. It is returned by the main entry
+   * point to the Decoder object, the call to decodeAll. The translations here are parallel to the
+   * input sentences in the corresponding TranslationRequest object. Because of parallelization, the
+   * translated sentences might be computed out of order. Each Translation is sent to this
+   * Translations object by a DecoderThreadRunner via the record() function, which places the
+   * Translation in the right place. When the next translation in a sequence is available, next() is
+   * notified.
    * 
-   * The object is both iterable and an iterator.  Normally this is frowned upon, because something that is 
-   * iterable is different from the (state-keeping) iterator used to iterate over it.  However, the Translations
-   * object removes old Translations for efficiency reasons (they can be large objects, retaining the complete
-   * hypergraph), which really supports only one iterator.
+   * The object is both iterable and an iterator. Normally this is frowned upon, because something
+   * that is iterable is different from the (state-keeping) iterator used to iterate over it.
+   * However, the Translations object removes old Translations for efficiency reasons (they can be
+   * large objects, retaining the complete hypergraph), which really supports only one iterator.
    * 
    * @author Matt Post <post@cs.jhu.edu>
    */
@@ -279,12 +279,6 @@ public class Decoder {
 
     /* The set of translated sentences. */
     private LinkedList<Translation> translations = null;
-
-    /*
-     * next() may be called before the next Translation has been produced. next() will then wait()
-     * on this object until the next translation is added, which will then notify() it.
-     */
-    private Object head = new Object();
 
     public Translations(TranslationRequest request) {
       this.request = request;
@@ -305,9 +299,7 @@ public class Decoder {
          * which will then remove the item and increment the currentID.
          */
         if (translation.id() == currentID) {
-          synchronized (head) {
-            head.notify();
-          }
+          this.notify();
         }
       }
     }
@@ -333,7 +325,8 @@ public class Decoder {
     }
 
     /**
-     * Returns the next Translation, blocking if necessary until it's available.
+     * Returns the next Translation, blocking if necessary until it's available, since the next
+     * Translation might not have been produced yet.
      */
     @Override
     public Translation next() {
@@ -342,10 +335,9 @@ public class Decoder {
        * wait
        */
       if (translations.size() == 0 || translations.peek() == null) {
-        synchronized (head) {
+        synchronized (this) {
           try {
-            head.wait();
-            System.err.println("  got it");
+            this.wait();
           } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -355,7 +347,6 @@ public class Decoder {
 
       currentID++;
       return translations.poll();
-
     }
 
     @Override
