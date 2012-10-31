@@ -1,10 +1,15 @@
 package joshua.decoder;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
+import joshua.decoder.Decoder.Translations;
+import joshua.decoder.io.TranslationRequest;
+
 import org.restlet.Server;
 import org.restlet.data.Protocol;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
-
 
 public class DecoderServer extends ServerResource {
 
@@ -18,12 +23,21 @@ public class DecoderServer extends ServerResource {
   public static void main(String[] args) throws Exception {
     cliArgs = new ArgsParser(args);
     // Create the HTTP server and listen on port 8182
-    new Server(Protocol.HTTP, 8182, DecoderServer.class).start();
+    Server server = new Server(Protocol.HTTP, 8182, DecoderServer.class);
+    server.start();
   }
 
-  @Post("json")
-  public String acceptJson(String value) {
-    return null;  // decoder.translateString(value);
+  @Post()
+  public String acceptString(String value) {
+    // convert String into InputStream
+    InputStream in = new ByteArrayInputStream(value.getBytes());
+    Translations translations = decoder.decodeAll(new TranslationRequest(in));
+
+    String result = "";
+    for (Translation translation : translations) {
+      result += translation + "\n";
+    }
+    return result;
   }
 
 }
