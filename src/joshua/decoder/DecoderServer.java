@@ -35,7 +35,7 @@ public class DecoderServer extends ServerResource {
 
     String result = "";
     for (Translation translation : translations) {
-      result += translation + "\n";
+      result += translation.translation();
     }
     return result;
   }
