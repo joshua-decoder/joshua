@@ -90,18 +90,13 @@ public class KBestExtractor {
       FeatureVector features = new FeatureVector();
 
 //      return derivationState.getDerivation(this, features, models, 0);
-      StringBuffer candidate = new StringBuffer();
-      if (sentID >= 0)
-        candidate.append(sentID + " ||| ");
-        
-      candidate.append(derivationState.getHypothesis(this, extractNbestTree, features, models));
-      if (null != features)
-        candidate.append(" ||| " + features.toString());
-
-      if (addCombinedScore)
-        candidate.append(String.format(" ||| %.3f", -derivationState.cost));
-
-      return candidate.toString();
+      String outputString = JoshuaConfiguration.outputFormat
+          .replace("%i", Integer.toString(sentID))
+          .replace("%s", derivationState.getHypothesis(this, extractNbestTree, features, models))
+          .replace("%f", features.toString())
+          .replace("%c", String.format("%.3f", -derivationState.cost));
+      
+      return outputString;
     }
   }
 
