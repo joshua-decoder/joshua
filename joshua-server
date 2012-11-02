@@ -15,7 +15,7 @@
 set -u
 
 java \
-	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar:$JOSHUA/lib/org.restlet-2.1.0.jar \
+	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \

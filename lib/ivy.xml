@@ -14,7 +14,5 @@
     <dependency org="org.apache.hadoop" name="hadoop-core" rev="0.20.203.0"/>
     <dependency org="org.testng" name="testng" rev="6.7"/>
     <dependency org="pmd" name="pmd" rev="4.2.5"/>
-    <dependency org="org.restlet.jse" name="org.restlet" rev="2.1.0" conf="*->default"/>
-    <dependency org="org.restlet.jse" name="org.restlet.ext.json" rev="2.1.0" conf="*->default"/>
   </dependencies>
 </ivy-module>
