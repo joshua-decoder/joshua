@@ -22,6 +22,7 @@ public class JoshuaServer {
       System.exit(-1);
     }
 
+    System.err.println("** Server running and listening on port 8182.");
     while (listening)
       new JoshuaServerThread(serverSocket.accept(), decoder).start();
 
