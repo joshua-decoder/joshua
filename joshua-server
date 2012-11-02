@@ -19,5 +19,5 @@ java \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
-	joshua.server.JoshuaServer $@
+	joshua.server.TcpServer $@
 

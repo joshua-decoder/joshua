@@ -11,21 +11,18 @@ import joshua.decoder.io.TranslationRequest;
 
 /**
  * This class handles a concurrent request for translations from a newly opened socket.
- * 
- * @author Luke Orland <orluke@gmail.com>
- * 
  */
-public class JoshuaServerThread extends Thread {
+public class TcpServerThread extends Thread {
   private Socket socket = null;
   private final Decoder decoder;
 
   /**
-   * Creates a new JoshuaServerThread that can run a set of translations.
+   * Creates a new TcpServerThread that can run a set of translations.
    * 
    * @param socket the socket representing the input/output streams
    * @param decoder the configured decoder that handles performing translations
    */
-  public JoshuaServerThread(Socket socket, Decoder decoder) {
+  public TcpServerThread(Socket socket, Decoder decoder) {
     this.socket = socket;
     this.decoder = decoder;
   }

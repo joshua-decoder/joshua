@@ -6,8 +6,18 @@ import java.io.*;
 import joshua.decoder.ArgsParser;
 import joshua.decoder.Decoder;
 
-public class JoshuaServer {
+/**
+ * TCP/IP server. Accepts newline-separated input sentences written to the socket, translates them
+ * all, and writes the resulting translations back out to the socket.
+ */
+public class TcpServer {
 
+  /**
+   * Listens on a port for new socket connections. Concurrently handles multiple socket connections.
+   * 
+   * @param args configuration options
+   * @throws IOException
+   */
   public static void main(String[] args) throws IOException {
     ArgsParser cliArgs = new ArgsParser(args);
     Decoder decoder = new Decoder(cliArgs.getConfigFile());
@@ -24,7 +34,7 @@ public class JoshuaServer {
 
     System.err.println("** TCP Server running and listening on port 8182.");
     while (listening)
-      new JoshuaServerThread(serverSocket.accept(), decoder).start();
+      new TcpServerThread(serverSocket.accept(), decoder).start();
 
     serverSocket.close();
   }

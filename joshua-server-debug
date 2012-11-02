@@ -21,5 +21,5 @@ java \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044 \
-	joshua.server.JoshuaServer $@
+	joshua.server.TcpServer $@
 
