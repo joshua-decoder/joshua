@@ -10,31 +10,16 @@
 # Once the server is running, test the connection in another terminal with the
 # command
 #
-# curl http://localhost:8182
-
-# The default amount of memory is 4gb.
-
-NUM_ARGS=0
-E_OPTERROR=1
-
-## memory usage; default is 4 GB
-mem=4g
-
-if [[ $1 == "-m" ]]; then
-	mem=$2
-
-    shift
-    shift
-fi
+# echo -e "1\n2" | nc localhost 8182
 
 
 set -u
 
-java -Xmx${mem} \
-	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar:$JOSHUA/lib/org.restlet-2.1.0.jar \
+java \
+	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044 \
-	joshua.decoder.DecoderServer $@
+	joshua.server.TcpServer $@
 

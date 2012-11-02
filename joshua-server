@@ -10,15 +10,14 @@
 # Once the server is running, test the connection in another terminal with the
 # command
 #
-# curl http://localhost:8182
-
+# echo -e "1\n2" | nc localhost 8182
 
 set -u
 
 java \
-	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar:$JOSHUA/lib/org.restlet-2.1.0.jar \
+	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
-	joshua.decoder.DecoderServer $@
+	joshua.server.TcpServer $@
 

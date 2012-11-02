@@ -46,7 +46,7 @@ public class DecoderThread extends Thread {
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
       List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers)
-      throws IOException {
+          throws IOException {
 
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
@@ -65,6 +65,7 @@ public class DecoderThread extends Thread {
   // Methods
   // ===============================================================
 
+  @Override
   public void run() {
     // Nothing to do but wait.
   }
@@ -81,16 +82,13 @@ public class DecoderThread extends Thread {
     if (sentence.target() != null)
       logger.info("Constraining to target sentence '" + sentence.target() + "'");
 
-    if (sentence.isEmpty())
-      return null;
-
-    long startTime = System.currentTimeMillis();
-
     // skip blank sentences
-    if (sentence.source().matches("^\\s*$")) {
+    if (sentence.isEmpty()) {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
       return null;
     }
+
+    long startTime = System.currentTimeMillis();
 
     int numGrammars = grammarFactories.size();
     Grammar[] grammars = new Grammar[numGrammars];
@@ -105,7 +103,7 @@ public class DecoderThread extends Thread {
     /* Parsing */
     HyperGraph hypergraph = chart.expand();
 
-    float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
+    float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
     logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",
         sentence.id(), seconds, getId()));
 
