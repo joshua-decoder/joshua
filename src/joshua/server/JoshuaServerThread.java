@@ -9,15 +9,32 @@ import joshua.decoder.Decoder.Translations;
 import joshua.decoder.Translation;
 import joshua.decoder.io.TranslationRequest;
 
+/**
+ * This class handles a concurrent request for translations from a newly opened socket.
+ * 
+ * @author Luke Orland <orluke@gmail.com>
+ * 
+ */
 public class JoshuaServerThread extends Thread {
   private Socket socket = null;
   private final Decoder decoder;
 
+  /**
+   * Creates a new JoshuaServerThread that can run a set of translations.
+   * 
+   * @param socket the socket representing the input/output streams
+   * @param decoder the configured decoder that handles performing translations
+   */
   public JoshuaServerThread(Socket socket, Decoder decoder) {
     this.socket = socket;
     this.decoder = decoder;
   }
 
+  /**
+   * Reads the input from the socket, submits the input to the decoder, transforms the resulting
+   * translations into the required output format, writes out the formatted output, then closes the
+   * socket.
+   */
   @Override
   public void run() {
 
@@ -31,9 +48,9 @@ public class JoshuaServerThread extends Thread {
         out.write(tr.translation());
         out.flush();
       }
+      in.close();
       out.close();
       socket.close();
-
     } catch (IOException e) {
       e.printStackTrace();
     }
