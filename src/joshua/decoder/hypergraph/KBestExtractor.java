@@ -47,9 +47,7 @@ public class KBestExtractor {
 
   // configuratoin option
   private boolean extractUniqueNbest = true;
-  private boolean extractNbestTree = false;
   private boolean includeAlign = false;
-  private boolean addCombinedScore = true;
   private boolean isMonolingual = false;
   private boolean performSanityCheck = true;
 
@@ -58,15 +56,13 @@ public class KBestExtractor {
   private FeatureVector weights;
 
   public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest,
-      boolean extractNbestTree, boolean includeAlign, boolean addCombinedScore,
+      boolean includeAlign, 
       boolean isMonolingual, boolean performSanityCheck) {
     rootID = Vocabulary.id(rootSym);
 
     this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
-    this.extractNbestTree = extractNbestTree;
     this.includeAlign = includeAlign;
-    this.addCombinedScore = addCombinedScore;
     this.isMonolingual = isMonolingual;
     this.performSanityCheck = performSanityCheck;
     // System.out.println("===============sanitycheck="+performSanityCheck);
@@ -92,7 +88,8 @@ public class KBestExtractor {
 //      return derivationState.getDerivation(this, features, models, 0);
       String outputString = JoshuaConfiguration.outputFormat
           .replace("%i", Integer.toString(sentID))
-          .replace("%s", derivationState.getHypothesis(this, extractNbestTree, features, models))
+          .replace("%s", derivationState.getHypothesis(this, false, features, models))
+          .replace("%t", derivationState.getHypothesis(this, true, features, models))
           .replace("%f", features.toString())
           .replace("%c", String.format("%.3f", -derivationState.cost));
       

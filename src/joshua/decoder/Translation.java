@@ -73,10 +73,9 @@ public class Translation {
       result = getSourceSentence().source();
 
     } else {
-      KBestExtractor kBestExtractor =
-        new KBestExtractor(Decoder.weights, JoshuaConfiguration.use_unique_nbest,
-          JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-          JoshuaConfiguration.add_combined_cost, false, false);
+      KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
+          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false,
+          false);
 
       StringWriter sw = new StringWriter();
       BufferedWriter out = new BufferedWriter(sw);
@@ -99,15 +98,14 @@ public class Translation {
    */
   public void print() {
     if (hypergraph != null) {
-      if (! JoshuaConfiguration.hypergraphFilePattern.equals("")) {
+      if (!JoshuaConfiguration.hypergraphFilePattern.equals("")) {
         this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
       }
 
       long startTime = System.currentTimeMillis();
-      KBestExtractor kBestExtractor =
-        new KBestExtractor(Decoder.weights, JoshuaConfiguration.use_unique_nbest,
-          JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-              JoshuaConfiguration.add_combined_cost, false, false);
+      KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
+          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false,
+          false);
 
       try {
         kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
@@ -116,14 +114,15 @@ public class Translation {
         e.printStackTrace();
       }
 
-      float seconds = (float)(System.currentTimeMillis() - startTime) / 1000.0f;
-      System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(), JoshuaConfiguration.topN, seconds));
+      float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
+      System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
+          JoshuaConfiguration.topN, seconds));
 
     } else {
       String output = getSourceSentence().source();
       if (getSourceSentence().target() != null)
         output += " ||| " + getSourceSentence().target();
-      
+
       System.out.println(id() + " ||| " + output + " |||  ||| 0.0");
     }
 

@@ -99,13 +99,8 @@ public class JoshuaConfiguration {
    */
   // make sure output strings are unique
   public static boolean use_unique_nbest = false;
-  // output the synchronous derivation tree
-  public static boolean use_tree_nbest = false;
   // include the phrasal alignments in the output
   public static boolean include_align_index = false;
-  // include a final field that denotes the complete model score (the dot-product of the weight
-  // vector with the accumulated feature values
-  public static boolean add_combined_cost = true;
   // The number of hypotheses to output by default
   public static int topN = 1;
 
@@ -116,6 +111,7 @@ public class JoshuaConfiguration {
    * 
    *   %i the 0-index sentence number 
    *   %s the translated sentence 
+   *   %t the synchronous derivation
    *   %f the list of feature values (as name=value pairs) 
    *   %c the model cost 
    *   %w the weight vector 
@@ -347,14 +343,6 @@ public class JoshuaConfiguration {
             use_unique_nbest = Boolean.valueOf(fds[1]);
             logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 
-          } else if (parameter.equals(normalize_key("add_combined_cost"))) {
-            add_combined_cost = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
-
-          } else if (parameter.equals(normalize_key("use_tree_nbest"))) {
-            use_tree_nbest = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
-
           } else if (parameter.equals(normalize_key("output-format"))) {
             outputFormat = fds[1];
             logger.finest(String.format("output-format: %s", outputFormat));
@@ -397,6 +385,7 @@ public class JoshuaConfiguration {
             if (useCubePrune == false)
               logger.warning("useCubePrune=false");
             logger.finest(String.format("useCubePrune: %s", useCubePrune));
+
           } else if (parameter.equals(normalize_key("useBeamAndThresholdPrune"))) {
             useBeamAndThresholdPrune = Boolean.valueOf(fds[1]);
             if (useBeamAndThresholdPrune == false)
@@ -437,8 +426,16 @@ public class JoshuaConfiguration {
             features.add("feature_function = " + fds[1]);
 
           } else {
-            logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");
-            System.exit(1);
+            
+            if (parameter.equals(normalize_key("use-sent-specific-tm"))
+                || parameter.equals(normalize_key("add-combined-cost"))
+                || parameter.equals(normalize_key("use-tree-nbest"))) {
+              logger.warning(String.format("WARNING: ignoring deprecated parameter '%s'", parameter));
+
+            } else {
+              logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");
+              System.exit(1);
+            }
           }
 
         } else {
