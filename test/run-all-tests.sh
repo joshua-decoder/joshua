@@ -12,7 +12,8 @@ for file in $(find . -name test*.sh); do
     continue;
   fi
   dir=$(dirname $file)
-  echo -n "Running test in $dir..."
+  name=$(basename $file)
+  echo -n "Running test '$name' in $dir..."
   pushd $dir > /dev/null
   bash test.sh
   popd > /dev/null
