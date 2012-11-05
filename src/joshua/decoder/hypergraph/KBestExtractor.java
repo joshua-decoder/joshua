@@ -15,9 +15,7 @@ import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.util.CoIterator;
-import joshua.util.Regex;
 import joshua.util.io.UncheckedIOException;
 
 /**
@@ -86,13 +84,18 @@ public class KBestExtractor {
       FeatureVector features = new FeatureVector();
 
 //      return derivationState.getDerivation(this, features, models, 0);
+
       String outputString = JoshuaConfiguration.outputFormat
-          .replace("%i", Integer.toString(sentID))
           .replace("%s", derivationState.getHypothesis(this, false, features, models))
-          .replace("%t", derivationState.getHypothesis(this, true, features, models))
+          .replace("%i", Integer.toString(sentID))
           .replace("%f", features.toString())
           .replace("%c", String.format("%.3f", -derivationState.cost));
-      
+
+      if (JoshuaConfiguration.outputFormat.contains("%t")) {
+        resetState();
+        outputString.replace("%t", derivationState.getHypothesis(this, false, features, models));
+      }
+
       return outputString;
     }
   }
