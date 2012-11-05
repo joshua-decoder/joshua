@@ -85,7 +85,7 @@ public class DecoderThread extends Thread {
     // skip blank sentences
     if (sentence.isEmpty()) {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
-      return null;
+      return new Translation(sentence, null, featureFunctions);
     }
 
     long startTime = System.currentTimeMillis();

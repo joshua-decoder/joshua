@@ -119,11 +119,15 @@ public class Translation {
           JoshuaConfiguration.topN, seconds));
 
     } else {
-      String output = getSourceSentence().source();
-      if (getSourceSentence().target() != null)
-        output += " ||| " + getSourceSentence().target();
 
-      System.out.println(id() + " ||| " + output + " |||  ||| 0.0");
+      String outputString = JoshuaConfiguration.outputFormat
+          .replace("%s", "")
+          .replace("%t", "")  
+          .replace("%i", Integer.toString(source.id()))
+          .replace("%f", "")
+          .replace("%c", "0.000");
+
+      System.out.println(outputString);
     }
 
     System.out.flush();
