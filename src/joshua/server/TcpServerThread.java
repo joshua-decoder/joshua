@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import joshua.decoder.Decoder;
-import joshua.decoder.Decoder.Translations;
 import joshua.decoder.Translation;
+import joshua.decoder.Translations;
 import joshua.decoder.io.TranslationRequest;
 
 /**

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import joshua.decoder.segment_file.LatticeInput;
 import joshua.decoder.segment_file.ParsedSentence;
@@ -39,12 +40,14 @@ public class TranslationRequest implements Iterator<Sentence> {
   /**
    * Read the next line from the buffered reader (blocking if necessary). When the line becomes
    * available, turn it into a Sentence object.
+   * 
+   * N.B. When 'line' is a String with just whitespace, it is skipped.
    */
-  private void prepareNextLine() {
+  private void prepareNextLine() throws NoSuchElementException {
     try {
       String line = reader.readLine();
-      if (line == null) {
-        nextSentence = null;
+      if (line == null || line.matches("\\s*")) {
+        throw new NoSuchElementException();
       } else {
         sentenceNo++;
 
@@ -70,17 +73,24 @@ public class TranslationRequest implements Iterator<Sentence> {
    * 
    * @see java.util.Iterator#hasNext()
    */
+  @Override
   public synchronized boolean hasNext() {
-    if (nextSentence == null)
-      prepareNextLine();
+    if (nextSentence == null) {
+      try {
+        prepareNextLine();
+      } catch (NoSuchElementException e) {
+        return false;
+      }
+    }
     return nextSentence != null;
   }
 
   /*
    * Returns the next sentence item, then sets it to null, so that hasNext() will know to produce a
-   * new one.  
+   * new one.
    */
-  public synchronized Sentence next() {
+  @Override
+  public synchronized Sentence next() throws NoSuchElementException {
     /* Check for null first, in case for some reason hasNext() was not called before next(). */
     if (nextSentence == null)
       prepareNextLine();
@@ -89,6 +99,7 @@ public class TranslationRequest implements Iterator<Sentence> {
     return sentence;
   }
 
+  @Override
   public void remove() {
     // unimplemented
   }

@@ -13,6 +13,7 @@
     <dependency org="net.sf.jung" name="jung-visualization" rev="2.0"/>
     <dependency org="org.apache.hadoop" name="hadoop-core" rev="0.20.203.0"/>
     <dependency org="org.testng" name="testng" rev="6.7"/>
+    <dependency org="org.mockito" name="mockito-all" rev="1.9.5"/>
     <dependency org="pmd" name="pmd" rev="4.2.5"/>
   </dependencies>
 </ivy-module>
