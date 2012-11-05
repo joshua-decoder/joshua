@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
+<!-- Build file for Joshua. -->
 <project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -8,7 +8,7 @@
   
   <property name="src"    value="./src" />
   <property name="test"   value="./test" />
-  <property name="build"  value="./bin" />
+  <property name="build"  value="./class" />
   <property name="lib"    value="./lib" />
   <property name="thraxlib"  value="./thrax/bin" />
   <property name="doc"    value="./doc" />
@@ -216,7 +216,7 @@
 	<exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
 	  <arg value="clean.sh" />
 	</exec>
-    <delete dir="bin/" />
+    <delete dir="class/" />
     <delete file="tree_visualizer/tree_visualizer.jar"/>
     <delete dir="doc/html"/>
     <delete dir="doc/latex"/>

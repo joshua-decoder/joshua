@@ -473,7 +473,7 @@ public class Decoder {
 
       // Load the weights.
       Decoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
-
+      
       this.featureFunctions = new ArrayList<FeatureFunction>();
 
       /*
@@ -700,8 +700,10 @@ public class Decoder {
        * Warning! This needs to be done *after* initializing the grammars, in case there is a packed
        * grammar, since it resets the vocabulary.
        */
-      for (String owner : ownersSeen)
+      for (String owner : ownersSeen) {
         this.featureFunctions.add(new PhraseModelFF(weights, owner));
+      }
+        
 
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
@@ -713,7 +715,7 @@ public class Decoder {
           JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
-
+    
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
   }

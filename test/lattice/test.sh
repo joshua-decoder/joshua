@@ -6,7 +6,7 @@
 
 rm -f test.nbest test.1best
 
-cat test.plf | $JOSHUA/joshua-decoder -m 500m config.test > test.nbest 2> log
+cat test.plf | $JOSHUA/bin/joshua-decoder -m 500m config.test > test.nbest 2> log
 
 if [[ $? -ne 0 ]]; then
 	echo FAILED
@@ -17,11 +17,12 @@ diff -u test.nbest test.expected > diff
 
 if [[ $? -eq 0 ]]; then
   echo PASSED
+  rm -f test.nbest log diff
   exit 0
 else
   echo FAILED
-  cat diff
-	exit $?
+  tail diff
+  exit $?
 fi
 
 

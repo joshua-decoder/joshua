@@ -12,12 +12,14 @@
 #
 # echo -e "1\n2" | nc localhost 8182
 
+
 set -u
 
 java \
-	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
+	-cp $JOSHUA/class:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
+	-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044 \
 	joshua.server.TcpServer $@
 

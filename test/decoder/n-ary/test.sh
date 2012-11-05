@@ -2,7 +2,7 @@
 
 set -u
 
-cat input.txt | $JOSHUA/joshua-decoder -m 1g -threads 1 -c joshua.config > output 2> log
+cat input.txt | $JOSHUA/bin/joshua-decoder -m 1g -threads 1 -c joshua.config > output 2> log
 
 # Extract the translations and model scores
 cat output | awk -F\| '{print $4 " ||| " $10}' > output.scores

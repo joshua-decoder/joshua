@@ -1,4 +1,4 @@
-bin/
+class/
 lib/libsrilm.dylib
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Ngram.java
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Vocab.java

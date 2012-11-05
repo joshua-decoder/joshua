@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [[ -z $3 ]]; then
+  echo "Usage: bleu output reference #numrefs"
+  exit 1
+fi
+
+set -u
+
+java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx256m -Xms256m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $1 -format nbest -ref $2 -rps $3 -m BLEU 4 closest

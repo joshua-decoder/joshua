@@ -430,7 +430,7 @@ public class JoshuaConfiguration {
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))
                 || parameter.equals(normalize_key("use-tree-nbest"))) {
-              logger.warning(String.format("WARNING: ignoring deprecated parameter '%s'", parameter));
+              logger.warning(String.format("WARNING: ignoring deprecated parameter '%s'", fds[0]));
 
             } else {
               logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");

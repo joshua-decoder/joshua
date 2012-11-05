@@ -14,5 +14,5 @@
 	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="class"/>
 </classpath>
