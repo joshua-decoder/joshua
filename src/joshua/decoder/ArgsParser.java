@@ -28,7 +28,7 @@ public class ArgsParser {
     // }
 
     // Step-0: Process the configuration file. We accept two use
-    // cases. (1) For backwards compatility, Joshua can be called
+    // cases. (1) For backwards compatability, Joshua can be called
     // with as "Joshua configFile [testFile [outputFile
     // [oracleFile]]]". (2) Command-line options can be used, in
     // which case we look for an argument to the "-config" flag.
@@ -45,6 +45,7 @@ public class ArgsParser {
 
             setConfigFile(args[i + 1].trim());
             try {
+              System.err.println("Parameters read from configuration file");
               JoshuaConfiguration.readConfigFile(getConfigFile());
             } catch (IOException e) {
               // TODO Auto-generated catch block

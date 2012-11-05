@@ -2,9 +2,12 @@ package joshua.decoder;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.logging.Logger;
 
 import joshua.decoder.io.TranslationRequest;
+import joshua.server.TcpServer;
+import joshua.server.TcpServerThread;
 
 /**
  * Implements decoder initialization, including interaction with <code>JoshuaConfiguration</code>
@@ -43,10 +46,14 @@ public class JoshuaDecoder {
     logger.info(String.format("Model loading took %d seconds",
       (System.currentTimeMillis() - startTime) / 1000));
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
-        .getRuntime().freeMemory()) / 1000000.0)));
+        .getRuntime().freeMemory()) / 1000000.0)));  
 
     /* Step-2: Decoding */
     // create a server if requested, which will create TranslationRequest objects
+    if (JoshuaConfiguration.server_port > 0) {
+      new TcpServer(decoder, JoshuaConfiguration.server_port).start();
+      return;
+    }
     
     // create a TranslationRequest object on STDIN
     TranslationRequest fileRequest = new TranslationRequest(System.in);
