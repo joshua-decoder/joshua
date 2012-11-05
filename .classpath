@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry including="joshua/" kind="src" path="test"/>
+	<classpathentry excluding="joshua/corpus/|joshua/decoder/DecoderThreadTest.java|joshua/decoder/ff/|joshua/decoder/ff/lm/|joshua/lattice/|joshua/util/io/|joshua/zmert/" including="joshua/" kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="lib/asm-3.1.jar"/>
 	<classpathentry kind="lib" path="lib/collections-generic-4.01.jar"/>
