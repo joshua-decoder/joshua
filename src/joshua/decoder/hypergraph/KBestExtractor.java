@@ -92,8 +92,7 @@ public class KBestExtractor {
           .replace("%c", String.format("%.3f", -derivationState.cost));
 
       if (JoshuaConfiguration.outputFormat.contains("%t")) {
-        resetState();
-        outputString.replace("%t", derivationState.getHypothesis(this, false, features, models));
+        outputString = outputString.replace("%t", derivationState.getHypothesis(this, true, null, models));
       }
 
       return outputString;
