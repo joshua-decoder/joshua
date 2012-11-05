@@ -8,6 +8,17 @@ import org.testng.annotations.*;
 import static org.testng.Assert.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * This class verifies the following behaviors:
+ * 
+ * - A blank input, i.e. "", does not cause a translation to be created.
+ * 
+ * - A non-blank input that is not followed by a newline, e.g. "1", causes a translation to be
+ * created.
+ * 
+ * - An input that contains whitespace or nothing followed by a newline causes a translation to be
+ * created, with "" as the source.
+ */
 public class TranslationRequestTest {
 
   @BeforeMethod
@@ -56,6 +67,31 @@ public class TranslationRequestTest {
     TranslationRequest request = new TranslationRequest(input);
     request.next();
     assertEquals(request.size(), 1);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.TranslationRequest#size()}.
+   */
+  @Test(enabled = true)
+  public void testSize_newline() {
+    byte[] data = "\n".getBytes();
+    ByteArrayInputStream input = new ByteArrayInputStream(data);
+    TranslationRequest request = new TranslationRequest(input);
+    request.next();
+    assertEquals(request.size(), 1);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.TranslationRequest#size()}.
+   */
+  @Test(enabled = true)
+  public void testSize_2newlines() {
+    byte[] data = "\n\n".getBytes();
+    ByteArrayInputStream input = new ByteArrayInputStream(data);
+    TranslationRequest request = new TranslationRequest(input);
+    request.next();
+    request.next();
+    assertEquals(request.size(), 2);
   }
 
   /**
@@ -123,6 +159,19 @@ public class TranslationRequestTest {
     byte[] data = " ".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
+    assertTrue(request.hasNext());
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.TranslationRequest#hasNext()}.
+   */
+  @Test(enabled = true)
+  public void testHasNext_whitespaceNewline() {
+    byte[] data = " \n".getBytes();
+    ByteArrayInputStream input = new ByteArrayInputStream(data);
+    TranslationRequest request = new TranslationRequest(input);
+    assertTrue(request.hasNext());
+    request.next();
     assertFalse(request.hasNext());
   }
 
@@ -141,8 +190,8 @@ public class TranslationRequestTest {
    * Test method for {@link joshua.decoder.io.TranslationRequest#next()}.
    */
   @Test(expectedExceptions = NoSuchElementException.class)
-  public void testNext_newline() {
-    byte[] data = "\n".getBytes();
+  public void testNext_empty() {
+    byte[] data = "".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
     request.next();
@@ -152,13 +201,36 @@ public class TranslationRequestTest {
   /**
    * Test method for {@link joshua.decoder.io.TranslationRequest#next()}.
    */
-  @Test(expectedExceptions = NoSuchElementException.class)
-  public void testNext_whitespace() {
-    byte[] data = "\n \n".getBytes();
+  @Test(enabled = true)
+  public void testNext_newline() {
+    byte[] data = "\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
-    request.next();
-    // Exception should have been thrown.
+    assertEquals(request.next().source(), "");
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.TranslationRequest#next()}.
+   */
+  @Test(enabled = true)
+  public void testNext_whitespaceNewline() {
+    byte[] data = " \n".getBytes();
+    ByteArrayInputStream input = new ByteArrayInputStream(data);
+    TranslationRequest request = new TranslationRequest(input);
+    assertEquals(request.next().source(), "");
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.TranslationRequest#next()}.
+   */
+  @Test(enabled = true)
+  public void testNext_2Newlines() {
+    byte[] data = "\n\n".getBytes();
+    ByteArrayInputStream input = new ByteArrayInputStream(data);
+    TranslationRequest request = new TranslationRequest(input);
+    assertEquals(request.next().source(), "");
+    assertEquals(request.next().source(), "");
+    assertFalse(request.hasNext());
   }
 
   /**

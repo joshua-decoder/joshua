@@ -46,7 +46,7 @@ public class TranslationRequest implements Iterator<Sentence> {
   private void prepareNextLine() throws NoSuchElementException {
     try {
       String line = reader.readLine();
-      if (line == null || line.matches("\\s*")) {
+      if (line == null) {
         throw new NoSuchElementException();
       } else {
         sentenceNo++;

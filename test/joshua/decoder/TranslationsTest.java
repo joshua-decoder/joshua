@@ -9,6 +9,7 @@ import joshua.decoder.io.TranslationRequest;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.AfterTest;
+import static org.mockito.Mockito.*;
 
 public class TranslationsTest {
   @BeforeTest
@@ -40,12 +41,22 @@ public class TranslationsTest {
   /**
    * Test method for {@link joshua.decoder.io.TranslationRequest#hasNext()}.
    */
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testHasNext_emptyInput_2newlines() {
     byte[] data = "\n\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
-    Translations translations = new Translations(request);
+    Translations translations = spy(new Translations(request));
+    // doReturn(null).when(translations).next();
+
+    assertTrue(translations.hasNext());
+
+    translations.next();
+    translations.record(mock(Translation.class));
+    assertTrue(translations.hasNext());
+
+    translations.next();
+    translations.record(mock(Translation.class));
     assertFalse(translations.hasNext());
   }
 
