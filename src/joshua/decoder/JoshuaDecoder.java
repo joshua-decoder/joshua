@@ -2,12 +2,10 @@ package joshua.decoder;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.logging.Logger;
 
 import joshua.decoder.io.TranslationRequest;
 import joshua.server.TcpServer;
-import joshua.server.TcpServerThread;
 
 /**
  * Implements decoder initialization, including interaction with <code>JoshuaConfiguration</code>
@@ -57,7 +55,12 @@ public class JoshuaDecoder {
     
     // create a TranslationRequest object on STDIN
     TranslationRequest fileRequest = new TranslationRequest(System.in);
-    for (Translation translation: decoder.decodeAll(fileRequest)) {
+    Translations translationStream = decoder.decodeAll(fileRequest);
+    for (;;) {
+      Translation translation = translationStream.next();
+      if (translation == null)
+        break;
+      
       translation.print();
     }
 

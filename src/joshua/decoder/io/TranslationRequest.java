@@ -19,7 +19,7 @@ import joshua.decoder.segment_file.Sentence;
  * @author orluke
  * 
  */
-public class TranslationRequest implements Iterator<Sentence> {
+public class TranslationRequest {
 
   private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 
@@ -37,17 +37,15 @@ public class TranslationRequest implements Iterator<Sentence> {
     return sentenceNo + 1;
   }
 
-  /**
-   * Read the next line from the buffered reader (blocking if necessary). When the line becomes
-   * available, turn it into a Sentence object.
-   * 
-   * N.B. When 'line' is a String with just whitespace, it is skipped.
+  /*
+   * Returns the next sentence item, then sets it to null, so that hasNext() will know to produce a
+   * new one.
    */
-  private void prepareNextLine() throws NoSuchElementException {
+  public synchronized Sentence next() {
     try {
       String line = reader.readLine();
       if (line == null) {
-        throw new NoSuchElementException();
+        return null;
       } else {
         sentenceNo++;
 
@@ -65,42 +63,7 @@ public class TranslationRequest implements Iterator<Sentence> {
     } catch (IOException e) {
       e.printStackTrace();
     }
-  }
 
-  /*
-   * The logic behind this function is to prepare the next sentence. It checks if nextSentence is
-   * null to support multiple calls to it, per the iterator contract.
-   * 
-   * @see java.util.Iterator#hasNext()
-   */
-  @Override
-  public synchronized boolean hasNext() {
-    if (nextSentence == null) {
-      try {
-        prepareNextLine();
-      } catch (NoSuchElementException e) {
-        return false;
-      }
-    }
-    return nextSentence != null;
-  }
-
-  /*
-   * Returns the next sentence item, then sets it to null, so that hasNext() will know to produce a
-   * new one.
-   */
-  @Override
-  public synchronized Sentence next() throws NoSuchElementException {
-    /* Check for null first, in case for some reason hasNext() was not called before next(). */
-    if (nextSentence == null)
-      prepareNextLine();
-    Sentence sentence = nextSentence;
-    nextSentence = null;
-    return sentence;
-  }
-
-  @Override
-  public void remove() {
-    // unimplemented
+    return nextSentence;
   }
 }

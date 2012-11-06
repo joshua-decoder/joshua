@@ -41,8 +41,12 @@ public class TcpServerThread extends Thread {
 
       TranslationRequest request = new TranslationRequest(in);
       Translations translations = decoder.decodeAll(request);
-      for (Translation tr : translations) {
-        out.write(tr.translation());
+      for (;;) {
+        Translation translation = translations.next();
+        if (translation == null)
+          break;
+        
+        out.write(translation.translation());
         out.flush();
       }
       in.close();

@@ -179,11 +179,15 @@ public class Decoder {
        * blocking, so that the RequestHandler can go on to the next sentence in this request, which
        * allows parallelization across the sentences of the request.
        */
-      while (request.hasNext()) {
+      for (;;) {
         Sentence sentence = request.next();
-        // This will block until a DecoderThread becomes available.
-        DecoderThread thread = Decoder.this.getThread();
-        new DecoderThreadRunner(thread, sentence, response).start();
+        if (sentence == null) {
+          response.finish();
+        } else {
+          // This will block until a DecoderThread becomes available.
+          DecoderThread thread = Decoder.this.getThread();
+          new DecoderThreadRunner(thread, sentence, response).start();
+        }
       }
     }
   }

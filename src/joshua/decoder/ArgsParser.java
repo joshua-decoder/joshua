@@ -10,8 +10,6 @@ public class ArgsParser {
 
   private String configFile = null;
   private String testFile = "-";
-  private String nbestFile = "-";
-  private String oracleFile = null;
 
   /**
    * Parse the arguments passed from the command line when the JoshuaDecoder application was
