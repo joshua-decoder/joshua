@@ -1,6 +1,5 @@
 package joshua.decoder;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import joshua.decoder.io.TranslationRequest;
 
@@ -12,11 +11,6 @@ import joshua.decoder.io.TranslationRequest;
  * Translations object by a DecoderThreadRunner via the record() function, which places the
  * Translation in the right place. When the next translation in a sequence is available, next() is
  * notified.
- * 
- * The object is both iterable and an iterator. Normally this is frowned upon, because something
- * that is iterable is different from the (state-keeping) iterator used to iterate over it. However,
- * the Translations object removes old Translations for efficiency reasons (they can be large
- * objects, retaining the complete hypergraph), which really supports only one iterator.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  */

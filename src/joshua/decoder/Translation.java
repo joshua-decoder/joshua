@@ -2,6 +2,7 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,7 +97,7 @@ public class Translation {
   /*
    * Prints the k-best list to standard output.
    */
-  public void print() {
+  public void print(BufferedWriter out) throws IOException {
     if (hypergraph != null) {
       if (!JoshuaConfiguration.hypergraphFilePattern.equals("")) {
         this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
@@ -109,7 +110,7 @@ public class Translation {
 
       try {
         kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
-            JoshuaConfiguration.topN, id(), (BufferedWriter) null);
+            JoshuaConfiguration.topN, id(), out);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -127,10 +128,11 @@ public class Translation {
           .replace("%f", "")
           .replace("%c", "0.000");
 
-      System.out.println(outputString);
+      out.write(outputString);
+      out.newLine();
     }
 
-    System.out.flush();
+    out.flush();
   }
 
   public String toString() {

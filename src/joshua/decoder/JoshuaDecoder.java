@@ -1,7 +1,9 @@
 package joshua.decoder;
 
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.logging.Logger;
 
 import joshua.decoder.io.TranslationRequest;
@@ -61,7 +63,7 @@ public class JoshuaDecoder {
       if (translation == null)
         break;
       
-      translation.print();
+      translation.print(new BufferedWriter(new OutputStreamWriter(System.out)));
     }
 
     logger.info("Decoding completed.");

@@ -1,7 +1,9 @@
 package joshua.server;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import joshua.decoder.Decoder;
@@ -37,7 +39,7 @@ public class TcpServerThread extends Thread {
 
     try {
       InputStream in = socket.getInputStream();
-      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
       TranslationRequest request = new TranslationRequest(in);
       Translations translations = decoder.decodeAll(request);
@@ -46,8 +48,7 @@ public class TcpServerThread extends Thread {
         if (translation == null)
           break;
         
-        out.write(translation.translation());
-        out.flush();
+        translation.print(out);
       }
       in.close();
       out.close();

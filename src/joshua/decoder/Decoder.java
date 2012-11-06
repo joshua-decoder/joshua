@@ -184,11 +184,11 @@ public class Decoder {
         if (sentence == null) {
           response.finish();
           break;
-        } else {
-          // This will block until a DecoderThread becomes available.
-          DecoderThread thread = Decoder.this.getThread();
-          new DecoderThreadRunner(thread, sentence, response).start();
         }
+        
+        // This will block until a DecoderThread becomes available.
+        DecoderThread thread = Decoder.this.getThread();
+        new DecoderThreadRunner(thread, sentence, response).start();
       }
     }
   }

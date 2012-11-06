@@ -30,5 +30,3 @@ java -Xmx${mem} \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
 	joshua.decoder.JoshuaDecoder "$@"
-
-
