@@ -34,6 +34,8 @@ public class Translations {
   /* The set of translated sentences. */
   private LinkedList<Translation> translations = null;
 
+  private boolean spent = false;
+
   public Translations(TranslationRequest request) {
     this.request = request;
     this.translations = new LinkedList<Translation>();
@@ -46,8 +48,10 @@ public class Translations {
    */
   public void finish() {
     synchronized (this) {
-      if (currentID == request.size())
+      spent = true;
+      if (currentID == request.size()) {
         this.notifyAll();
+      }
     }
   }
 
@@ -84,10 +88,19 @@ public class Translations {
    * Translation might not have been produced yet.
    */
   public Translation next() {
-    /*
-     * If the current position is past the position of the last translated sentence, we have to wait
-     */
     synchronized (this) {
+
+      /*
+       * If there are no more input sentences, and we've already distributed what we then know is
+       * the last one, we're done.
+       */
+      if (spent && currentID == request.size())
+        return null;
+
+      /*
+       * Otherwise, there is another sentence. If it's not available already, we need to wait for
+       * it.
+       */
       if (translations.size() == 0 || translations.peek() == null) {
         try {
           this.wait();
@@ -97,6 +110,7 @@ public class Translations {
         }
       }
 
+      /* We now have the sentence and can return it. */
       currentID++;
       return translations.poll();
     }

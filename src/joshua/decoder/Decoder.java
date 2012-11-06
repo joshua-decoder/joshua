@@ -183,6 +183,7 @@ public class Decoder {
         Sentence sentence = request.next();
         if (sentence == null) {
           response.finish();
+          break;
         } else {
           // This will block until a DecoderThread becomes available.
           DecoderThread thread = Decoder.this.getThread();
@@ -294,8 +295,14 @@ public class Decoder {
   }
 
   public void cleanUp() {
-    // TODO
-    // this.languageModel.end_lm_grammar(); //end the threads
+    for (DecoderThread thread: threadPool) {
+      try {
+        thread.join();
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
   }
 
   public static void writeConfigFile(double[] newWeights, String template, String outputFile,

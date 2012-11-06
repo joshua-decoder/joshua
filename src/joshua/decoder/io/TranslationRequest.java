@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import joshua.decoder.segment_file.LatticeInput;
 import joshua.decoder.segment_file.ParsedSentence;
@@ -42,11 +40,10 @@ public class TranslationRequest {
    * new one.
    */
   public synchronized Sentence next() {
+    nextSentence = null;
     try {
       String line = reader.readLine();
-      if (line == null) {
-        return null;
-      } else {
+      if (line != null) {
         sentenceNo++;
 
         // TODO: This should be replace with a single Input object type that knows about all kinds

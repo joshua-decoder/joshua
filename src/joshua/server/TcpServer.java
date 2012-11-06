@@ -26,21 +26,21 @@ public class TcpServer {
    * @param args configuration options
    * @throws IOException
    */
-    public void start() {
+  public void start() {
 
-      try {
-        ServerSocket serverSocket = new ServerSocket(JoshuaConfiguration.server_port);
-        System.err.println(String.format("** TCP Server running and listening on port %d.", port));  
+    try {
+      ServerSocket serverSocket = new ServerSocket(JoshuaConfiguration.server_port);
+      System.err.println(String.format("** TCP Server running and listening on port %d.", port));  
 
-        boolean listening = true;
-        while (listening)
-          new TcpServerThread(serverSocket.accept(), decoder).start();
+      boolean listening = true;
+      while (listening)
+        new TcpServerThread(serverSocket.accept(), decoder).start();
 
-        serverSocket.close();
-        
-      } catch (IOException e) {
-        System.err.println(String.format("Could not listen on port: %d.", JoshuaConfiguration.server_port));
-        System.exit(-1);
-      }
+      serverSocket.close();
+
+    } catch (IOException e) {
+      System.err.println(String.format("Could not listen on port: %d.", JoshuaConfiguration.server_port));
+      System.exit(-1);
     }
+  }
 }
