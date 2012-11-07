@@ -24,7 +24,7 @@ fi
 
 set -u
 
-java -Xmx${mem} \
+exec java -Xmx${mem} \
 	-cp $JOSHUA/class:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
