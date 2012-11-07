@@ -1,24 +1,29 @@
-#!/bin/sh
+#!/bin/bash
 
-# This test case should start a server, translate with it, and then kill the server.  Unfortunately,
-# I can't get it to kill the server properly.  It kills the parent process, but Joshua is launched
-# from a shell script, and so it doesn't kill the actual sub-process.
+# This test case starts a server and then throws 10 threads at it to make sure threading is working.
 
 $JOSHUA/bin/decoder -server-port 9010 -output-format "%i ||| %s" > server.log 2>&1 &
 serverpid=$!
 sleep 2
-ps ax | grep java
 
-echo "this\nthat\nthese\n\nthose" | nc localhost 9010 > output 2> log
+for num in $(seq 0 9); do
+  echo -e "this\nthat\nthese\n\nthose\nmine\nhis\nyours\nhers" | nc localhost 9010 > output.$num 2> log.$num &
+  pids[$num]=$!
+done
 
-echo "killing pid $serverpid"
-kill -15 $serverpid
+for num in $(seq 0 9); do
+  wait ${pids[$num]}
+done
 
-diff -u output output.expected > diff
+kill -15 $serverpid 2> /dev/null
+
+paste output.* > output
+
+diff -u output expected > diff
 
 if [[ $? -eq 0 ]]; then
   echo PASSED
-  rm -f server.log output log diff
+  rm -f server.log output output.* log.* diff
   exit 0
 else
   echo FAILED
