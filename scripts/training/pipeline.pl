@@ -1061,7 +1061,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # tune
   if ($TUNER eq "mert") {
 		$cachepipe->cmd("mert-$run",
-										"java -d64 -Xmx2g -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
+										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR,
 										"$tunedir/weights.ZMERT.final",
 										"$tunedir/decoder_command",
@@ -1070,7 +1070,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		system("ln -sf weights.ZMERT.final $tunedir/weights.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
-										"java -d64 -Xmx2g -cp $JOSHUA/bin joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
+										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR,
 										"$tunedir/weights.PRO.final",
 										"$tunedir/decoder_command",
@@ -1196,19 +1196,19 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		$numlines--;
 
 		$cachepipe->cmd("test-onebest-parmbr-$run", 
-										"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
+										"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
 										"$testrun/test.output.nbest.noOOV", 
 										"$testrun/test.output.1best");
   } else {
 		$cachepipe->cmd("test-extract-onebest-$run",
-										"java -Xmx500m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+										"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
 										"$testrun/test.output.nbest.noOOV", 
 										"$testrun/test.output.1best");
   }
 
   $numrefs = get_numrefs($TEST{target});
   $cachepipe->cmd("test-bleu-$run",
-									"java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+									"java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
 									"$testrun/test.output.1best", 
 									"$testrun/test.output.1best.bleu");
 
@@ -1321,19 +1321,19 @@ $cachepipe->cmd("test-$NAME-remove-oov",
 
 if ($DO_MBR) {
   $cachepipe->cmd("test-$NAME-onebest-parmbr", 
-									"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
+									"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
 									"$testrun/test.output.nbest.noOOV", 
 									"$testrun/test.output.1best");
 } else {
   $cachepipe->cmd("test-$NAME-extract-onebest",
-									"java -Xmx500m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
 									"$testrun/test.output.nbest.noOOV", 
 									"$testrun/test.output.1best");
 }
 
 $numrefs = get_numrefs($TEST{target});
 $cachepipe->cmd("$NAME-test-bleu",
-								"java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+								"java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
 								"$testrun/test.output.1best", 
 								"$testrun/test.output.1best.bleu");
 
