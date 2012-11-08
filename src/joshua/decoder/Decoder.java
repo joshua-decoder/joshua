@@ -127,7 +127,7 @@ public class Decoder {
   }
 
   /**
-   * Sets the feature weight values used by the decoder.
+   * aSets the feature weight values used by the decoder.
    * 
    * @param weights Feature weight values
    */
@@ -590,7 +590,7 @@ public class Decoder {
         if (format.equals("packed")) {
           grammar = new PackedGrammar(file, span_limit, owner);
 
-        } else {
+        } else if (format.equals("thrax") || format.equals("regexp")) {
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
               JoshuaConfiguration.default_non_terminal, span_limit);
         }

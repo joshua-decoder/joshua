@@ -136,7 +136,7 @@ public class Chart {
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
-      this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this);
+      this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this, this.grammars[i].isRegexpGrammar());
 
     /*
      * The CubePruneCombiner defined here is fairly complicated. It is designed to work both at the

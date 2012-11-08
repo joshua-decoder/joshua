@@ -1,10 +1,12 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -58,20 +60,20 @@ class DotChart {
    */
   private Grammar pGrammar;
 
-
-  /** Length of input sentence. */
+  /* Length of input sentence. */
   private final int sentLen;
 
-  /** Represents the input sentence being translated. */
+  /* Represents the input sentence being translated. */
   private final Lattice<Integer> input;
 
+  /* If enabled, rule terminals are treated as regular expressions. */
+  private boolean regexpMatching = false;
 
   // ===============================================================
   // Static fields
   // ===============================================================
 
   private static final Logger logger = Logger.getLogger(DotChart.class.getName());
-
 
   // ===============================================================
   // Constructors
@@ -100,6 +102,18 @@ class DotChart {
     seed();
   }
 
+  public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, boolean useRegexpMatching) {
+    this.dotChart = chart;
+    this.pGrammar = grammar;
+    this.input = input;
+    this.sentLen = input.size();
+    this.dotcells = new DotCell[sentLen][sentLen + 1];
+
+    // seeding the dotChart
+    seed();
+
+    this.regexpMatching = useRegexpMatching;
+  }
 
   /**
    * Constructs a new dot chart from a specified input sentence, a translation grammar, and a parse
@@ -189,30 +203,29 @@ class DotChart {
       if (null != dotcells[i][j - 1]) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
         for (DotNode dotNode : dotcells[i][j - 1].getDotNodes()) {
-          if (null == dotNode.trieNode) {
-            // We'll get one anyways in the else branch
-            // TODO: better debugging.
-            throw new NullPointerException("DotChart.expand_cell(" + i + "," + j + "): "
-                + "Null tnode for DotItem");
-
-          } else {
-            // match the terminal
-            ArrayList<Trie> child_tnodes = dotNode.trieNode.matchAll(last_word);
-            if (child_tnodes == null || child_tnodes.isEmpty()) continue;
+          if (this.regexpMatching) {
+            ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
+            if (child_tnodes == null || child_tnodes.isEmpty()) 
+              continue;
             for (Trie child_tnode : child_tnodes) {
               if (null != child_tnode) {
-                // we do not have an ant for the terminal
                 addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
-                  dotNode.srcPath.extend(arc));
+                    dotNode.srcPath.extend(arc));
               }
+            }
+          } else {
+            Trie child_node = dotNode.trieNode.match(last_word);
+            if (null != child_node) {
+              addDotItem(child_node, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
+                  dotNode.srcPath.extend(arc));
             }
           }
         }
       }
     }
   }
-
-
+  
+  
   /**
    * note: (i,j) is a non-terminal, this cannot be a cn-side terminal, which have been handled in
    * case2 of dotchart.expand_cell add dotitems that start with the complete super-items in
@@ -252,19 +265,56 @@ class DotChart {
     for (DotNode dotNode : dotcells[i][k].dotNodes) {
       // see if it matches what the dotitem is looking for
       for (SuperNode superNode : t_ArrayList) {
-        ArrayList<Trie> child_tnodes = dotNode.trieNode.matchAll(superNode.lhs);
-        if (child_tnodes.isEmpty()) continue;
-        for (Trie child_tnode : child_tnodes) {
-          if (null == child_tnode) continue;
-          if (true == startDotItems && !child_tnode.hasExtensions())
-            continue; // TODO
-          addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode,
-              dotNode.getSourcePath().extendNonTerminal());
+        if (this.regexpMatching) {
+          ArrayList<Trie> child_tnodes = matchAll(dotNode, superNode.lhs);
+          if (child_tnodes.isEmpty()) 
+            continue;
+          for (Trie child_tnode : child_tnodes) {
+            if (null == child_tnode) 
+              continue;
+            if (true == startDotItems && !child_tnode.hasExtensions())
+              continue; // TODO
+            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode,
+                dotNode.getSourcePath().extendNonTerminal());
+          }
+        } else {
+          Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
+          if (child_tnode != null) {
+            if (true == startDotItems && !child_tnode.hasExtensions())
+              continue;
+            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                .getSourcePath().extendNonTerminal());
+          }
         }
       }
     }
   }
+  
+  /*
+   * We introduced the ability to have regular expressions in rules. When this is enabled for a
+   * grammar, we first check whether there are any children. If there are, we need to try to match
+   * _every rule_ against the symbol we're querying. This is expensive, which is an argument for
+   * keeping your set of regular expression s small and limited to a separate grammar.
+   */
+  private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
+    ArrayList<Trie> trieList = new ArrayList<Trie>();
+    HashMap<Integer, ? extends Trie> childrenTbl = dotNode.trieNode.getChildren();
 
+    if (childrenTbl != null && wordID >= 0) {
+      // get all the extensions, map to string, check for *, build regexp
+      for (Integer arcID: childrenTbl.keySet()) {
+        if (arcID == wordID) {
+          trieList.add(childrenTbl.get(arcID));
+        } else {
+          String arcWord = Vocabulary.word(arcID);
+          if (Vocabulary.word(wordID).matches(arcWord)) {
+            trieList.add(childrenTbl.get(arcID));
+          }
+        }
+      }
+    }
+    return trieList; 
+  }
 
   /**
    * Creates a dot item and adds it into the cell(i,j) of this dot chart.
