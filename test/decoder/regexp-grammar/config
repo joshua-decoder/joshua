@@ -4,6 +4,6 @@ mark-oovs = true
 goal-symbol = GOAL
 regexp-grammar = regexp
 
-phrasemodel regexp 0 1
-phrasemodel regexp 1 1
-phrasemodel glue 0 1
+weights-file = weights
+
+feature-function = OOVPenalty
