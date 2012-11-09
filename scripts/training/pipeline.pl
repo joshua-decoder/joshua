@@ -1000,6 +1000,7 @@ if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
 
 	# Add the weight for the glue grammar.
 	push (@tmparamstrings, "tm_glue_0 ||| 1.0 Opt -Inf +Inf -1 +1");
+  push (@tmweightstrings, "tm_glue_0 1.0");
 }
 
 my $tmparams = join($/, @tmparamstrings);
