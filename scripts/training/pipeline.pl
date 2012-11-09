@@ -981,9 +981,10 @@ if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
 	# listed in the file.
 	open CONFIG, $TUNEFILES{'joshua.config'} or die;
 	while (my $line = <CONFIG>) {
-		if ($line =~ /^phrasemodel/) {
-			my (undef,$owner,$i,@rest) = split(' ', $line);
-			push (@tmparamstrings, "phrasemodel $owner $i ||| 1.0 Opt -Inf +Inf -1 +1");
+		if ($line =~ /^tm/) {
+      my ($id) = split(' ', $line);
+			my (undef,$owner,$i) = split('_', $id);
+			push (@tmparamstrings, "tm_${owner}_${i} ||| 1.0 Opt -Inf +Inf -1 +1");
 		}
 	}
 	close CONFIG;
@@ -993,12 +994,12 @@ if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
 
 	my $num_tm_features = count_num_features($TUNE_GRAMMAR);
 	for my $i (0..($num_tm_features-1)) {
-		push (@tmparamstrings, "phrasemodel pt $i ||| 1.0 Opt -Inf +Inf -1 +1");
-		push (@tmweightstrings, "phrasemodel pt $i 1.0");
+		push (@tmparamstrings, "tm_pt_$i ||| 1.0 Opt -Inf +Inf -1 +1");
+		push (@tmweightstrings, "tm_pt_$i 1.0");
 	}
 
 	# Add the weight for the glue grammar.
-	push (@tmparamstrings, "phrasemodel glue 0 ||| 1.0 Opt -Inf +Inf -1 +1");
+	push (@tmparamstrings, "tm_glue_0 ||| 1.0 Opt -Inf +Inf -1 +1");
 }
 
 my $tmparams = join($/, @tmparamstrings);
