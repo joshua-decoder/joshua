@@ -355,7 +355,6 @@ public class PackedGrammar extends BatchGrammar {
       PackedSlice ps = lookup.get(word_id);
       if (ps != null) {
         PackedTrie trie = new PackedTrie(ps, 0);
-        System.out.println("ONE");
         return trie.match(word_id);
       }
       return null;
@@ -377,7 +376,6 @@ public class PackedGrammar extends BatchGrammar {
     public ArrayList<? extends Trie> getExtensions() {
       ArrayList<Trie> tries = new ArrayList<Trie>();
       for (int key : lookup.keySet()) {
-        System.out.println("TWO");
         tries.add(match(key));
       }
       return tries;
