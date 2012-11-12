@@ -1,0 +1,3 @@
+This test ensures that the distance between nodes is computed correctly.  In lattices,
+the span (j - i) no longer contains the distance between two words, since words connected
+by two hops in the lattice could have an arbitrary distance between their node IDs.
