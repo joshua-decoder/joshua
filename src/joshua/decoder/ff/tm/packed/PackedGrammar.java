@@ -121,7 +121,7 @@ public class PackedGrammar extends BatchGrammar {
 
   @Override
   public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
-    return (spanLimit == -1 || endIndex - startIndex <= spanLimit);
+    return (spanLimit == -1 || pathLength <= spanLimit);
   }
 
   @Override

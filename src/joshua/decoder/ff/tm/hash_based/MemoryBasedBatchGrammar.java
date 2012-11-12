@@ -48,7 +48,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private String grammarFile;
 
   /* The maximum span of the input this rule can be applied to. */
-  private int spanLimit = JoshuaConfiguration.span_limit;
+  private int spanLimit = 1;
 
   private GrammarReader<BilingualRule> modelReader;
 
@@ -151,11 +151,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   /**
    * if the span covered by the chart bin is greater than the limit, then return false
    */
-  public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
+  public boolean hasRuleForSpan(int i, int j, int pathLength) {
     if (this.spanLimit == -1) { // mono-glue grammar
-      return (startIndex == 0);
+      return (i == 0);
     } else {
-      return (endIndex - startIndex <= this.spanLimit);
+//      System.err.println(String.format("%s HASRULEFORSPAN(%d,%d,%d)/%d = %s", Vocabulary.word(this.owner), i, j, pathLength, spanLimit, pathLength <= this.spanLimit));
+      return (pathLength <= this.spanLimit);
     }
   }
 

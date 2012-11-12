@@ -32,25 +32,25 @@ public class Arc<Label> {
    * variable.
    */
   // TODO should be a vector of costs
-  final double cost;
+  private final double cost;
 
   /**
    * Node where this arc ends. Package-private scope so that Node and Lattice can quickly access
    * this variable.
    */
-  final Node<Label> head;
+  private final Node<Label> head;
 
   /**
    * Node where this arc begins. Package-private scope so that Node and Lattice can quickly access
    * this variable.
    */
-  final Node<Label> tail;
+  private final Node<Label> tail;
 
   /**
    * Label associated with this arc. Package-private scope so that Node and Lattice can quickly
    * access this variable.
    */
-  final Label label;
+  private final Label label;
 
   /**
    * Creates an arc with the specified head, tail, cost, and label.

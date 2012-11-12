@@ -148,13 +148,13 @@ class DotChart {
    */
   void seed() {
     for (int j = 0; j <= sentLen - 1; j++) {
-      if (pGrammar.hasRuleForSpan(j, j, sentLen)) {
+//      if (pGrammar.hasRuleForSpan(j, j, input.distance(j, j))) {
         if (null == pGrammar.getTrieRoot()) {
           throw new RuntimeException("trie root is null");
         }
         addDotItem(pGrammar.getTrieRoot(), j, j, null, null, new SourcePath());
       }
-    }
+//    }
   }
 
 
