@@ -29,7 +29,7 @@ import joshua.decoder.segment_file.Sentence;
  * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
-// BUG: known synchronization problem: LM cache; srilm call;
+
 public class DecoderThread extends Thread {
   /*
    * these variables may be the same across all threads (e.g., just copy from DecoderFactory), or
