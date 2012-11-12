@@ -4,6 +4,10 @@
 
 set -u
 
+rm -rf thrax.log grammar .grammar.crc thrax
+
+hadoop_dl_url=http://archive.apache.org/dist/hadoop/core/hadoop-0.20.2/hadoop-0.20.2.tar.gz
+[[ ! -f $JOSHUA/lib/hadoop-0.20.2.tar.gz ]] && wget -O $JOSHUA/lib/hadoop-0.20.2.tar.gz $hadoop_dl_url
 [[ ! -d hadoop-0.20.2 ]] && tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz
 
 unset HADOOP HADOOP_HOME HADOOP_CONF_DIR
@@ -21,7 +25,7 @@ fi
 
 if [[ $size -eq 6385751 ]]; then
   echo PASSED
-  rm -rf thrax.log grammar thrax
+  rm -rf thrax.log grammar .grammar.crc thrax
   exit 0
 else
   echo FAILED
