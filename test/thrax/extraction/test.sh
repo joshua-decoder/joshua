@@ -25,7 +25,7 @@ fi
 
 if [[ $size -eq 6385751 ]]; then
   echo PASSED
-  rm -rf thrax.log grammar .grammar.crc thrax
+  rm -rf thrax.log grammar .grammar.crc thrax hadoop-0.20.2.tar.gz hadoop-0.20.2
   exit 0
 else
   echo FAILED
