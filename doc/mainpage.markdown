@@ -13,5 +13,6 @@ This documentation isn't very complete at the moment.
 * [Tutorial](@ref tutorial)
 * [Support](@ref support)
 * [Developer Guide](@ref develop)
+* [Troubleshooting Guide](@ref troubleshooting)
 * [Acknowledgements](@ref acknowledgements)
 * [Bibliography](@ref bibliography)
