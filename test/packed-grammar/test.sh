@@ -2,9 +2,10 @@
 
 set -u
 
-#export THRAX=$JOSHUA/thrax
+export THRAX=$JOSHUA/thrax
 
 # pack the grammar
+rm -rf dense_map grammar.packed
 $JOSHUA/scripts/support/grammar-packer.pl grammar.gz grammar.packed 2> packer.log
 
 # generate the glue grammar
