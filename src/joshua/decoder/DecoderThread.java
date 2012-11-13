@@ -16,6 +16,7 @@ import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.segment_file.Sentence;
+import joshua.corpus.Vocabulary;
 
 /**
  * This class handles decoding of individual Sentence objects (which can represent plain sentences
@@ -119,22 +120,23 @@ public class DecoderThread extends Thread {
     Grammar newGrammar = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
     newGrammar.sortGrammar(this.featureFunctions);
     long sortTime = System.currentTimeMillis();
-    logger.info(String.format("New grammar has %d rules.\n", newGrammar.getNumRules()));
+    logger.info(String.format("Sentence %d: New grammar has %d rules.", sentence.id(), newGrammar.getNumRules()));
 
     /* Step 2. Create a new chart and parse with the instantiated grammar. */
     Grammar[] newGrammarArray = new Grammar[] { newGrammar };
     Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
     chart = new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
-    logger.info(String.format("goal symbol is %d.\n", goalSymbol));
+    String goalSymbolString = Vocabulary.word(goalSymbol);
+    logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(), goalSymbolString, goalSymbol));
     chart.setGoalSymbolID(goalSymbol);
 
     /* Parsing */
     HyperGraph englishParse = chart.expand();
     long secondParseTime = System.currentTimeMillis();
-    logger.info(String.format("Finished second chart expansion (%d seconds).\n",
+    logger.info(String.format("Sentence %d: Finished second chart expansion (%d seconds).", sentence.id(),
         (secondParseTime - sortTime) / 1000));
-    logger.info(String.format("Total time: %d seconds.\n", (secondParseTime - startTime) / 1000));
+    logger.info(String.format("Sentence %d total time: %d seconds.\n", sentence.id(), (secondParseTime - startTime) / 1000));
 
     return new Translation(sentence, englishParse, featureFunctions); // or do something else
 
