@@ -127,7 +127,7 @@ public class DecoderThread extends Thread {
     Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
     chart = new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
-	String goalSymbolString = Vocabulary.word(goalSymbol);
+    String goalSymbolString = Vocabulary.word(goalSymbol);
     logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(), goalSymbolString, goalSymbol));
     chart.setGoalSymbolID(goalSymbol);
 
