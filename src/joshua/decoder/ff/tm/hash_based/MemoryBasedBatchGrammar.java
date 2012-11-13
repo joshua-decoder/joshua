@@ -138,6 +138,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // Methods
   // ===============================================================
 
+  public void setSpanLimit(int spanLimit) {
+    this.spanLimit = spanLimit;
+  }
+  
   public int getNumRules() {
     return this.qtyRulesRead;
   }

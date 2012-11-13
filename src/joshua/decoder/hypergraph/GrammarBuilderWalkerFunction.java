@@ -32,6 +32,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
 
   public GrammarBuilderWalkerFunction(String goal) {
     grammar = new MemoryBasedBatchGrammar(reader);
+    grammar.setSpanLimit(1000);
     outStream = null;
     goalSymbol = Vocabulary.id(goal);
     rules = new HashSet<Rule>();
