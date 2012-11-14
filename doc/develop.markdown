@@ -37,13 +37,15 @@ TBD
 
 ### Tools
 
-If you are developing Joshua using Eclipse, please import the GoogleStyle 
-formatter configuration `eclipse-java-google-style.xml`, which can be 
-downloaded from 
-[http://code.google.com/p/google-styleguide/source/browse/trunk](http://code.google.com/p/google-styleguide/source/browse/trunk).
+* Git
+* (optional) Eclipse
+  If you are developing Joshua using Eclipse, please import the GoogleStyle 
+  formatter configuration `eclipse-java-google-style.xml`, which can be 
+  downloaded from 
+  [http://code.google.com/p/google-styleguide/source/browse/trunk](http://code.google.com/p/google-styleguide/source/browse/trunk).
 
-In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
-on *Import...* and choose `eclipse-java-google-style.xml`.
+  In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
+  on *Import...* and choose `eclipse-java-google-style.xml`.
 
 ### Format
 
