@@ -38,10 +38,7 @@
   <!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Create the build directory for compiled class files -->
-  <target name="init" depends="set-joshua-home,resolve">
-    <tstamp />
-    <mkdir dir="${build}" />
-    <mkdir dir="${lib}" />
+  <target name="init" depends="set-joshua-home, resolve, download-thrax, download-hadoop">
   </target>
 
   <!-- Check for environment variables -->
@@ -50,7 +47,7 @@
   </target>
 
   <target name="set-joshua-version" unless="env.JOSHUA_VERSION">
-    <fail message="Please set the $JOSHUA_VERSION environment variable." />
+    <fail message="Please set the JOSHUA_VERSION environment variable." />
   </target>
 
   <!-- Check for environment variables -->
@@ -102,7 +99,7 @@
     </exec>
   </target>
 
-  <target name="thrax" depends="set-joshua-home">
+  <target name="download-thrax" depends="set-joshua-home">
     <exec executable="git">
       <arg value="submodule" />
       <arg value="init" />
@@ -111,6 +108,9 @@
       <arg value="submodule" />
       <arg value="update" />
     </exec>
+  </target>
+
+  <target name="thrax" depends="set-joshua-home">
     <subant buildpath="thrax">
       <property name="env.HADOOP" value="${env.JOSHUA}/${lib}" />
       <property name="env.HADOOP_VERSION" value="0.20.203.0" />
@@ -119,9 +119,22 @@
     </subant>
   </target>
 
+  <!-- Download the hadoop tool tarball (not jar library), which gets used by
+       pipeline.pl and test/hadoop/ -->
+  <target name="download-hadoop" depends="set-joshua-home">
+    <get
+      src="http://archive.apache.org/dist/hadoop/core/hadoop-0.20.2/hadoop-0.20.2.tar.gz"
+      dest="${env.JOSHUA}/lib"
+      usetimestamp="true"
+      skipexisting="true" />
+  </target>
+
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-  <target name="all" depends="java,giza,kenlm,parallelize">
+  <target name="all" depends="giza, kenlm, parallelize">
+  </target>
+
+  <target name="devel" depends="init, java, all">
   </target>
 
   <!-- Compile the Java code. -->
@@ -173,7 +186,7 @@
   </target>
 
   <!-- Create a versioned release -->
-  <target name="release" depends="set-joshua-version, resolve">
+  <target name="release" depends="devel-clean, set-joshua-version, init">
     <exec executable="./scripts/support/make-release.sh">
       <arg value="${env.JOSHUA_VERSION}" />
     </exec>
@@ -245,6 +258,21 @@
     </delete>
   </target>
 
+
+  <!-- Delete *all* generated files,
+       including files and directories not tracked by git -->
+  <target name="devel-clean">
+    <!-- Delete untracked, ignored files and directories. -->
+    <exec executable="git">
+      <arg value="clean" />
+      <arg value="-fX" />
+    </exec>
+    <!-- Delete untracked, not ignored files and directories. -->
+    <exec executable="git">
+      <arg value="clean" />
+      <arg value="-fd" />
+    </exec>
+  </target>
 
   <!-- ~~~~~ Javadoc ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
