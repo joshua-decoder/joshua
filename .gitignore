@@ -69,3 +69,12 @@ doxygen_*.tmp
 test/scripts/tokenization/diff
 test/scripts/tokenization/output
 .cachepipe
+
+joshua-decoder.org
+release
+test/bn-en/samt/output.scores
+test/decoder/n-ary/diff
+test/decoder/n-ary/log
+test/decoder/n-ary/output
+test/decoder/n-ary/output.scores
+debug.txt
