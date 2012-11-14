@@ -9,6 +9,12 @@ The Joshua source code repository is located at
 [http://github.com/joshua-decoder/joshua](http://github.com/joshua-decoder/joshua).
 Active development is being done in the `devel` branch.
 
+## Tools required
+
+* [Apache Ant](http://ant.apache.org/) version 1.8.0 or greater
+* [Doxygen](http://www.doxygen.org) version 1.8.0 or greater
+* A POSIX environment
+
 ## Discussion list
 
 [https://groups.google.com/forum/#!forum/joshua_developers](https://groups.google.com/forum/#!forum/joshua_developers)
