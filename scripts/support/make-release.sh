@@ -25,6 +25,7 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/test \
     joshua-$version/examples \
     joshua-$version/thrax/bin/thrax.jar \
+    joshua-$version/thrax/scripts \
 		joshua-$version/joshua-decoder.org \
     joshua-$version/joshua-decoder
 
