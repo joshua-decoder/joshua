@@ -305,6 +305,16 @@
   <property name="ivy.jar.dir" value="${ivy.home}/lib" />
   <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
   <target name="download-ivy" unless="offline">
+
+    <!-- Test for Ant Version.-->
+    <fail message="Ivy requires Ant version 1.8.0 or greater. Please upgrade to the latest version.">
+      <condition>
+        <not>
+          <antversion atleast="1.8.0"/>
+        </not>
+      </condition>
+    </fail>
+
     <property name="ivy.default.ivy.user.dir" value="${env.JOSHUA}/lib" />
     <mkdir dir="${ivy.jar.dir}" />
     <!-- download Ivy from web site so that it can be used even without any special installation -->
