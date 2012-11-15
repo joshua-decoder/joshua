@@ -15,6 +15,7 @@ import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.io.DeNormalize;
 
 /**
  * This class implements lazy k-best extraction on a hyper-graph. To seed the kbest extraction, it
@@ -82,8 +83,10 @@ public class KBestExtractor {
 
       // return derivationState.getDerivation(this, features, models, 0);
 
+      String hypothesis = derivationState.getHypothesis(this, false, features, models);
       String outputString = JoshuaConfiguration.outputFormat
-          .replace("%s", derivationState.getHypothesis(this, false, features, models))
+          .replace("%s", hypothesis)
+          .replace("%S", DeNormalize.processSingleLine(hypothesis))
           .replace("%i", Integer.toString(sentID))
           .replace("%f", features.toString())
           .replace("%c", String.format("%.3f", -derivationState.cost));
