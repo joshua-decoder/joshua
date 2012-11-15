@@ -15,8 +15,6 @@ import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
-import joshua.util.CoIterator;
-import joshua.util.io.UncheckedIOException;
 
 /**
  * This class implements lazy k-best extraction on a hyper-graph. To seed the kbest extraction, it
@@ -108,53 +106,9 @@ public class KBestExtractor {
 
   // =========================== end kbestHypergraph
 
-  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
-      int sentID, final List<String> out) {
+  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN, int sentID) throws IOException {
 
-    CoIterator<String> coIt = new CoIterator<String>() {
-
-      public void coNext(String hypStr) {
-        out.add(hypStr);
-      }
-
-      public void finish() {
-      }
-    };
-
-    this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
-  }
-
-  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
-      int sentID, BufferedWriter out) throws IOException {
-
-    final BufferedWriter writer;
-    if (null == out) {
-      writer = new BufferedWriter(new OutputStreamWriter(System.out));
-    } else {
-      writer = out;
-    }
-
-    try {
-
-      CoIterator<String> coIt = new CoIterator<String>() {
-        public void coNext(String hypStr) {
-          try {
-            writer.write(hypStr);
-            writer.write("\n");
-            writer.flush();
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        }
-
-        public void finish() {
-        }
-      };
-
-      this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
-    } catch (UncheckedIOException e) {
-      e.throwCheckedException();
-    }
+    lazyKBestExtractOnHG(hg, models, topN, sentID, new BufferedWriter(new OutputStreamWriter(System.out)));
   }
 
   /**
@@ -165,29 +119,26 @@ public class KBestExtractor {
    * @param topN
    * @param sentID
    * @param coit
+   * @throws IOException 
    */
-  private void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions,
-      int topN, int sentID, CoIterator<String> coit) {
+  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions,
+      int topN, int sentID, BufferedWriter out) throws IOException {
 
     this.sentID = sentID;
     resetState();
 
     if (null == hg.goalNode)
       return;
+    
+    for (int k = 1;; k++) {
+      String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
 
-    // VirtualItem virtual_goal_item = add_virtual_item(hg.goal_item);
-    try {
-      for (int k = 1;; k++) {
-        String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
+      if (null == hypStr || k > topN)
+        break;
 
-        if (null == hypStr || k > topN)
-          break;
-
-        coit.coNext(hypStr);
-      }
-      // g_time_kbest_extract += System.currentTimeMillis()-start;
-    } finally {
-      coit.finish();
+      out.write(hypStr);
+      out.write("\n");
+      out.flush();
     }
   }
 
