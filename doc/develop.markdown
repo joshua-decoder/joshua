@@ -9,11 +9,21 @@ The Joshua source code repository is located at
 [http://github.com/joshua-decoder/joshua](http://github.com/joshua-decoder/joshua).
 Active development is being done in the `devel` branch.
 
-## Tools required
+## Development tools required
 
 * [Apache Ant](http://ant.apache.org/) version 1.8.0 or greater
 * [Doxygen](http://www.doxygen.org) version 1.8.0 or greater
 * A POSIX environment
+* Git
+* (optional) Eclipse
+  If you are developing Joshua using Eclipse, please import the GoogleStyle 
+  formatter configuration `eclipse-java-google-style.xml`, which can be 
+  downloaded from 
+  [http://code.google.com/p/google-styleguide/source/browse/trunk](http://code.google.com/p/google-styleguide/source/browse/trunk).
+
+  In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
+  on *Import...* and choose `eclipse-java-google-style.xml`.
+
 
 ## Discussion list
 
@@ -34,16 +44,6 @@ page.
 ### Naming conventions
 
 TBD
-
-### Tools
-
-If you are developing Joshua using Eclipse, please import the GoogleStyle 
-formatter configuration `eclipse-java-google-style.xml`, which can be 
-downloaded from 
-[http://code.google.com/p/google-styleguide/source/browse/trunk](http://code.google.com/p/google-styleguide/source/browse/trunk).
-
-In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
-on *Import...* and choose `eclipse-java-google-style.xml`.
 
 ### Format
 
