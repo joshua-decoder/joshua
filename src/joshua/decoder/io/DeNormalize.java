@@ -12,7 +12,7 @@ import java.util.Map;
  * <UL>
  * <LI>Delete whitespace in front of periods and commas</LI>
  * <LI>Join contractions</LI>
- * <LI>Capitalize titles (Mr Ms Miss Dr etc.)</LI>
+ * <LI>Capitalize name titles (Mr Ms Miss Dr etc.)</LI>
  * <LI>TODO: Handle surrounding characters ([{<"''">}])</LI>
  * <LI>TODO: Join multi-period abbreviations (e.g. M.Phil. i.e.)</LI>
  * <LI>TODO: Handle ambiguities like "st.", which can be an abbreviation for both "Saint" and
@@ -146,8 +146,8 @@ public class DeNormalize {
   }
 
   /**
-   * Capitalize the first character of the titles Mr Mrs Ms Miss Dr
-   *
+   * Capitalize the first character of the titles of names: Mr Mrs Ms Miss Dr Prof
+   * 
    * @param line The single-line input string
    * @return The input string modified as described above
    */
