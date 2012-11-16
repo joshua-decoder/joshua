@@ -167,6 +167,7 @@ my $retval = GetOptions(
   "lm=s"              => \$LM_TYPE,
   "lmfile=s"        => \@LMFILES,
   "lm-gen=s"          => \$LM_GEN,
+  "lm-order=i"        => \$LM_ORDER,
   "corpus-lm!"        => \$DO_BUILD_LM_FROM_CORPUS,
   "witten-bell!"     => \$WITTEN_BELL,
   "tune-grammar=s"    => \$TUNE_GRAMMAR_FILE,
