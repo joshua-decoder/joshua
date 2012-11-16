@@ -904,7 +904,11 @@ public class MertCore {
                   }
                 } else {
                   for (int c = 1; c <= numParams; ++c) {
-                    currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                    try {
+                      currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                    } catch (Exception e) {
+                      currFeatVal[c] = 0.0;
+                    }
                   // print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
                   }
                 // println("",4);
@@ -1132,7 +1136,11 @@ public class MertCore {
                 stats_str = inFile_statsCurrIt.readLine();
                 String[] temp_stats = stats_str.split("\\s+");
                 for (int s = 0; s < suffStatsCount; ++s) {
-                  stats[s] = Integer.parseInt(temp_stats[s]);
+                  try {
+                    stats[s] = Integer.parseInt(temp_stats[s]);
+                  } catch (Exception e) {
+                    stats[s] = 0;
+                  }
                 }
               }
 
@@ -1149,7 +1157,13 @@ public class MertCore {
                 }
               } else {
                 for (int c = 1; c <= numParams; ++c) {
-                  currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                  try {
+                    currFeatVal[c] = Double.parseDouble(featVal_str[c - 1]);
+                  } catch (Exception e) {
+                    // NumberFormatException, ArrayIndexOutOfBoundsException
+                    currFeatVal[c] = 0.0;
+                  }
+
                 // print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
                 }
               }
