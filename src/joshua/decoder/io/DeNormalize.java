@@ -10,7 +10,6 @@ import java.util.Map;
  * <LI>Capitalize the first character in the string</LI>
  * <LI>Detokenize</LI>
  * <UL>
- * <LI>Combine conjunctions</LI>
  * <LI>Delete whitespace in front of periods and commas</LI>
  * <LI>Join contractions</LI>
  * <LI>Capitalize titles (Mr Ms Miss Dr etc.)</LI>
