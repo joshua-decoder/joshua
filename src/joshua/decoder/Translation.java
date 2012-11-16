@@ -2,7 +2,6 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,9 +116,11 @@ public class Translation {
 
     } else {
 
+      // There is no output for the given input (e.g. blank line)
       String outputString = JoshuaConfiguration.outputFormat
           .replace("%s", "")
-          .replace("%t", "")  
+          .replace("%S", "")
+          .replace("%t", "")
           .replace("%i", Integer.toString(source.id()))
           .replace("%f", "")
           .replace("%c", "0.000");
@@ -131,6 +132,7 @@ public class Translation {
     out.flush();
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(id());

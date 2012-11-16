@@ -108,6 +108,7 @@ public class JoshuaConfiguration {
    * 
    *   %i the 0-index sentence number 
    *   %s the translated sentence 
+   *   %S the translated sentence, denormalized
    *   %t the synchronous derivation
    *   %f the list of feature values (as name=value pairs) 
    *   %c the model cost 
