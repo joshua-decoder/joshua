@@ -49,50 +49,50 @@ public class DeNormalizeTest {
 
   /**
    * Test method for
-   * {@link joshua.decoder.io.DeNormalize#testCapitalizeFirstLetter(java.lang.String)}.
+   * {@link joshua.decoder.io.DeNormalize#capitalizeLineFirstLetter(java.lang.String)}.
    */
   @Test
-  public void testCapitalizeFirstLetter() throws Exception {
-    String actual = DeNormalize.capitalizeFirstLetter(tokenized);
+  public void testCapitalizeLineFirstLetter() throws Exception {
+    String actual = DeNormalize.capitalizeLineFirstLetter(tokenized);
     String expected = "My son 's friend , however , plays a high - risk game .";
     assertEquals(actual, expected);
   }
 
   /**
    * Test method for
-   * {@link joshua.decoder.io.DeNormalize#testCapitalizeFirstLetter(java.lang.String)}.
+   * {@link joshua.decoder.io.DeNormalize#capitalizeLineFirstLetter(java.lang.String)}.
    */
   @Test
-  public void testCapitalizeFirstLetter_empty() throws Exception {
-    String actual = DeNormalize.capitalizeFirstLetter("");
+  public void testCapitalizeLineFirstLetter_empty() throws Exception {
+    String actual = DeNormalize.capitalizeLineFirstLetter("");
     String expected = "";
     assertEquals(actual, expected);
   }
 
   /**
    * Test method for
-   * {@link joshua.decoder.io.DeNormalize#testCapitalizeFirstLetter(java.lang.String)}.
+   * {@link joshua.decoder.io.DeNormalize#capitalizeLineFirstLetter(java.lang.String)}.
    */
   @Test
-  public void testCapitalizeFirstLetter_singleNumberCharacter() throws Exception {
-    String actual = DeNormalize.capitalizeFirstLetter("1");
+  public void testCapitalizeLineFirstLetter_singleNumberCharacter() throws Exception {
+    String actual = DeNormalize.capitalizeLineFirstLetter("1");
     String expected = "1";
     assertEquals(actual, expected);
   }
 
   /**
    * Test method for
-   * {@link joshua.decoder.io.DeNormalize#testCapitalizeFirstLetter(java.lang.String)}.
+   * {@link joshua.decoder.io.DeNormalize#capitalizeLineFirstLetter(java.lang.String)}.
    */
   @Test
-  public void testCapitalizeFirstLetter_singleLetterCharacter() throws Exception {
-    String actual = DeNormalize.capitalizeFirstLetter("a");
+  public void testCapitalizeLineFirstLetter_singleLetterCharacter() throws Exception {
+    String actual = DeNormalize.capitalizeLineFirstLetter("a");
     String expected = "A";
     assertEquals(actual, expected);
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinPeriodsCommas(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinPeriodsCommas(java.lang.String)}.
    */
   @Test
   public void testJoinPeriodsCommas() throws Exception {
@@ -102,7 +102,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinPeriodsCommas(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinPeriodsCommas(java.lang.String)}.
    */
   @Test
   public void testJoinPeriodsCommas_empty() throws Exception {
@@ -112,7 +112,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinHyphen(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinHyphen(java.lang.String)}.
    */
   @Test
   public void testJoinHyphen() throws Exception {
@@ -122,7 +122,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinHyphen(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinHyphen(java.lang.String)}.
    */
   @Test
   public void testJoinHypen_empty() throws Exception {
@@ -132,7 +132,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinHyphen(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinHyphen(java.lang.String)}.
    */
   @Test
   public void testJoinHyphen_1space_btw_2hyphens() throws Exception {
@@ -142,7 +142,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinHyphen(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinHyphen(java.lang.String)}.
    */
   @Test
   public void testJoinHyphen_2spaces_btw_2hyphens() throws Exception {
@@ -152,7 +152,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinContractions(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinContractions(java.lang.String)}.
    */
   @Test
   public void testJoinContractions() throws Exception {
@@ -163,7 +163,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinContractions(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinContractions(java.lang.String)}.
    */
   @Test
   public void testJoinContractions_empty() throws Exception {
@@ -173,13 +173,14 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#capitalizeTitles(java.lang.String)}.
+   * Test method for
+   * {@link joshua.decoder.io.DeNormalize#capitalizeNameTitleAbbrvs(java.lang.String)}.
    */
   @Test
-  public void testCapitalizeTitles() throws Exception {
+  public void testCapitalizeNameTitleAbbrvs() throws Exception {
     tokenized =       "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
     String expected = "my son 's friend , Dr . robotnik , PhD , however , wo n't play a high - risk game .";
-    String actual = DeNormalize.capitalizeTitles(tokenized);
+    String actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
     assertEquals(actual, expected);
   }
 

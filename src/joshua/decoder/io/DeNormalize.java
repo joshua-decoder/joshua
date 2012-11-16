@@ -15,7 +15,11 @@ import java.util.Map;
  * <LI>Join contractions</LI>
  * <LI>Capitalize titles (Mr Ms Miss Dr etc.)</LI>
  * <LI>TODO: Handle surrounding characters ([{<"''">}])</LI>
- * <LI>TODO: join multi-period abbreviations (e.g. M.Phil. i.e.)</LI>
+ * <LI>TODO: Join multi-period abbreviations (e.g. M.Phil. i.e.)</LI>
+ * <LI>TODO: Handle ambiguities like "st.", which can be an abbreviation for both "Saint" and
+ * "street"</LI>
+ * <LI>TODO: Capitalize both the title and the name of a person, e.g. Mr. Morton (named entities
+ * should be demarcated).</LI>
  * </UL>
  * </UL> <bold>N.B.</bold> These methods all assume that every translation result that will be
  * denormalized has the following format:
@@ -42,7 +46,7 @@ public class DeNormalize {
   };
 
   /** Abbreviations of titles for names that capitalize only the first letter */
-  private static final String[] TITLES_CAP_FIRST_LETTER =
+  private static final String[] NAME_TITLES_CAP_FIRST_LETTER =
       new String[] {
           "dr",
           "miss",
@@ -50,6 +54,7 @@ public class DeNormalize {
           "mrs",
           "ms",
           "prof",
+          //"st", There is too much ambiguity between the abbreviations for Saint and street.
   };
 
   /**
@@ -58,7 +63,7 @@ public class DeNormalize {
    * Values are the capitalized version.
    */
   @SuppressWarnings("serial")
-  private static final Map<String, String> TITLES_COMPLEX_CAPITALIZATION =
+  private static final Map<String, String> NAME_TITLES_COMPLEX_CAPITALIZATION =
       Collections.unmodifiableMap(new HashMap<String, String>() {{
           put("phd", "PhD");
           put("mphil", "MPhil");
@@ -76,15 +81,15 @@ public class DeNormalize {
     // capitalized to "Phd" by the capitalizeFirstLetter method, and because the "phd" token won't
     // match, "Phd" won't be corrected to "PhD".
     String deNormalized = normalized;
-    deNormalized = capitalizeTitles(deNormalized);
+    deNormalized = capitalizeNameTitleAbbrvs(deNormalized);
     deNormalized = joinPeriodsCommas(deNormalized);
     deNormalized = joinHyphen(deNormalized);
     deNormalized = joinContractions(deNormalized);
-    deNormalized = capitalizeFirstLetter(deNormalized);
+    deNormalized = capitalizeLineFirstLetter(deNormalized);
     return deNormalized;
   }
 
-  public static String capitalizeFirstLetter(String line) {
+  public static String capitalizeLineFirstLetter(String line) {
     String result = null;
     if (line.length() > 0) {
       result = Character.toUpperCase(line.charAt(0)) + line.substring(1);
@@ -147,19 +152,19 @@ public class DeNormalize {
    * @param line The single-line input string
    * @return The input string modified as described above
    */
-  public static String capitalizeTitles(String line) {
+  public static String capitalizeNameTitleAbbrvs(String line) {
     String result = line;
 
     // Capitalize only the first character of certain name titles.
-    for (String title : TITLES_CAP_FIRST_LETTER) {
+    for (String title : NAME_TITLES_CAP_FIRST_LETTER) {
       result = result.replaceAll("\\b" + title + "\\b",
           Character.toUpperCase(title.charAt(0)) + title.substring(1));
     }
 
     // Capitalize the relevant characters of certain name titles.
-    for (String title : TITLES_COMPLEX_CAPITALIZATION.keySet()) {
+    for (String title : NAME_TITLES_COMPLEX_CAPITALIZATION.keySet()) {
       result = result.replaceAll("\\b" + title + "\\b",
-          TITLES_COMPLEX_CAPITALIZATION.get(title));
+          NAME_TITLES_COMPLEX_CAPITALIZATION.get(title));
     }
     return result;
   }
