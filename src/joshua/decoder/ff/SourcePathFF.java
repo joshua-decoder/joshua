@@ -31,11 +31,11 @@ public final class SourcePathFF extends StatelessFF {
   
   @Override
   public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
-    return new FeatureVector(name, -sourcePath.getPathCost());
+    return new FeatureVector(name, sourcePath.getPathCost());
   }
 
   @Override
   public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
-    return weight * -sourcePath.getPathCost();
+    return weight * sourcePath.getPathCost();
   }
 }
