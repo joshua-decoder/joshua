@@ -30,8 +30,20 @@ public class DeNormalizeTest {
    */
   @Test(enabled = true)
   public void testProcessSingleLine() {
+    tokenized = "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
+    String expected = "My son's friend, Dr. robotnik, PhD, however, won't play a high-risk game.";
     String actual = DeNormalize.processSingleLine(tokenized);
-    String expected = "My son's friend, however, plays a high-risk game.";
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#processSingleLine(java.lang.String)}.
+   */
+  @Test
+  public void testProcessSingleLine_interspersed() {
+    tokenized = "phd mrx";
+    String expected = "PhD mrx";
+    String actual = DeNormalize.processSingleLine(tokenized);
     assertEquals(actual, expected);
   }
 
@@ -157,6 +169,17 @@ public class DeNormalizeTest {
   public void testJoinContractions_empty() throws Exception {
     String actual = DeNormalize.joinContractions("");
     String expected = "";
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#capitalizeTitles(java.lang.String)}.
+   */
+  @Test
+  public void testCapitalizeTitles() throws Exception {
+    tokenized =       "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
+    String expected = "my son 's friend , Dr . robotnik , PhD , however , wo n't play a high - risk game .";
+    String actual = DeNormalize.capitalizeTitles(tokenized);
     assertEquals(actual, expected);
   }
 

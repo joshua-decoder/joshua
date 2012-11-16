@@ -1,5 +1,9 @@
 package joshua.decoder.io;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Denormalize a(n English) string in a collection of ways listed below.
  * <UL>
@@ -9,8 +13,9 @@ package joshua.decoder.io;
  * <LI>Combine conjunctions</LI>
  * <LI>Delete whitespace in front of periods and commas</LI>
  * <LI>Join contractions</LI>
+ * <LI>Capitalize titles (Mr Ms Miss Dr etc.)</LI>
  * <LI>TODO: Handle surrounding characters ([{<"''">}])</LI>
- * <LI>TODO: Capitalize titles (Mr* Ms Miss Dr)</LI>
+ * <LI>TODO: join multi-period abbreviations (e.g. M.Phil. i.e.)</LI>
  * </UL>
  * </UL> <bold>N.B.</bold> These methods all assume that every translation result that will be
  * denormalized has the following format:
@@ -25,7 +30,7 @@ package joshua.decoder.io;
 
 public class DeNormalize {
 
-  private final static String[] CONTRACTION_SUFFIXES =
+  private static final String[] CONTRACTION_SUFFIXES =
       new String[] {
           "'d",
           "'ll",
@@ -36,12 +41,46 @@ public class DeNormalize {
           "'ve",
   };
 
+  /** Abbreviations of titles for names that capitalize only the first letter */
+  private static final String[] TITLES_CAP_FIRST_LETTER =
+      new String[] {
+          "dr",
+          "miss",
+          "mr",
+          "mrs",
+          "ms",
+          "prof",
+  };
+
+  /**
+   * Keys are token representations of abbreviations of titles for names that capitalize more than
+   * just the first letter.<br>
+   * Values are the capitalized version.
+   */
+  @SuppressWarnings("serial")
+  private static final Map<String, String> TITLES_COMPLEX_CAPITALIZATION =
+      Collections.unmodifiableMap(new HashMap<String, String>() {{
+          put("phd", "PhD");
+          put("mphil", "MPhil");
+      }});
+
+  /**
+   * Apply all the denormalization methods to the normalized input line.
+   *
+   * @param normalized
+   * @return
+   */
   public static String processSingleLine(String normalized) {
+    // The order in which the methods are applied could matter in some situations. E.g., a token to
+    // be matched is "phd", but if it is the first token in the line, it might have already been
+    // capitalized to "Phd" by the capitalizeFirstLetter method, and because the "phd" token won't
+    // match, "Phd" won't be corrected to "PhD".
     String deNormalized = normalized;
-    deNormalized = capitalizeFirstLetter(deNormalized);
+    deNormalized = capitalizeTitles(deNormalized);
     deNormalized = joinPeriodsCommas(deNormalized);
     deNormalized = joinHyphen(deNormalized);
     deNormalized = joinContractions(deNormalized);
+    deNormalized = capitalizeFirstLetter(deNormalized);
     return deNormalized;
   }
 
@@ -90,7 +129,7 @@ public class DeNormalize {
    * <pre>wo n't</pre>
    * becomes
    * <pre>won't</pre>
-   * 
+   *
    * @param line The single-line input string
    * @return The input string modified as described above
    */
@@ -98,6 +137,29 @@ public class DeNormalize {
     String result = line;
     for (String suffix : CONTRACTION_SUFFIXES) {
       result = result.replace(" " + suffix, suffix);
+    }
+    return result;
+  }
+
+  /**
+   * Capitalize the first character of the titles Mr Mrs Ms Miss Dr
+   *
+   * @param line The single-line input string
+   * @return The input string modified as described above
+   */
+  public static String capitalizeTitles(String line) {
+    String result = line;
+
+    // Capitalize only the first character of certain name titles.
+    for (String title : TITLES_CAP_FIRST_LETTER) {
+      result = result.replaceAll("\\b" + title + "\\b",
+          Character.toUpperCase(title.charAt(0)) + title.substring(1));
+    }
+
+    // Capitalize the relevant characters of certain name titles.
+    for (String title : TITLES_COMPLEX_CAPITALIZATION.keySet()) {
+      result = result.replaceAll("\\b" + title + "\\b",
+          TITLES_COMPLEX_CAPITALIZATION.get(title));
     }
     return result;
   }
