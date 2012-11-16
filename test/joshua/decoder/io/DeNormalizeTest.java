@@ -1,6 +1,3 @@
-/**
- *
- */
 package joshua.decoder.io;
 
 import static org.testng.Assert.*;
@@ -16,7 +13,7 @@ public class DeNormalizeTest {
   /**
    * @throws java.lang.Exception
    */
-  @BeforeTest
+  @BeforeMethod
   protected void setUp() throws Exception {
     tokenized = "my son 's friend , however , plays a high - risk game .";
   }
@@ -24,7 +21,7 @@ public class DeNormalizeTest {
   /**
    * @throws java.lang.Exception
    */
-  @AfterTest
+  @AfterMethod
   protected void tearDown() throws Exception {
   }
 
@@ -34,7 +31,7 @@ public class DeNormalizeTest {
   @Test(enabled = true)
   public void testProcessSingleLine() {
     String actual = DeNormalize.processSingleLine(tokenized);
-    String expected = "My son 's friend, however, plays a high-risk game.";
+    String expected = "My son's friend, however, plays a high-risk game.";
     assertEquals(actual, expected);
   }
 
@@ -139,6 +136,27 @@ public class DeNormalizeTest {
   public void testJoinHyphen_2spaces_btw_2hyphens() throws Exception {
     String actual = DeNormalize.joinHyphen("a -  - b");
     String expected = "a--b";
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinContractions(java.lang.String)}.
+   */
+  @Test
+  public void testJoinContractions() throws Exception {
+    tokenized = "my son 's friend , however , wo n't play a high - risk game .";
+    String actual = DeNormalize.joinContractions(tokenized);
+    String expected = "my son's friend , however , won't play a high - risk game .";
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#testJoinContractions(java.lang.String)}.
+   */
+  @Test
+  public void testJoinContractions_empty() throws Exception {
+    String actual = DeNormalize.joinContractions("");
+    String expected = "";
     assertEquals(actual, expected);
   }
 
