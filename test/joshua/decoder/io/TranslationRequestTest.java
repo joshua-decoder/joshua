@@ -57,9 +57,10 @@ public class TranslationRequestTest {
 
   /**
    * Test method for {@link joshua.decoder.io.TranslationRequest#size()}.
+   * @throws Exception 
    */
   @Test(enabled = true)
-  public void testSize_1() {
+  public void testSize_1() throws Exception {
     byte[] data = "1".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
@@ -69,9 +70,10 @@ public class TranslationRequestTest {
 
   /**
    * Test method for {@link joshua.decoder.io.TranslationRequest#size()}.
+   * @throws Exception 
    */
   @Test(enabled = true)
-  public void testSize_newline() {
+  public void testSize_newline() throws Exception {
     byte[] data = "\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
@@ -81,9 +83,10 @@ public class TranslationRequestTest {
 
   /**
    * Test method for {@link joshua.decoder.io.TranslationRequest#size()}.
+   * @throws Exception 
    */
   @Test(enabled = true)
-  public void testSize_2newlines() {
+  public void testSize_2newlines() throws Exception {
     byte[] data = "\n\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);
@@ -94,9 +97,10 @@ public class TranslationRequestTest {
 
   /**
    * Test method for {@link joshua.decoder.io.TranslationRequest#next()}.
+   * @throws Exception 
    */
   @Test(enabled = true)
-  public void testNext_2Newlines() {
+  public void testNext_2Newlines() throws Exception {
     byte[] data = "\n\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
     TranslationRequest request = new TranslationRequest(input);

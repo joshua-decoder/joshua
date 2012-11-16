@@ -51,8 +51,7 @@ public class KBestExtractor {
 
   private FeatureVector weights;
 
-  public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest,
-      boolean includeAlign, 
+  public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean includeAlign,
       boolean isMonolingual, boolean performSanityCheck) {
     rootID = Vocabulary.id(rootSym);
 
@@ -81,7 +80,7 @@ public class KBestExtractor {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
 
-//      return derivationState.getDerivation(this, features, models, 0);
+      // return derivationState.getDerivation(this, features, models, 0);
 
       String outputString = JoshuaConfiguration.outputFormat
           .replace("%s", derivationState.getHypothesis(this, false, features, models))
@@ -90,46 +89,42 @@ public class KBestExtractor {
           .replace("%c", String.format("%.3f", -derivationState.cost));
 
       if (JoshuaConfiguration.outputFormat.contains("%t")) {
-        outputString = outputString.replace("%t", derivationState.getHypothesis(this, true, null, models));
+        outputString = outputString.replace("%t",
+            derivationState.getHypothesis(this, true, null, models));
       }
 
       return outputString;
     }
   }
 
-  /*
-   * public void getNumNodesAndEdges(HGNode it, int k, int[] numNodesAndEdges) { //==== setup the
-   * kbest at each hgnode VirtualNode virtualNode = addVirtualNode(it); DerivationState cur =
-   * virtualNode.lazyKBestExtractOnNode(Vocabulary, this, k); if( cur==null){ numNodesAndEdges[0]=0;
-   * numNodesAndEdges[1]=0; }else{ cur.getNumNodesAndEdges(this, numNodesAndEdges); } }
-   */
-
   // =========================== end kbestHypergraph
 
-  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN, int sentID) throws IOException {
+  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN, int sentID)
+      throws IOException {
 
-    lazyKBestExtractOnHG(hg, models, topN, sentID, new BufferedWriter(new OutputStreamWriter(System.out)));
+    lazyKBestExtractOnHG(hg, models, topN, sentID, new BufferedWriter(new OutputStreamWriter(
+        System.out)));
   }
 
   /**
-   * This is the private entry point for extracting k-best hypotheses.
+   * This is the entry point for extracting k-best hypotheses.
    * 
-   * @param hg
-   * @param featureFunctions
-   * @param topN
-   * @param sentID
-   * @param coit
-   * @throws IOException 
+   * @param hg the hypergraph to extract from 
+   * @param featureFunctions the feature functions to use
+   * @param topN how many to extract
+   * @param sentID the sentence number
+   * @param out object to write to
+   * @throws IOException
    */
-  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions,
-      int topN, int sentID, BufferedWriter out) throws IOException {
+  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions, int topN,
+      int sentID, BufferedWriter out) throws IOException {
 
     this.sentID = sentID;
     resetState();
 
     if (null == hg.goalNode)
       return;
-    
+
     for (int k = 1;; k++) {
       String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
 
@@ -592,8 +587,8 @@ public class KBestExtractor {
           sb.append(' ');
         }
         for (int id = 0; id < edge.getTailNodes().size(); id++) {
-          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(
-              kbestExtractor, useTreeFormat, features, models));
+          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(kbestExtractor,
+              useTreeFormat, features, models));
           if (id < edge.getTailNodes().size() - 1)
             sb.append(' ');
         }
@@ -625,7 +620,8 @@ public class KBestExtractor {
               sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
                   kbestExtractor, useTreeFormat, features, models));
             } else {
-              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
+              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM)
+                  && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
                 sb.append(Vocabulary.word(english[c]));
             }
             if (c < english.length - 1)
@@ -636,8 +632,8 @@ public class KBestExtractor {
           int nonTerminalID = 0;// the position of the non-terminal in the rule
           for (int c = 0; c < french.length; c++) {
             if (Vocabulary.nt(french[c])) {
-              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID)
-                  .getHypothesis(kbestExtractor, useTreeFormat, features, models));
+              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID).getHypothesis(
+                  kbestExtractor, useTreeFormat, features, models));
               nonTerminalID++;
             } else {
               sb.append(Vocabulary.word(french[c]));

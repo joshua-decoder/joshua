@@ -185,7 +185,7 @@ public class Decoder {
           response.finish();
           break;
         }
-        
+
         // This will block until a DecoderThread becomes available.
         DecoderThread thread = Decoder.this.getThread();
         new DecoderThreadRunner(thread, sentence, response).start();

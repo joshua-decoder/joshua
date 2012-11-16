@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
+
 import joshua.decoder.Decoder;
 import joshua.decoder.Translation;
 import joshua.decoder.Translations;
@@ -47,15 +49,20 @@ public class TcpServerThread extends Thread {
         Translation translation = translations.next();
         if (translation == null)
           break;
-        
-        translation.print(out);
+
+        try {
+          translation.print(out);
+        } catch (SocketException e) {
+          System.err.println("* WARNING: Socket interrupted");
+          request.shutdown();
+          return;
+        }
       }
       in.close();
       out.close();
       socket.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      return;
     }
   }
-
 }

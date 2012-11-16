@@ -108,13 +108,9 @@ public class Translation {
           JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false,
           false);
 
-      try {
-        kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
-            JoshuaConfiguration.topN, id(), out);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-
+      kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
+          JoshuaConfiguration.topN, id(), out);
+      
       float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
       System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
           JoshuaConfiguration.topN, seconds));
