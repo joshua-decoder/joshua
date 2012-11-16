@@ -1014,6 +1014,12 @@ my $latticeweight = ($DOING_LATTICES == 1)
 		? "SourcePath 1.0"
 		: "";
 
+my @feature_functions;
+if ($DOING_LATTICES) {
+  push(@feature_functions, "feature_function = SourcePath");
+}
+my $feature_functions = join("\n", @feature_functions);
+
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
@@ -1033,6 +1039,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
       s/<WEIGHTS_FILE>/$tunedir\/weights/g;
+      s/<FEATURE_FUNCTIONS>/$feature_functions/g;
 			s/<LATTICEWEIGHT>/$latticeweight/g;
 			s/<LATTICEPARAM>/$latticeparam/g;
 			s/<LMFILE>/$LMFILES[0]/g;
