@@ -81,9 +81,16 @@ public class DeNormalize {
   }
 
   /**
-   * Scanning from left-to-right, a contraction suffix preceded by a space will become just the
-   * contraction.
-   *
+   * Scanning the line from left-to-right, a contraction suffix preceded by a space will become just
+   * the contraction suffix. <br>
+   * <br>
+   * I.e., the preceding space will be deleting, joining the prefix to the suffix. <br>
+   * <br>
+   * E.g.
+   * <pre>wo n't</pre>
+   * becomes
+   * <pre>won't</pre>
+   * 
    * @param line The single-line input string
    * @return The input string modified as described above
    */
