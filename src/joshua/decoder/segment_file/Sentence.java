@@ -14,7 +14,7 @@ import joshua.util.Regex;
  * This class represents a basic input sentence. A sentence is a sequence of UTF-8 characters
  * denoting a string of source language words. The sequence can optionally be wrapped in <seg
  * id="N">...</seg> tags, which are then used to set the sentence number (a 0-indexed ID).
- * 
+ *
  * @author Matt Post <post@cs.jhu.edu>
  */
 
@@ -46,7 +46,7 @@ public class Sentence {
    * id=N>...</seg> tags). It's important to respect what the sentence claims to be for tuning
    * procedures, but the sequence id is also necessary for ensuring that the output translations are
    * assembled in the order they were found in the input file.
-   * 
+   *
    * In most cases, these numbers should be the same.
    */
 
@@ -54,7 +54,7 @@ public class Sentence {
   protected String sentence;
   protected String target = null;
 
-  private List<ConstraintSpan> constraints;
+  private final List<ConstraintSpan> constraints;
 
   // Matches the opening and closing <seg> tags, e.g.,
   // <seg id="72">this is a test input sentence</seg>.
@@ -66,23 +66,23 @@ public class Sentence {
 
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
 
-    this.constraints = new LinkedList<ConstraintSpan>();
+    constraints = new LinkedList<ConstraintSpan>();
 
     // Check if the sentence has SGML markings denoting the
     // sentence ID; if so, override the id passed in to the
     // constructor
     Matcher start = SEG_START.matcher(inputSentence);
     if (start.find()) {
-      this.sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
+      sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
       String idstr = start.group(1);
       this.id = Integer.parseInt(idstr);
     } else {
       if (inputSentence.indexOf(" ||| ") != -1) {
         String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
-        this.sentence = pieces[0];
-        this.target = pieces[1];
+        sentence = pieces[0];
+        target = pieces[1];
       } else {
-        this.sentence = inputSentence;
+        sentence = inputSentence;
       }
       this.id = id;
     }
@@ -117,25 +117,25 @@ public class Sentence {
   }
 
   public String source() {
-    return this.sentence;
+    return sentence;
   }
-  
+
   public String annotatedSource() {
-    return Vocabulary.START_SYM + " " + this.sentence + " " + Vocabulary.STOP_SYM;
+    return Vocabulary.START_SYM + " " + sentence + " " + Vocabulary.STOP_SYM;
   }
 
   /**
    * If a target side was supplied with the sentence, this will be non-null. This is used when doing
    * synchronous parsing or constrained decoding. The input format is:
-   * 
+   *
    * Bill quiere ir a casa ||| Bill wants to go home
-   * 
+   *
    * If the parameter parse=true is set, parsing will be triggered, otherwise constrained decoding.
-   * 
+   *
    * @return
    */
   public String target() {
-    return this.target;
+    return target;
   }
 
   public int[] intSentence() {
@@ -143,13 +143,14 @@ public class Sentence {
   }
 
   public List<ConstraintSpan> constraints() {
-    return this.constraints;
+    return constraints;
   }
 
   public Lattice<Integer> intLattice() {
     return Lattice.createIntLattice(intSentence());
   }
-  
+
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder(source());
     if (target() != null) {
