@@ -51,14 +51,34 @@ public class SentenceTest {
   public void testTooManyTokens() {
     // Concatenate MAX_SENTENCE_TOKENS, each longer than the average length, joined by a space.
     String input = concatTokens("1234567", Sentence.MAX_SENTENCE_TOKENS);
-    assertTrue(new Sentence(input, 0).isEmpty());
+
+    Sentence sentence;
+    // Source only
+    sentence = new Sentence(input, 0);
+    assertTrue(sentence.isEmpty());
+    assertNull(sentence.target);
+
+    // Source + target
+    sentence = new Sentence(input + " ||| target side", 0);
+    assertTrue(sentence.isEmpty());
+    assertEquals(sentence.target, "");
   }
 
   @Test
   public void testAlmostButNotTooManyTokens() {
     // Concatenate MAX_SENTENCE_TOKENS, each shorter than the average length, joined by a space.
     String input = concatTokens("12345", Sentence.MAX_SENTENCE_TOKENS);
-    assertFalse(new Sentence(input, 0).isEmpty());
+
+    Sentence sentence;
+    // Source only
+    sentence = new Sentence(input, 0);
+    assertFalse(sentence.isEmpty());
+    assertNull(sentence.target);
+
+    // Source + target
+    sentence = new Sentence(input + " ||| target side", 0);
+    assertFalse(sentence.isEmpty());
+    assertEquals(sentence.target, "target side");
   }
 
   @Test
