@@ -3,6 +3,8 @@ package joshua.decoder.io;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Denormalize a(n English) string in a collection of ways listed below.
@@ -90,8 +92,11 @@ public class DeNormalize {
 
   public static String capitalizeLineFirstLetter(String line) {
     String result = null;
-    if (line.length() > 0) {
-      result = Character.toUpperCase(line.charAt(0)) + line.substring(1);
+    Pattern regexp = Pattern.compile("[^\\p{Punct}\\p{Space}¡¿]");
+    Matcher matcher = regexp.matcher(line);
+    if (matcher.find()) {
+      String match = matcher.group(0);
+      result = line.replaceFirst(match, match.toUpperCase());
     } else {
       result = line;
     }
@@ -109,6 +114,10 @@ public class DeNormalize {
     String result = line;
     result = result.replace(" ,", ",");
     result = result.replace(" .", ".");
+    result = result.replace(" !", "!");
+    result = result.replace("¡ ", "¡");
+    result = result.replace(" ?", "?");
+    result = result.replace("¿ ", "¿");
     return result;
   }
 
