@@ -20,6 +20,23 @@ import joshua.util.Regex;
 
 public class Sentence {
 
+  /**
+   * The maximum number of tokens in a Sentence before the sentence gets replaced by an empty
+   * sentence.
+   * <UL>
+   * <LI>TODO: Move this setting to JoshuaConfiguration and provide a configurable parameter to the
+   * user.</LI>
+   * <LI>TODO: Provide the option to truncate to this many tokens instead of making the whole input
+   * empty.</LI>
+   * </UL>
+   */
+  public static final int MAX_SENTENCE_TOKENS = 100;
+
+  /**
+   * Answer returned to Wolfram-Alpha query
+   */
+  public static final double CHARS_PER_TOKEN = 5.1;
+
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
   /*
@@ -68,6 +85,26 @@ public class Sentence {
         this.sentence = inputSentence;
       }
       this.id = id;
+    }
+    adjustForLength();
+  }
+
+  /**
+   * Hacky approach: if the input sentence is deemed too long, replace it (and the target, if not
+   * null) with an empty string.
+   */
+  private void adjustForLength() {
+    // The length of a sentence of the maximum length contains the maximum tokens plus one fewer
+    // space character.
+    double maxTokensChars = MAX_SENTENCE_TOKENS * CHARS_PER_TOKEN;
+    double numSpaces = MAX_SENTENCE_TOKENS - 1;
+    double maxChars = maxTokensChars + numSpaces;
+    if (sentence.length() > maxChars) {
+      // Replace the input sentence (and target)
+      sentence = "";
+      if (target != null) {
+        target = "";
+      }
     }
   }
 
