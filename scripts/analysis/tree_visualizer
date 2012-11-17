@@ -20,7 +20,7 @@ N_BEST="$*"
 LIB=$JOSHUA/lib
 
 # Build up the classpath: first the Joshua files,
-VISUALIZATION_CLASSPATH=$JOSHUA/bin
+VISUALIZATION_CLASSPATH=$JOSHUA/class
 # the Java Unified Network Graph library API,
 VISUALIZATION_CLASSPATH="$VISUALIZATION_CLASSPATH:$LIB/jung-api-2.0.jar"
 # the JUNG Algorithms,

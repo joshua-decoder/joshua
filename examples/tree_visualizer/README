@@ -1,8 +1,8 @@
 These examples demonstrate how to use the tree visualizer.  
-Build the visualizer by running the following commmand in the
-$JOSHUA directory:
+Build the visualizer by running the following commmand to compile
+the relevant code:
 
-    ant
+    ant -f $JOSHUA/build.xml tree_visualizer
 
 You can run the visualizer by using the visualizer invocation 
 script under UNIX/Linux/OS-X:
