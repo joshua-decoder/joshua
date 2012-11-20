@@ -14,11 +14,28 @@ import joshua.util.Regex;
  * This class represents a basic input sentence. A sentence is a sequence of UTF-8 characters
  * denoting a string of source language words. The sequence can optionally be wrapped in <seg
  * id="N">...</seg> tags, which are then used to set the sentence number (a 0-indexed ID).
- * 
+ *
  * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class Sentence {
+
+  /**
+   * The maximum number of tokens in a Sentence before the sentence gets replaced by an empty
+   * sentence.
+   * <UL>
+   * <LI>TODO: Move this setting to JoshuaConfiguration and provide a configurable parameter to the
+   * user.</LI>
+   * <LI>TODO: Provide the option to truncate to this many tokens instead of making the whole input
+   * empty.</LI>
+   * </UL>
+   */
+  public static final int MAX_SENTENCE_TOKENS = 100;
+
+  /**
+   * Answer returned to Wolfram-Alpha query
+   */
+  public static final double CHARS_PER_TOKEN = 5.1;
 
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
@@ -29,7 +46,7 @@ public class Sentence {
    * id=N>...</seg> tags). It's important to respect what the sentence claims to be for tuning
    * procedures, but the sequence id is also necessary for ensuring that the output translations are
    * assembled in the order they were found in the input file.
-   * 
+   *
    * In most cases, these numbers should be the same.
    */
 
@@ -37,7 +54,7 @@ public class Sentence {
   protected String sentence;
   protected String target = null;
 
-  private List<ConstraintSpan> constraints;
+  private final List<ConstraintSpan> constraints;
 
   // Matches the opening and closing <seg> tags, e.g.,
   // <seg id="72">this is a test input sentence</seg>.
@@ -49,25 +66,45 @@ public class Sentence {
 
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
 
-    this.constraints = new LinkedList<ConstraintSpan>();
+    constraints = new LinkedList<ConstraintSpan>();
 
     // Check if the sentence has SGML markings denoting the
     // sentence ID; if so, override the id passed in to the
     // constructor
     Matcher start = SEG_START.matcher(inputSentence);
     if (start.find()) {
-      this.sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
+      sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
       String idstr = start.group(1);
       this.id = Integer.parseInt(idstr);
     } else {
       if (inputSentence.indexOf(" ||| ") != -1) {
         String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
-        this.sentence = pieces[0];
-        this.target = pieces[1];
+        sentence = pieces[0];
+        target = pieces[1];
       } else {
-        this.sentence = inputSentence;
+        sentence = inputSentence;
       }
       this.id = id;
+    }
+    adjustForLength();
+  }
+
+  /**
+   * Hacky approach: if the input sentence is deemed too long, replace it (and the target, if not
+   * null) with an empty string.
+   */
+  private void adjustForLength() {
+    // The length of a sentence of the maximum length contains the maximum tokens plus one fewer
+    // space character.
+    double maxTokensChars = MAX_SENTENCE_TOKENS * CHARS_PER_TOKEN;
+    double numSpaces = MAX_SENTENCE_TOKENS - 1;
+    double maxChars = maxTokensChars + numSpaces;
+    if (sentence.length() > maxChars) {
+      // Replace the input sentence (and target)
+      sentence = "";
+      if (target != null) {
+        target = "";
+      }
     }
   }
 
@@ -80,25 +117,25 @@ public class Sentence {
   }
 
   public String source() {
-    return this.sentence;
+    return sentence;
   }
-  
+
   public String annotatedSource() {
-    return Vocabulary.START_SYM + " " + this.sentence + " " + Vocabulary.STOP_SYM;
+    return Vocabulary.START_SYM + " " + sentence + " " + Vocabulary.STOP_SYM;
   }
 
   /**
    * If a target side was supplied with the sentence, this will be non-null. This is used when doing
    * synchronous parsing or constrained decoding. The input format is:
-   * 
+   *
    * Bill quiere ir a casa ||| Bill wants to go home
-   * 
+   *
    * If the parameter parse=true is set, parsing will be triggered, otherwise constrained decoding.
-   * 
+   *
    * @return
    */
   public String target() {
-    return this.target;
+    return target;
   }
 
   public int[] intSentence() {
@@ -106,13 +143,14 @@ public class Sentence {
   }
 
   public List<ConstraintSpan> constraints() {
-    return this.constraints;
+    return constraints;
   }
 
   public Lattice<Integer> intLattice() {
     return Lattice.createIntLattice(intSentence());
   }
-  
+
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder(source());
     if (target() != null) {
