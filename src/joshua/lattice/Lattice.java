@@ -344,11 +344,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     int size = nodes.size();
     double[][] costs = new double[size][size];
 
-    // Initialize pairwise costs to be infinite for
-    // each pair of nodes
+    // Initialize pairwise costs. Costs from a node to itself are 0, and are infinite between
+    // different nodes.
     for (int from = 0; from < size; from++) {
       for (int to = 0; to < size; to++) {
-        costs[from][to] = Double.POSITIVE_INFINITY;
+        costs[from][to] = (from == to) ? 0.0 : Double.POSITIVE_INFINITY;
       }
     }
 

@@ -45,7 +45,6 @@ class DotChart {
     return dotcells[i][j];
   }
 
-
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================
@@ -138,58 +137,59 @@ class DotChart {
    * this.input = new Lattice<Integer>(input); }
    */
 
-
   // ===============================================================
   // Package-protected methods
   // ===============================================================
 
   /**
-   * add intial dot items: dot-items pointer to the root of the grammar trie.
+   * Add initial dot items: dot-items pointer to the root of the grammar trie.
    */
   void seed() {
     for (int j = 0; j <= sentLen - 1; j++) {
-//      if (pGrammar.hasRuleForSpan(j, j, input.distance(j, j))) {
+      if (pGrammar.hasRuleForSpan(j, j, input.distance(j, j))) {
         if (null == pGrammar.getTrieRoot()) {
           throw new RuntimeException("trie root is null");
         }
         addDotItem(pGrammar.getTrieRoot(), j, j, null, null, new SourcePath());
       }
-//    }
+    }
   }
 
-
   /**
-   * This function computes all possible expansions of all rules over the provided span (i,j).  By
+   * This function computes all possible expansions of all rules over the provided span (i,j). By
    * expansions, we mean the moving of the dot forward (from left to right) over a nonterminal or
    * terminal symbol on the rule's source side.
-   *
+   * 
    * There are two kinds of expansions:
-   *
-   * 1. Expansion over a nonterminal symbol.  For this kind of expansion, a rule has a dot
-   *    immediately prior to a source-side nonterminal.  The main Chart is consulted to see whether
-   *    there exists a completed nonterminal with the same label.  If so, the dot is advanced.
-   *
-   *    Discovering nonterminal expansions is a matter of enumerating all split points k such that
-   *    i < k and k < j.  The nonterminal symbol must exist in the main Chart over (k,j).
-   *
-   * 2. Expansion over a terminal symbol.  In this case, expansion is a simple matter of determing
-   *    whether the input symbol at position j (the end of the span) matches the next symbol in the
-   *    rule.  This is equivalent to choosing a split point k = j - 1 and looking for terminal
-   *    symbols over (k,j).  Note that phrases in the input rule are handled one-by-one as we
-   *    consider longer spans.
+   * 
+   * 1. Expansion over a nonterminal symbol. For this kind of expansion, a rule has a dot
+   * immediately prior to a source-side nonterminal. The main Chart is consulted to see whether
+   * there exists a completed nonterminal with the same label. If so, the dot is advanced.
+   * 
+   * Discovering nonterminal expansions is a matter of enumerating all split points k such that i <
+   * k and k < j. The nonterminal symbol must exist in the main Chart over (k,j).
+   * 
+   * 2. Expansion over a terminal symbol. In this case, expansion is a simple matter of determing
+   * whether the input symbol at position j (the end of the span) matches the next symbol in the
+   * rule. This is equivalent to choosing a split point k = j - 1 and looking for terminal symbols
+   * over (k,j). Note that phrases in the input rule are handled one-by-one as we consider longer
+   * spans.
    */
   void expandDotCell(int i, int j) {
-    if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell (" + i + "," + j + ")");
+    if (logger.isLoggable(Level.FINEST))
+      logger.finest("Expanding dot cell (" + i + "," + j + ")");
 
-    /* (1) If the dot is just to the left of a non-terminal variable, we look for theorems or axioms
-     * in the Chart that may apply and extend the dot position.  We look for existing axioms over
-     * all spans (k,j), i < k < j.
+    /*
+     * (1) If the dot is just to the left of a non-terminal variable, we look for theorems or axioms
+     * in the Chart that may apply and extend the dot position. We look for existing axioms over all
+     * spans (k,j), i < k < j.
      */
     for (int k = i + 1; k < j; k++) {
       extendDotItemsWithProvedItems(i, k, j, false);
     }
 
-    /* (2) If the the dot-item is looking for a source-side terminal symbol, we simply match against
+    /*
+     * (2) If the the dot-item is looking for a source-side terminal symbol, we simply match against
      * the input sentence and advance the dot.
      */
     Node<Integer> node = input.getNode(j - 1);
@@ -205,7 +205,7 @@ class DotChart {
         for (DotNode dotNode : dotcells[i][j - 1].getDotNodes()) {
           if (this.regexpMatching) {
             ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
-            if (child_tnodes == null || child_tnodes.isEmpty()) 
+            if (child_tnodes == null || child_tnodes.isEmpty())
               continue;
             for (Trie child_tnode : child_tnodes) {
               if (null != child_tnode) {
@@ -224,8 +224,7 @@ class DotChart {
       }
     }
   }
-  
-  
+
   /**
    * note: (i,j) is a non-terminal, this cannot be a cn-side terminal, which have been handled in
    * case2 of dotchart.expand_cell add dotitems that start with the complete super-items in
@@ -234,7 +233,6 @@ class DotChart {
   void startDotItems(int i, int j) {
     extendDotItemsWithProvedItems(i, i, j, true);
   }
-
 
   // ===============================================================
   // Private methods
@@ -258,8 +256,8 @@ class DotChart {
     }
 
     // complete super-items (items over the same span with different LHSs)
-    List<SuperNode> t_ArrayList =
-        new ArrayList<SuperNode>(this.dotChart.getCell(k, j).getSortedSuperItems().values());
+    List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(this.dotChart.getCell(k, j)
+        .getSortedSuperItems().values());
 
     // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
     for (DotNode dotNode : dotcells[i][k].dotNodes) {
@@ -267,15 +265,15 @@ class DotChart {
       for (SuperNode superNode : t_ArrayList) {
         if (this.regexpMatching) {
           ArrayList<Trie> child_tnodes = matchAll(dotNode, superNode.lhs);
-          if (child_tnodes.isEmpty()) 
+          if (child_tnodes.isEmpty())
             continue;
           for (Trie child_tnode : child_tnodes) {
-            if (null == child_tnode) 
+            if (null == child_tnode)
               continue;
             if (true == startDotItems && !child_tnode.hasExtensions())
               continue; // TODO
-            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode,
-                dotNode.getSourcePath().extendNonTerminal());
+            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                .getSourcePath().extendNonTerminal());
           }
         } else {
           Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
@@ -289,7 +287,7 @@ class DotChart {
       }
     }
   }
-  
+
   /*
    * We introduced the ability to have regular expressions in rules. When this is enabled for a
    * grammar, we first check whether there are any children. If there are, we need to try to match
@@ -302,7 +300,7 @@ class DotChart {
 
     if (childrenTbl != null && wordID >= 0) {
       // get all the extensions, map to string, check for *, build regexp
-      for (Integer arcID: childrenTbl.keySet()) {
+      for (Integer arcID : childrenTbl.keySet()) {
         if (arcID == wordID) {
           trieList.add(childrenTbl.get(arcID));
         } else {
@@ -313,7 +311,7 @@ class DotChart {
         }
       }
     }
-    return trieList; 
+    return trieList;
   }
 
   /**
@@ -356,13 +354,14 @@ class DotChart {
     }
   }
 
-
   // ===============================================================
   // Package-protected classes
   // ===============================================================
 
   /**
-   * Bin is a cell in parsing terminology
+   * A DotCell groups together DotNodes that have been applied over a particular span. A DotNode, in
+   * turn, is a partially-applied grammar rule, represented as a pointer into the grammar trie
+   * structure.
    */
   static class DotCell {
 
@@ -381,10 +380,12 @@ class DotChart {
     }
   }
 
-
   /**
-   * remember the dot position in which a rule has been applied so far, and remember the old
-   * complete items.
+   * A DotNode represents the partial application of a rule. It contains the following fields:
+   * 
+   * - trieNode, a pointer into the grammar trie structure - antSuperNodes, a list of zero or more
+   * nonterminal nodes that have been traversed in the rule - srcPath, which represents a path taken
+   * through the input lattice
    */
   static class DotNode {
 
@@ -407,8 +408,10 @@ class DotChart {
     }
 
     public boolean equals(Object obj) {
-      if (obj == null) return false;
-      if (!this.getClass().equals(obj.getClass())) return false;
+      if (obj == null)
+        return false;
+      if (!this.getClass().equals(obj.getClass()))
+        return false;
       DotNode state = (DotNode) obj;
 
       /*
@@ -419,7 +422,8 @@ class DotChart {
       // if (this.i != state.i || this.j != state.j)
       // return false;
 
-      if (this.trieNode != state.trieNode) return false;
+      if (this.trieNode != state.trieNode)
+        return false;
 
       return true;
     }
