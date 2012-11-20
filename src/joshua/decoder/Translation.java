@@ -74,8 +74,7 @@ public class Translation {
 
     } else {
       KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
-          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false,
-          false);
+          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
       StringWriter sw = new StringWriter();
       BufferedWriter out = new BufferedWriter(sw);
@@ -104,8 +103,7 @@ public class Translation {
 
       long startTime = System.currentTimeMillis();
       KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
-          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false,
-          false);
+          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
       kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
           JoshuaConfiguration.topN, id(), out);

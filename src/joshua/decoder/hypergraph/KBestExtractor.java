@@ -42,26 +42,25 @@ public class KBestExtractor {
   static String rootSym = "ROOT";
   static int rootID;// TODO: bug
 
+  private enum Side { SOURCE, TARGET };
+  
   // configuratoin option
   private boolean extractUniqueNbest = true;
   private boolean includeAlign = false;
-  private boolean isMonolingual = false;
-  private boolean performSanityCheck = true;
+  private Side defaultSide = Side.TARGET;
 
   private int sentID;
 
   private FeatureVector weights;
-
+  
   public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean includeAlign,
-      boolean isMonolingual, boolean performSanityCheck) {
+      boolean isMonolingual) {
     rootID = Vocabulary.id(rootSym);
 
     this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
     this.includeAlign = includeAlign;
-    this.isMonolingual = isMonolingual;
-    this.performSanityCheck = performSanityCheck;
-    // System.out.println("===============sanitycheck="+performSanityCheck);
+    this.defaultSide = (isMonolingual ? Side.SOURCE : Side.TARGET);
   }
 
   // k start from 1
@@ -83,7 +82,7 @@ public class KBestExtractor {
 
       // return derivationState.getDerivation(this, features, models, 0);
 
-      String hypothesis = derivationState.getHypothesis(this, false, features, models);
+      String hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
       String outputString = JoshuaConfiguration.outputFormat
           .replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
@@ -93,9 +92,12 @@ public class KBestExtractor {
 
       if (JoshuaConfiguration.outputFormat.contains("%t")) {
         outputString = outputString.replace("%t",
-            derivationState.getHypothesis(this, true, null, models));
+            derivationState.getHypothesis(this, true, null, models, Side.TARGET));
       }
-
+      
+      if (JoshuaConfiguration.outputFormat.contains("%e"))
+        outputString = outputString.replace("%e", derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
+    
       return outputString;
     }
   }
@@ -232,7 +234,7 @@ public class KBestExtractor {
           if (extractUniqueNbest) {
             boolean useTreeFormat = false;
             String res_str = derivationState.getHypothesis(kbestExtractor, useTreeFormat, null,
-                null);
+                null, defaultSide);
             // We pass false for extract_nbest_tree because we want;
             // to check that the hypothesis *strings* are unique,
             // not the trees.
@@ -564,7 +566,7 @@ public class KBestExtractor {
     // get the numeric sequence of the particular hypothesis
     // if want to get model cost, then have to set model_cost and l_models
     private String getHypothesis(KBestExtractor kbestExtractor, boolean useTreeFormat,
-        FeatureVector features, List<FeatureFunction> models) {
+        FeatureVector features, List<FeatureFunction> models, Side side) {
       // ### accumulate cost of p_edge into model_cost if necessary
       if (null != features) {
         computeCost(parentNode, edge, features, models);
@@ -591,7 +593,7 @@ public class KBestExtractor {
         }
         for (int id = 0; id < edge.getTailNodes().size(); id++) {
           sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(kbestExtractor,
-              useTreeFormat, features, models));
+              useTreeFormat, features, models, side));
           if (id < edge.getTailNodes().size() - 1)
             sb.append(' ');
         }
@@ -615,13 +617,13 @@ public class KBestExtractor {
           }
           sb.append(' ');
         }
-        if (!isMonolingual) { // bilingual
+        if (side == Side.TARGET) {
           int[] english = rule.getEnglish();
           for (int c = 0; c < english.length; c++) {
             if (Vocabulary.idx(english[c])) {
               int index = -(english[c] + 1);
               sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
-                  kbestExtractor, useTreeFormat, features, models));
+                  kbestExtractor, useTreeFormat, features, models, side));
             } else {
               if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM)
                   && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
@@ -630,13 +632,13 @@ public class KBestExtractor {
             if (c < english.length - 1)
               sb.append(' ');
           }
-        } else { // monolingual
+        } else if (side == Side.SOURCE) {
           int[] french = rule.getFrench();
           int nonTerminalID = 0;// the position of the non-terminal in the rule
           for (int c = 0; c < french.length; c++) {
             if (Vocabulary.nt(french[c])) {
               sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID).getHypothesis(
-                  kbestExtractor, useTreeFormat, features, models));
+                  kbestExtractor, useTreeFormat, features, models, side));
               nonTerminalID++;
             } else {
               sb.append(Vocabulary.word(french[c]));
