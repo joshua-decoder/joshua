@@ -48,9 +48,28 @@ public class SentenceTest {
   }
 
   @Test
+  public void testMaxTokens() {
+    // Concatenate MAX_SENTENCE_TOKENS
+    // Since the maximum-tokens threshold was not crossed, the input sentence should not be blanked.
+    String input = concatTokens("*", Sentence.MAX_SENTENCE_TOKENS);
+
+    Sentence sentence;
+    // Source only
+    sentence = new Sentence(input, 0);
+    assertFalse(sentence.isEmpty());
+    assertNull(sentence.target);
+
+    // Source + target
+    sentence = new Sentence(input + " ||| target side", 0);
+    assertFalse(sentence.isEmpty());
+    assertEquals(sentence.target, "target side");
+  }
+
+  @Test
   public void testTooManyTokens() {
-    // Concatenate MAX_SENTENCE_TOKENS, each longer than the average length, joined by a space.
-    String input = concatTokens("1234567", Sentence.MAX_SENTENCE_TOKENS);
+    // Concatenate more than MAX_SENTENCE_TOKENS
+    // Since the maximum-tokens threshold is crossed, the input sentence should be blanked.
+    String input = concatTokens("*", Sentence.MAX_SENTENCE_TOKENS + 1);
 
     Sentence sentence;
     // Source only
