@@ -30,7 +30,7 @@ public class Sentence {
    * empty.</LI>
    * </UL>
    */
-  public static final int MAX_SENTENCE_TOKENS = 100;
+  public static final int MAX_SENTENCE_TOKENS = 200;
 
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
