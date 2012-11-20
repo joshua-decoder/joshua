@@ -32,11 +32,6 @@ public class Sentence {
    */
   public static final int MAX_SENTENCE_TOKENS = 100;
 
-  /**
-   * Answer returned to Wolfram-Alpha query
-   */
-  public static final double CHARS_PER_TOKEN = 5.1;
-
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
   /*
@@ -94,12 +89,10 @@ public class Sentence {
    * null) with an empty string.
    */
   private void adjustForLength() {
-    // The length of a sentence of the maximum length contains the maximum tokens plus one fewer
-    // space character.
-    double maxTokensChars = MAX_SENTENCE_TOKENS * CHARS_PER_TOKEN;
-    double numSpaces = MAX_SENTENCE_TOKENS - 1;
-    double maxChars = maxTokensChars + numSpaces;
-    if (sentence.length() > maxChars) {
+
+    int length = sentence.split(" ").length;
+    
+    if (length > MAX_SENTENCE_TOKENS) {
       // Replace the input sentence (and target)
       sentence = "";
       if (target != null) {
