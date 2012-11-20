@@ -90,9 +90,11 @@ public class Sentence {
    */
   private void adjustForLength() {
 
-    int length = sentence.split(" ").length;
+    int length = sentence.split("\\s+").length;
     
     if (length > MAX_SENTENCE_TOKENS) {
+      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to 0 length", id(), length));
+      
       // Replace the input sentence (and target)
       sentence = "";
       if (target != null) {
