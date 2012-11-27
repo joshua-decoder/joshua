@@ -1180,7 +1180,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # copy the config file over
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-									"cat $tunedir/joshua.config | $SCRIPTDIR/copy-config.pl -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
+                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config",
 									"$testrun/joshua.config");
 
@@ -1314,7 +1314,7 @@ close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
-system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true > $testrun/joshua.config");
+system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -tm 'thrax pt 20 $TEST_GRAMMAR' -tm 'thrax glue -1 $GLUE_GRAMMAR_FILE' -default-non-terminal $OOV -mark-oovs true > $testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
