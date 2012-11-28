@@ -1213,7 +1213,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 										"$testrun/test.output.1best");
   } else {
 		$cachepipe->cmd("test-extract-onebest-$run",
-										"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+										"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $testrun/test.output.1best",
 										"$testrun/test.output.nbest.noOOV", 
 										"$testrun/test.output.1best");
   }
@@ -1225,6 +1225,9 @@ for my $run (1..$OPTIMIZER_RUNS) {
 									"$testrun/test.output.1best.bleu");
 
   # system("cat $testrun/test.output.1best.bleu");
+
+  # Now do the analysis
+  analyze_testrun($testrun,$TEST{source},$TEST{target});
 }
 
 # Now average the runs, report BLEU
@@ -1612,4 +1615,30 @@ sub get_absolute_path {
 	}
 
 	return $file;
+}
+
+sub analyze_testrun {
+  my ($dir,$source,$reference) = @_;
+
+  mkdir("$dir/analysis") unless -d "$dir/analysis";
+
+  my @references;
+  if (-e "$reference.0") {
+    my $num = 0;
+    while (-e "$reference.$num") {
+      push(@references, "$reference.$num");
+      $num++;
+    }
+  } else {
+    push(@references, $reference);
+  }
+
+  my $references = join(" -r ", @references);
+
+  my $runname = "analyze-$dir";
+  $runname =~ s/\//-/g;
+  $cachepipe->cmd($runname,
+                  "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $dir/test.output.1best > $dir/analysis/sentence-by-sentence.html",
+                  "$dir/test.output.1best",
+                  "$dir/analysis/sentence-by-sentence.html");
 }
