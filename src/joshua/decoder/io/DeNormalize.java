@@ -177,4 +177,9 @@ public class DeNormalize {
     return result;
   }
 
+  public static String capitalizeI(String line) {
+    // Capitalize only the first character of certain name titles.
+    return line.replaceAll("\\b" + "i" + "\\b", "I");
+  }
+
 }

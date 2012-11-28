@@ -184,4 +184,33 @@ public class DeNormalizeTest {
     assertEquals(actual, expected);
   }
 
+  /**
+   * Test method for
+   * {@link joshua.decoder.io.DeNormalize#capitalizeI(java.lang.String)}.
+   */
+  @Test
+  public void testCapitalizeI() throws Exception {
+    String expected, actual;
+
+    tokenized = "sam i am";
+    expected = "sam I am";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "sam iam";
+    expected = "sam iam";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "sami am";
+    expected = "sami am";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "samiam";
+    expected = "samiam";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+  }
+
 }
