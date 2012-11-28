@@ -984,10 +984,14 @@ if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
 	# listed in the file.
 	open CONFIG, $TUNEFILES{'joshua.config'} or die;
 	while (my $line = <CONFIG>) {
-		if ($line =~ /^tm/) {
-      my ($id) = split(' ', $line);
-			my (undef,$owner,$i) = split('_', $id);
-			push (@tmparamstrings, "tm_${owner}_${i} ||| 1.0 Opt -Inf +Inf -1 +1");
+		if ($line =~ /^tm\s*=/) {
+      $line =~ s/^.*?=\s*//;
+      my (undef,$owner,$span,$file) = split(' ', $line);
+      my $num_tm_features = count_num_features($file);
+      for my $i (0..($num_tm_features-1)) {
+        push (@tmparamstrings, "tm_${owner}_${i} ||| 1.0 Opt -Inf +Inf -1 +1");
+        push (@tmweightstrings, "tm_${owner}_${i} 1.0");
+      }
 		}
 	}
 	close CONFIG;
