@@ -1090,60 +1090,61 @@ for my $run (1..$OPTIMIZER_RUNS) {
 										"$tunedir/params.txt");
 		system("ln -sf weights.PRO.final $tunedir/weights.final");
   }
-}
 
-maybe_quit("TUNE");
+  # Go to the next tuning run if tuning is the last step.
+  if ($LAST_STEP eq "TUNE") {
+    next;
+  }
+
 
 # prepare the testing data
-if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
-  my $prefixes = prepare_data("test",[$TEST]);
-  $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
-  $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
-  $PREPPED{TEST} = 1;
-}
+  if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
+    my $prefixes = prepare_data("test",[$TEST]);
+    $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
+    $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
+    $PREPPED{TEST} = 1;
+  }
 
 # filter the test grammar
-system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
-my $TEST_GRAMMAR;
-if ($TEST_GRAMMAR_FILE) {
-  # if a specific test grammar was specified, use that (no filtering)
-  $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
-} else {
-  # otherwise, use the main grammar, and filter it if requested
-  $TEST_GRAMMAR = $GRAMMAR_FILE;
-  
-  if ($DO_FILTER_TM) {
-		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
+  system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
+  my $TEST_GRAMMAR;
+  if ($TEST_GRAMMAR_FILE) {
+    # if a specific test grammar was specified, use that (no filtering)
+    $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
+  } else {
+    # otherwise, use the main grammar, and filter it if requested
+    $TEST_GRAMMAR = $GRAMMAR_FILE;
+    
+    if ($DO_FILTER_TM) {
+      $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
-		$cachepipe->cmd("filter-test",
-										"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
-										$GRAMMAR_FILE,
-										$TEST{source},
-										$TEST_GRAMMAR);
+      $cachepipe->cmd("filter-test",
+                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
+                      $GRAMMAR_FILE,
+                      $TEST{source},
+                      $TEST_GRAMMAR);
+    }
   }
-}
 
 # create the glue file
-if (! defined $GLUE_GRAMMAR_FILE) {
-  $cachepipe->cmd("glue-test",
-									"$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $THRAX/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{test}/grammar.glue",
-									$TEST_GRAMMAR,
-									"$DATA_DIRS{test}/grammar.glue");
-  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
+  if (! defined $GLUE_GRAMMAR_FILE) {
+    $cachepipe->cmd("glue-test",
+                    "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $THRAX/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{test}/grammar.glue",
+                    $TEST_GRAMMAR,
+                    "$DATA_DIRS{test}/grammar.glue");
+    $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
 
-} else {
-  # just create a symlink to it
-  my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
-
-  if ($GLUE_GRAMMAR_FILE =~ /^\//) {
-		system("ln -sf $GLUE_GRAMMAR_FILE $filename"); 
   } else {
-		system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename"); 
-  }
-}
+    # just create a symlink to it
+    my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
 
-# decode the test set once for each optimization run
-for my $run (1..$OPTIMIZER_RUNS) {
+    if ($GLUE_GRAMMAR_FILE =~ /^\//) {
+      system("ln -sf $GLUE_GRAMMAR_FILE $filename"); 
+    } else {
+      system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename"); 
+    }
+  }
+
   my $testrun = (defined $NAME) ? "test/$NAME/$run" : "test/$run";
   
   system("mkdir -p $testrun") unless -d $testrun;
@@ -1179,8 +1180,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   }
   chmod(0755,"$testrun/decoder_command");
 
-  # copy the config file over
-  my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
+  # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
                   "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 12 $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config",
@@ -1246,7 +1246,6 @@ close(BLEU);
 system("cat $dir/final-bleu");
 exit;
 
-
 # This target allows the pipeline to be used just for decoding new
 # data sets
 
@@ -1276,6 +1275,7 @@ my $testrun = "test/$NAME";
 system("mkdir -p $testrun") unless -d $testrun;
 
 # filter the test grammar
+my $TEST_GRAMMAR;
 if ($TEST_GRAMMAR_FILE) {
   # if a specific test grammar was specified, use that (no filtering)
   $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
