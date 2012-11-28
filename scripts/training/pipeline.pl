@@ -1203,31 +1203,39 @@ for my $run (1..$OPTIMIZER_RUNS) {
 									"$testrun/test.output.nbest",
 									"$testrun/test.output.nbest.noOOV");
 
+  my $output = "$testrun/test.output.1best";
+  $numrefs = get_numrefs($TEST{target});
+
+  # Always compute the BLEU score on the regular 1-best output, since it's easy to do
+  $cachepipe->cmd("test-extract-onebest-$run",
+                  "java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $output",
+                  "$testrun/test.output.nbest.noOOV", 
+                  $output);
+
+  $cachepipe->cmd("test-bleu-$run",
+									"java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $output -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+									$output,
+									"$testrun/test.output.1best.bleu");
+
+  # We can also rescore the output lattice with MBR
   if ($DO_MBR) {
 		my $numlines = `cat $TEST{source} | wc -l`;
 		$numlines--;
+    $output .= ".mbr";
 
 		$cachepipe->cmd("test-onebest-parmbr-$run", 
-										"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
+										"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 $NUM_THREADS > $output",
 										"$testrun/test.output.nbest.noOOV", 
-										"$testrun/test.output.1best");
-  } else {
-		$cachepipe->cmd("test-extract-onebest-$run",
-										"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $testrun/test.output.1best",
-										"$testrun/test.output.nbest.noOOV", 
-										"$testrun/test.output.1best");
+										$output);
+
+    $cachepipe->cmd("test-bleu-$run",
+                    "java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $output -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+                    $output,
+                    "$testrun/test.output.1best.bleu");
   }
 
-  $numrefs = get_numrefs($TEST{target});
-  $cachepipe->cmd("test-bleu-$run",
-									"java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
-									"$testrun/test.output.1best", 
-									"$testrun/test.output.1best.bleu");
-
-  # system("cat $testrun/test.output.1best.bleu");
-
   # Now do the analysis
-  analyze_testrun($testrun,$TEST{source},$TEST{target});
+  analyze_testrun($output,$TEST{source},$TEST{target});
 }
 
 # Now average the runs, report BLEU
@@ -1618,7 +1626,8 @@ sub get_absolute_path {
 }
 
 sub analyze_testrun {
-  my ($dir,$source,$reference) = @_;
+  my ($output,$source,$reference) = @_;
+  my $dir = dirname($output);
 
   mkdir("$dir/analysis") unless -d "$dir/analysis";
 
@@ -1638,7 +1647,7 @@ sub analyze_testrun {
   my $runname = "analyze-$dir";
   $runname =~ s/\//-/g;
   $cachepipe->cmd($runname,
-                  "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $dir/test.output.1best > $dir/analysis/sentence-by-sentence.html",
+                  "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $output > $dir/analysis/sentence-by-sentence.html",
                   "$dir/test.output.1best",
                   "$dir/analysis/sentence-by-sentence.html");
 }
