@@ -1,8 +1,5 @@
 package joshua.decoder.io;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,43 +31,6 @@ import java.util.regex.Pattern;
  */
 
 public class DeNormalize {
-
-  private static final String[] CONTRACTION_SUFFIXES =
-      new String[] {
-          "'d",
-          "'ll",
-          "'m",
-          "n't",
-          "'re",
-          "'s",
-          "'ve",
-  };
-
-  /** Abbreviations of titles for names that capitalize only the first letter */
-  private static final String[] NAME_TITLES_CAP_FIRST_LETTER =
-      new String[] {
-          "dr",
-          "miss",
-          "mr",
-          "mrs",
-          "ms",
-          "prof",
-          //"st", There is too much ambiguity between the abbreviations for Saint and street.
-  };
-
-  /**
-   * Keys are token representations of abbreviations of titles for names that capitalize more than
-   * just the first letter.<br>
-   * Values are the capitalized version.
-   */
-  @SuppressWarnings("serial")
-  private static final Map<String, String> NAME_TITLES_COMPLEX_CAPITALIZATION = Collections
-      .unmodifiableMap(new HashMap<String, String>() {
-        {
-          put("phd", "PhD");
-          put("mphil", "MPhil");
-        }
-      });
 
   /**
    * Apply all the denormalization methods to the normalized input line.
@@ -148,16 +108,19 @@ public class DeNormalize {
    * I.e., the preceding space will be deleting, joining the prefix to the suffix. <br>
    * <br>
    * E.g.
+   * 
    * <pre>wo n't</pre>
+   * 
    * becomes
+   * 
    * <pre>won't</pre>
-   *
+   * 
    * @param line The single-line input string
    * @return The input string modified as described above
    */
   public static String joinContractions(String line) {
     String result = line;
-    for (String suffix : CONTRACTION_SUFFIXES) {
+    for (String suffix : new String[] {"'d", "'ll", "'m", "n't", "'re", "'s", "'ve",}) {
       result = result.replace(" " + suffix, suffix);
     }
     return result;
@@ -173,16 +136,14 @@ public class DeNormalize {
     String result = line;
 
     // Capitalize only the first character of certain name titles.
-    for (String title : NAME_TITLES_CAP_FIRST_LETTER) {
-      result = result.replaceAll("\\b" + title + "\\b",
-          Character.toUpperCase(title.charAt(0)) + title.substring(1));
+    for (String title : new String[] {"dr", "miss", "mr", "mrs", "ms", "prof"}) {
+      result =
+          result.replaceAll("\\b" + title + "\\b",
+              Character.toUpperCase(title.charAt(0)) + title.substring(1));
     }
-
     // Capitalize the relevant characters of certain name titles.
-    for (String title : NAME_TITLES_COMPLEX_CAPITALIZATION.keySet()) {
-      result = result.replaceAll("\\b" + title + "\\b",
-          NAME_TITLES_COMPLEX_CAPITALIZATION.get(title));
-    }
+    result = result.replaceAll("\\b" + "phd" + "\\b", "PhD");
+    result = result.replaceAll("\\b" + "mphil" + "\\b", "MPhil");
     return result;
   }
 
