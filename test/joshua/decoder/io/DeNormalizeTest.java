@@ -35,8 +35,8 @@ public class DeNormalizeTest {
    */
   @Test
   public void testProcessSingleLine_interspersed() {
-    tokenized = "phd mrx";
-    String expected = "PhD mrx";
+    tokenized = "phd mphil";
+    String expected = "PhD MPhil";
     String actual = DeNormalize.processSingleLine(tokenized);
     assertEquals(actual, expected);
   }
@@ -172,9 +172,17 @@ public class DeNormalizeTest {
    */
   @Test
   public void testCapitalizeNameTitleAbbrvs() throws Exception {
-    tokenized =       "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
-    String expected = "my son 's friend , Dr . robotnik , PhD , however , wo n't play a high - risk game .";
-    String actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
+    String actual, expected;
+    tokenized =
+        "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
+    expected =
+        "my son 's friend , Dr . robotnik , PhD , however , wo n't play a high - risk game .";
+    actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "mr mrs ms miss dr prof";
+    expected = "Mr Mrs Ms Miss Dr Prof";
+    actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
     assertEquals(actual, expected);
   }
 
