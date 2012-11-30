@@ -64,15 +64,17 @@ public class DeNormalize {
    * Values are the capitalized version.
    */
   @SuppressWarnings("serial")
-  private static final Map<String, String> NAME_TITLES_COMPLEX_CAPITALIZATION =
-      Collections.unmodifiableMap(new HashMap<String, String>() {{
+  private static final Map<String, String> NAME_TITLES_COMPLEX_CAPITALIZATION = Collections
+      .unmodifiableMap(new HashMap<String, String>() {
+        {
           put("phd", "PhD");
           put("mphil", "MPhil");
-      }});
+        }
+      });
 
   /**
    * Apply all the denormalization methods to the normalized input line.
-   *
+   * 
    * @param normalized
    * @return
    */
@@ -83,7 +85,7 @@ public class DeNormalize {
     // match, "Phd" won't be corrected to "PhD".
     String deNormalized = normalized;
     deNormalized = capitalizeNameTitleAbbrvs(deNormalized);
-    deNormalized = joinPeriodsCommas(deNormalized);
+    deNormalized = joinPunctuationMarks(deNormalized);
     deNormalized = joinHyphen(deNormalized);
     deNormalized = joinContractions(deNormalized);
     deNormalized = capitalizeLineFirstLetter(deNormalized);
@@ -106,11 +108,11 @@ public class DeNormalize {
   /**
    * Scanning from left-to-right, a comma or period preceded by a space will become just the
    * comma/period.
-   *
+   * 
    * @param line The single-line input string
    * @return The input string modified as described above
    */
-  public static String joinPeriodsCommas(String line) {
+  public static String joinPunctuationMarks(String line) {
     String result = line;
     result = result.replace(" ,", ",");
     result = result.replace(" .", ".");
@@ -118,13 +120,19 @@ public class DeNormalize {
     result = result.replace("¡ ", "¡");
     result = result.replace(" ?", "?");
     result = result.replace("¿ ", "¿");
+    result = result.replace(" )", ")");
+    result = result.replace(" ]", "]");
+    result = result.replace(" }", "}");
+    result = result.replace("( ", "(");
+    result = result.replace("[ ", "[");
+    result = result.replace("{ ", "{");
     return result;
   }
 
   /**
    * Scanning from left-to-right, a hyphen surrounded by a space before and after it will become
    * just the hyphen.
-   *
+   * 
    * @param line The single-line input string
    * @return The input string modified as described above
    */
@@ -180,6 +188,29 @@ public class DeNormalize {
   public static String capitalizeI(String line) {
     // Capitalize only the first character of certain name titles.
     return line.replaceAll("\\b" + "i" + "\\b", "I");
+  }
+
+  /**
+   * Case-insensitively replace all of the character sequences that represent a bracket character.
+   * 
+   * Keys are token representations of abbreviations of titles for names that capitalize more than
+   * just the first letter.<br>
+   * Bracket token sequences: -lrb- -rrb- -lsb- -rsb- -lcb- -rcb- <br>
+   * <br>
+   * See http://www.cis.upenn.edu/~treebank/tokenization.html
+   * 
+   * @param line The single-line input string
+   * @return The input string modified as described above
+   */
+  public static String replaceBracketTokens(String line) {
+    String result = line;
+    result = result.replaceAll("(?iu)" + "-lrb-", "(");
+    result = result.replaceAll("(?iu)" + "-rrb-", ")");
+    result = result.replaceAll("(?iu)" + "-lsb-", "[");
+    result = result.replaceAll("(?iu)" + "-rsb-", "]");
+    result = result.replaceAll("(?iu)" + "-lcb-", "{");
+    result = result.replaceAll("(?iu)" + "-rcb-", "}");
+    return result;
   }
 
 }

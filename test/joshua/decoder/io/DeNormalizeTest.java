@@ -19,13 +19,6 @@ public class DeNormalizeTest {
   }
 
   /**
-   * @throws java.lang.Exception
-   */
-  @AfterMethod
-  protected void tearDown() throws Exception {
-  }
-
-  /**
    * Test method for {@link joshua.decoder.io.DeNormalize#processSingleLine(java.lang.String)}.
    */
   @Test(enabled = true)
@@ -92,21 +85,21 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#joinPeriodsCommas(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinPunctuationMarks(java.lang.String)}.
    */
   @Test
-  public void testJoinPeriodsCommas() throws Exception {
-    String actual = DeNormalize.joinPeriodsCommas(tokenized);
+  public void testJoinPunctuationMarks() throws Exception {
+    String actual = DeNormalize.joinPunctuationMarks(tokenized);
     String expected = "my son 's friend, however, plays a high - risk game.";
     assertEquals(actual, expected);
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#joinPeriodsCommas(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinPunctuationMarks(java.lang.String)}.
    */
   @Test
-  public void testJoinPeriodsCommas_empty() throws Exception {
-    String actual = DeNormalize.joinPeriodsCommas("");
+  public void testJoinPunctuationMarks_empty() throws Exception {
+    String actual = DeNormalize.joinPunctuationMarks("");
     String expected = "";
     assertEquals(actual, expected);
   }
@@ -212,5 +205,43 @@ public class DeNormalizeTest {
     actual = DeNormalize.capitalizeI(tokenized);
     assertEquals(actual, expected);
   }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#replaceBracketTokens(java.lang.String)}.
+   */
+  @Test
+  public void testReplaceBracketTokens() throws Exception {
+    String expected, actual;
+
+    tokenized = "-lrb- i -rrb-";
+    expected = "( i )";
+    actual = DeNormalize.replaceBracketTokens(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "-LRB- i -RRB-";
+    expected = "( i )";
+    actual = DeNormalize.replaceBracketTokens(tokenized);
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#detokenizeBracketTokens(java.lang.String)}
+   * .
+   */
+  @Test
+  public void testDetokenizeBracketTokens() throws Exception {
+    String expected, actual;
+
+    tokenized = "( i )";
+    expected = "(i)";
+    actual = DeNormalize.joinPunctuationMarks(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "[ i } j";
+    expected = "[i} j";
+    actual = DeNormalize.joinPunctuationMarks(tokenized);
+    assertEquals(actual, expected);
+  }
+
 
 }
