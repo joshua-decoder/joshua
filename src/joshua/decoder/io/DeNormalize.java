@@ -53,6 +53,13 @@ public class DeNormalize {
     return deNormalized;
   }
 
+  /**
+   * Capitalize the first letter of a line. This should be the last denormalization step applied to
+   * a line.
+   * 
+   * @param line The single-line input string
+   * @return The input string modified as described above
+   */
   public static String capitalizeLineFirstLetter(String line) {
     String result = null;
     Pattern regexp = Pattern.compile("[^\\p{Punct}\\p{Space}¡¿]");

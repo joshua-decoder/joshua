@@ -1,7 +1,9 @@
 package joshua.decoder.io;
 
-import static org.testng.Assert.*;
-import org.testng.annotations.*;
+import static org.testng.Assert.assertEquals;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  *
@@ -187,8 +189,7 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for
-   * {@link joshua.decoder.io.DeNormalize#capitalizeI(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#capitalizeI(java.lang.String)}.
    */
   @Test
   public void testCapitalizeI() throws Exception {
@@ -235,7 +236,6 @@ public class DeNormalizeTest {
 
   /**
    * Test method for {@link joshua.decoder.io.DeNormalize#detokenizeBracketTokens(java.lang.String)}
-   * .
    */
   @Test
   public void testDetokenizeBracketTokens() throws Exception {
@@ -251,6 +251,5 @@ public class DeNormalizeTest {
     actual = DeNormalize.joinPunctuationMarks(tokenized);
     assertEquals(actual, expected);
   }
-
 
 }
