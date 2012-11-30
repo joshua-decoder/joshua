@@ -23,8 +23,9 @@ public class DeNormalizeTest {
    */
   @Test(enabled = true)
   public void testProcessSingleLine() {
-    tokenized = "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
-    String expected = "My son's friend, Dr. robotnik, PhD, however, won't play a high-risk game.";
+    tokenized =
+        "my son 's friend , ( dr . -rrb- robotnik , phd , however , wo n't play a high - risk game .";
+    String expected = "My son's friend, (Dr.) robotnik, PhD, however, won't play a high-risk game.";
     String actual = DeNormalize.processSingleLine(tokenized);
     assertEquals(actual, expected);
   }

@@ -85,6 +85,7 @@ public class DeNormalize {
     // match, "Phd" won't be corrected to "PhD".
     String deNormalized = normalized;
     deNormalized = capitalizeNameTitleAbbrvs(deNormalized);
+    deNormalized = replaceBracketTokens(deNormalized);
     deNormalized = joinPunctuationMarks(deNormalized);
     deNormalized = joinHyphen(deNormalized);
     deNormalized = joinContractions(deNormalized);
