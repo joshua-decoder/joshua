@@ -1,7 +1,9 @@
 package joshua.decoder.io;
 
-import static org.testng.Assert.*;
-import org.testng.annotations.*;
+import static org.testng.Assert.assertEquals;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  *
@@ -19,19 +21,13 @@ public class DeNormalizeTest {
   }
 
   /**
-   * @throws java.lang.Exception
-   */
-  @AfterMethod
-  protected void tearDown() throws Exception {
-  }
-
-  /**
    * Test method for {@link joshua.decoder.io.DeNormalize#processSingleLine(java.lang.String)}.
    */
   @Test(enabled = true)
   public void testProcessSingleLine() {
-    tokenized = "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
-    String expected = "My son's friend, Dr. robotnik, PhD, however, won't play a high-risk game.";
+    tokenized =
+        "my son 's friend , ( dr . -rrb- robotnik , phd , however , wo n't play a high - risk game .";
+    String expected = "My son's friend, (Dr.) robotnik, PhD, however, won't play a high-risk game.";
     String actual = DeNormalize.processSingleLine(tokenized);
     assertEquals(actual, expected);
   }
@@ -41,8 +37,8 @@ public class DeNormalizeTest {
    */
   @Test
   public void testProcessSingleLine_interspersed() {
-    tokenized = "phd mrx";
-    String expected = "PhD mrx";
+    tokenized = "phd mphil";
+    String expected = "PhD MPhil";
     String actual = DeNormalize.processSingleLine(tokenized);
     assertEquals(actual, expected);
   }
@@ -92,21 +88,21 @@ public class DeNormalizeTest {
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#joinPeriodsCommas(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinPunctuationMarks(java.lang.String)}.
    */
   @Test
-  public void testJoinPeriodsCommas() throws Exception {
-    String actual = DeNormalize.joinPeriodsCommas(tokenized);
+  public void testJoinPunctuationMarks() throws Exception {
+    String actual = DeNormalize.joinPunctuationMarks(tokenized);
     String expected = "my son 's friend, however, plays a high - risk game.";
     assertEquals(actual, expected);
   }
 
   /**
-   * Test method for {@link joshua.decoder.io.DeNormalize#joinPeriodsCommas(java.lang.String)}.
+   * Test method for {@link joshua.decoder.io.DeNormalize#joinPunctuationMarks(java.lang.String)}.
    */
   @Test
-  public void testJoinPeriodsCommas_empty() throws Exception {
-    String actual = DeNormalize.joinPeriodsCommas("");
+  public void testJoinPunctuationMarks_empty() throws Exception {
+    String actual = DeNormalize.joinPunctuationMarks("");
     String expected = "";
     assertEquals(actual, expected);
   }
@@ -178,9 +174,81 @@ public class DeNormalizeTest {
    */
   @Test
   public void testCapitalizeNameTitleAbbrvs() throws Exception {
-    tokenized =       "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
-    String expected = "my son 's friend , Dr . robotnik , PhD , however , wo n't play a high - risk game .";
-    String actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
+    String actual, expected;
+    tokenized =
+        "my son 's friend , dr . robotnik , phd , however , wo n't play a high - risk game .";
+    expected =
+        "my son 's friend , Dr . robotnik , PhD , however , wo n't play a high - risk game .";
+    actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "mr mrs ms miss dr prof";
+    expected = "Mr Mrs Ms Miss Dr Prof";
+    actual = DeNormalize.capitalizeNameTitleAbbrvs(tokenized);
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#capitalizeI(java.lang.String)}.
+   */
+  @Test
+  public void testCapitalizeI() throws Exception {
+    String expected, actual;
+
+    tokenized = "sam i am";
+    expected = "sam I am";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "sam iam";
+    expected = "sam iam";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "sami am";
+    expected = "sami am";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "samiam";
+    expected = "samiam";
+    actual = DeNormalize.capitalizeI(tokenized);
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#replaceBracketTokens(java.lang.String)}.
+   */
+  @Test
+  public void testReplaceBracketTokens() throws Exception {
+    String expected, actual;
+
+    tokenized = "-lrb- i -rrb-";
+    expected = "( i )";
+    actual = DeNormalize.replaceBracketTokens(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "-LRB- i -RRB-";
+    expected = "( i )";
+    actual = DeNormalize.replaceBracketTokens(tokenized);
+    assertEquals(actual, expected);
+  }
+
+  /**
+   * Test method for {@link joshua.decoder.io.DeNormalize#detokenizeBracketTokens(java.lang.String)}
+   */
+  @Test
+  public void testDetokenizeBracketTokens() throws Exception {
+    String expected, actual;
+
+    tokenized = "( i )";
+    expected = "(i)";
+    actual = DeNormalize.joinPunctuationMarks(tokenized);
+    assertEquals(actual, expected);
+
+    tokenized = "[ i } j";
+    expected = "[i} j";
+    actual = DeNormalize.joinPunctuationMarks(tokenized);
     assertEquals(actual, expected);
   }
 
