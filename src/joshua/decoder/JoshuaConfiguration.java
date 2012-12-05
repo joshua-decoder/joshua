@@ -91,6 +91,9 @@ public class JoshuaConfiguration {
   public static double relative_threshold = 10.0;
   public static int max_n_rules = 50;
 
+  /* Maximum sentence length */
+  public static int maxlen = 200;
+
   /*
    * N-best configuration.
    */

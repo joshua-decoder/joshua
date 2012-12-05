@@ -38,6 +38,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   private final List<Node<Value>> nodes;
 
+  /**
+   * Records the shortest distance through the lattice.
+   */
+  private int shortestDistance = Integer.MAX_VALUE;
+
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Lattice.class.getName());
 
@@ -303,6 +308,14 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   }
 
   /**
+   * Gets the shortest distance through the lattice.
+   * 
+   */
+  public int getShortestDistance() {
+    return shortestDistance;
+  }
+
+  /**
    * Gets the node with a specified integer identifier.
    * 
    * @param index Integer identifier for a node.
@@ -374,27 +387,23 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       }
     }
 
-    // Loop over every possible starting node (the last
-    // node is assumed to not be a starting node)
+    // Loop over every possible starting node (the last node is assumed to not be a starting node)
     for (int i = 0; i < size - 2; i++) {
 
-      // Loop over every possible ending node,
-      // starting two nodes past the starting
-      // node (this assumes no backward arcs)
+      // Loop over every possible ending node, starting two nodes past the starting node (this
+      // assumes no backward arcs)
       for (int j = i + 2; j < size; j++) {
 
-        // Loop over every possible middle
-        // node, starting one node past the
-        // starting node (this assumes no
-        // backward arcs)
+        // Loop over every possible middle node, starting one node past the starting node (this
+        // assumes no backward arcs)
         for (int k = i + 1; k < j; k++) {
 
-          // The best cost is the
-          // minimum of the previously
-          // recorded cost and the sum
-          // of costs in the currently
-          // considered path
+          // The best cost is the minimum of the previously recorded cost and the sum of costs in
+          // the currently considered path
           costs[i][j] = Math.min(costs[i][j], costs[i][k] + costs[k][j]);
+
+          if (i == 0 && j == size - 1 && costs[i][j] < shortestDistance)
+            shortestDistance = (int)costs[i][j];
         }
       }
     }

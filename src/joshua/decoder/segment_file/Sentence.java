@@ -30,7 +30,7 @@ public class Sentence {
    * empty.</LI>
    * </UL>
    */
-  public static final int MAX_SENTENCE_TOKENS = 200;
+  public static final int MAX_SENTENCE_NODES = 200;
 
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
@@ -85,15 +85,24 @@ public class Sentence {
   }
 
   /**
+   * Returns the length of the sentence.  For lattices, the length is the shortest path through the
+   * lattice.
+   */
+  private int length() {
+    return this.intLattice().getShortestDistance();
+  }
+
+  /**
    * Hacky approach: if the input sentence is deemed too long, replace it (and the target, if not
    * null) with an empty string.
    */
   private void adjustForLength() {
 
-    int length = sentence.split("\\s+").length;
-    
-    if (length > MAX_SENTENCE_TOKENS) {
-      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to 0 length", id(), length));
+    Lattice<Integer> lattice = this.intLattice();
+    int size = lattice.size();
+
+    if (size > MAX_SENTENCE_NODES) {
+      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to 0 length", id(), size));
       
       // Replace the input sentence (and target)
       sentence = "";
