@@ -1219,7 +1219,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   $cachepipe->cmd("test-bleu-$run",
 									"java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $output -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
 									$output,
-									"$testrun/test.output.1best.bleu");
+									"$output.bleu");
 
   # We can also rescore the output lattice with MBR
   if ($DO_MBR) {
@@ -1232,33 +1232,20 @@ for my $run (1..$OPTIMIZER_RUNS) {
 										"$testrun/test.output.nbest.noOOV", 
 										$output);
 
-    $cachepipe->cmd("test-bleu-$run",
-                    "java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $output -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+    $cachepipe->cmd("test-bleu-mbr-$run",
+                    "java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $output -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.mbr.bleu",
                     $output,
-                    "$testrun/test.output.1best.bleu");
+                    "$output.bleu");
   }
 
   # Now do the analysis
   analyze_testrun($output,$TEST{source},$TEST{target});
 }
 
-# Now average the runs, report BLEU
-my @bleus;
-my $numrecs = 0;
 my $dir = (defined $NAME) ? "test/$NAME" : "test";
-open CMD, "grep ' BLEU = ' $dir/*/*bleu |";
-while (<CMD>) {
-  my @F = split;
-  push(@bleus, $F[-1]);
-}
-close(CMD);
-my $final_bleu = sum(@bleus) / (scalar @bleus);
+compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
+compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
 
-open BLEU, ">$dir/final-bleu" or die "Can't write to $dir/final-bleu";
-printf(BLEU "%s / %d = %.4f\n", join(" + ", @bleus), scalar @bleus, $final_bleu);
-close(BLEU);
-
-system("cat $dir/final-bleu");
 exit;
 
 # This target allows the pipeline to be used just for decoding new
@@ -1654,4 +1641,26 @@ sub analyze_testrun {
                   "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $output > $dir/analysis/sentence-by-sentence.html",
                   "$dir/test.output.1best",
                   "$dir/analysis/sentence-by-sentence.html");
+}
+
+sub compute_bleu_summary {
+  my ($filepattern, $outputfile) = @_;
+
+  # Now average the runs, report BLEU
+  my @bleus;
+  my $numrecs = 0;
+  open CMD, "grep ' BLEU = ' $filepattern |";
+  while (<CMD>) {
+    my @F = split;
+    push(@bleus, $F[-1]);
+  }
+  close(CMD);
+
+  if (scalar @bleus) {
+    my $final_bleu = sum(@bleus) / (scalar @bleus);
+
+    open BLEU, ">$outputfile" or die "Can't write to $outputfile";
+    printf(BLEU "%s / %d = %.4f\n", join(" + ", @bleus), scalar @bleus, $final_bleu);
+    close(BLEU);
+  }
 }
