@@ -7,4 +7,10 @@ fi
 
 set -u
 
-java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx256m -Xms256m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $1 -format nbest -ref $2 -rps $3 -m BLEU 4 closest
+format=plain
+grep "|||" $1 > /dev/null
+if [[ $? -eq 0 ]]; then
+  format=nbest
+fi
+
+java -cp $JOSHUA/class -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx256m -Xms256m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $1 -format $format -ref $2 -rps $3 -m BLEU 4 closest
