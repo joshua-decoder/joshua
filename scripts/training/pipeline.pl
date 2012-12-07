@@ -58,6 +58,8 @@ my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt"
 my $WITTEN_BELL = 0;
 
+my $JOSHUA_ARGS = "";
+
 # Run description.
 my $README = undef;
 
@@ -179,6 +181,7 @@ my $retval = GetOptions(
   "maxlen=i"        => \$MAXLEN,
   "tokenizer=s"      => \$TOKENIZER,
   "joshua-config=s"   => \$TUNEFILES{'joshua.config'},
+  "joshua-args=s"      => \$JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "parser-mem=s"      => \$PARSER_MEM,
@@ -1061,6 +1064,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<OUTPUT>/$tunedir\/tune.output.nbest/g;
 			s/<REF>/$TUNE{target}/g;
 			s/<JOSHUA>/$JOSHUA/g;
+			s/<JOSHUA_ARGS>/$JOSHUA_ARGS/g;
 			s/<NUMREFS>/$numrefs/g;
 			s/<CONFIG>/$tunedir\/joshua.config/g;
 			s/<LOG>/$tunedir\/joshua.log/g;
@@ -1164,6 +1168,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<QSUB_ARGS>/$QSUB_ARGS/g;
 			s/<OUTPUT>/$testrun\/test.output.nbest/g;
 			s/<JOSHUA>/$JOSHUA/g;
+			s/<JOSHUA_ARGS>/$JOSHUA_ARGS/g;
 			s/<NUMREFS>/$numrefs/g;
 			s/<SOURCE>/$SOURCE/g;
 			s/<TARGET>/$TARGET/g;
