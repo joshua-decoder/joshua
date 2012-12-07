@@ -1243,13 +1243,14 @@ for my $run (1..$OPTIMIZER_RUNS) {
                     "$output.bleu");
   }
 
+  # Update the BLEU summary.
+  my $dir = (defined $NAME) ? "test/$NAME" : "test";
+  compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
+  compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
+
   # Now do the analysis
   analyze_testrun($output,$TEST{source},$TEST{target});
 }
-
-my $dir = (defined $NAME) ? "test/$NAME" : "test";
-compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
-compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
 
 exit;
 
