@@ -77,7 +77,7 @@ public class NbestMinRiskReranker {
       if (sentID != tSentID) {
         throw new RuntimeException("sentence_id does not match");
       }
-      String hypothesis = (fds.length == 4) ? fds[1] : "";
+      String hypothesis = (fds.length >= 4) ? fds[1] : "";
       hypsItself.add(hypothesis);
 
       String[] words = Regex.spaces.split(hypothesis);

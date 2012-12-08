@@ -1162,6 +1162,12 @@ for my $run (1..$OPTIMIZER_RUNS) {
   
   system("mkdir -p $testrun") unless -d $testrun;
 
+  # If we're decoding a lattice, also output the source side path we chose
+  my $joshua_args = $JOSHUA_ARGS;
+  if ($DOING_LATTICES) {
+    $joshua_args .= " -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
+  }
+
   foreach my $key (qw(decoder_command)) {
 		my $file = $TUNEFILES{$key};
 		open FROM, $file or die "can't find file '$file'";
@@ -1173,7 +1179,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<QSUB_ARGS>/$QSUB_ARGS/g;
 			s/<OUTPUT>/$testrun\/test.output.nbest/g;
 			s/<JOSHUA>/$JOSHUA/g;
-			s/<JOSHUA_ARGS>/$JOSHUA_ARGS/g;
+			s/<JOSHUA_ARGS>/$joshua_args/g;
 			s/<NUMREFS>/$numrefs/g;
 			s/<SOURCE>/$SOURCE/g;
 			s/<TARGET>/$TARGET/g;
