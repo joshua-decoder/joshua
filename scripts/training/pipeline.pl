@@ -208,6 +208,11 @@ if (! $retval) {
 
 my $DOING_LATTICES = 0;
 
+# Prepend a space to the arguments list if it's non-empty and doesn't already have the space.
+if ($JOSHUA_ARGS ne "" and $JOSHUA_ARGS !~ /^\s/) {
+  $JOSHUA_ARGS = " $JOSHUA_ARGS";
+}
+
 my %DATA_DIRS = (
   train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
   tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
