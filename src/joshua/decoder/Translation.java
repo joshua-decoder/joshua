@@ -117,6 +117,7 @@ public class Translation {
       // There is no output for the given input (e.g. blank line)
       String outputString = JoshuaConfiguration.outputFormat
           .replace("%s", "")
+          .replace("%e", "")
           .replace("%S", "")
           .replace("%t", "")
           .replace("%i", Integer.toString(source.id()))
