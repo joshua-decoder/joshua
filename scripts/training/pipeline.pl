@@ -1260,7 +1260,17 @@ for my $run (1..$OPTIMIZER_RUNS) {
   compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
 
   # Now do the analysis
-  analyze_testrun($output,$TEST{source},$TEST{target});
+  if ($DOING_LATTICES) {
+    # extract the source
+    my $source = "$testrun/test.lattice-path.txt";
+    $cachepipe->cmd("test-lattice-extract-source-$run",
+                    "$JOSHUA/bin/extract-1best $testrun/test.output.nbest.noOOV 2 | perl -pe 's/<s> //' > $source",
+                    $output, $source);
+
+    analyze_testrun($output,$source,$TEST{target});
+  } else {
+    analyze_testrun($output,$TEST{source},$TEST{target});
+  }
 }
 
 exit;
