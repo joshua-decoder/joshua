@@ -985,17 +985,26 @@ my $lmweights = join($/, @weightstrings);
 my $lmparams  = join($/, @lmparamstrings);
 
 my (@tmparamstrings, @tmweightstrings);
-if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
-	# If the user supplied a joshua config file, read the parameters that need to
-	# be tuned from the file itself. This will automatically add all the grammar
-	# features, including the glue grammar features, as long as they are already
-	# listed in the file.
-	open CONFIG, $TUNEFILES{'joshua.config'} or die;
-	while (my $line = <CONFIG>) {
-		if ($line =~ /^tm\s*=/) {
-      $line =~ s/^.*?=\s*//;
-      my (undef,$owner,$span,$file) = split(' ', $line);
-      my $num_tm_features = count_num_features($file);
+open CONFIG, $TUNEFILES{'joshua.config'} or die;
+while (my $line = <CONFIG>) {
+  if ($line =~ /^tm\s*=/) {
+    $line =~ s/\s+$//;
+    my (undef,$grammarline) = split(/\s*=\s*/, $line);
+    my (undef,$owner,$span,$grammar) = split(' ', $grammarline);
+
+    if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
+
+      # Add the weights for the tuning grammar.
+      my $num_tm_features = count_num_features($TUNE_GRAMMAR);
+      for my $i (0..($num_tm_features-1)) {
+        push (@tmparamstrings, "tm_${owner}_$i ||| 1.0 Opt -Inf +Inf -1 +1");
+        push (@tmweightstrings, "tm_${owner}_$i 1.0");
+      }
+
+    } else {
+      # Add weights for any pre-supplied grammars.
+
+      my $num_tm_features = count_num_features($grammar);
       for my $i (0..($num_tm_features-1)) {
         push (@tmparamstrings, "tm_${owner}_${i} ||| 1.0 Opt -Inf +Inf -1 +1");
         push (@tmweightstrings, "tm_${owner}_${i} 1.0");
@@ -1003,19 +1012,6 @@ if ($TUNEFILES{'joshua.config'} ne $JOSHUA_CONFIG_ORIG) {
 		}
 	}
 	close CONFIG;
-
-} else {
-	# Otherwise, just count them from the grammars themselves
-
-	my $num_tm_features = count_num_features($TUNE_GRAMMAR);
-	for my $i (0..($num_tm_features-1)) {
-		push (@tmparamstrings, "tm_pt_$i ||| 1.0 Opt -Inf +Inf -1 +1");
-		push (@tmweightstrings, "tm_pt_$i 1.0");
-	}
-
-	# Add the weight for the glue grammar.
-	push (@tmparamstrings, "tm_glue_0 ||| 1.0 Opt -Inf +Inf -1 +1");
-  push (@tmweightstrings, "tm_glue_0 1.0");
 }
 
 my $tmparams = join($/, @tmparamstrings);
