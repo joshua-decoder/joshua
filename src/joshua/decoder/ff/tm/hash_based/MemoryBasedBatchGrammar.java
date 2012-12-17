@@ -48,9 +48,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private String grammarFile;
 
   /* The maximum span of the input this rule can be applied to. */
-  private int spanLimit = JoshuaConfiguration.span_limit;
+  private int spanLimit = 1;
 
   private GrammarReader<BilingualRule> modelReader;
+
+  /* Whether the grammar's rules contain regular expressions. */
+  private boolean isRegexpGrammar = false;
 
   // ===============================================================
   // Static Fields
@@ -81,8 +84,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
-    this.root =
-        new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
+    this.root = new MemoryBasedTrie();
     modelReader = gr;
   }
 
@@ -92,9 +94,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.owner = Vocabulary.id(owner);
     Vocabulary.id(defaultLHSSymbol);
     this.spanLimit = spanLimit;
-    this.root = new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(owner));
+    this.root = new MemoryBasedTrie();
     this.grammarFile = grammarFile;
-
+    this.setRegexpGrammar(formatKeyword.equals("regexp"));
+    
     // ==== loading grammar
     this.modelReader = createReader(formatKeyword, grammarFile);
     if (modelReader != null) {
@@ -112,19 +115,18 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.printGrammar();
   }
 
-  protected GrammarReader<BilingualRule> createReader(String formatKeyword, String grammarFile) {
+  protected GrammarReader<BilingualRule> createReader(String format, String grammarFile) {
 
     if (grammarFile != null) {
-      if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
+      if ("hiero".equals(format) || "thrax".equals(format) || "regexp".equals(format)) {
         return new HieroFormatReader(grammarFile);
-      } else if ("samt".equals(formatKeyword)) {
+      } else if ("samt".equals(format)) {
         return new SamtFormatReader(grammarFile);
       } else {
         // TODO: throw something?
         // TODO: add special warning if "heiro" mispelling is used
 
-        if (logger.isLoggable(Level.WARNING))
-          logger.warning("Unknown GrammarReader format " + formatKeyword);
+        System.err.println("* FATAL: unknown grammar format '" + format + "'");
       }
     }
 
@@ -136,6 +138,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // Methods
   // ===============================================================
 
+  public void setSpanLimit(int spanLimit) {
+    this.spanLimit = spanLimit;
+  }
+  
   public int getNumRules() {
     return this.qtyRulesRead;
   }
@@ -149,11 +155,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   /**
    * if the span covered by the chart bin is greater than the limit, then return false
    */
-  public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
+  public boolean hasRuleForSpan(int i, int j, int pathLength) {
     if (this.spanLimit == -1) { // mono-glue grammar
-      return (startIndex == 0);
+      return (i == 0);
     } else {
-      return (endIndex - startIndex <= this.spanLimit);
+//      System.err.println(String.format("%s HASRULEFORSPAN(%d,%d,%d)/%d = %s", Vocabulary.word(this.owner), i, j, pathLength, spanLimit, pathLength <= this.spanLimit));
+      return (pathLength <= this.spanLimit);
     }
   }
 
@@ -193,11 +200,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
        * (logger.isLoggable(Level.FINEST)) logger.finest("Amended to: " + curSymID); }
        */
 
-      // we call exactMatch() here to avoid applying regular expressions along the arc
-      MemoryBasedTrie nextLayer = pos.exactMatch(curSymID);
+      MemoryBasedTrie nextLayer = (MemoryBasedTrie) pos.match(curSymID);
       if (null == nextLayer) {
-        nextLayer =
-            new MemoryBasedTrie(JoshuaConfiguration.regexpGrammar.equals(Vocabulary.word(owner)));
+        nextLayer = new MemoryBasedTrie();
         if (pos.hasExtensions() == false) {
           pos.childrenTbl = new HashMap<Integer, MemoryBasedTrie>();
         }
@@ -217,5 +222,14 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
   protected void printGrammar() {
     logger.info(String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", this.qtyRulesRead, this.qtyRuleBins, grammarFile));
+  }
+
+  @Override
+  public boolean isRegexpGrammar() {
+    return this.isRegexpGrammar;
+  }
+  
+  public void setRegexpGrammar(boolean value) {
+    this.isRegexpGrammar = value;
   }
 }

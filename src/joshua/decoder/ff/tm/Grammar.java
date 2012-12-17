@@ -22,8 +22,6 @@ public interface Grammar {
    */
   Trie getTrieRoot();
 
-
-
   /**
    * After calling this method, the rules in this grammar are guaranteed to be sorted based on the
    * latest feature function values.
@@ -33,8 +31,6 @@ public interface Grammar {
    * @param weights The model weights.
    */
   void sortGrammar(List<FeatureFunction> models);
-
-
 
   /**
    * Determines whether the rules in this grammar have been sorted based on the latest feature
@@ -54,15 +50,14 @@ public interface Grammar {
    * than the span limit. Other grammars, e.g. for rule-based systems, may have different behaviors.
    * 
    * @param startIndex Indicates the starting index of a phrase in a source input phrase, or a
-   *        starting node identifier in a source input lattice
+   *          starting node identifier in a source input lattice
    * @param endIndex Indicates the ending index of a phrase in a source input phrase, or an ending
-   *        node identifier in a source input lattice
+   *          node identifier in a source input lattice
    * @param pathLength Length of the input path in a source input lattice. If a source input phrase
-   *        is used instead of a lattice, this value will likely be ignored by the underlying
-   *        implementation, but would normally be defined as <code>endIndex-startIndex</code>
+   *          is used instead of a lattice, this value will likely be ignored by the underlying
+   *          implementation, but would normally be defined as <code>endIndex-startIndex</code>
    */
   boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength);
-
 
   /**
    * Gets the number of rules stored in the grammar.
@@ -71,7 +66,6 @@ public interface Grammar {
    */
   int getNumRules();
 
-
   /**
    * This is used to construct a manual rule supported from outside the grammar, but the owner
    * should be the same as the grammar. Rule ID will the same as OOVRuleId, and no lattice cost
@@ -79,6 +73,13 @@ public interface Grammar {
   Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores,
       int aritity);
 
-
   void writeGrammarOnDisk(String file);
+
+  /**
+   * This returns true if the grammar contains rules that are regular expressions, possibly matching
+   * many different inputs.
+   * 
+   * @return true if the grammar's rules may contain regular expressions.
+   */
+  boolean isRegexpGrammar();
 }

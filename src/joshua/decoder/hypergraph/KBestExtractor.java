@@ -15,10 +15,7 @@ import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.BilingualRule;
-import joshua.util.CoIterator;
-import joshua.util.Regex;
-import joshua.util.io.UncheckedIOException;
+import joshua.decoder.io.DeNormalize;
 
 /**
  * This class implements lazy k-best extraction on a hyper-graph. To seed the kbest extraction, it
@@ -33,6 +30,7 @@ import joshua.util.io.UncheckedIOException;
  * to store all these model cost at each hyperedge.)
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class KBestExtractor {
 
@@ -44,31 +42,25 @@ public class KBestExtractor {
   static String rootSym = "ROOT";
   static int rootID;// TODO: bug
 
+  private enum Side { SOURCE, TARGET };
+  
   // configuratoin option
   private boolean extractUniqueNbest = true;
-  private boolean extractNbestTree = false;
   private boolean includeAlign = false;
-  private boolean addCombinedScore = true;
-  private boolean isMonolingual = false;
-  private boolean performSanityCheck = true;
+  private Side defaultSide = Side.TARGET;
 
   private int sentID;
 
   private FeatureVector weights;
-
-  public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest,
-      boolean extractNbestTree, boolean includeAlign, boolean addCombinedScore,
-      boolean isMonolingual, boolean performSanityCheck) {
+  
+  public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean includeAlign,
+      boolean isMonolingual) {
     rootID = Vocabulary.id(rootSym);
 
     this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
-    this.extractNbestTree = extractNbestTree;
     this.includeAlign = includeAlign;
-    this.addCombinedScore = addCombinedScore;
-    this.isMonolingual = isMonolingual;
-    this.performSanityCheck = performSanityCheck;
-    // System.out.println("===============sanitycheck="+performSanityCheck);
+    this.defaultSide = (isMonolingual ? Side.SOURCE : Side.TARGET);
   }
 
   // k start from 1
@@ -88,84 +80,49 @@ public class KBestExtractor {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
 
-//      return derivationState.getDerivation(this, features, models, 0);
-       String strHypNumeric = derivationState.getHypothesis(this, extractNbestTree, features,
-       models);
-       String strHypStr =
-       convertHyp2String(sentID, derivationState, models, strHypNumeric, features);
-       return strHypStr;
+      // return derivationState.getDerivation(this, features, models, 0);
+
+      String hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
+      String outputString = JoshuaConfiguration.outputFormat
+          .replace("%s", hypothesis)
+          .replace("%S", DeNormalize.processSingleLine(hypothesis))
+          .replace("%i", Integer.toString(sentID))
+          .replace("%f", features.toString())
+          .replace("%c", String.format("%.3f", -derivationState.cost));
+
+      if (JoshuaConfiguration.outputFormat.contains("%t")) {
+        outputString = outputString.replace("%t",
+            derivationState.getHypothesis(this, true, null, models, Side.TARGET));
+      }
+      
+      if (JoshuaConfiguration.outputFormat.contains("%e"))
+        outputString = outputString.replace("%e", derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
+    
+      return outputString;
     }
   }
-
-  /*
-   * public void getNumNodesAndEdges(HGNode it, int k, int[] numNodesAndEdges) { //==== setup the
-   * kbest at each hgnode VirtualNode virtualNode = addVirtualNode(it); DerivationState cur =
-   * virtualNode.lazyKBestExtractOnNode(Vocabulary, this, k); if( cur==null){ numNodesAndEdges[0]=0;
-   * numNodesAndEdges[1]=0; }else{ cur.getNumNodesAndEdges(this, numNodesAndEdges); } }
-   */
 
   // =========================== end kbestHypergraph
 
-  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
-      int sentID, final List<String> out) {
+  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN, int sentID)
+      throws IOException {
 
-    CoIterator<String> coIt = new CoIterator<String>() {
-
-      public void coNext(String hypStr) {
-        out.add(hypStr);
-      }
-
-      public void finish() {
-      }
-    };
-
-    this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
-  }
-
-  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN,
-      int sentID, BufferedWriter out) throws IOException {
-
-    final BufferedWriter writer;
-    if (null == out) {
-      writer = new BufferedWriter(new OutputStreamWriter(System.out));
-    } else {
-      writer = out;
-    }
-
-    try {
-
-      CoIterator<String> coIt = new CoIterator<String>() {
-        public void coNext(String hypStr) {
-          try {
-            writer.write(hypStr);
-            writer.write("\n");
-            writer.flush();
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        }
-
-        public void finish() {
-        }
-      };
-
-      this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
-    } catch (UncheckedIOException e) {
-      e.throwCheckedException();
-    }
+    lazyKBestExtractOnHG(hg, models, topN, sentID, new BufferedWriter(new OutputStreamWriter(
+        System.out)));
   }
 
   /**
-   * This is the private entry point for extracting k-best hypotheses.
+   * This is the entry point for extracting k-best hypotheses.
    * 
-   * @param hg
-   * @param featureFunctions
-   * @param topN
-   * @param sentID
-   * @param coit
+   * @param hg the hypergraph to extract from 
+   * @param featureFunctions the feature functions to use
+   * @param topN how many to extract
+   * @param sentID the sentence number
+   * @param out object to write to
+   * @throws IOException
    */
-  private void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions,
-      int topN, int sentID, CoIterator<String> coit) {
+  public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> featureFunctions, int topN,
+      int sentID, BufferedWriter out) throws IOException {
 
     this.sentID = sentID;
     resetState();
@@ -173,19 +130,15 @@ public class KBestExtractor {
     if (null == hg.goalNode)
       return;
 
-    // VirtualItem virtual_goal_item = add_virtual_item(hg.goal_item);
-    try {
-      for (int k = 1;; k++) {
-        String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
+    for (int k = 1;; k++) {
+      String hypStr = getKthHyp(hg.goalNode, k, sentID, featureFunctions);
 
-        if (null == hypStr || k > topN)
-          break;
+      if (null == hypStr || k > topN)
+        break;
 
-        coit.coNext(hypStr);
-      }
-      // g_time_kbest_extract += System.currentTimeMillis()-start;
-    } finally {
-      coit.finish();
+      out.write(hypStr);
+      out.write("\n");
+      out.flush();
     }
   }
 
@@ -194,110 +147,6 @@ public class KBestExtractor {
    */
   public void resetState() {
     virtualNodesTbl.clear();
-  }
-
-  /*
-   * non-recursive function format: sent_id ||| hyp ||| individual model cost ||| combined cost
-   * sent_id<0: do not add sent_id l_models==null: do not add model cost add_combined_score==f: do
-   * not add combined model cost
-   */
-  private String convertHyp2String(int sentID, DerivationState state, List<FeatureFunction> models,
-      String strHypNumeric, FeatureVector features) {
-    String[] tem = Regex.spaces.split(strHypNumeric);
-    StringBuffer strHyp = new StringBuffer();
-
-    // ####sent id
-    if (sentID >= 0) { // valid sent id must be >=0
-      strHyp.append(sentID);
-      strHyp.append(" ||| ");
-    }
-
-    // TODO: consider_start_sym
-    // ####hyp words
-    for (int t = 0; t < tem.length; t++) {
-      tem[t] = tem[t].trim();
-      if (extractNbestTree && (tem[t].startsWith("(") || tem[t].endsWith(")"))) { // tree tag
-        /* New node. */
-        if (tem[t].startsWith("(")) {
-          if (includeAlign) {
-            // we must account for the {i-j} substring
-            int ijStrIndex = tem[t].indexOf('{');
-            String tag = Vocabulary.word(Integer.parseInt(tem[t].substring(1, ijStrIndex)));
-            strHyp.append('(');
-            strHyp.append(tag);
-            strHyp.append(tem[t].substring(ijStrIndex)); // append {i-j}
-          } else {
-            String tag = Vocabulary.word(Integer.parseInt(tem[t].substring(1)));
-            strHyp.append('(');
-            strHyp.append(tag);
-          }
-        } else {
-//          System.err.println("TEM = " + t + " " + tem[t]);
-          // note: it may have more than two ")", e.g., "3499))"
-          int firstBracketPos = tem[t].indexOf(')');// TODO: assume the tag/terminal does not have
-                                                    // ')'
-          String tag = Vocabulary.word(Integer.parseInt(tem[t].substring(0, firstBracketPos)));
-          strHyp.append(tag);
-          String terminal = tem[t].substring(firstBracketPos);
-          strHyp.append(escapeTerminalForTree(terminal));
-        }
-      } else { // terminal symbol
-        String terminal = Vocabulary.word(Integer.parseInt(tem[t]));
-        terminal = escapeTerminalForTree(terminal);
-        strHyp.append(terminal);
-      }
-      if (t < tem.length - 1) {
-        strHyp.append(' ');
-      }
-    }
-
-    // ####individual model cost, and final transition cost
-    if (null != features) {
-      strHyp.append(" ||| " + features.toString());
-      double temSum = 0.0;
-
-      for (String feature : features.keySet()) {
-        temSum += features.get(feature) * weights.get(feature);
-      }
-
-      // sanity check
-      if (performSanityCheck) {
-        if (Math.abs(state.cost - temSum) > 1e-2) {
-          StringBuilder error = new StringBuilder();
-          error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + state.cost
-              + "; temsum: " + temSum + "\n");
-          // System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost +
-          // "; temsum: " +tem_sum);
-          for (String feature : features.keySet()) {
-            error.append(String.format("model weight: %.3f; cost: %.3f\n", weights.get(feature),
-                features.get(feature)));
-
-            // for (int k = 0; k < modelCost.length; k++) {
-            // error.append("model weight: " + models.get(k).getWeight() + "; cost: " + modelCost[k]
-            // + "\n");
-            // System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: "
-            // +model_cost[k]);
-          }
-          throw new RuntimeException(error.toString());
-        }
-      }
-    }
-
-    // ####combined model cost
-    if (addCombinedScore) {
-      strHyp.append(String.format(" ||| %.3f", -state.cost));
-    }
-
-    return strHyp.toString();
-  }
-
-  private String escapeTerminalForTree(String terminal) {
-    if (JoshuaConfiguration.escape_trees) {
-      // any paren that is not part of the tree structure
-      // can cause an error when parsing the resulting tree
-      terminal = terminal.replace("(", "-LRB-").replace(")", "-RRB-");
-    }
-    return terminal;
   }
 
   /**
@@ -385,7 +234,7 @@ public class KBestExtractor {
           if (extractUniqueNbest) {
             boolean useTreeFormat = false;
             String res_str = derivationState.getHypothesis(kbestExtractor, useTreeFormat, null,
-                null);
+                null, defaultSide);
             // We pass false for extract_nbest_tree because we want;
             // to check that the hypothesis *strings* are unique,
             // not the trees.
@@ -717,7 +566,7 @@ public class KBestExtractor {
     // get the numeric sequence of the particular hypothesis
     // if want to get model cost, then have to set model_cost and l_models
     private String getHypothesis(KBestExtractor kbestExtractor, boolean useTreeFormat,
-        FeatureVector features, List<FeatureFunction> models) {
+        FeatureVector features, List<FeatureFunction> models, Side side) {
       // ### accumulate cost of p_edge into model_cost if necessary
       if (null != features) {
         computeCost(parentNode, edge, features, models);
@@ -731,7 +580,7 @@ public class KBestExtractor {
         if (useTreeFormat) {
           // res.append("(ROOT ");
           sb.append('(');
-          sb.append(rootID);
+          sb.append(Vocabulary.word(rootID));
           if (includeAlign) {
             // append "{i-j}"
             sb.append('{');
@@ -743,8 +592,8 @@ public class KBestExtractor {
           sb.append(' ');
         }
         for (int id = 0; id < edge.getTailNodes().size(); id++) {
-          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(
-              kbestExtractor, useTreeFormat, features, models));
+          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(kbestExtractor,
+              useTreeFormat, features, models, side));
           if (id < edge.getTailNodes().size() - 1)
             sb.append(' ');
         }
@@ -757,12 +606,7 @@ public class KBestExtractor {
           if (lhs > 0) {
             System.err.printf("k-best: WARNING: rule LHS is greater than 0: %d\n", lhs);
           }
-          if (JoshuaConfiguration.parse) {
-            // hack to fix output labels in synchronous parsing
-            int max = GrammarBuilderWalkerFunction.MAX_NTS;
-            lhs = (lhs % max);
-          }
-          sb.append(lhs);
+          sb.append(Vocabulary.word(lhs));
           if (includeAlign) {
             // append "{i-j}"
             sb.append('{');
@@ -773,30 +617,31 @@ public class KBestExtractor {
           }
           sb.append(' ');
         }
-        if (!isMonolingual) { // bilingual
+        if (side == Side.TARGET) {
           int[] english = rule.getEnglish();
           for (int c = 0; c < english.length; c++) {
             if (Vocabulary.idx(english[c])) {
               int index = -(english[c] + 1);
               sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
-                  kbestExtractor, useTreeFormat, features, models));
+                  kbestExtractor, useTreeFormat, features, models, side));
             } else {
-              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
-                sb.append(english[c]);
+              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM)
+                  && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
+                sb.append(Vocabulary.word(english[c]));
             }
             if (c < english.length - 1)
               sb.append(' ');
           }
-        } else { // monolingual
+        } else if (side == Side.SOURCE) {
           int[] french = rule.getFrench();
           int nonTerminalID = 0;// the position of the non-terminal in the rule
           for (int c = 0; c < french.length; c++) {
             if (Vocabulary.nt(french[c])) {
-              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID)
-                  .getHypothesis(kbestExtractor, useTreeFormat, features, models));
+              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID).getHypothesis(
+                  kbestExtractor, useTreeFormat, features, models, side));
               nonTerminalID++;
             } else {
-              sb.append(french[c]);
+              sb.append(Vocabulary.word(french[c]));
             }
             if (c < french.length - 1)
               sb.append(' ');

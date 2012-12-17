@@ -32,6 +32,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
 
   public GrammarBuilderWalkerFunction(String goal) {
     grammar = new MemoryBasedBatchGrammar(reader);
+    grammar.setSpanLimit(1000);
     outStream = null;
     goalSymbol = Vocabulary.id(goal);
     rules = new HashSet<Rule>();
@@ -54,30 +55,15 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     }
   }
 
-  /*
-   * TODO: this can break silently and dangerously if we do try to parse sentences longer than the
-   * max length. If a sentence is longer than this length, then the IDs for labeled spans aren't
-   * guaranteed to be unique.
-   */
-  private static final int MAX_SENTENCE_LENGTH = 64;
-  public static final int MAX_NTS = 500000;
-
   private static int getLabelWithSpan(HGNode node) {
-    int x = node.i * MAX_SENTENCE_LENGTH;
-    x = (x + node.j) * MAX_NTS;
-    x = node.lhs - x;
-    if (x > 0) {
-      System.err.println("WARNING: integer overflow in node label!");
-      System.err.printf("lhs = %d, i = %d, j = %d, result = %d\n", node.lhs, node.i, node.j, x);
-    }
-    return x;
+    return Vocabulary.id(getLabelWithSpanAsString(node));
   }
 
   private static String getLabelWithSpanAsString(HGNode node) {
     String label = Vocabulary.word(node.lhs);
     String cleanLabel = reader.cleanNonTerminal(label);
     String unBracketedCleanLabel = cleanLabel.substring(1, cleanLabel.length() - 1);
-    return String.format("%d-%s-%d", node.i, unBracketedCleanLabel, node.j);
+    return String.format("[%d-%s-%d]", node.i, unBracketedCleanLabel, node.j);
   }
 
   private boolean nodeHasGoalSymbol(HGNode node) {
@@ -113,17 +99,21 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     // if this is a unary abstract rule, just return null
     // TODO: except glue rules!
     if (english.length == 1 && english[0] < 0 && !isGlue) return null;
-    int currNT = 1;
     int[] result = new int[english.length];
     for (int i = 0; i < english.length; i++) {
       int curr = english[i];
       if (!Vocabulary.nt(curr)) {
+				// If it's a terminal symbol, we just copy it into the new rule.
         result[i] = curr;
       } else {
+				// If it's a nonterminal, its value is -N, where N is the index
+				// of the nonterminal on the source side.
+				//
+				// That is, if we would call a nonterminal "[X,2]", the value of
+				// curr at this point is -2. And the tail node that it points at
+				// is #1 (since getTailNodes() is 0-indexed).
         int index = -curr - 1;
-        int label = getLabelWithSpan(edge.getTailNodes().get(index));
-        result[i] = label * 2 - currNT;
-        currNT++;
+        result[i] = getLabelWithSpan(edge.getTailNodes().get(index));
       }
     }
     // System.err.printf("source: %s\n", result);
@@ -132,13 +122,12 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
 
   private static int[] getNewTargetFromSource(int[] source) {
     int[] result = new int[source.length];
+		int currNT = -1; // value to stick into NT slots
     for (int i = 0; i < source.length; i++) {
       result[i] = source[i];
       if (Vocabulary.nt(result[i])) {
-        int currNT = (Math.abs(result[i]) % 2) - 2;
         result[i] = currNT;
-        source[i] -= currNT;
-        source[i] /= 2;
+				currNT--;
       }
     }
     // System.err.printf("target: %s\n", result);

@@ -18,7 +18,6 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
-
 /**
  * this class implement functions: (1) combine small itesm into larger ones using rules, and create
  * items and hyper-edges to construct a hyper-graph, (2) evaluate model score for items, (3)
@@ -49,12 +48,10 @@ class Cell {
    */
   private List<HGNode> sortedNodes = null;
 
-
   // ===============================================================
   // Static fields
   // ===============================================================
   private static final Logger logger = Logger.getLogger(Cell.class.getName());
-
 
   // ===============================================================
   // Constructor
@@ -66,9 +63,8 @@ class Cell {
 
     if (JoshuaConfiguration.useBeamAndThresholdPrune) {
       PriorityQueue<HGNode> nodesHeap = new PriorityQueue<HGNode>(1, HGNode.logPComparator);
-      beamPruner =
-          new BeamPruner<HGNode>(nodesHeap, JoshuaConfiguration.relative_threshold,
-              JoshuaConfiguration.max_n_items);
+      beamPruner = new BeamPruner<HGNode>(nodesHeap, JoshuaConfiguration.relative_threshold,
+          JoshuaConfiguration.max_n_items);
     }
   }
 
@@ -76,11 +72,9 @@ class Cell {
     this(chart, goal_sym_id);
   }
 
-
   // ===============================================================
   // Package-protected methods
   // ===============================================================
-
 
   /**
    * add all the items with GOAL_SYM state into the goal bin the goal bin has only one Item, which
@@ -97,28 +91,24 @@ class Cell {
         List<HGNode> antNodes = new ArrayList<HGNode>();
         antNodes.add(antNode);
 
-        double finalTransitionLogP =
-            ComputeNodeResult.computeFinalCost(featureFunctions, antNodes, 0, sentenceLength, null,
-                this.chart.segmentID);
+        double finalTransitionLogP = ComputeNodeResult.computeFinalCost(featureFunctions, antNodes,
+            0, sentenceLength, null, this.chart.segmentID);
 
         List<HGNode> previousItems = new ArrayList<HGNode>();
         previousItems.add(antNode);
 
-        HyperEdge dt =
-            new HyperEdge(null, logP + finalTransitionLogP, finalTransitionLogP, previousItems,
-                null);
+        HyperEdge dt = new HyperEdge(null, logP + finalTransitionLogP, finalTransitionLogP,
+            previousItems, null);
 
         if (null == goalItem) {
-          goalItem =
-              new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, logP
-                  + finalTransitionLogP);
+          goalItem = new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, logP
+              + finalTransitionLogP);
           this.sortedNodes.add(goalItem);
         } else {
           goalItem.addHyperedgeInNode(dt);
         }
       } // End if item.lhs == this.goalSymID
     } // End foreach Item in bin.get_sorted_items()
-
 
     if (logger.isLoggable(Level.INFO)) {
       if (null == goalItem) {
@@ -140,8 +130,6 @@ class Cell {
     return true;
   }
 
-
-
   /**
    * in order to add a hyperedge into the chart, we need to (1) do the combination, and compute the
    * logP (if pass the cube-prunning filter) (2) run through the beam and threshold pruning, which
@@ -155,7 +143,6 @@ class Cell {
    * signature is new or because its logP is better than the old node's logP), then it will trigger
    * pruningNodes, which might causes *other* nodes got pruned as well
    * */
-
 
   /**
    * Creates a new hyperedge and adds it to the chart, subject to pruning. The logic of this
@@ -171,7 +158,7 @@ class Cell {
 
     HGNode newNode = null;
 
-//    System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
+    // System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
 
     TreeMap<StateComputer, DPState> dpStates = result.getDPStates();
     double pruningEstimate = result.getPruningEstimate();
@@ -218,7 +205,7 @@ class Cell {
 
           newNode.addHyperedgesInNode(oldNode.hyperedges);
           addNewNode(newNode, noPrune); // this will update the HashMap, so that the oldNode is
-                                    // destroyed
+          // destroyed
 
         } else {// merge new to old, does not trigger pruningItems
           oldNode.addHyperedgesInNode(newNode.hyperedges);
@@ -233,19 +220,15 @@ class Cell {
     return newNode;
   }
 
-
   List<HGNode> getSortedNodes() {
     ensureSorted();
     return this.sortedNodes;
   }
 
-
   Map<Integer, SuperNode> getSortedSuperItems() {
     ensureSorted();
     return this.superNodesTbl;
   }
-
-
 
   // ===============================================================
   // Private Methods
@@ -284,8 +267,6 @@ class Cell {
     si.nodes.add(node);// TODO what about the dead items?
   }
 
-
-
   /**
    * get a sorted list of Nodes in the cell, and also make sure the list of node in any SuperItem is
    * sorted, this will be called only necessary, which means that the list is not always sorted,
@@ -311,8 +292,6 @@ class Cell {
         this.sortedNodes.add(node);
         // System.out.println(node.getPruneLogP());
       }
-
-
 
       // TODO: we cannot create new SuperItem here because the DotItem link to them
 

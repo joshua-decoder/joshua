@@ -24,7 +24,7 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Support;
-import joshua.decoder.JoshuaDecoder;
+import joshua.decoder.Decoder;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -132,7 +132,7 @@ public class OracleExtractionHG extends SplitHg {
     boolean do_ngram_clip_nbest = true; // TODO
     if (orc_extract_nbest) {
       System.out.println("oracle extraction from nbest list");
-      kbest_extractor = new KBestExtractor(JoshuaDecoder.weights, extract_unique_nbest, false, false, false, false, true);
+      kbest_extractor = new KBestExtractor(Decoder.weights, extract_unique_nbest, false, false);
     }
 
     BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);

@@ -120,7 +120,7 @@ public class PackedGrammar extends BatchGrammar {
 
   @Override
   public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
-    return (spanLimit == -1 || endIndex - startIndex <= spanLimit);
+    return (spanLimit == -1 || pathLength <= spanLimit);
   }
 
   @Override
@@ -162,6 +162,7 @@ public class PackedGrammar extends BatchGrammar {
         arity++;
     }
 
+    @Override
     public final Trie match(int token_id) {
       int num_children = grammar.source[position];
       if (num_children == 0)
@@ -230,11 +231,18 @@ public class PackedGrammar extends BatchGrammar {
     // }
     // }
 
+    @Override
+    public HashMap<Integer, ? extends Trie> getChildren() {
+      // TODO: implement this
+      System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
+      return new HashMap<Integer, PackedTrie>();
+    }
+    
     public boolean hasExtensions() {
       return (grammar.source[position] != 0);
     }
 
-    public Collection<? extends Trie> getExtensions() {
+    public ArrayList<? extends Trie> getExtensions() {
       int num_children = grammar.source[position];
       ArrayList<PackedTrie> tries = new ArrayList<PackedTrie>(num_children);
 
@@ -357,10 +365,18 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public Collection<? extends Trie> getExtensions() {
+    public HashMap<Integer, ? extends Trie> getChildren() {
+      // TODO: implement this
+      System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
+      return new HashMap<Integer, PackedRoot>();
+    }
+    
+    @Override
+    public ArrayList<? extends Trie> getExtensions() {
       ArrayList<Trie> tries = new ArrayList<Trie>();
-      for (int key : lookup.keySet())
+      for (int key : lookup.keySet()) {
         tries.add(match(key));
+      }
       return tries;
     }
 
@@ -597,5 +613,11 @@ public class PackedGrammar extends BatchGrammar {
     public String toString() {
       return name;
     }
+  }
+
+  @Override
+  public boolean isRegexpGrammar() {
+    // TODO Auto-generated method stub
+    return false;
   }
 }

@@ -21,7 +21,10 @@ import joshua.decoder.segment_file.Sentence;
  */
 
 public class Translation {
+  private int id = -1;
   private Sentence source;
+  private String translation = null;
+  private List<Double> modelScores = null;
   private double score;
   private HyperGraph hypergraph;
   private List<FeatureFunction> featureFunctions;
@@ -55,19 +58,23 @@ public class Translation {
   }
 
   /*
-   * Returns the 1-best translation from the hypergraph object.
+   * Returns the 1-best translation from the hypergraph object. Memoizes the result of the first
+   * time the translation is requested.
    */
   public String translation() {
 
+    if (this.translation != null) {
+      return this.translation;
+    }
+
+    String result;
+
     if (this.hypergraph == null) {
-      return getSourceSentence().source();
+      result = getSourceSentence().source();
 
     } else {
-
-      KBestExtractor kBestExtractor =
-        new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
-          JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-          JoshuaConfiguration.add_combined_cost, false, false);
+      KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
+          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
       StringWriter sw = new StringWriter();
       BufferedWriter out = new BufferedWriter(sw);
@@ -79,42 +86,52 @@ public class Translation {
         e.printStackTrace();
       }
 
-      return sw.toString();
+      result = sw.toString();
     }
+    this.translation = result;
+    return result;
   }
 
   /*
    * Prints the k-best list to standard output.
    */
-  public void print() {
+  public void print(BufferedWriter out) throws IOException {
     if (hypergraph != null) {
-      if (! JoshuaConfiguration.hypergraphFilePattern.equals("")) {
+      if (!JoshuaConfiguration.hypergraphFilePattern.equals("")) {
         this.hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
       }
 
-      KBestExtractor kBestExtractor =
-        new KBestExtractor(JoshuaDecoder.weights, JoshuaConfiguration.use_unique_nbest,
-          JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-              JoshuaConfiguration.add_combined_cost, false, false);
+      long startTime = System.currentTimeMillis();
+      KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
+          JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
-      try {
-        kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
-            JoshuaConfiguration.topN, id(), (BufferedWriter) null);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,
+          JoshuaConfiguration.topN, id(), out);
+      
+      float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
+      System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
+          JoshuaConfiguration.topN, seconds));
 
     } else {
-      String output = getSourceSentence().source();
-      if (getSourceSentence().target() != null)
-        output += " ||| " + getSourceSentence().target();
-      
-      System.out.println(id() + " ||| " + output + " |||  ||| 0.0");
+
+      // There is no output for the given input (e.g. blank line)
+      String outputString = JoshuaConfiguration.outputFormat
+          .replace("%s", "")
+          .replace("%e", "")
+          .replace("%S", "")
+          .replace("%t", "")
+          .replace("%i", Integer.toString(source.id()))
+          .replace("%f", "")
+          .replace("%c", "0.000");
+
+      out.write(outputString);
+      out.newLine();
     }
 
-    System.out.flush();
+    out.flush();
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(id());

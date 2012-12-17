@@ -2,7 +2,7 @@
 
 set -u
 
-./decoder_command 2> log
+cat input.bn | $JOSHUA/bin/joshua-decoder -m 1g -threads 2 -c joshua.config > output 2> log
 
 # Extract the translations and model scores
 cat output | awk -F\| '{print $4 " ||| " $10}' > output.scores
@@ -16,7 +16,7 @@ if [ $? -eq 0 ]; then
   exit 0
 else
   echo FAILED
-  cat diff
+  tail diff
   exit 1
 fi
 

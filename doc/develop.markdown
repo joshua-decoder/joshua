@@ -9,6 +9,22 @@ The Joshua source code repository is located at
 [http://github.com/joshua-decoder/joshua](http://github.com/joshua-decoder/joshua).
 Active development is being done in the `devel` branch.
 
+## Development tools required
+
+* [Apache Ant](http://ant.apache.org/) version 1.8.0 or greater
+* [Doxygen](http://www.doxygen.org) version 1.8.0 or greater
+* A POSIX environment
+* Git
+* (optional) Eclipse
+  If you are developing Joshua using Eclipse, please import the GoogleStyle 
+  formatter configuration `eclipse-java-google-style.xml`, which can be 
+  downloaded from 
+  [http://code.google.com/p/google-styleguide/source/browse/trunk](http://code.google.com/p/google-styleguide/source/browse/trunk).
+
+  In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
+  on *Import...* and choose `eclipse-java-google-style.xml`.
+
+
 ## Discussion list
 
 [https://groups.google.com/forum/#!forum/joshua_developers](https://groups.google.com/forum/#!forum/joshua_developers)
@@ -28,16 +44,6 @@ page.
 ### Naming conventions
 
 TBD
-
-### Tools
-
-If you are developing Joshua using Eclipse, please import the GoogleStyle 
-formatter configuration `eclipse-java-google-style.xml`, which can be 
-downloaded from 
-[http://code.google.com/p/google-styleguide/source/browse/trunk](http://code.google.com/p/google-styleguide/source/browse/trunk).
-
-In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
-on *Import...* and choose `eclipse-java-google-style.xml`.
 
 ### Format
 
@@ -76,3 +82,24 @@ Here's an example of building a release versioned "2012-07-18".  It will be plac
     cd $JOSHUA
     ant release
 
+## Adding dependencies
+
+Dependencies such as JAR archives are automatically downloaded by the
+[Apache Ivy](http://ant.apache.org/ivy/) dependency management tool,
+which is designed to interact with the `ant` build tool.
+
+To add a new dependency to the list of automatically downloaded archive
+libraries, follow these steps:
+
+1.  Search for the library in 
+    [Maven Central Repository](http://search.maven.org/) or 
+    [MVN Repository](http://mvnrepository.com/). 
+2.  If the desired library is found, both websites provide the line that
+    you would add under `<dependencies>` in `ivy.xml`. E.g. for
+    **asm-3.1.jar**, the line that would be added is:
+
+        <dependency org="asm" name="asm" rev="3.1"/>
+
+More obscure libraries can be found to be hosted in less common
+repositories. Additional repositories can be added to the
+`$JOSHUA/ivysettings.xml` file.

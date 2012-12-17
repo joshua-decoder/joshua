@@ -1,4 +1,4 @@
-bin/
+class/
 lib/libsrilm.dylib
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Ngram.java
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Vocab.java
@@ -68,13 +68,13 @@ doxygen_*.tmp
 *.so
 test/scripts/tokenization/diff
 test/scripts/tokenization/output
+.cachepipe
 
-/test/bn-en/packed/diff
-/test/bn-en/packed/output.bleu
-/test/decoder/empty-test/log
-/test/decoder/regexp-grammar/diff
-/test/decoder/regexp-grammar/output
-/test/packed-grammar/diff
-/test/packed-grammar/log
-/test/packed-grammar/output
-/test/packed-grammar/output.bleu
+joshua-decoder.org
+release
+test/bn-en/samt/output.scores
+test/decoder/n-ary/diff
+test/decoder/n-ary/log
+test/decoder/n-ary/output
+test/decoder/n-ary/output.scores
+debug.txt

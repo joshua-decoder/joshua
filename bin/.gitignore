@@ -1,0 +1,5 @@
+GIZA++
+build_binary
+mkcls
+ngram_query
+snt2cooc.out

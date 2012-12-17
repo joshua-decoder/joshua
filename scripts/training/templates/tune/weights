@@ -18,8 +18,6 @@
 
 <TMWEIGHTS>
 
-tm_glue_0 1.0
-
 # The wordpenalty feature counts the number of words in each hypothesis.
 
 WordPenalty -1.0

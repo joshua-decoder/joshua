@@ -39,7 +39,7 @@ open CONFIG, ">packer.config" or die "can't write to packer.config";
 print CONFIG "slice_size 400000\n\nquantizer   float   $feature_str\n";
 close(CONFIG);
 
-system("java -cp $JOSHUA/bin joshua.tools.GrammarPacker -c packer.config -p $output_dir -g grammar-labeled.gz");
+system("java -cp $JOSHUA/class joshua.tools.GrammarPacker -c packer.config -p $output_dir -g grammar-labeled.gz");
 
 unlink("grammar-labeled.gz");
 system("mv dense_map packer.config $output_dir");

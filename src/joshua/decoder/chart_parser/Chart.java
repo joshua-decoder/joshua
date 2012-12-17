@@ -136,7 +136,7 @@ public class Chart {
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
-      this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this);
+      this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this, this.grammars[i].isRegexpGrammar());
 
     /*
      * The CubePruneCombiner defined here is fairly complicated. It is designed to work both at the
@@ -294,7 +294,7 @@ public class Chart {
       // seed it with the beginning states
       // for each applicable grammar
       for (int g = 0; g < grammars.length; g++) {
-        if (!grammars[g].hasRuleForSpan(i, j, sourceLength)
+        if (!grammars[g].hasRuleForSpan(i, j, inputLattice.distance(i,j))
             || null == dotcharts[g].getDotCell(i, j))
           continue;
         // for each rule with applicable rules
@@ -424,7 +424,7 @@ public class Chart {
     } else {
       for (int k = 0; k < this.grammars.length; k++) {
         // grammars have a maximum input span they'll apply to
-        if (this.grammars[k].hasRuleForSpan(i, j, sourceLength)
+        if (this.grammars[k].hasRuleForSpan(i, j, inputLattice.distance(i,j))
             && null != this.dotcharts[k].getDotCell(i, j)) {
 
           // foreach dotnode in the span
@@ -456,7 +456,12 @@ public class Chart {
         int j = i + width;
         if (logger.isLoggable(Level.FINEST))
           logger.finest(String.format("Processing span (%d, %d)", i, j));
-
+        
+        /* Skips spans for which no path exists (possible in lattices). */
+        if (inputLattice.distance(i,j) == Double.POSITIVE_INFINITY) {
+          continue;
+        }
+        
         // (1)=== expand the cell in dotchart
         logger.finest("Expanding cell");
         for (int k = 0; k < this.grammars.length; k++) {
@@ -484,7 +489,7 @@ public class Chart {
         // chart_cell(i,j)
         logger.finest("Initializing new dot-items that start from complete items in this cell");
         for (int k = 0; k < this.grammars.length; k++) {
-          if (this.grammars[k].hasRuleForSpan(i, j, sourceLength)) {
+          if (this.grammars[k].hasRuleForSpan(i, j, inputLattice.distance(i,j))) {
             this.dotcharts[k].startDotItems(i, j);
           }
         }
@@ -559,7 +564,7 @@ public class Chart {
       seen_lhs.add(node.lhs);
 
       for (Grammar gr : grammars) {
-        if (!gr.hasRuleForSpan(i, j, sourceLength))
+        if (!gr.hasRuleForSpan(i, j, inputLattice.distance(i,j)))
           continue;
 
         Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and

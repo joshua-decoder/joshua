@@ -29,7 +29,10 @@ public class NodeIdentifierComparator implements Comparator<Node<?>>, Serializab
 
   /* See Javadoc for java.util.Comparator#compare */
   public int compare(Node<?> o1, Node<?> o2) {
-    return o1.id.compareTo(o2.id);
+    if (o1.id() < o2.id())
+      return -1;
+    else if (o1.id() == o2.id())
+      return 0;
+    return 1;
   }
-
 }

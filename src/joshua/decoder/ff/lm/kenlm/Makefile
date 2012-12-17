@@ -15,12 +15,14 @@ libken.dylib: $(CORE) $(HEADERS)
 
 install: libken.dylib
 	cp -f libken.dylib $(JOSHUA)/lib/
+	cp -f build_binary ngram_query $(JOSHUA)/bin/
 else
 libken.so: $(CORE) $(HEADERS) jni/wrap.cc
 	g++ -I. -DNO_ICU -DNDEBUG -O3 $(CXXFLAGS) jni/wrap.cc -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux util/bit_packing.o util/ersatz_progress.o util/exception.o util/file.o util/file_piece.o util/murmur_hash.o util/mmap.o util/usage.o lm/bhiksha.o lm/binary_format.o lm/config.o lm/lm_exception.o lm/model.o lm/quantize.o lm/read_arpa.o lm/search_hashed.o lm/search_trie.o lm/trie.o lm/trie_sort.o lm/value_build.o lm/virtual_interface.o lm/vocab.o -fpic -shared -Wl,-soname,libken.so -o libken.so -lz -Wno-deprecated -pthread
 
 install: libken.so
 	cp -f libken.so $(libdir)/libken.so
+	cp -f build_binary ngram_query $(JOSHUA)/bin/
 endif
 
 build_binary: $(CORE) $(HEADERS) lm/build_binary.cc

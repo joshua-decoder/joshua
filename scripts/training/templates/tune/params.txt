@@ -1,6 +1,5 @@
 <LMPARAMS>
 <TMPARAMS>
-tm_glue_0 |||    1.0        Opt  -Inf  +Inf  -1  +1
 WordPenalty        |||   -2.844814   Opt  -Inf  +Inf  -5   0
 OOVPenalty         ||| -100          Fix     0     0   0   0
 <LATTICEPARAM>

@@ -2,27 +2,30 @@
 
 set -u
 
+export THRAX=$JOSHUA/thrax
+
 # pack the grammar
+rm -rf dense_map grammar.packed
 $JOSHUA/scripts/support/grammar-packer.pl grammar.gz grammar.packed 2> packer.log
 
 # generate the glue grammar
 gzip -cd grammar.gz | $JOSHUA/thrax/scripts/create_glue_grammar.sh > grammar.glue
 
 # decode
-./decoder_command 2> log
+cat input.bn | $JOSHUA/bin/joshua-decoder -m 1g -threads 2 -c joshua.config > output 2> log
 
-java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx256m -Xms256m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand output -format nbest -ref reference.en -rps 4 -m BLEU 4 closest > output.bleu
+$JOSHUA/bin/bleu output reference.en 4 > output.bleu
 
 diff -u output.bleu output.gold.bleu > diff
 
 if [ $? -eq 0 ]; then
 	echo PASSED
-	rm -f diff log output.bleu output grammar.glue
+	rm -f packer.log diff log output.bleu output grammar.glue
 	rm -rf grammar.packed
 	exit 0
 else
 	echo FAILED
-	cat diff
+	tail diff
 	exit 1
 fi
 

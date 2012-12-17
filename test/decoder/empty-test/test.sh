@@ -2,7 +2,7 @@
 
 set -u
 
-cat input | $JOSHUA/joshua-decoder > output 2> log
+cat input | $JOSHUA/bin/joshua-decoder > output 2> log
 
 diff -u output output.gold > diff
 

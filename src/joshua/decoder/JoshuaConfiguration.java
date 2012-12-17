@@ -27,9 +27,6 @@ public class JoshuaConfiguration {
   // new format enabling any number of grammar files
   public static ArrayList<String> tms = new ArrayList<String>();
 
-  // when set to a grammar's owner, it permits that grammar to have regular expressions in its rules
-  public static String regexpGrammar = "";
-
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
   public static double lm_ceiling_cost = 100;
@@ -38,25 +35,28 @@ public class JoshuaConfiguration {
   public static int lm_order = 3;
 
   public static String lm_file = null;
-  
-  /* The file to read the weights from (part of the sparse features implementation).
+
+  /*
+   * The file to read the weights from (part of the sparse features implementation).
    */
   public static String weights_file = "";
 
-  /* The span limit is the maximum span of the input to which rules from the main translation
-   * grammar can be applied.  It does not apply to the glue grammar.
+  /*
+   * The span limit is the maximum span of the input to which rules from the main translation
+   * grammar can be applied. It does not apply to the glue grammar.
    */
-  public static int span_limit = 10;
+  public static int span_limit = 20;
 
-  /* This word is in an index into a grammars feature sets.  The name here ties together the
-   * features present on each grammar line in a grammar file, and the features present in the Joshua
-   * configuration file.  This allows you to have different sets of features (or shared) across
+  /*
+   * This word is in an index into a grammars feature sets. The name here ties together the features
+   * present on each grammar line in a grammar file, and the features present in the Joshua
+   * configuration file. This allows you to have different sets of features (or shared) across
    * grammar files.
    */
-  public static String phrase_owner = "pt"; 
-  public static String glue_owner   = "glue";
+  public static String phrase_owner = "pt";
+  public static String glue_owner = "glue";
 
-  // Default symbols.  The symbol here should be enclosed in square brackets.
+  // Default symbols. The symbol here should be enclosed in square brackets.
   public static String default_non_terminal = "[X]";
   public static String goal_symbol = "[GOAL]";
 
@@ -91,19 +91,34 @@ public class JoshuaConfiguration {
   public static double relative_threshold = 10.0;
   public static int max_n_rules = 50;
 
-  /* N-best configuration.
+  /* Maximum sentence length */
+  public static int maxlen = 200;
+
+  /*
+   * N-best configuration.
    */
   // make sure output strings are unique
   public static boolean use_unique_nbest = false;
-  // output the synchronous derivation tree
-  public static boolean use_tree_nbest = false;
   // include the phrasal alignments in the output
   public static boolean include_align_index = false;
-  // include a final field that denotes the complete model score (the dot-product of the weight
-  // vector with the accumulated feature values
-  public static boolean add_combined_cost = true;
   // The number of hypotheses to output by default
   public static int topN = 1;
+
+  /*
+   * This string describes the format of each line of output from the decoder (i.e., the
+   * translations). The string can include arbitrary text and also variables.  The following variables
+   * are available:
+   * 
+   *   %i the 0-index sentence number 
+   *   %s the translated sentence 
+   *   %S the translated sentence, denormalized
+   *   %t the synchronous derivation
+   *   %f the list of feature values (as name=value pairs) 
+   *   %c the model cost 
+   *   %w the weight vector 
+   *   %a the alignments between source and target words (currently unimplemented) 
+   */
+  public static String outputFormat = "%i ||| %s ||| %f ||| %c";
 
   public static boolean escape_trees = false;
 
@@ -128,6 +143,9 @@ public class JoshuaConfiguration {
   private static final Logger logger = Logger.getLogger(JoshuaConfiguration.class.getName());
 
   public static ArrayList<String> features = new ArrayList<String>();
+
+  /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
+  public static int server_port = 0;
 
   // ===============================================================
   // Methods
@@ -177,7 +195,8 @@ public class JoshuaConfiguration {
       for (String line : configReader) {
         line = line.trim(); // .toLowerCase();
 
-        if (Regex.commentOrEmptyLine.matches(line)) continue;
+        if (Regex.commentOrEmptyLine.matches(line))
+          continue;
 
         /*
          * There are two kinds of substantive (non-comment, non-blank) lines: parameters and feature
@@ -203,7 +222,8 @@ public class JoshuaConfiguration {
 
           } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
             hypergraphFilePattern = fds[1].trim();
-            logger.finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
+            logger
+                .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
           } else if (parameter.equals(normalize_key("lm_file"))) {
             lm_file = fds[1].trim();
@@ -211,10 +231,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("parse"))) {
             parse = Boolean.parseBoolean(fds[1]);
             logger.finest(String.format("parse: %s", parse));
-
-          } else if (parameter.equals(normalize_key("regexp-grammar"))) {
-            regexpGrammar = fds[1];
-            logger.finest(String.format("regexp-grammar: %s", regexpGrammar));
 
           } else if (parameter.equals(normalize_key("tm_file"))) {
             tm_file = fds[1].trim();
@@ -231,10 +247,11 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("glue_format"))) {
             glue_format = fds[1].trim();
             logger.finest(String.format("glue format: %s", glue_format));
-            
+
           } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
             hypergraphFilePattern = fds[1].trim();
-            logger.finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
+            logger
+                .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
           } else if (parameter.equals(normalize_key("lm_type"))) {
             lm_type = String.valueOf(fds[1]);
@@ -285,7 +302,7 @@ public class JoshuaConfiguration {
             goal_symbol = fds[1].trim();
 
             // If the goal symbol was not enclosed in square brackets, then add them
-            if (! goal_symbol.matches("\\[.*\\]"))
+            if (!goal_symbol.matches("\\[.*\\]"))
               goal_symbol = "[" + goal_symbol + "]";
 
             logger.finest("goalSymbol: " + goal_symbol);
@@ -326,13 +343,9 @@ public class JoshuaConfiguration {
             use_unique_nbest = Boolean.valueOf(fds[1]);
             logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 
-          } else if (parameter.equals(normalize_key("add_combined_cost"))) {
-            add_combined_cost = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
-
-          } else if (parameter.equals(normalize_key("use_tree_nbest"))) {
-            use_tree_nbest = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
+          } else if (parameter.equals(normalize_key("output-format"))) {
+            outputFormat = fds[1];
+            logger.finest(String.format("output-format: %s", outputFormat));
 
           } else if (parameter.equals(normalize_key("escape_trees"))) {
             escape_trees = Boolean.valueOf(fds[1]);
@@ -369,8 +382,10 @@ public class JoshuaConfiguration {
 
           } else if (parameter.equals(normalize_key("useCubePrune"))) {
             useCubePrune = Boolean.valueOf(fds[1]);
-            if (useCubePrune == false) logger.warning("useCubePrune=false");
+            if (useCubePrune == false)
+              logger.warning("useCubePrune=false");
             logger.finest(String.format("useCubePrune: %s", useCubePrune));
+
           } else if (parameter.equals(normalize_key("useBeamAndThresholdPrune"))) {
             useBeamAndThresholdPrune = Boolean.valueOf(fds[1]);
             if (useBeamAndThresholdPrune == false)
@@ -396,11 +411,15 @@ public class JoshuaConfiguration {
 
           } else if (parameter.equals(normalize_key("oracleFile"))) {
             oracleFile = fds[1].trim();
-            logger.info(String.format("oracle file: %s", oracleFile));
+            logger.info(String.format("    oracle file: %s", oracleFile));
             if (!new File(oracleFile).exists()) {
               logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
               System.exit(1);
             }
+            
+          } else if (parameter.equals(normalize_key("server-port"))) {
+            server_port = Integer.parseInt(fds[1]);
+            logger.info(String.format("    server-port: %d", server_port));
 
           } else if (parameter.equals("c") || parameter.equals("config")) {
             // this was used to send in the config file, just ignore it
@@ -411,10 +430,18 @@ public class JoshuaConfiguration {
             features.add("feature_function = " + fds[1]);
 
           } else {
-            logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");
-            System.exit(1);
-          }
+            
+            if (parameter.equals(normalize_key("use-sent-specific-tm"))
+                || parameter.equals(normalize_key("add-combined-cost"))
+                || parameter.equals(normalize_key("use-tree-nbest"))
+                || parameter.equals(normalize_key("regexp-grammar"))) {  
+              logger.warning(String.format("WARNING: ignoring deprecated parameter '%s'", fds[0]));
 
+            } else {
+              logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");
+              System.exit(1);
+            }
+          }
 
         } else {
           // Feature function. These are processed a bit later
@@ -434,9 +461,8 @@ public class JoshuaConfiguration {
     // parameters. These combined lines are later processed in
     // JoshuaDecoder as part of the multiple LM support
     if (lms.size() == 0 && lm_file != null) {
-      String line =
-          String.format("%s %d %b %b %.2f %s", lm_type, lm_order, use_left_equivalent_state,
-              use_right_equivalent_state, lm_ceiling_cost, lm_file);
+      String line = String.format("%s %d %b %b %.2f %s", lm_type, lm_order,
+          use_left_equivalent_state, use_right_equivalent_state, lm_ceiling_cost, lm_file);
       lms.add(line);
     }
 
@@ -446,12 +472,14 @@ public class JoshuaConfiguration {
     for (String lmLine : lms) {
       String tokens[] = lmLine.split("\\s+");
       int order = Integer.parseInt(tokens[1]);
-      if (order > JoshuaConfiguration.lm_order) JoshuaConfiguration.lm_order = order;
+      if (order > JoshuaConfiguration.lm_order)
+        JoshuaConfiguration.lm_order = order;
     }
 
-    /* Now we do a similar thing for the TMs, enabling backward compatibility with the old format
-     * that allowed for just two grammars.  The new format is
-     *
+    /*
+     * Now we do a similar thing for the TMs, enabling backward compatibility with the old format
+     * that allowed for just two grammars. The new format is
+     * 
      * tm = FORMAT OWNER SPAN_LIMIT FILE
      */
     if (tms.size() == 0 && tm_file != null) {
