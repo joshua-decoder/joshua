@@ -29,9 +29,8 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.util.encoding.Encoder;
 import joshua.util.io.LineReader;
-import joshua.util.quantization.Quantizer;
-import joshua.util.quantization.QuantizerConfiguration;
 
 public class PackedGrammar extends BatchGrammar {
 
@@ -41,7 +40,7 @@ public class PackedGrammar extends BatchGrammar {
 
   private int owner;
 
-  private QuantizerConfiguration quantization;
+  private EncoderConfiguration quantization;
   private HashMap<Integer, Integer> featureNameMap;
 
   private PackedRoot root;
@@ -584,7 +583,7 @@ public class PackedGrammar extends BatchGrammar {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < num_features; i++) {
         int feature_id = features.getInt(feature_position);
-        Quantizer quantizer = quantization.get(feature_id);
+        Encoder quantizer = quantization.get(feature_id);
         int index = featureNameMap.get(feature_id);
         sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
             quantizer.read(features, feature_position)));

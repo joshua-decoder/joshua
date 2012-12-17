@@ -11,12 +11,6 @@ public interface Encoder {
 
   public void write(ByteBuffer stream, float value);
 
-  public void initialize();
-
-  public void add(float key);
-
-  public void finalize();
-
   public String getKey();
 
   public void writeState(DataOutputStream out) throws IOException;
