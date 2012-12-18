@@ -669,6 +669,11 @@ PARSE:
 
 # Parsing only happens for SAMT grammars.
 
+if ($FIRST_STEP eq "PARSE" and $GRAMMAR_TYPE ne "samt") {
+  print STDERR "* FATAL: parsing doesn't apply to hiero grammars; You need to add '--type samt'\n";
+  exit;
+}
+
 if ($GRAMMAR_TYPE eq "samt") {
 
   # If the user passed in the already-parsed corpus, use that (after copying it into place)
@@ -678,12 +683,14 @@ if ($GRAMMAR_TYPE eq "samt") {
     $TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
   } else {
 
+    system("mkdir -p $DATA_DIRS{train}") unless -e $DATA_DIRS{train};
+
     $cachepipe->cmd("build-vocab",
                     "cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{train}/vocab.$TARGET",
                     $TRAIN{target},
                     "$DATA_DIRS{train}/vocab.$TARGET");
 
-    my $file_to_parse = (exists $TRAIN{mixedcase}) ? $TRAIN{mixedcase} : $TRAIN{source};
+    my $file_to_parse = (exists $TRAIN{mixedcase}) ? $TRAIN{mixedcase} : $TRAIN{target};
 
     if ($NUM_JOBS > 1) {
       # the black-box parallelizer model doesn't work with multiple
