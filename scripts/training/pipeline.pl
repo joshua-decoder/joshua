@@ -103,6 +103,9 @@ my $BUILDLM_MEM = "2g";
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";
 
+# When qsub is called for aligning, these arguments should be passed to it.
+my $QSUB_ALIGN_ARGS  = "-l h_rt=168:00:00,h_vmem=15g,mem_free=10g,num_proc=1";
+
 # Amount of memory for the Berkeley aligner.
 my $ALIGNER_MEM = "10g";
 
@@ -194,6 +197,7 @@ my $retval = GetOptions(
   "threads=i"         => \$NUM_THREADS,
   "subsample!"       => \$DO_SUBSAMPLE,
   "qsub-args=s"      => \$QSUB_ARGS,
+  "qsub-align-args=s"      => \$QSUB_ALIGN_ARGS,
   "first-step=s"     => \$FIRST_STEP,
   "last-step=s"      => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
@@ -623,26 +627,20 @@ if (! defined $ALIGNMENT) {
   #
   # my $pool = new Thread::Pool(Min => 1, Max => $max_aligner_threads);
 
-	my @aligned_files;
-  for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
+  system("mkdir alignments") unless -d "alignments";
 
-		# create the alignment subdirectory
-		my $chunkdir = "alignments/$chunkno";
-		system("mkdir","-p", $chunkdir);
-    
-		if ($ALIGNER eq "giza") {
-			run_giza($chunkdir, $chunkno, $NUM_THREADS > 1);
-			# $pool->enqueue(\&run_giza, $chunkdir, $chunkno, $NUM_THREADS > 1);
-
-			push(@aligned_files, "alignments/$chunkno/model/aligned.grow-diag-final");
-		} elsif ($ALIGNER eq "berkeley") {
-			run_berkeley_aligner($chunkdir, $chunkno);
-			# $pool->enqueue(\&run_berkeley_aligner, $chunkdir, $chunkno);
-
-			push(@aligned_files, "alignments/$chunkno/training.align");
-		}
+  if ($lastchunk == 0 || $NUM_JOBS == 1) {
+    system("seq 0 $lastchunk | $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log 2>&1");
+  } else {
+    system("seq 0 $lastchunk | $JOSHUA/scripts/training/parallelize/parallelize.pl --err err --jobs $NUM_JOBS --qsub-args \"$QSUB_ALIGN_ARGS\" -p $ALIGNER_MEM -- $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log 2>&1");
   }
 
+  my @aligned_files;
+  if ($ALIGNER eq "giza") {
+    @aligned_files = map { "alignments/$_/model/aligned.grow-diag-final" } (0..$lastchunk);
+  } elsif ($ALIGNER eq "berkeley") {
+    @aligned_files = map { "alignments/$_/training.align" } (0..$lastchunk);
+  }
 	my $aligned_file_list = join(" ", @aligned_files);
 
   # wait for all the threads to finish
@@ -1581,42 +1579,6 @@ sub is_lattice {
   } else {
 		return 0;
   }
-}
-
-# This function runs GIZA++, possibly doing both directions at the same time
-sub run_giza {
-  my ($chunkdir,$chunkno,$do_parallel) = @_;
-  my $parallel = ($do_parallel == 1) ? "-parallel" : "";
-  $cachepipe->cmd("giza-$chunkno",
-									"rm -f $chunkdir/corpus.0-0.*; $GIZA_TRAINER --root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus -merge $GIZA_MERGE $parallel > $chunkdir/giza.log 2>&1",
-									"$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
-									"$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
-									"$chunkdir/model/aligned.grow-diag-final");
-}
-
-sub run_berkeley_aligner {
-  my ($chunkdir,$chunkno) = @_;
-
-  # copy and modify the config file
-  open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
-  open TO, ">", "alignments/$chunkno/word-align.conf" or die "can't write to 'alignments/$chunkno/word-align.conf'";
-  while (<FROM>) {
-		s/<SOURCE>/$SOURCE.$chunkno/g;
-		s/<TARGET>/$TARGET.$chunkno/g;
-		s/<CHUNK>/$chunkno/g;
-		s/<TRAIN_DIR>/$DATA_DIRS{train}/g;
-		print TO;
-  }
-  close(TO);
-  close(FROM);
-
-  # run the job
-  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
-									"java -d64 -Xmx${ALIGNER_MEM} -jar $JOSHUA/lib/berkeleyaligner.jar ++alignments/$chunkno/word-align.conf",
-									"alignments/$chunkno/word-align.conf",
-									"$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
-									"$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
-									"$chunkdir/training.align");
 }
 
 # This counts the number of TM features present in a grammar
