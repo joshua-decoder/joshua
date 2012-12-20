@@ -1346,7 +1346,7 @@ close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
-system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -tm 'thrax pt 20 $TEST_GRAMMAR' -tm 'thrax glue -1 $GLUE_GRAMMAR_FILE' -default-non-terminal $OOV -mark-oovs true > $testrun/joshua.config");
+system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt 20 $TEST_GRAMMAR' -non-terminal $OOV > $testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
