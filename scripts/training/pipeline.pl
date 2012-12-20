@@ -1016,8 +1016,8 @@ while (my $line = <CONFIG>) {
       }
 		}
 	}
-	close CONFIG;
 }
+close CONFIG;
 
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
