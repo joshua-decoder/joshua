@@ -310,16 +310,12 @@ public class Chart {
           if (cells[i][j] == null)
             cells[i][j] = new Cell(this, goalSymbolID);
 
-          if (! ruleCollection.isSorted()) {
-            ruleCollection.sortRules(this.featureFunctions);
-          }
-          
           /*
            * TODO: This causes the whole list of rules to be copied, which is unnecessary when there
            * are not actually any constraints in play.
            */
           List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j,
-              ruleCollection.getSortedRules());
+              ruleCollection.getSortedRules(this.featureFunctions));
           SourcePath sourcePath = dotNode.getSourcePath();
 
           if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0)
@@ -372,7 +368,7 @@ public class Chart {
         SourcePath sourcePath = dotNode.getSourcePath();
         List<SuperNode> superNodes = dotNode.getAntSuperNodes();
         List<Rule> rules = manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules()
-            .getSortedRules());
+            .getSortedRules(this.featureFunctions));
 
         List<HGNode> currentAntNodes = new ArrayList<HGNode>(state.antNodes);
 
@@ -445,7 +441,7 @@ public class Chart {
             if (ruleCollection != null) { // have rules under this trienode
               // TODO: filter the rule according to LHS constraint
               // complete the cell
-              completeCell(i, j, dotNode, ruleCollection.getSortedRules(),
+              completeCell(i, j, dotNode, ruleCollection.getSortedRules(this.featureFunctions),
                   ruleCollection.getArity(), dotNode.getSourcePath());
 
             }
@@ -588,7 +584,7 @@ public class Chart {
 
           ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
           antecedents.add(node);
-          List<Rule> rules = childNode.getRuleCollection().getSortedRules();
+          List<Rule> rules = childNode.getRuleCollection().getSortedRules(this.featureFunctions);
 
           for (Rule rule : rules) { // for each unary rules
             ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule,

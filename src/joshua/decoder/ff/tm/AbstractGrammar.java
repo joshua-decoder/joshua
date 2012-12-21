@@ -96,11 +96,9 @@ public abstract class AbstractGrammar implements Grammar {
         if (logger.isLoggable(Level.FINE))
           logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));
 
-        rules.sortRules(models);
-
         if (logger.isLoggable(Level.FINEST)) {
           StringBuilder s = new StringBuilder();
-          for (Rule r : rules.getSortedRules()) {
+          for (Rule r : rules.getSortedRules(models)) {
             s.append("\n\t" + r.getLHS() + " ||| " + Arrays.toString(r.getFrench()) + " ||| "
                 + Arrays.toString(r.getEnglish()) + " ||| " + r.getFeatureVector()
                 + " ||| " + r.getEstimatedCost() + "  " + r.getClass().getName() + "@"
