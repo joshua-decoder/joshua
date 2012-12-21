@@ -143,6 +143,11 @@ public class Decoder {
       }
     }
 
+    /*
+     *  TODO: we need to clear out the entire trie of positive sorting markings.
+     */
+    System.err.println("* FATAL: changing the feature weights won't work until you clear the sorted settings for the complete trie");
+    System.exit(1);
     for (GrammarFactory grammarFactory : this.grammarFactories) {
       // if (grammarFactory instanceof Grammar) {
       grammarFactory.getGrammarForSentence(null).sortGrammar(this.featureFunctions);
@@ -482,14 +487,6 @@ public class Decoder {
 
       long pre_sort_time = System.currentTimeMillis();
       // Sort the TM grammars (needed to do cube pruning)
-/*
-      for (GrammarFactory grammarFactory : this.grammarFactories) {
-        if (grammarFactory instanceof Grammar) {
-          Grammar batchGrammar = (Grammar) grammarFactory;
-          batchGrammar.sortGrammar(this.featureFunctions);
-        }
-      }
-      */
       logger.info(String.format("Grammar sorting took: %d seconds.",
           (System.currentTimeMillis() - pre_sort_time) / 1000));
 
