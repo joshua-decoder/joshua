@@ -31,7 +31,7 @@ public class SentenceTest {
   }
 
   /**
-   * Return a string consisting of repeatedToken concatenated MAX_SENTENCE_TOKENS times, joined by a
+   * Return a string consisting of repeatedToken concatenated MAX_SENTENCE_NODES times, joined by a
    * space.
    *
    * @param repeatedToken
@@ -49,9 +49,9 @@ public class SentenceTest {
 
   @Test
   public void testMaxTokens() {
-    // Concatenate MAX_SENTENCE_TOKENS
+    // Concatenate MAX_SENTENCE_NODES
     // Since the maximum-tokens threshold was not crossed, the input sentence should not be blanked.
-    String input = concatTokens("*", Sentence.MAX_SENTENCE_TOKENS);
+    String input = concatTokens("*", Sentence.MAX_SENTENCE_NODES);
 
     Sentence sentence;
     // Source only
@@ -67,9 +67,9 @@ public class SentenceTest {
 
   @Test
   public void testTooManyTokens() {
-    // Concatenate more than MAX_SENTENCE_TOKENS
+    // Concatenate more than MAX_SENTENCE_NODES
     // Since the maximum-tokens threshold is crossed, the input sentence should be blanked.
-    String input = concatTokens("*", Sentence.MAX_SENTENCE_TOKENS + 1);
+    String input = concatTokens("*", Sentence.MAX_SENTENCE_NODES + 1);
 
     Sentence sentence;
     // Source only
@@ -85,8 +85,8 @@ public class SentenceTest {
 
   @Test
   public void testAlmostButNotTooManyTokens() {
-    // Concatenate MAX_SENTENCE_TOKENS, each shorter than the average length, joined by a space.
-    String input = concatTokens("12345", Sentence.MAX_SENTENCE_TOKENS);
+    // Concatenate MAX_SENTENCE_NODES, each shorter than the average length, joined by a space.
+    String input = concatTokens("12345", Sentence.MAX_SENTENCE_NODES);
 
     Sentence sentence;
     // Source only
@@ -102,7 +102,7 @@ public class SentenceTest {
 
   @Test
   public void testClearlyNotTooManyTokens() {
-    // Concatenate MAX_SENTENCE_TOKENS, each shorter than the average length, joined by a space.
+    // Concatenate MAX_SENTENCE_NODES, each shorter than the average length, joined by a space.
     String input = "token";
     assertFalse(new Sentence(input, 0).isEmpty());
   }
