@@ -136,7 +136,8 @@ public class Chart {
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
-      this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this, this.grammars[i].isRegexpGrammar());
+      this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
+          this.grammars[i].isRegexpGrammar());
 
     /*
      * The CubePruneCombiner defined here is fairly complicated. It is designed to work both at the
@@ -168,7 +169,8 @@ public class Chart {
         // create a rule, but do not add into the grammar trie
         // TODO: which grammar should we use to create an OOV rule?
         int sourceWord = arc.getLabel();
-        if (sourceWord == Vocabulary.id(Vocabulary.START_SYM) || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
+        if (sourceWord == Vocabulary.id(Vocabulary.START_SYM)
+            || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
           continue;
 
         // Determine if word is actual OOV.
@@ -263,14 +265,15 @@ public class Chart {
 
     // System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
 
-//    StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
-//        Vocabulary.START_SYM + " " + sentence.target() + " " + Vocabulary.STOP_SYM) : null;
+    // StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
+    // Vocabulary.START_SYM + " " + sentence.target() + " " + Vocabulary.STOP_SYM) : null;
 
     StateConstraint stateConstraint = null;
     if (sentence.target() != null)
-//      stateConstraint = new StateConstraint(sentence.target());
-      stateConstraint = new StateConstraint(Vocabulary.START_SYM + " " + sentence.target() + " " + Vocabulary.STOP_SYM);
-    
+      // stateConstraint = new StateConstraint(sentence.target());
+      stateConstraint = new StateConstraint(Vocabulary.START_SYM + " " + sentence.target() + " "
+          + Vocabulary.STOP_SYM);
+
     if (JoshuaConfiguration.pop_limit > 0) {
       /*
        * We want to implement proper cube-pruning at the span level, with pruning controlled with
@@ -294,7 +297,7 @@ public class Chart {
       // seed it with the beginning states
       // for each applicable grammar
       for (int g = 0; g < grammars.length; g++) {
-        if (!grammars[g].hasRuleForSpan(i, j, inputLattice.distance(i,j))
+        if (!grammars[g].hasRuleForSpan(i, j, inputLattice.distance(i, j))
             || null == dotcharts[g].getDotCell(i, j))
           continue;
         // for each rule with applicable rules
@@ -307,6 +310,14 @@ public class Chart {
           if (cells[i][j] == null)
             cells[i][j] = new Cell(this, goalSymbolID);
 
+          if (! ruleCollection.isSorted()) {
+            ruleCollection.sortRules(this.featureFunctions);
+          }
+          
+          /*
+           * TODO: This causes the whole list of rules to be copied, which is unnecessary when there
+           * are not actually any constraints in play.
+           */
           List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j,
               ruleCollection.getSortedRules());
           SourcePath sourcePath = dotNode.getSourcePath();
@@ -424,7 +435,7 @@ public class Chart {
     } else {
       for (int k = 0; k < this.grammars.length; k++) {
         // grammars have a maximum input span they'll apply to
-        if (this.grammars[k].hasRuleForSpan(i, j, inputLattice.distance(i,j))
+        if (this.grammars[k].hasRuleForSpan(i, j, inputLattice.distance(i, j))
             && null != this.dotcharts[k].getDotCell(i, j)) {
 
           // foreach dotnode in the span
@@ -456,12 +467,12 @@ public class Chart {
         int j = i + width;
         if (logger.isLoggable(Level.FINEST))
           logger.finest(String.format("Processing span (%d, %d)", i, j));
-        
+
         /* Skips spans for which no path exists (possible in lattices). */
-        if (inputLattice.distance(i,j) == Double.POSITIVE_INFINITY) {
+        if (inputLattice.distance(i, j) == Double.POSITIVE_INFINITY) {
           continue;
         }
-        
+
         // (1)=== expand the cell in dotchart
         logger.finest("Expanding cell");
         for (int k = 0; k < this.grammars.length; k++) {
@@ -489,7 +500,7 @@ public class Chart {
         // chart_cell(i,j)
         logger.finest("Initializing new dot-items that start from complete items in this cell");
         for (int k = 0; k < this.grammars.length; k++) {
-          if (this.grammars[k].hasRuleForSpan(i, j, inputLattice.distance(i,j))) {
+          if (this.grammars[k].hasRuleForSpan(i, j, inputLattice.distance(i, j))) {
             this.dotcharts[k].startDotItems(i, j);
           }
         }
@@ -564,7 +575,7 @@ public class Chart {
       seen_lhs.add(node.lhs);
 
       for (Grammar gr : grammars) {
-        if (!gr.hasRuleForSpan(i, j, inputLattice.distance(i,j)))
+        if (!gr.hasRuleForSpan(i, j, inputLattice.distance(i, j)))
           continue;
 
         Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and

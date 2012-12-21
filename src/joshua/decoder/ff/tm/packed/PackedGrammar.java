@@ -287,6 +287,18 @@ public class PackedGrammar extends BatchGrammar {
       return rules;
     }
 
+    /**
+     * We determine if the Trie is sorted by checking if the estimated cost of the first rule in the
+     * trie has been set.
+     */  
+    @Override
+    public boolean isSorted() {
+      int num_children = grammar.source[position];
+      int rule_position = position + 2 * (num_children + 1);
+      int block_id = grammar.source[rule_position + 2];
+      return (grammar.estimated[block_id] != Float.NEGATIVE_INFINITY);
+    }
+    
     @Override
     public void sortRules(List<FeatureFunction> models) {
       // Do nothing.
