@@ -25,7 +25,12 @@ public interface RuleCollection {
    * @param weights the model weights.
    */
   void sortRules(List<FeatureFunction> models);
-
+  
+  /**
+   * Returns true if the rules are sorted.
+   */
+  boolean isSorted();
+  
   /**
    * TODO: now, we assume this function will be called only after all the rules have been read; this
    * method need to be synchronized as we will call this function only after the decoding begins to

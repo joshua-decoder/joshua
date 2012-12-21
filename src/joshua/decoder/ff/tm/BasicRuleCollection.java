@@ -97,6 +97,10 @@ public class BasicRuleCollection implements RuleCollection {
   public List<Rule> getRules() {
     return this.rules;
   }
+  
+  public boolean isSorted() {
+    return sorted;
+  }
 
   public static void sortRules(List<Rule> rules, List<FeatureFunction> models) {
 

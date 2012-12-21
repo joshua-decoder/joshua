@@ -482,12 +482,14 @@ public class Decoder {
 
       long pre_sort_time = System.currentTimeMillis();
       // Sort the TM grammars (needed to do cube pruning)
+/*
       for (GrammarFactory grammarFactory : this.grammarFactories) {
         if (grammarFactory instanceof Grammar) {
           Grammar batchGrammar = (Grammar) grammarFactory;
           batchGrammar.sortGrammar(this.featureFunctions);
         }
       }
+      */
       logger.info(String.format("Grammar sorting took: %d seconds.",
           (System.currentTimeMillis() - pre_sort_time) / 1000));
 
