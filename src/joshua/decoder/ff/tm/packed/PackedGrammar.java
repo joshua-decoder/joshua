@@ -45,15 +45,11 @@ public class PackedGrammar extends BatchGrammar {
 
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
-  
-  private List<FeatureFunction> models;
 
   private final float maxId;
 
   public PackedGrammar(String grammar_directory, int span_limit, String owner)
       throws FileNotFoundException, IOException {
-    // Fake sortedness.
-    this.sorted = true;
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
@@ -115,11 +111,6 @@ public class PackedGrammar extends BatchGrammar {
         System.exit(0);
       }
     }
-  }
-  
-  @Override
-  public void sortGrammar(List<FeatureFunction> models) {
-    // Do nothing.
   }
 
   @Override
@@ -246,7 +237,7 @@ public class PackedGrammar extends BatchGrammar {
       System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
       return new HashMap<Integer, PackedTrie>();
     }
-    
+
     public boolean hasExtensions() {
       return (grammar.source[position] != 0);
     }
@@ -274,8 +265,6 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     public List<Rule> getRules() {
-      ensureSortedness();
-      
       int num_children = grammar.source[position];
       int rule_position = position + 2 * (num_children + 1);
       int num_rules = grammar.source[rule_position - 1];
@@ -290,28 +279,23 @@ public class PackedGrammar extends BatchGrammar {
     /**
      * We determine if the Trie is sorted by checking if the estimated cost of the first rule in the
      * trie has been set.
-     */  
+     */
     @Override
     public boolean isSorted() {
       int num_children = grammar.source[position];
       int rule_position = position + 2 * (num_children + 1);
+      int num_rules = grammar.source[rule_position - 1];
       int block_id = grammar.source[rule_position + 2];
-      return (grammar.estimated[block_id] != Float.NEGATIVE_INFINITY);
+      return (num_rules == 0 || grammar.estimated[block_id] != Float.NEGATIVE_INFINITY);
     }
-    
+
     @Override
     public void sortRules(List<FeatureFunction> models) {
-      // Do nothing.
-    }
-    
-    private void ensureSortedness() {
       int num_children = grammar.source[position];
       int rule_position = position + 2 * (num_children + 1);
       int num_rules = grammar.source[rule_position - 1];
-
-      if (grammar.estimated[rule_position + 2] > Float.NEGATIVE_INFINITY)
+      if (num_rules == 0)
         return;
-      
       Integer[] rules = new Integer[num_rules];
 
       int target_address;
@@ -351,7 +335,6 @@ public class PackedGrammar extends BatchGrammar {
 
     @Override
     public List<Rule> getSortedRules() {
-      ensureSortedness();
       return getRules();
     }
 
@@ -401,7 +384,7 @@ public class PackedGrammar extends BatchGrammar {
       System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
       return new HashMap<Integer, PackedRoot>();
     }
-    
+
     @Override
     public ArrayList<? extends Trie> getExtensions() {
       ArrayList<Trie> tries = new ArrayList<Trie>();
@@ -486,8 +469,8 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public FeatureVector getFeatureVector() {
       if (features == null) {
-        features = new FeatureVector(parent.grammar.getFeatures(parent.grammar.source[address + 2]),
-            "");
+        features = new FeatureVector(
+            parent.grammar.getFeatures(parent.grammar.source[address + 2]), "");
         features.times(-1);
       }
 
