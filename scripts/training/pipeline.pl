@@ -1006,9 +1006,11 @@ while (my $line = <CONFIG>) {
     my (undef,$owner,$span,$grammar) = split(' ', $grammarline);
 
     if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
+      
+      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
 
       # Add the weights for the tuning grammar.
-      my $num_tm_features = count_num_features($TUNE_GRAMMAR);
+      my $num_tm_features = count_num_features($glue_grammar_file);
       for my $i (0..($num_tm_features-1)) {
         push (@tmparamstrings, "tm_${owner}_$i ||| 1.0 Opt -Inf +Inf -1 +1");
         push (@tmweightstrings, "tm_${owner}_$i 1.0");
