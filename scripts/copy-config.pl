@@ -1,12 +1,18 @@
 #!/usr/bin/env perl
 
 # Takes a config file on STDIN, and replaces each of the file arguments with those found on the
-# command line.  Parameters not found in the config file (and thus not replaceable) are appended to
+# command line.  Parameters not found in the config file (and thus not replaceable) are appended to 
 # the end.
 #
-# Usage:
-#
 #    cat joshua.config | copy-config.pl -param1 value -param2 "multi-word value" ...
+#
+# Some parameters can take options.  For example, there are multiple permitted "tm" lines.  If you
+# want to specify which one to replace, you can add "/owner" after the name.  For example,
+#
+#    cat joshua.config | copy-config.pl -tm/pt "tm = thrax pt 12 /path/to/grammar"
+#
+# This will ensure that only the tm line with the "pt" owner gets replaced.  Note that if there is
+# more than one, only the first one will be replaced.
 
 use strict;
 use warnings;
@@ -14,7 +20,7 @@ use warnings;
 # Step 1. process command-line arguments for key/value pairs.  The keys are matched next to the
 # config file and the configfile values replaced with those found on the command-line.
 
-my (%params);
+my (%params,%restrictions);
 while (my $key = shift @ARGV) {
   # make sure the parameter has a leading dash
   if ($key !~ /^-/) {
@@ -42,8 +48,14 @@ while (my $line = <>) {
     $key =~ s/^\s+//g;
     $value =~ s/\s+$//g;
 
-    # if the parameter was found on the command line, print out its replaced value
     my $norm_key = normalize_key($key);
+
+    if ($norm_key eq "tm") {
+      my (undef,$owner) = split(' ', $value);
+      $norm_key = "$norm_key/$owner" if (exists $params{"$norm_key/$owner"});
+    }
+
+    # if the parameter was found on the command line, print out its replaced value
     if (exists $params{$norm_key}) {
       print "$key = " . $params{$norm_key} . "\n";
 
@@ -78,3 +90,4 @@ sub normalize_key {
 #   print STDERR "** KEY($_[0]) -> $key\n";
   return $key;
 }
+

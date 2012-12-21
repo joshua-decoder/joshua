@@ -55,7 +55,7 @@ my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
 my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
-my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt"
+my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
 my $WITTEN_BELL = 0;
 
 my $JOSHUA_ARGS = "";
@@ -139,7 +139,7 @@ my $OPTIMIZER_RUNS = 1;
 # what to use to create language models ("berkeleylm" or "srilm")
 my $LM_GEN = "berkeleylm";
 
-my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX TUNE MERT PRO TEST LAST];
+my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $NAME = undef;
@@ -396,7 +396,7 @@ if ($NUM_JOBS == 1) {
   $TUNEFILES{'decoder_command'} = "$TUNECONFDIR/decoder_command.sequential";
 }
 
-my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
+my $OOV = ($GRAMMAR_TYPE eq "hiero") ? "X" : "OOV";
 
 # use this default unless it's already been defined by a command-line argument
 $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
@@ -630,9 +630,9 @@ if (! defined $ALIGNMENT) {
   system("mkdir alignments") unless -d "alignments";
 
   if ($lastchunk == 0 || $NUM_JOBS == 1) {
-    system("seq 0 $lastchunk | $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log 2>&1");
+    system("seq 0 $lastchunk | $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log");
   } else {
-    system("seq 0 $lastchunk | $JOSHUA/scripts/training/parallelize/parallelize.pl --err err --jobs $NUM_JOBS --qsub-args \"$QSUB_ALIGN_ARGS\" -p $ALIGNER_MEM -- $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log 2>&1");
+    system("seq 0 $lastchunk | $JOSHUA/scripts/training/parallelize/parallelize.pl --err err --jobs $NUM_JOBS --qsub-args \"$QSUB_ALIGN_ARGS\" -p $ALIGNER_MEM -- $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log");
   }
 
   my @aligned_files;
@@ -667,12 +667,12 @@ PARSE:
 
 # Parsing only happens for SAMT grammars.
 
-if ($FIRST_STEP eq "PARSE" and $GRAMMAR_TYPE ne "samt") {
+if ($FIRST_STEP eq "PARSE" and $GRAMMAR_TYPE eq "hiero") {
   print STDERR "* FATAL: parsing doesn't apply to hiero grammars; You need to add '--type samt'\n";
   exit;
 }
 
-if ($GRAMMAR_TYPE eq "samt") {
+if ($GRAMMAR_TYPE eq "samt" || $GRAMMAR_TYPE eq "ghkm") {
 
   # If the user passed in the already-parsed corpus, use that (after copying it into place)
   if (defined $TRAIN{parsed} && -e $TRAIN{parsed}) {
@@ -722,6 +722,8 @@ maybe_quit("PARSE");
 
 ## THRAX #############################################################
 
+GRAMMAR:
+    ;
 THRAX:
     ;
 
@@ -778,69 +780,74 @@ if (! defined $ALIGNMENT) {
 # If the grammar file wasn't specified
 if (! defined $GRAMMAR_FILE) {
 
-  # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
-  # sure that this is the right behavior.
-  if (! -e "grammar.gz" && ! -z "grammar.gz") {
+  my $target_file = ($GRAMMAR_TYPE eq "hiero") ? $TRAIN{target} : $TRAIN{parsed};
 
-		# create the input file
-		my $target_file = ($GRAMMAR_TYPE eq "samt") 
-				? $TRAIN{parsed} : $TRAIN{target};
-		$cachepipe->cmd("thrax-input-file",
-										"paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
-										$TRAIN{source}, $target_file, $ALIGNMENT,
-										"$DATA_DIRS{train}/thrax-input-file");
+  if ($GRAMMAR_TYPE eq "ghkm") {
+    $cachepipe->cmd("ghkm-extract",
+                    "java -Xmx1g -Xms1g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
+                    $ALIGNMENT,
+                    "grammar.gz");
+  } elsif (! -e "grammar.gz" && ! -z "grammar.gz") {
 
+    # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
+    # sure that this is the right behavior.
 
-		# Rollout the hadoop cluster if needed.  This causes $HADOOP to be defined (pointing to the
-		# unrolled directory).
-		start_hadoop_cluster() unless defined $HADOOP;
-
-		# put the hadoop files in place
-		my $THRAXDIR;
-		my $thrax_input;
-		if ($HADOOP eq "hadoop") {
-			$THRAXDIR = "thrax";
-
-			$thrax_input = "$DATA_DIRS{train}/thrax-input-file"
-
-		} else {
-			$THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
-			$THRAXDIR =~ s#/#_#g;
-
-			$cachepipe->cmd("thrax-prep",
-											"$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
-											"$DATA_DIRS{train}/thrax-input-file", 
-											"grammar.gz");
+    # create the input file
+    $cachepipe->cmd("thrax-input-file",
+                    "paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
+                    $TRAIN{source}, $target_file, $ALIGNMENT,
+                    "$DATA_DIRS{train}/thrax-input-file");
 
 
-			$thrax_input = "$THRAXDIR/input-file";
-    }
+    # Rollout the hadoop cluster if needed.  This causes $HADOOP to be defined (pointing to the
+    # unrolled directory).
+    start_hadoop_cluster() unless defined $HADOOP;
 
-		# copy the thrax config file
-		my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
-		system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
-		system("echo input-file $thrax_input >> $thrax_file.tmp");
-		system("mv $thrax_file.tmp $thrax_file");
+    # put the hadoop files in place
+    my $THRAXDIR;
+    my $thrax_input;
+    if ($HADOOP eq "hadoop") {
+      $THRAXDIR = "thrax";
 
-		$cachepipe->cmd("thrax-run",
-										"$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; $HADOOP/bin/hadoop fs -rmr $THRAXDIR; gzip -9nf grammar",
-										"$DATA_DIRS{train}/thrax-input-file",
-										$thrax_file,
-										"grammar.gz");
+      $thrax_input = "$DATA_DIRS{train}thrax/-input-file"
+
+    } else {
+      $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
+      $THRAXDIR =~ s#/#_#g;
+
+      $cachepipe->cmd("thrax-prep",
+                      "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
+                      "$DATA_DIRS{train}/thrax-input-file", 
+                      "grammar.gz");
+
+      $thrax_input = "$THRAXDIR/input-file";
+}
+
+    # copy the thrax config file
+    my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
+    system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
+    system("echo input-file $thrax_input >> $thrax_file.tmp");
+    system("mv $thrax_file.tmp $thrax_file");
+
+    $cachepipe->cmd("thrax-run",
+                    "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; $HADOOP/bin/hadoop fs -rmr $THRAXDIR; gzip -9nf grammar",
+                    "$DATA_DIRS{train}/thrax-input-file",
+                    $thrax_file,
+                    "grammar.gz");
 #perl -pi -e 's/\.?0+\b//g' grammar; 
 
-		stop_hadoop_cluster() if $HADOOP eq "hadoop";
+    stop_hadoop_cluster() if $HADOOP eq "hadoop";
 
-		# cache the thrax-prep step, which depends on grammar.gz
-		if ($HADOOP ne "hadoop") {
-			$cachepipe->cmd("thrax-prep", "--cache-only");
-		}
+    # cache the thrax-prep step, which depends on grammar.gz
+    if ($HADOOP ne "hadoop") {
+      $cachepipe->cmd("thrax-prep", "--cache-only");
+    }
 
-		# clean up
-		# TODO: clean up real hadoop clusters too
-		if ($HADOOP eq "hadoop") {
-			system("rm -rf $THRAXDIR hadoop hadoop-0.20.2");
-		}
+    # clean up
+    # TODO: clean up real hadoop clusters too
+    if ($HADOOP eq "hadoop") {
+      system("rm -rf $THRAXDIR hadoop hadoop-0.20.2");
+    }
   }
 
   # set the grammar file
@@ -848,6 +855,7 @@ if (! defined $GRAMMAR_FILE) {
 }
 
 maybe_quit("THRAX");
+maybe_quit("GRAMMAR");
 
 ## TUNING ##############################################################
 TUNE:
@@ -1016,8 +1024,8 @@ while (my $line = <CONFIG>) {
       }
 		}
 	}
-	close CONFIG;
 }
+close CONFIG;
 
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
@@ -1346,7 +1354,7 @@ close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
-system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -tm 'thrax pt 20 $TEST_GRAMMAR' -tm 'thrax glue -1 $GLUE_GRAMMAR_FILE' -default-non-terminal $OOV -mark-oovs true > $testrun/joshua.config");
+system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt 20 $TEST_GRAMMAR' -non-terminal $OOV > $testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
