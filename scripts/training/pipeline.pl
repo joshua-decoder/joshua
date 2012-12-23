@@ -809,7 +809,7 @@ if (! defined $GRAMMAR_FILE) {
     if ($HADOOP eq "hadoop") {
       $THRAXDIR = "thrax";
 
-      $thrax_input = "$DATA_DIRS{train}thrax/-input-file"
+      $thrax_input = "$DATA_DIRS{train}/thrax/-input-file"
 
     } else {
       $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
