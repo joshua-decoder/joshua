@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id$
+#
 # Usage:
 # mert-moses.pl <foreign> <english> <decoder-executable> <decoder-config>
 # For other options see below or run 'mert-moses.pl --help'
@@ -102,7 +102,7 @@ my $___JOBS = undef; # if parallel, number of jobs to use (undef or 0 -> serial)
 my $___DECODER_FLAGS = ""; # additional parametrs to pass to the decoder
 my $continue = 0; # should we try to continue from the last saved step?
 my $skip_decoder = 0; # and should we skip the first decoder run (assuming we got interrupted during mert)
-my $___FILTER_PHRASE_TABLE = 1; # filter phrase table
+my $___FILTER_PHRASE_TABLE = 0; # filter phrase table
 my $___PREDICTABLE_SEEDS = 0;
 my $___START_WITH_HISTORIC_BESTS = 0; # use best settings from all previous iterations as starting points [Foster&Kuhn,2009]
 my $___RANDOM_DIRECTIONS = 0; # search in random directions only
@@ -512,9 +512,9 @@ if ($___FILTER_PHRASE_TABLE) {
   $___CONFIG_ORIG = $___CONFIG;
 }
 
-# we run moses to check validity of moses.ini and to obtain all the feature
-# names
-my $featlist = get_featlist_from_moses($___CONFIG);
+# Read the list of weights from the weights file
+chomp(my $weights_file = `cat $___CONFIG | grep ^weights-file | awk '{print \$NF}'`);
+my $featlist = get_featlist_from_file($weights_file);
 $featlist = insert_ranges_to_featlist($featlist, $___RANGES);
 
 # Mark which features are disabled:
@@ -1092,9 +1092,9 @@ sub run_decoder {
     }
 
     if (defined $___JOBS && $___JOBS > 0) {
-      $decoder_cmd = "$moses_parallel_cmd $pass_old_sge -config $___CONFIG -inputtype $___INPUTTYPE -qsub-prefix mert$run -queue-parameters \"$queue_flags\" -decoder-parameters \"$___DECODER_FLAGS $decoder_config\" $lsamp_cmd -n-best-list \"$filename $___N_BEST_LIST_SIZE\" -input-file $___DEV_F -jobs $___JOBS -decoder $___DECODER > run$run.out";
+      # $decoder_cmd = "$moses_parallel_cmd $pass_old_sge -config $___CONFIG -inputtype $___INPUTTYPE -qsub-prefix mert$run -queue-parameters \"$queue_flags\" -decoder-parameters \"$___DECODER_FLAGS $decoder_config\" $lsamp_cmd -n-best-list \"$filename $___N_BEST_LIST_SIZE\" -input-file $___DEV_F -jobs $___JOBS -decoder $___DECODER > run$run.out";
     } else {
-      $decoder_cmd = "$___DECODER $___DECODER_FLAGS  -config $___CONFIG -inputtype $___INPUTTYPE $decoder_config $lsamp_cmd -n-best-list $filename $___N_BEST_LIST_SIZE -input-file $___DEV_F > run$run.out";
+      $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -top-n $___N_BEST_LIST_SIZE > $filename 2> run$run.out";
     }
 
     safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";
@@ -1156,21 +1156,6 @@ sub sanity_check_order_of_lambdas {
     if "@got" ne "@expected_lambdas";
 }
 
-sub get_featlist_from_moses {
-  # run moses with the given config file and return the list of features and
-  # their initial values
-  my $configfn = shift;
-  my $featlistfn = "./features.list";
-  if (-e $featlistfn && ! -z $featlistfn) {   # exists & not empty
-    print STDERR "Using cached features list: $featlistfn\n";
-  } else {
-    print STDERR "Asking moses for feature names and values from $___CONFIG\n";
-    my $cmd = "$___DECODER $___DECODER_FLAGS -config $configfn  -inputtype $___INPUTTYPE -show-weights > $featlistfn";
-    safesystem($cmd) or die "Failed to run moses with the config $configfn";
-  }
-  return get_featlist_from_file($featlistfn);
-}
-
 sub get_featlist_from_file {
   my $featlistfn = shift;
   # read feature list
@@ -1182,8 +1167,9 @@ sub get_featlist_from_file {
   while (<$fh>) {
     $nr++;
     chomp;
-    /^(.+) (\S+) (\S+)$/ || die "invalid feature: $_";
-    my ($longname, $feature, $value) = ($1, $2, $3);
+    next if (/^#/ || /^\s*$/);
+    /^(\S+) (\S+)$/ || die "invalid feature: $_";
+    my ($feature, $value) = ($1, $2, $3);
     next if $value eq "sparse";
     push @errs, "$featlistfn:$nr:Bad initial value of $feature: $value\n"
       if $value !~ /^[+-]?[0-9.\-e]+$/;
