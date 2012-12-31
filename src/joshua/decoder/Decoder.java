@@ -1,6 +1,7 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -586,7 +587,7 @@ public class Decoder {
         String file = tokens[3];
 
         GrammarFactory grammar = null;
-        if (format.equals("packed")) {
+        if (format.equals("packed") || new File(file).isDirectory()) {
           grammar = new PackedGrammar(file, span_limit, owner);
 
         } else if (format.equals("thrax") || format.equals("regexp")) {

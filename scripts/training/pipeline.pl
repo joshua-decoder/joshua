@@ -46,6 +46,7 @@ my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
 my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
+my $DO_PACK_GRAMMARS = 1;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
@@ -948,7 +949,8 @@ if ($numrefs > 1) {
 }
 
 
-# filter the tuning grammar
+# Filter the tuning grammar if it was requested (yes by default) and a tuned grammar was not passed
+# in explicitly.
 my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
 		? $TUNE_GRAMMAR_FILE
 		: $GRAMMAR_FILE;
@@ -963,7 +965,8 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
 									$TUNE_GRAMMAR);
 }
 
-# create the glue grammars
+# Create the glue grammars. This is done by looking at all the symbols in the grammar file and
+# creating all the needed rules.
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-tune",
 									"$CAT $TUNE_GRAMMAR | java -Xmx2g -cp $THRAX/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{tune}/grammar.glue",
@@ -976,8 +979,29 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   system("ln -sf $GLUE_GRAMMAR_FILE $filename");
 }
 
+# Pack the grammar, if requested (yes by default). This must be done after the glue grammar is
+# created, since we don't have a script (yet) to dump the rules from a packed grammar, which
+# information we need to create the glue grammar.
+if ($DO_PACK_GRAMMARS) {
+  my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
+
+  $cachepipe->cmd("pack-tune",
+                  "$SCRIPTDIR/support/grammar-packer.pl $TUNE_GRAMMAR $packed_dir",
+                  $TUNE_GRAMMAR,
+                  "$packed_dir/vocabulary",
+                  "$packed_dir/slice_00000.source");
+
+  # $TUNE_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
+  # tuning grammar, is now used to record the text-based grammar, which is needed later for
+  # different things.
+  $TUNE_GRAMMAR_FILE = $TUNE_GRAMMAR;
+
+  # The actual grammar used for decoding is the packed directory.
+  $TUNE_GRAMMAR = $packed_dir;
+}
+
 # For each language model, we need to create an entry in the Joshua
-# config file and in ZMert's params.txt file.  We use %lm_strings to
+# config file and in ZMERT's params.txt file.  We use %lm_strings to
 # build the corresponding string substitutions
 my (@configstrings, @weightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
@@ -1007,7 +1031,7 @@ while (my $line = <CONFIG>) {
 
     if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
       
-      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
+      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR_FILE : $GLUE_GRAMMAR_FILE;
 
       # Add the weights for the tuning grammar.
       my $num_tm_features = count_num_features($grammar_file);
@@ -1098,7 +1122,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   if ($TUNER eq "mert") {
 		$cachepipe->cmd("mert-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
-										$TUNE_GRAMMAR,
+										$TUNE_GRAMMAR_FILE,
 										"$tunedir/weights.ZMERT.final",
 										"$tunedir/decoder_command",
 										"$tunedir/mert.config",
@@ -1107,7 +1131,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
-										$TUNE_GRAMMAR,
+										$TUNE_GRAMMAR_FILE,
 										"$tunedir/weights.PRO.final",
 										"$tunedir/decoder_command",
 										"$tunedir/pro.config",
@@ -1150,7 +1174,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     }
   }
 
-# create the glue file
+  # Create the glue file.
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
                     "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $THRAX/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{test}/grammar.glue",
@@ -1167,6 +1191,25 @@ for my $run (1..$OPTIMIZER_RUNS) {
     } else {
       system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename"); 
     }
+  }
+
+  # Pack the grammar.
+  if ($DO_PACK_GRAMMARS) {
+    my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
+
+    $cachepipe->cmd("pack-test",
+                    "$SCRIPTDIR/support/grammar-packer.pl $TEST_GRAMMAR $packed_dir",
+                    $TEST_GRAMMAR,
+                    "$packed_dir/vocabulary",
+                    "$packed_dir/slice_00000.source");
+
+    # $TEST_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
+    # tuning grammar, is now used to record the text-based grammar, which is needed later for
+    # different things.
+    $TEST_GRAMMAR_FILE = $TEST_GRAMMAR;
+
+    # The actual grammar used for decoding is the packed directory.
+    $TEST_GRAMMAR = $packed_dir;
   }
 
   my $testrun = (defined $NAME) ? "test/$NAME/$run" : "test/$run";
@@ -1226,7 +1269,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 									"./$testrun/decoder_command",
 									"$testrun/decoder_command",
 									"$DATA_DIRS{test}/grammar.glue",
-									$TEST_GRAMMAR,
+									$TEST_GRAMMAR_FILE,
 									"$testrun/test.output.nbest");
 
   $cachepipe->cmd("remove-oov-$run",
