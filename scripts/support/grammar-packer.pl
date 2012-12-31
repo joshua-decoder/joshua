@@ -36,17 +36,18 @@ system("$CAT $grammar | sort -k3,3 | $JOSHUA/scripts/label_grammar.py | gzip -9n
 # in the grammar. Note that this isn't recommended for working with sparse grammars!
 my $num_features = count_num_features("grammar-labeled.gz");
 my $feature_str = join(" ", 0..($num_features-1));
-open CONFIG, ">packer.config.tmp" or die "can't write to packer.config.tmp";
+my $packer_config = "packer.config.tmp";
+open CONFIG, ">$packer_config" or die "can't write to $packer_config";
 print CONFIG "slice_size 400000\n\nquantizer   float   $feature_str\n";
 close(CONFIG);
 
 # Do the packing using the config.
-system("java -Xmx8g -cp $JOSHUA/class joshua.tools.GrammarPacker -c packer.config -p $output_dir -g grammar-labeled.gz");
+system("java -Xmx8g -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz");
 
 # Clean up.
 unlink("grammar-labeled.gz");
 system("mv dense_map $output_dir");
-system("mv packer.config.tmp $output_dir/packer.config");
+system("mv $packer_config $output_dir/packer.config");
 
 ################################################################################
 ## SUBROUTINES #################################################################
