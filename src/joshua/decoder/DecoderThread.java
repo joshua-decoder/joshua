@@ -47,7 +47,7 @@ public class DecoderThread extends Thread {
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
       List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers)
-          throws IOException {
+      throws IOException {
 
     this.grammarFactories = grammarFactories;
     this.stateComputers = stateComputers;
@@ -107,6 +107,8 @@ public class DecoderThread extends Thread {
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
     logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",
         sentence.id(), seconds, getId()));
+    logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
+        .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
     if (!JoshuaConfiguration.parse || hypergraph == null) {
       return new Translation(sentence, hypergraph, featureFunctions);
@@ -120,7 +122,8 @@ public class DecoderThread extends Thread {
     Grammar newGrammar = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
     newGrammar.sortGrammar(this.featureFunctions);
     long sortTime = System.currentTimeMillis();
-    logger.info(String.format("Sentence %d: New grammar has %d rules.", sentence.id(), newGrammar.getNumRules()));
+    logger.info(String.format("Sentence %d: New grammar has %d rules.", sentence.id(),
+        newGrammar.getNumRules()));
 
     /* Step 2. Create a new chart and parse with the instantiated grammar. */
     Grammar[] newGrammarArray = new Grammar[] { newGrammar };
@@ -128,18 +131,21 @@ public class DecoderThread extends Thread {
     chart = new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     String goalSymbolString = Vocabulary.word(goalSymbol);
-    logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(), goalSymbolString, goalSymbol));
+    logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(),
+        goalSymbolString, goalSymbol));
     chart.setGoalSymbolID(goalSymbol);
 
     /* Parsing */
     HyperGraph englishParse = chart.expand();
     long secondParseTime = System.currentTimeMillis();
-    logger.info(String.format("Sentence %d: Finished second chart expansion (%d seconds).", sentence.id(),
-        (secondParseTime - sortTime) / 1000));
-    logger.info(String.format("Sentence %d total time: %d seconds.\n", sentence.id(), (secondParseTime - startTime) / 1000));
+    logger.info(String.format("Sentence %d: Finished second chart expansion (%d seconds).",
+        sentence.id(), (secondParseTime - sortTime) / 1000));
+    logger.info(String.format("Sentence %d total time: %d seconds.\n", sentence.id(),
+        (secondParseTime - startTime) / 1000));
+    logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
+        .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
     return new Translation(sentence, englishParse, featureFunctions); // or do something else
-
   }
 
   private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {

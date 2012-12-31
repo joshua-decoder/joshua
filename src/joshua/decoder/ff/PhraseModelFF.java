@@ -5,7 +5,6 @@ import joshua.decoder.ff.tm.packed.PackedGrammar.PackedRule;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.corpus.Vocabulary;
 
-
 /**
  * This feature handles the list of features that are found with grammar rules in the grammar file.
  * dense features that may be associated with the rules in a grammar file. The feature names of
@@ -42,22 +41,17 @@ public class PhraseModelFF extends StatelessFF {
     float cost = 0.0f;
 
     if (rule != null && this.ownerID == rule.getOwner()) {
-      if (rule instanceof PackedRule) {
-        cost = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
-      } else {
-        if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-          float t = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
-          rule.setPrecomputableCost(t);
-        }
-        cost = rule.getPrecomputableCost();
+      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
+        float t = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
+        rule.setPrecomputableCost(t);
       }
+      cost = rule.getPrecomputableCost();
     }
-
     return cost;
   }
 
   /**
-   * Just chain to computeFeatures(rule), since this feature doesn't use the sourcePath or sentID.
+   * Just chain to computeFeatures(rule), since this feature doesn't use the sourcePath or sentID. *
    */
   @Override
   public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {

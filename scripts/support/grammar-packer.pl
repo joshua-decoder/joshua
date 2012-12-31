@@ -30,22 +30,28 @@ my $config  = shift || undef;
 
 system("$CAT $grammar | sort -k3,3 | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
 
+
+# Create a dummy packer configuration file, since that is needed by the packer. We do no
+# quantization, and simply create a single float quantizer item that applies to all features found
+# in the grammar. Note that this isn't recommended for working with sparse grammars!
 my $num_features = count_num_features("grammar-labeled.gz");
-
 my $feature_str = join(" ", 0..($num_features-1));
-
-die "packer.config already exists, refusing to overwrite" if -e "packer.config";
-open CONFIG, ">packer.config" or die "can't write to packer.config";
+my $packer_config = "packer.config.tmp";
+open CONFIG, ">$packer_config" or die "can't write to $packer_config";
 print CONFIG "slice_size 400000\n\nquantizer   float   $feature_str\n";
 close(CONFIG);
 
-system("java -cp $JOSHUA/class joshua.tools.GrammarPacker -c packer.config -p $output_dir -g grammar-labeled.gz");
+# Do the packing using the config.
+system("java -Xmx8g -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz");
 
+# Clean up.
 unlink("grammar-labeled.gz");
-system("mv dense_map packer.config $output_dir");
+system("mv dense_map $output_dir");
+system("mv $packer_config $output_dir/packer.config");
 
-
+################################################################################
 ## SUBROUTINES #################################################################
+################################################################################
 
 # This counts the number of TM features present in a grammar
 sub count_num_features {

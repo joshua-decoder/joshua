@@ -1,6 +1,7 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -143,6 +144,11 @@ public class Decoder {
       }
     }
 
+    /*
+     *  TODO: we need to clear out the entire trie of positive sorting markings.
+     */
+    System.err.println("* FATAL: changing the feature weights won't work until you clear the sorted settings for the complete trie");
+    System.exit(1);
     for (GrammarFactory grammarFactory : this.grammarFactories) {
       // if (grammarFactory instanceof Grammar) {
       grammarFactory.getGrammarForSentence(null).sortGrammar(this.featureFunctions);
@@ -482,12 +488,6 @@ public class Decoder {
 
       long pre_sort_time = System.currentTimeMillis();
       // Sort the TM grammars (needed to do cube pruning)
-      for (GrammarFactory grammarFactory : this.grammarFactories) {
-        if (grammarFactory instanceof Grammar) {
-          Grammar batchGrammar = (Grammar) grammarFactory;
-          batchGrammar.sortGrammar(this.featureFunctions);
-        }
-      }
       logger.info(String.format("Grammar sorting took: %d seconds.",
           (System.currentTimeMillis() - pre_sort_time) / 1000));
 
@@ -587,7 +587,7 @@ public class Decoder {
         String file = tokens[3];
 
         GrammarFactory grammar = null;
-        if (format.equals("packed")) {
+        if (format.equals("packed") || new File(file).isDirectory()) {
           grammar = new PackedGrammar(file, span_limit, owner);
 
         } else if (format.equals("thrax") || format.equals("regexp")) {

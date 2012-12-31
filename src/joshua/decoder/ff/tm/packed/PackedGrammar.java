@@ -13,7 +13,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -237,7 +236,7 @@ public class PackedGrammar extends BatchGrammar {
       System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
       return new HashMap<Integer, PackedTrie>();
     }
-    
+
     public boolean hasExtensions() {
       return (grammar.source[position] != 0);
     }
@@ -276,12 +275,26 @@ public class PackedGrammar extends BatchGrammar {
       return rules;
     }
 
+    /**
+     * We determine if the Trie is sorted by checking if the estimated cost of the first rule in the
+     * trie has been set.
+     */
     @Override
-    public void sortRules(List<FeatureFunction> models) {
+    public boolean isSorted() {
       int num_children = grammar.source[position];
       int rule_position = position + 2 * (num_children + 1);
       int num_rules = grammar.source[rule_position - 1];
+      int block_id = grammar.source[rule_position + 2];
+      return (num_rules == 0 || grammar.estimated[block_id] != Float.NEGATIVE_INFINITY);
+    }
 
+    @Override
+    public synchronized void sortRules(List<FeatureFunction> models) {
+      int num_children = grammar.source[position];
+      int rule_position = position + 2 * (num_children + 1);
+      int num_rules = grammar.source[rule_position - 1];
+      if (num_rules == 0)
+        return;
       Integer[] rules = new Integer[num_rules];
 
       int target_address;
@@ -293,14 +306,14 @@ public class PackedGrammar extends BatchGrammar {
 
         BilingualRule rule = new BilingualRule(grammar.source[rule_position + 3 * i], src,
             grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner);
-        grammar.cache[block_id] = rule.estimateRuleCost(models);
-        // System.err.println(String.format("COST(%s) = %.5f", rule, grammar.cache[block_id]));
+        grammar.estimated[block_id] = rule.estimateRuleCost(models);
+        grammar.precomputable[block_id] = rule.getPrecomputableCost();
       }
 
       Arrays.sort(rules, new Comparator<Integer>() {
         public int compare(Integer a, Integer b) {
-          float a_cost = grammar.cache[grammar.source[a]];
-          float b_cost = grammar.cache[grammar.source[b]];
+          float a_cost = grammar.estimated[grammar.source[a]];
+          float b_cost = grammar.estimated[grammar.source[b]];
           if (a_cost == b_cost)
             return 0;
           return (a_cost > b_cost ? 1 : -1);
@@ -320,7 +333,9 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public List<Rule> getSortedRules() {
+    public synchronized List<Rule> getSortedRules(List<FeatureFunction> featureFunctions) {
+      if (! isSorted())
+        sortRules(featureFunctions);
       return getRules();
     }
 
@@ -370,7 +385,7 @@ public class PackedGrammar extends BatchGrammar {
       System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
       return new HashMap<Integer, PackedRoot>();
     }
-    
+
     @Override
     public ArrayList<? extends Trie> getExtensions() {
       ArrayList<Trie> tries = new ArrayList<Trie>();
@@ -455,8 +470,8 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public FeatureVector getFeatureVector() {
       if (features == null) {
-        features = new FeatureVector(parent.grammar.getFeatures(parent.grammar.source[address + 2]),
-            "");
+        features = new FeatureVector(
+            parent.grammar.getFeatures(parent.grammar.source[address + 2]), "");
         features.times(-1);
       }
 
@@ -465,28 +480,27 @@ public class PackedGrammar extends BatchGrammar {
 
     @Override
     public void setEstimatedCost(float cost) {
-      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
+      parent.grammar.estimated[parent.grammar.source[address + 2]] = cost;
     }
 
     @Override
     public float getEstimatedCost() {
-      return parent.grammar.cache[parent.grammar.source[address + 2]];
+      return parent.grammar.estimated[parent.grammar.source[address + 2]];
     }
 
     @Override
     public void setPrecomputableCost(float cost) {
-      //      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
+      parent.grammar.precomputable[parent.grammar.source[address + 2]] = cost;
     }
 
     @Override
     public float getPrecomputableCost() {
-      return 0.0f;
-      //      return parent.grammar.cache[parent.grammar.source[address + 2]];
+      return parent.grammar.precomputable[parent.grammar.source[address + 2]];
     }
 
     @Override
     public float estimateRuleCost(List<FeatureFunction> models) {
-      return parent.grammar.cache[parent.grammar.source[address + 2]];
+      return parent.grammar.estimated[parent.grammar.source[address + 2]];
     }
   }
 
@@ -502,7 +516,8 @@ public class PackedGrammar extends BatchGrammar {
     int featureSize;
     private int[] featureLookup;
 
-    private float[] cache;
+    private float[] estimated;
+    private float[] precomputable;
 
     public PackedSlice(String prefix) throws IOException {
       name = prefix;
@@ -535,10 +550,14 @@ public class PackedGrammar extends BatchGrammar {
 
       int num_blocks = features.getInt(0);
       featureLookup = new int[num_blocks];
-      cache = new float[num_blocks];
+      estimated = new float[num_blocks];
+      precomputable = new float[num_blocks];
       featureSize = features.getInt(4);
-      for (int i = 0; i < num_blocks; i++)
+      for (int i = 0; i < num_blocks; i++) {
         featureLookup[i] = features.getInt(8 + 4 * i);
+        estimated[i] = Float.NEGATIVE_INFINITY;
+        precomputable[i] = Float.NEGATIVE_INFINITY;
+      }
 
       DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
           new FileInputStream(target_lookup_file)));
