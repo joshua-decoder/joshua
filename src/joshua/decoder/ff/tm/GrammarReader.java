@@ -113,9 +113,9 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
     String line = lookAhead;
     advanceReader();
     
-    if ((numRulesRead-1) % 80000 == 0) {
+    if ((numRulesRead) % 80000 == 0) {
       System.err.println(String.format("%d rules read", numRulesRead));
-    } else if ( (numRulesRead-1) % 1000 == 0) {
+    } else if ( (numRulesRead) % 1000 == 0) {
       System.err.print(".");
     }
     return parseLine(line);
