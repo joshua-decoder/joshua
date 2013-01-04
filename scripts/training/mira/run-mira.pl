@@ -586,8 +586,7 @@ while (1) {
       $lsamp_file      = "$lsamp_file.gz";
       $nbest_file      = "$combined_file";
     }
-    # safesystem("gzip -f $nbest_file") or die "Failed to gzip run*out";
-    print STDERR "** SKIPPING COMPRESSING NBEST FILE\n";
+    safesystem("gzip -f $nbest_file") or die "Failed to gzip run*out";
     $nbest_file = $nbest_file.".gz";
   } else {
     $nbest_file = "run$run.best$___N_BEST_LIST_SIZE.out.gz";
@@ -875,8 +874,7 @@ sub run_decoder {
       $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -weights-file run$run.weights -top-n $___N_BEST_LIST_SIZE 2> run$run.out | $JOSHUA/scripts/training/mira/feature_label_munger.pl > $filename";
     }
 
-#    safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";
-    print "** SKIPPING RUNNING DECODER\n";
+    safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";
 
     return ($filename, $lsamp_filename);
 }
