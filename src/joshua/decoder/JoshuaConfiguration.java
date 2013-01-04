@@ -443,6 +443,8 @@ public class JoshuaConfiguration {
             }
           }
 
+          logger.info(String.format("    %s = '%s'", normalize_key(fds[0]), fds[1]));
+
         } else {
           // Feature function. These are processed a bit later
           // in JoshuaDecoder initialization, so we just set

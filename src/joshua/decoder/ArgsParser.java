@@ -43,7 +43,7 @@ public class ArgsParser {
 
             setConfigFile(args[i + 1].trim());
             try {
-              System.err.println("Parameters read from configuration file");
+              System.err.println("Parameters read from configuration file:");
               JoshuaConfiguration.readConfigFile(getConfigFile());
             } catch (IOException e) {
               // TODO Auto-generated catch block
@@ -55,6 +55,7 @@ public class ArgsParser {
         }
 
         // now process all the command-line args
+        System.err.println("Parameters overridden from the command line:");
         JoshuaConfiguration.processCommandLineOptions(args);
 
       } else {
