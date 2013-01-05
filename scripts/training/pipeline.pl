@@ -150,7 +150,7 @@ my $NAME = undef;
 my $GIZA_MERGE = "grow-diag-final";
 
 # Which tuner to use by default
-my $TUNER = "mert";  # or pro or "mira"
+my $TUNER = "mert";  # or "pro" or "mira"
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
@@ -399,6 +399,10 @@ if ($TUNER eq "mira") {
   }
 }
 
+if ($TUNER ne "mert" and $TUNER ne "mira" and $TUNER ne "pro") {
+  print "* FATAL: --tuner must be one of 'mert', 'pro', or 'mira'.\n";
+  exit 1;
+}
 
 ## Dependent variable setting ########################################
 
