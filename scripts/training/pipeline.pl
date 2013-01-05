@@ -5,7 +5,6 @@
 # --- and it allows jumping into arbitrary points of the pipeline. 
 
 my $JOSHUA;
-my $HADOOP;
 
 BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
@@ -33,7 +32,8 @@ use File::Temp qw/ :mktemp /;
 use CachePipe;
 # use Thread::Pool;
 
-$HADOOP = $ENV{HADOOP};
+my $HADOOP = $ENV{HADOOP};
+my $MOSES = $ENV{MOSES};
 
 my $THRAX = "$JOSHUA/thrax";
 
@@ -150,7 +150,7 @@ my $NAME = undef;
 my $GIZA_MERGE = "grow-diag-final";
 
 # Which tuner to use by default
-my $TUNER = "mert";  # or PRO
+my $TUNER = "mert";  # or pro or "mira"
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
@@ -210,6 +210,10 @@ if (! $retval) {
   print "Invalid usage, quitting\n";
   exit 1;
 }
+
+$RUNDIR = get_absolute_path($RUNDIR);
+
+$TUNER = lc $TUNER;
 
 my $DOING_LATTICES = 0;
 
@@ -386,6 +390,13 @@ if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
 if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm") {
   print "* FATAL: lm generating code (--lm-gen) must be one of 'berkeleylm' (default) or 'srilm'\n";
   exit 1;
+}
+
+if ($TUNER eq "mira") {
+  if (! defined $MOSES) {
+    print "* FATAL: using MIRA for tuning requires setting the MOSES environment variable\n";
+    exit 1;
+  }
 }
 
 
@@ -909,7 +920,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 										"$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary lm.gz lm.kenlm",
 										$lmfile, $kenlm_file);
 
-		push (@LMFILES, $kenlm_file);
+		push (@LMFILES, get_absolute_path($kenlm_file, $RUNDIR));
 
 	} elsif ($LM_TYPE eq "berkeleylm") {
 		my $berkeleylm_file = "lm.berkeleylm";
@@ -917,10 +928,10 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 										"java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa lm.gz lm.berkeleylm",
 										$lmfile, $berkeleylm_file);
 
-		push (@LMFILES, $berkeleylm_file);
+		push (@LMFILES, get_absolute_path($berkeleylm_file, $RUNDIR));
 	} else {
 
-		push (@LMFILES, $lmfile);
+		push (@LMFILES, get_absolute_path($lmfile, $RUNDIR));
 	}
 }
 
@@ -1073,6 +1084,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
 
+  my $weights_file = get_absolute_path("$tunedir/weights",$RUNDIR);
+
   foreach my $key (keys %TUNEFILES) {
 		my $file = $TUNEFILES{$key};
 		open FROM, $file or die "can't find file '$file'";
@@ -1087,7 +1100,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
-      s/<WEIGHTS_FILE>/$tunedir\/weights/g;
+      s/<WEIGHTS_FILE>/$weights_file/g;
       s/<FEATURE_FUNCTIONS>/$feature_functions/g;
 			s/<LATTICEWEIGHT>/$latticeweight/g;
 			s/<LATTICEPARAM>/$latticeparam/g;
@@ -1137,6 +1150,15 @@ for my $run (1..$OPTIMIZER_RUNS) {
 										"$tunedir/pro.config",
 										"$tunedir/params.txt");
 		system("ln -sf weights.PRO.final $tunedir/weights.final");
+  } elsif ($TUNER eq "mira") {
+    my $refs_path = $TUNE{target};
+    $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
+
+    $cachepipe->cmd("mira-$run",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS\" > $tunedir/mira.log 2>&1",
+                    $TUNE_GRAMMAR_FILE,
+                    $TUNE{source},
+                    "$tunedir/weights.final");
   }
 
   # Go to the next tuning run if tuning is the last step.
@@ -1212,7 +1234,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     $TEST_GRAMMAR = $packed_dir;
   }
 
-  my $testrun = (defined $NAME) ? "test/$NAME/$run" : "test/$run";
+  my $testrun = get_absolute_path((defined $NAME) ? "test/$NAME/$run" : "test/$run", $RUNDIR);
   
   system("mkdir -p $testrun") unless -d $testrun;
 
@@ -1266,7 +1288,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 									"$testrun/weights");
 
   $cachepipe->cmd("test-decode-$run",
-									"./$testrun/decoder_command",
+									"$testrun/decoder_command",
 									"$testrun/decoder_command",
 									"$DATA_DIRS{test}/grammar.glue",
 									$TEST_GRAMMAR_FILE,
@@ -1403,7 +1425,7 @@ system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
-								"./$testrun/decoder_command",
+								"$testrun/decoder_command",
 								"$testrun/decoder_command",
 								$TEST_GRAMMAR,
 								$GLUE_GRAMMAR_FILE,
@@ -1651,11 +1673,12 @@ sub count_num_features {
 
 # File names reflecting relative paths need to be absolute-ized for --rundir to work
 sub get_absolute_path {
-	my ($file) = @_;
+	my ($file,$basedir) = @_;
+  $basedir = $STARTDIR unless defined $basedir;
 
 	if (defined $file) {
 		# prepend startdir (which is absolute) unless the path is absolute.
-		$file = "$STARTDIR/$file" unless $file =~ /^\//;
+		$file = "$basedir/$file" unless $file =~ /^\//;
 	}
 
 	return $file;
