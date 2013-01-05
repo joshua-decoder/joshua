@@ -431,7 +431,6 @@ chdir($___WORKING_DIR) or die "Can't chdir to $___WORKING_DIR";
 # fixed file names
 my $mert_outfile = "mert.out";
 my $mert_logfile = "mert.log";
-my $weights_out_file = "weights.txt";
 my $finished_step_file = "finished_step.txt";
 
 # set start run
@@ -568,6 +567,7 @@ while (1) {
 
   # In case something dies later, we might wish to have a copy
   create_config($weights_file, "./run$run.weights", $featlist, $run, (defined $devbleu ? $devbleu : "--not-estimated--"));
+  system("cp run$run.weights $weights_file");
 
   # skip running the decoder if the user wanted
   if (! $skip_decoder) {
@@ -611,8 +611,10 @@ while (1) {
   # extractor into treating everything as a sparse feature.
   system("perl -pi -e 's/_:/:/g' $feature_file");
 
-  my %CURR = %$featlist; # save the current features
+  my %CURR;
+  map { $CURR{$_} = $featlist->{$_}{value} } keys(%$featlist); # save the current features
   my $DIM = scalar(keys(%CURR)); # number of lambdas
+  # print "\n**CURR: " . join(" ", map { "$_:$CURR{$_}" } (keys(%CURR))) . $/;
 
   # run mert
   $cmd = "$mert_mert_cmd -d $DIM $mert_mert_args";
@@ -657,8 +659,6 @@ while (1) {
     $mira_settings .= "$batch_mira_args ";
   }
 
-#  $mira_settings .= " --sparse-init run$run.sparse-weights";
-
   my $file_settings = " --ffile $ffiles --scfile $scfiles";
   my $pro_file_settings = "--ffile " . join(" --ffile ", split(/,/, $ffiles)) .
                           " --scfile " .  join(" --scfile ", split(/,/, $scfiles));
@@ -667,7 +667,7 @@ while (1) {
 
   my $pro_optimizer_cmd = "$pro_optimizer $megam_default_options run$run.pro.data";
   if ($___PAIRWISE_RANKED_OPTIMIZER) {  # pro optimization
-    $cmd = "$mert_pro_cmd $seed_settings $pro_file_settings -o run$run.pro.data ; echo 'not used' > $weights_out_file; $pro_optimizer_cmd";
+    $cmd = "$mert_pro_cmd $seed_settings $pro_file_settings -o run$run.pro.data ; $pro_optimizer_cmd";
     &submit_or_exec($cmd, $mert_outfile, $mert_logfile);
   } elsif ($___PRO_STARTING_POINT) {  # First, run pro, then mert
     # run pro...
@@ -694,15 +694,11 @@ while (1) {
     $cmd =~ s/(--ifile \S+)/$1,run$run.init.pro/;
     &submit_or_exec($cmd . $mert_settings, $mert_outfile, $mert_logfile);
   } elsif ($___BATCH_MIRA) { # batch MIRA optimization
-    safesystem("echo 'not used' > $weights_out_file") or die;
     $cmd = "$mert_mira_cmd $mira_settings $seed_settings $pro_file_settings -o $mert_outfile";
     &submit_or_exec($cmd, "run$run.mert.out", $mert_logfile);
   } else {  # just mert
     &submit_or_exec($cmd . $mert_settings, $mert_outfile, $mert_logfile);
   }
-
-  die "Optimization failed, file $weights_out_file does not exist or is empty"
-    if ! -s $weights_out_file;
 
   # backup copies
   safesystem("\\cp -f extract.err run$run.extract.err") or die;
@@ -710,7 +706,6 @@ while (1) {
   safesystem("\\cp -f $mert_outfile run$run.$mert_outfile") or die;
   safesystem("\\cp -f $mert_logfile run$run.$mert_logfile") or die;
   safesystem("touch $mert_logfile run$run.$mert_logfile") or die;
-  safesystem("\\cp -f $weights_out_file run$run.$weights_out_file") or die; # this one is needed for restarts, too
 
   print "run $run end at ".`date`;
 
@@ -739,7 +734,8 @@ while (1) {
     #   my $numold = scalar(keys(%CURR));
     #   die "Lost weight! mert reported fewer weights ($numnew) than we gave it ($numold) -- no key $name";
     # }
-    if (abs($CURR{$name}{value} - $newweights{$name}) >= $minimum_required_change_in_weights) {
+    print STDERR "DIFF: $name: $CURR{$name} -> $newweights{$name}\n";
+    if (abs($CURR{$name} - $newweights{$name}) >= $minimum_required_change_in_weights) {
       $shouldstop = 0;
       last;
     }
@@ -868,11 +864,11 @@ sub run_decoder {
       $lsamp_cmd = " -lattice-samples $lsamp_filename $___LATTICE_SAMPLES ";
     }
 
-    if (defined $___JOBS && $___JOBS > 0) {
+    # if (defined $___JOBS && $___JOBS > 0) {
       # $decoder_cmd = "$moses_parallel_cmd $pass_old_sge -config $___CONFIG -inputtype $___INPUTTYPE -qsub-prefix mert$run -queue-parameters \"$queue_flags\" -decoder-parameters \"$___DECODER_FLAGS $decoder_config\" $lsamp_cmd -n-best-list \"$filename $___N_BEST_LIST_SIZE\" -input-file $___DEV_F -jobs $___JOBS -decoder $___DECODER > run$run.out";
-    } else {
-      $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -weights-file run$run.weights -top-n $___N_BEST_LIST_SIZE 2> run$run.out | $JOSHUA/scripts/training/mira/feature_label_munger.pl > $filename";
-    }
+    # } else {
+    $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -top-n $___N_BEST_LIST_SIZE 2> run$run.out | $JOSHUA/scripts/training/mira/feature_label_munger.pl > $filename";
+    # }
 
     safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";
 
