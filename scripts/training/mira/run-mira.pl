@@ -73,6 +73,7 @@ my $___START_WITH_HISTORIC_BESTS = 0; # use best settings from all previous iter
 my $___RANDOM_DIRECTIONS = 0; # search in random directions only
 my $___NUM_RANDOM_DIRECTIONS = 0; # number of random directions, also works with default optimizer [Cer&al.,2008]
 my $___RANDOM_RESTARTS = 20;
+my $___RETURN_BEST_DEV = 1; # return the best weights according to dev, not the last
 
 # Flags related to PRO (Hopkins & May, 2011)
 my $___PAIRWISE_RANKED_OPTIMIZER = 0; # flag to enable PRO.
@@ -134,7 +135,7 @@ my $prev_aggregate_nbl_size = -1; # number of previous step to consider when loa
                                   # 0 means no previous data, i.e. from actual iteration
                                   # 1 means 1 previous data , i.e. from the actual iteration and from the previous one
                                   # and so on
-my $maximum_iterations = 25;
+my $maximum_iterations = 15;
 
 use Getopt::Long;
 GetOptions(
@@ -173,6 +174,7 @@ GetOptions(
   "random-directions" => \$___RANDOM_DIRECTIONS, # search only in random directions
   "number-of-random-directions=i" => \$___NUM_RANDOM_DIRECTIONS, # number of random directions
   "random-restarts=i" => \$___RANDOM_RESTARTS, # number of random restarts
+  "return-best-dev" => \$___RETURN_BEST_DEV, # return the best weights according to dev, not the last
   "activate-features=s" => \$___ACTIVATE_FEATURES, #comma-separated (or blank-separated) list of features to work on (others are fixed to the starting values)
   "range=s@" => \$___RANGES,
   "use-config-weights-for-first-run" => \$___USE_CONFIG_WEIGHTS_FIRST, # use the weights in the configuration file when running the decoder for the first time
@@ -261,6 +263,8 @@ Options:
                                      N means this and N previous iterations
 
   --maximum-iterations=ITERS ... Maximum number of iterations. Default: $maximum_iterations
+  --return-best-dev          ... Return the weights according to dev bleu, instead of returning
+                                 the last iteration
   --random-directions               ... search only in random directions
   --number-of-random-directions=int ... number of random directions
                                         (also works with regular optimizer, default: 0)
@@ -784,7 +788,27 @@ if (defined $allsorted) {
 
 safesystem("\\cp -f $mert_logfile run$run.$mert_logfile") or die;
 
-create_config($weights_file, "./weights.final", $featlist, $run, $devbleu);
+if ($___RETURN_BEST_DEV) {
+  my $bestit = 1;
+  my $bestbleu = 0;
+  my $evalout = "eval.out";
+  for (my $i = 1; $i < $run; $i++) {
+    safesystem("$mert_eval_cmd --reference " . join(",", @references) . " --candidate run$i.out 2> /dev/null 1> $evalout");
+    open my $fh, '<', $evalout or die "Can't read $evalout : $!";
+    my $bleu = <$fh>;
+    chomp $bleu;
+    if($bleu > $bestbleu) {
+      $bestbleu = $bleu;
+      $bestit = $i;
+    }
+    close $fh;
+  }
+  print "copying weights from best iteration ($bestit, bleu=$bestbleu) to moses.ini\n";
+  create_config($weights_file, "./weights.final", get_featlist_from_file("run$bestit.weights"),
+                $bestit, $bestbleu);
+} else {
+  create_config($weights_file, "./weights.final", $featlist, $run, $devbleu);
+}
 
 # just to be sure that we have the really last finished step marked
 &save_finished_step($finished_step_file, $run);
@@ -929,14 +953,11 @@ sub get_featlist_from_file {
   while (<$fh>) {
     $nr++;
     chomp;
-    next if (/^#/ || /^\s*$/);
+    next if (/^#/ || /^\s*$/);   # skip blank lines and comments
     /^(\S+) (\S+)$/ || die "invalid feature: $_";
-    my ($feature, $value) = ($1, $2, $3);
-    next if $value eq "sparse";
+    my ($feature, $value) = ($1, $2);
     push @errs, "$featlistfn:$nr:Bad initial value of $feature: $value\n"
       if $value !~ /^[+-]?[0-9.\-e]+$/;
-    # push @errs, "$featlistfn:$nr:Unknown feature '$feature', please add it to \@ABBR_FULL_MAP\n"
-    #   if !defined $ABBR2FULL{$feature};
     $featlist{$feature}{value} = $value;
   }
   close $fh;
