@@ -891,7 +891,7 @@ sub run_decoder {
     # if (defined $___JOBS && $___JOBS > 0) {
       # $decoder_cmd = "$moses_parallel_cmd $pass_old_sge -config $___CONFIG -inputtype $___INPUTTYPE -qsub-prefix mert$run -queue-parameters \"$queue_flags\" -decoder-parameters \"$___DECODER_FLAGS $decoder_config\" $lsamp_cmd -n-best-list \"$filename $___N_BEST_LIST_SIZE\" -input-file $___DEV_F -jobs $___JOBS -decoder $___DECODER > run$run.out";
     # } else {
-    $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -top-n $___N_BEST_LIST_SIZE 2> run$run.out | $JOSHUA/scripts/training/mira/feature_label_munger.pl > $filename";
+    $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -top-n $___N_BEST_LIST_SIZE 2> run$run.log | $JOSHUA/scripts/training/mira/feature_label_munger.pl | tee $filename | $JOSHUA/bin/extract-1best > run$run.out";
     # }
 
     safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";
