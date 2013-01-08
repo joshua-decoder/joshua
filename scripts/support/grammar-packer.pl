@@ -15,18 +15,24 @@
 
 use strict;
 use warnings;
+use Getopt::Std;
+
+my %opts = (
+  m => '16g',    # amount of memory to give the packer
+  c => '',       # use alternate packer config
+);
+getopts("m:c:");
 
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
 
 sub usage {
-  print "Usage: grammar-packer.pl input-grammar [output-dir=grammar.packed [packer-config]]\n";
+  print "Usage: grammar-packer.pl [-m MEM] [-c packer-config] input-grammar [output-dir=grammar.packed\n";
   exit;
 }
 
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
-my $config  = shift || undef;
 
 system("$CAT $grammar | sort -k3,3 | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
 
@@ -42,7 +48,7 @@ print CONFIG "slice_size 400000\n\nquantizer   float   $feature_str\n";
 close(CONFIG);
 
 # Do the packing using the config.
-system("java -Xmx8g -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz");
+system("java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz");
 
 # Clean up.
 unlink("grammar-labeled.gz");
