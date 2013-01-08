@@ -825,7 +825,7 @@ if (! defined $GRAMMAR_FILE) {
     if ($HADOOP eq "hadoop") {
       $THRAXDIR = "thrax";
 
-      $thrax_input = "$DATA_DIRS{train}/thrax/-input-file"
+      $thrax_input = "$DATA_DIRS{train}/thrax-input-file"
 
     } else {
       $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
@@ -837,7 +837,7 @@ if (! defined $GRAMMAR_FILE) {
                       "grammar.gz");
 
       $thrax_input = "$THRAXDIR/input-file";
-}
+    }
 
     # copy the thrax config file
     my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
@@ -1634,6 +1634,7 @@ sub rollout_hadoop_cluster {
   }
   
   $ENV{HADOOP} = $HADOOP = "hadoop";
+  $ENV{HADOOP_CONF_DIR} = "";
 }
 
 sub stop_hadoop_cluster {
