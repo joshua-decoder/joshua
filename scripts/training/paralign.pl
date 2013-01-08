@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 $| = 1;
 
+BEGIN {
+  unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
+}
+
 use strict;
 use warnings;
 use CachePipe;
