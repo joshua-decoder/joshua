@@ -1001,7 +1001,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
-                  "$SCRIPTDIR/support/grammar-packer.pl $TUNE_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -m 16g $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/slice_00000.source");
@@ -1224,7 +1224,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
-                    "$SCRIPTDIR/support/grammar-packer.pl $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -m 16g $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/slice_00000.source");

@@ -18,7 +18,7 @@ use warnings;
 use Getopt::Std;
 
 my %opts = (
-  m => '16g',    # amount of memory to give the packer
+  m => '4g',    # amount of memory to give the packer
   c => '',       # use alternate packer config
 );
 getopts("m:c:");
