@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 $| = 1;
 
+my $JOSHUA;
+
 BEGIN {
+  $JOSHUA = $ENV{JOSHUA};
   unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
 }
 
@@ -9,7 +12,6 @@ use strict;
 use warnings;
 use CachePipe;
 
-my $JOSHUA = $ENV{JOSHUA};
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 
