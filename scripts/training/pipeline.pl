@@ -101,6 +101,9 @@ my $PARSER_MEM = "2g";
 # memory available for building the language model
 my $BUILDLM_MEM = "2g";
 
+# Memory available for packing the grammar.
+my $PACKER_MEM = "2g";
+
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";
 
@@ -190,6 +193,7 @@ my $retval = GetOptions(
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "parser-mem=s"      => \$PARSER_MEM,
   "buildlm-mem=s"     => \$BUILDLM_MEM,
+  "packer-mem=s"      => \$PACKER_MEM,
   "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
   "thrax=s"           => \$THRAX,
@@ -1001,7 +1005,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m 16g $TUNE_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/slice_00000.source");
@@ -1224,7 +1228,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
-                    "$SCRIPTDIR/support/grammar-packer.pl -m 16g $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/slice_00000.source");

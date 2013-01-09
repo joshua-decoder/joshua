@@ -44,7 +44,7 @@ my $num_features = count_num_features("grammar-labeled.gz");
 my $feature_str = join(" ", 0..($num_features-1));
 my $packer_config = "packer.config.tmp";
 open CONFIG, ">$packer_config" or die "can't write to $packer_config";
-print CONFIG "slice_size 400000\n\nquantizer   float   $feature_str\n";
+print CONFIG "slice_size 100000\n\nquantizer   float   $feature_str\n";
 close(CONFIG);
 
 # Do the packing using the config.
