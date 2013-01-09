@@ -978,7 +978,7 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
-									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | grep -av '|||  |||' | gzip -9n > $TUNE_GRAMMAR",
+									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -us3 | grep -av '|||  |||' | gzip -9n > $TUNE_GRAMMAR",
 									$GRAMMAR_FILE,
 									$TUNE{source},
 									$TUNE_GRAMMAR);
@@ -1197,7 +1197,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
-                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
+                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -us3 | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
                       $GRAMMAR_FILE,
                       $TEST{source},
                       $TEST_GRAMMAR);
@@ -1400,7 +1400,7 @@ if ($TEST_GRAMMAR_FILE) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test-$NAME",
-										"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TEST_GRAMMAR",
+										"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -us3 | gzip -9n > $TEST_GRAMMAR",
 										$GRAMMAR_FILE,
 										$TEST{source},
 										$TEST_GRAMMAR);
