@@ -43,7 +43,14 @@ my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,@LMFILES,$GRAMMAR_FILE,$GLUE
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
+
+# The maximum length of training sentences (--maxlen). The threshold is applied to both sides.
 my $MAXLEN = 50;
+
+# The maximum length of tuning and testing sentences (--maxlen-tune and --maxlen-test).
+my $MAXLEN_TUNE = 0;
+my $MAXLEN_TEST = 0;
+
 my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $DO_PACK_GRAMMARS = 1;
@@ -186,6 +193,8 @@ my $retval = GetOptions(
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
   "maxlen=i"        => \$MAXLEN,
+  "maxlen-tune=i"        => \$MAXLEN_TUNE,
+  "maxlen-test=i"        => \$MAXLEN_TEST,
   "tokenizer=s"      => \$TOKENIZER,
   "joshua-config=s"   => \$TUNEFILES{'joshua.config'},
   "joshua-args=s"      => \$JOSHUA_ARGS,
@@ -518,14 +527,14 @@ if ($DO_PREPARE_CORPORA) {
 
 # prepare the tuning and development data
 if (defined $TUNE and $DO_PREPARE_CORPORA) {
-  my $prefixes = prepare_data("tune",[$TUNE]);
+  my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
   $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
   $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TUNE} = 1;
 }
 
 if (defined $TEST and $DO_PREPARE_CORPORA) {
-  my $prefixes = prepare_data("test",[$TEST]);
+  my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
   $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
   $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TEST} = 1;
@@ -1477,6 +1486,7 @@ LAST:
 # $maxlen: maximum length (only applicable to training)
 sub prepare_data {
   my ($label,$corpora,$maxlen) = @_;
+  $maxlen = 0 unless defined $maxlen;
 
   system("mkdir -p $DATA_DIR") unless -d $DATA_DIR;
   system("mkdir -p $DATA_DIRS{$label}") unless -d $DATA_DIRS{$label};
@@ -1533,15 +1543,25 @@ sub prepare_data {
   $prefix .= ".tok";
   $prefixes{tokenized} = $prefix;
 
-  if ($label eq "train" and $maxlen > 0) {
+  if ($maxlen > 0) {
+    my (@infiles, @outfiles);
+    foreach my $ext ($TARGET, $SOURCE, "$TARGET.0", "$TARGET.1", "$TARGET.2", "$TARGET.3") {
+      my $infile = "$DATA_DIRS{$label}/$prefix.$ext.gz";
+      my $outfile = "$DATA_DIRS{$label}/$prefix.$maxlen.$ext.gz";
+      if (-e $infile) {
+        push(@infiles, $infile);
+        push(@outfiles, $outfile);
+      }
+    }
+
+    my $infilelist = join(" ", map { "<(gzip -cd $_)" } @infiles);
+    my $outfilelist = join(" ", @outfiles);
+
 		# trim training data
-		$cachepipe->cmd("train-trim",
-										"paste <(gzip -cd $DATA_DIRS{$label}/$prefix.$TARGET.gz) <(gzip -cd $DATA_DIRS{$label}/$prefix.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $DATA_DIRS{$label}/$prefix.$maxlen.$TARGET.gz $DATA_DIRS{$label}/$prefix.$maxlen.$SOURCE.gz",
-										"$DATA_DIRS{$label}/$prefix.$TARGET.gz", 
-										"$DATA_DIRS{$label}/$prefix.$SOURCE.gz",
-										"$DATA_DIRS{$label}/$prefix.$maxlen.$TARGET.gz", 
-										"$DATA_DIRS{$label}/$prefix.$maxlen.$SOURCE.gz",
-				);
+		$cachepipe->cmd("$label-trim",
+										"paste $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $outfilelist",
+                    @infiles,
+                    @outfiles);
 		$prefix .= ".$maxlen";
   }
   # record this whether we shortened or not
