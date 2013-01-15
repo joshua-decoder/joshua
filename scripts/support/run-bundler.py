@@ -6,23 +6,25 @@
 
 # Example invocation:
 '''
-./run-bundler.py \
+$JOSHUA/scripts/support/run-bundler.py \
   --force \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/test/1/joshua.config \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5 \
   haitian5-bundle \
-  "-top-n 1 \
+  --pack-grammar \
+  --binarize-lm \
+  --copy-config-options "-top-n 1 \
     -output-format %S \
     -mark-oovs false \
     -server-port 5674 \
     -tm/pt "thrax pt 20 /path/to/copied/unfiltered/grammar.gz"
-
 '''
 # Then, go run the executable file
 #   haitian5-bundle/bundle-runner.sh
 
 from __future__ import print_function
 import argparse
+import itertools
 import os
 import re
 import shutil
@@ -31,7 +33,7 @@ import sys
 from subprocess import Popen, PIPE
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
-FILE_PARAMS = set(['lm', 'tm', 'weights-file'])
+FILE_TYPE_TOKENS = set(['lm', 'tm', 'weights-file'])
 OUTPUT_CONFIG_FILE_NAME = 'joshua.config'
 BUNDLE_RUNNER_FILE_NAME = 'bundle-runner.sh'
 BUNDLE_RUNNER_TEXT = r"""#!/bin/bash
@@ -71,56 +73,154 @@ def filter_through_copy_config_script(configs, other_joshua_configs):
     result = p.communicate("\n".join(configs))[0]
     return result.split("\n")
 
-def determine_copy_orig_path(file_path_token, orig_dir):
+
+class ConfigLine(object):
     """
-    If the path to the file to be copied is relative, then prepend it with
-    the origin directory.
+    Base class for representing a configuration lines. Subclasses of this class
+    are meant to deal with files that get copied or processed.
     """
-    # The path might be relative or absolute, we don't know.
-    match_orig_dir_prefix = re.search("^" + orig_dir, file_path_token)
-    match_abs_path = re.search("^/", file_path_token)
-    if match_abs_path or match_orig_dir_prefix:
-        return file_path_token
-    return os.path.join(orig_dir, file_path_token)
+
+    def __init__(self, line_parts, orig_dir=None, dest_dir=None,
+            pack_grammar=None, binarize_lm=None):
+        self.line_parts = line_parts
+        self.orig_dir = orig_dir
+        self.dest_dir = dest_dir
+        self.pack_grammar = pack_grammar
+        self.binarize_lm = binarize_lm
+
+    def join_command_comment(self, custom_command_parts=None,
+                custom_comment=None):
+        """
+        If no values are given for the custom_command_parts and custom_comment
+        parameters, the original input configuration string is returned.
+        """
+        if custom_command_parts:
+            command = " ".join(custom_command_parts)
+        else:
+            command = " ".join(self.line_parts["command"])
+        if custom_comment:
+            comment = custom_comment
+        else:
+            comment = self.line_parts["comment"]
+        if comment:
+            comment = "#" + comment
+        return " ".join([command, comment]).strip()
+
+    def result(self):
+        return self.join_command_comment()
 
 
-def determine_copy_dest_path(file_path_token, orig_dir):
-    """
-    If the path to the file to be copied is relative, then prepend it with
-    the origin directory.
-    """
-    # The path might be relative or absolute, we don't know.
-    return os.path.join(orig_dir, os.path.basename(file_path_token))
+class FileConfigLine(ConfigLine):
+
+    def __init__(self, line_parts, orig_dir, dest_dir,
+            pack_grammar=None, binarize_lm=None):
+        super(FileConfigLine, self).__init__(line_parts, orig_dir, dest_dir,
+                pack_grammar, binarize_lm)
+        self.source_file_path = None
+
+    def set_source_file_token(self, file_token):
+        self.source_file_path = self.__determine_source_file_path(file_token)
+
+    def __determine_source_file_path(self, file_token):
+        """
+        If the path to the file to be copied is relative, then prepend it with
+        the origin directory.
+        """
+        # The path might be relative or absolute, we don't know.
+        match_orig_dir_prefix = re.search("^" + self.orig_dir, file_token)
+        match_abs_path = re.search("^/", file_token)
+        if match_abs_path or match_orig_dir_prefix:
+            return file_token
+        return os.path.abspath(os.path.join(self.orig_dir, file_token))
 
 
-def process_config_line(line, orig_dir, dest_dir):
-    """
-    Copy referenced file over to the destination directory and return the
-    config line, changed if necessary, reflecting the new location of the file.
-    """
-    config, hash_char, comment = line.partition('#')
-    tokens = config.split()
-    if len(tokens) > 0 and tokens[0] in FILE_PARAMS:
-        # This line concerns a file. The final token is the file path.
-        file_path_token = tokens[-1]
-        src = determine_copy_orig_path(file_path_token, orig_dir)
-        dst = determine_copy_dest_path(file_path_token, dest_dir)
-        # Copy the file.
-        shutil.copy(src, dst)
+class ProcessFileConfigLine(FileConfigLine):
+
+    pass
+
+
+class CopyFileConfigLine(FileConfigLine):
+
+    def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
+            binarize_lm=None):
+        super(FileConfigLine, self).__init__(line_parts, orig_dir, dest_dir,
+                pack_grammar, binarize_lm)
+        self.dest_file_path = None
+
+    def set_dest_file_token(self, file_token):
+        path = self.__determine_copy_dest_path(file_token)
+        self.dest_file_path = os.path.abspath(path)
+
+    def __determine_copy_dest_path(self, file_token):
+        """
+        If the path to the file to be copied is relative, then prepend it with
+        the origin directory.
+        """
+        # The path might be relative or absolute, we don't know.
+        return os.path.join(self.dest_dir, os.path.basename(file_token))
+
+    def __copy_file_to_bundle(self):
+        """
+        Copy referenced file or directory tree over to the destination
+        directory.
+        """
+        src = self.source_file_path
+        dst = self.dest_file_path
+        if os.path.isdir(src):
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy(src, dst)
+
+    def process(self):
+        """
+        Copy referenced file over to the destination directory and return the
+        config line, changed if necessary, reflecting the new location of the file.
+        """
+        self.__copy_file_to_bundle()
+
+    def result(self):
+        """
+        return the config line, changed if necessary, reflecting the new
+    location of the file.
+        """
         # Update the config line to reference the changed path.
         # 1) Remove the directories from the path, since the files are
         #    copied to the top level.
-        tokens[-1] = os.path.basename(file_path_token)
+        command_parts = self.line_parts["command"]
+        command_parts[-1] = os.path.basename(self.dest_file_path)
         # 2) Put back together the configuration line
-        config = ' '.join(tokens)
-        if hash_char:
-            return "{0}  {1}{2}".format(config, hash_char, comment)
-        else:
-            return config
-    return line
+        return self.join_command_comment(command_parts)
 
 
-def handle_args():
+def extract_line_parts(line):
+    config, hash_char, comment = line.partition('#')
+    return {"command": config.split(), "comment": comment}
+
+
+def processed_config_line(line, args):
+    """
+    Copy referenced file over to the destination directory and return the
+    config line, changed if necessary, reflecting the new location of the file.
+
+    line is the configuration line.
+
+    args is a MyParser object.
+    """
+    line_parts = extract_line_parts(line)
+    tokens = line_parts["command"]
+    try:
+        config_type_token = tokens[0]
+        #file_path_token = tokens[-1]
+    except:
+        config_type_token = None
+    if config_type_token in FILE_TYPE_TOKENS:
+        return CopyFileConfigLine(line_parts, args.origdir, args.destdir,
+                args.pack_grammar, args.binarize_lm)
+    else:
+        return ConfigLine(line_parts)
+
+
+def handle_args(clargs):
     """
     Command-line arguments
     """
@@ -134,7 +234,6 @@ def handle_args():
     # Parse the command line arguments.
     parser = MyParser(description='creates a Joshua configuration bundle from '
                                   'an existing configuration and set of files')
-
     parser.add_argument('config', type=file,
                         help='path to the origin configuration file. '
                         'e.g. /path/to/test/1/joshua.config.final')
@@ -147,15 +246,24 @@ def handle_args():
                         'exist. But if it does, it will be removed if -f is used.')
     parser.add_argument('-f', '--force', action='store_true',
                         help='extant destination directory will be overwritten')
-    parser.add_argument('other_joshua_configs',
-                        help='optionally additional configuration options '
-                        'for Joshua, surrounded by quotes. To omit this '
-                        'parameter, use an empty pair of quotes.')
-    return parser.parse_args()
+    parser.add_argument('-o', '--copy-config-options',
+                        help='optional additional or replacement configuration '
+                        'options for Joshua, all surrounded by one pair of '
+                        'quotes.')
+    parser.add_argument('--pack-grammar',
+                        action="store_true",
+                        help='use the grammar packer script to pack the '
+                        'grammar.')
+    parser.add_argument('--binarize-kenlm',
+                        nargs='+',
+                        help='use the build_binary script to binarize the '
+                        'language model(s) listed, for shorter loading at run '
+                        'time.')
+    return parser.parse_args(clargs)
 
 
 def main():
-    args = handle_args()
+    args = handle_args(sys.argv)
     try:
         make_dest_dir(args.destdir, args.force)
     except:
@@ -164,14 +272,17 @@ def main():
                              % args.destdir)
             sys.stderr.write('use -f or --force option to overwrite the directory.')
             sys.exit(2)
-    config = filter_through_copy_config_script(args.config,
-                                               args.other_joshua_configs)
+    filtered_config_lines = filter_through_copy_config_script(
+            args.filtered_config_lines, args.copy_config_options)
     # Create the resource files in the new bundle.
-    new_config_lines = [process_config_line(line, args.origdir, args.destdir)
-                        for line in config]
+    # Some results might be a list of more than one line.
+    result_config_lines = [processed_config_line(line, args).result()
+                           for line in filtered_config_lines]
+    # Flatten the list (potentially containing items that are lists)
+    result_config_lines = list(itertools.chain(*result_config_lines))
     # Create the Joshua configuration file for the package
     with open(os.path.join(args.destdir, OUTPUT_CONFIG_FILE_NAME), 'w') as fh:
-        fh.write('\n'.join(new_config_lines))
+        fh.write('\n'.join(result_config_lines))
     # Write the script that runs Joshua using the configuration and resources
     # in the bundle.
     with open(os.path.join(args.destdir, BUNDLE_RUNNER_FILE_NAME), 'w') as fh:
@@ -191,9 +302,49 @@ if __name__ == "__main__":
 ######################
 
 import unittest
+from mock import Mock
 
 
-class TestRunBundlr(unittest.TestCase):
+class TestRunBundler_cli(unittest.TestCase):
+
+    def test_force(self):
+        args = handle_args(["--force",
+                            "/dev/null",
+                            "/dev/null",
+                            "haitian5-bundle"])
+        self.assertIsInstance(args.config, file)
+
+    def test_no_force(self):
+        args = handle_args(["/dev/null",
+                            "/dev/null",
+                            "haitian5-bundle"])
+        self.assertIsInstance(args.config, file)
+
+    def test_copy_config_options(self):
+        """
+        For --copy_config_options, Space-separated options surrounded by a pair
+        of quotes should not be split.
+        """
+        args = handle_args(["/dev/null",
+                            "/dev/null",
+                            "haitian5-bundle",
+                            "--copy-config-options",
+                            "-grammar grammar.gz"])
+        self.assertIsInstance(args.config, file)
+        self.assertEqual("-grammar grammar.gz", args.copy_config_options)
+
+    def test_copy_config_options__empty(self):
+        """
+        An error should result from --copy-config-options with no options.
+        """
+        with self.assertRaises(SystemExit):
+            handle_args(["/dev/null",
+                         "/dev/null",
+                         "haitian5-bundle",
+                         "--copy-config-options"])
+
+
+class TestRunBundler_bundle_dir(unittest.TestCase):
 
     def setUp(self):
         self.test_dest_dir = "newdir"
@@ -206,252 +357,10 @@ class TestRunBundlr(unittest.TestCase):
         temp_file_path = os.path.join(self.test_dest_dir, 'temp')
         open(temp_file_path, 'w').write('test text')
 
-        self.input_config = """# This file is a template for the Joshua pipeline; variables enclosed
-# in <angle-brackets> are substituted by the pipeline script as
-# appropriate.  This file also serves to document Joshua's many
-# parameters.
-
-# These are the grammar file specifications.  Joshua supports an
-# arbitrary number of grammar files, each specified on its own line
-# using the following format:
-#
-#   tm = TYPE OWNER LIMIT FILE
-#
-# TYPE is "packed", "thrax", or "samt".  The latter denotes the format
-# used in Zollmann and Venugopal's SAMT decoder
-# (http://www.cs.cmu.edu/~zollmann/samt/).
-#
-# OWNER is the "owner" of the rules in the grammar; this is used to
-# determine which set of phrasal features apply to the grammar's
-# rules.  Having different owners allows different features to be
-# applied to different grammars, and for grammars to share features
-# across files.
-#
-# LIMIT is the maximum input span permitted for the application of
-# grammar rules found in the grammar file.  A value of -1 implies no limit.
-#
-# FILE is the grammar file (or directory when using packed grammars).
-# The file can be compressed with gzip, which is determined by the
-# presence or absence of a ".gz" file extension.
-#
-# By a convention defined by Chiang (2007), the grammars are split
-# into two files: the main translation grammar containing all the
-# learned translation rules, and a glue grammar which supports
-# monotonic concatenation of hierarchical phrases. The glue grammar's
-# main distinction from the regular grammar is that the span limit
-# does not apply to it.
-
-tm = thrax pt 12 /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/data/test/grammar.filtered.gz
-tm = thrax glue -1 /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/data/tune/grammar.glue
-
-# This symbol is used over unknown words in the source language
-
-default-non-terminal = X
-
-# This is the goal nonterminal, used to determine when a complete
-# parse is found.  It should correspond to the root-level rules in the
-# glue grammar.
-
-goal-symbol = GOAL
-
-# Language model config.
-
-# Multiple language models are supported.  For each language model,
-# create a line in the following format,
-#
-# lm = TYPE 5 false false 100 FILE
-#
-# where the six fields correspond to the following values:
-# - LM type: one of "kenlm", "berkeleylm", "javalm" (not recommended), or "none"
-# - LM order: the N of the N-gram language model
-# - whether to use left equivalent state (currently not supported)
-# - whether to use right equivalent state (currently not supported)
-# - the ceiling cost of any n-gram (currently ignored)
-# - LM file: the location of the language model file
-# You also need to add a weight for each language model below.
-
-lm = berkeleylm 5 false false 100 lm.berkeleylm
-
-# The suffix _OOV is appended to unknown source-language words if this
-# is set to true.
-
-mark-oovs = true
-
-# The pop-limit for decoding.  This determines how many hypotheses are
-# considered over each span of the input.
-
-pop-limit = 100
-
-# How many hypotheses to output
-
-top-n = 300
-
-# Whether those hypotheses should be distinct strings
-
-use-unique-nbest = true
-
-# The following two options control whether to output (a) the
-# derivation tree and (b) word alignment information (for each
-# hypothesis on the n-best list).  Note that setting these options to
-# 'true' will currently break MERT, so don't use these in the
-# pipeline.
-
-use-tree-nbest = false
-include-align-index = false
-
-## Feature functions and weights.
-#
-# This is the location of the file containing model weights.
-#
-weights-file = test/1/weights
-
-# And these are the feature functions to activate.
-feature_function = OOVPenalty
-feature_function = WordPenalty
-"""
-
-        self.extra_config_options = r"""-top-n 1 \
--output-format %S \
--mark-oovs false \
--server-port 5674 \
--weights-file test/1/weights.final """
-
-        self.copy_config_input = r"""-tm thrax pt 12 grammar.gz \
--tm thrax glue -1 grammar.glue \
--lm berkeleylm 5 false false 100 lm.berkeleylm \
-""" + self.extra_config_options
-
-        self.expected_output_config = """# This file is a template for the Joshua pipeline; variables enclosed
-# in <angle-brackets> are substituted by the pipeline script as
-# appropriate.  This file also serves to document Joshua's many
-# parameters.
-
-# These are the grammar file specifications.  Joshua supports an
-# arbitrary number of grammar files, each specified on its own line
-# using the following format:
-#
-#   tm = TYPE OWNER LIMIT FILE
-#
-# TYPE is "packed", "thrax", or "samt".  The latter denotes the format
-# used in Zollmann and Venugopal's SAMT decoder
-# (http://www.cs.cmu.edu/~zollmann/samt/).
-#
-# OWNER is the "owner" of the rules in the grammar; this is used to
-# determine which set of phrasal features apply to the grammar's
-# rules.  Having different owners allows different features to be
-# applied to different grammars, and for grammars to share features
-# across files.
-#
-# LIMIT is the maximum input span permitted for the application of
-# grammar rules found in the grammar file.  A value of -1 implies no limit.
-#
-# FILE is the grammar file (or directory when using packed grammars).
-# The file can be compressed with gzip, which is determined by the
-# presence or absence of a ".gz" file extension.
-#
-# By a convention defined by Chiang (2007), the grammars are split
-# into two files: the main translation grammar containing all the
-# learned translation rules, and a glue grammar which supports
-# monotonic concatenation of hierarchical phrases. The glue grammar's
-# main distinction from the regular grammar is that the span limit
-# does not apply to it.
-
-tm = thrax pt 12 grammar.gz
-tm = thrax glue -1 grammar.glue
-
-# This symbol is used over unknown words in the source language
-
-default-non-terminal = X
-
-# This is the goal nonterminal, used to determine when a complete
-# parse is found.  It should correspond to the root-level rules in the
-# glue grammar.
-
-goal-symbol = GOAL
-
-# Language model config.
-
-# Multiple language models are supported.  For each language model,
-# create a line in the following format,
-#
-# lm = TYPE 5 false false 100 FILE
-#
-# where the six fields correspond to the following values:
-# - LM type: one of "kenlm", "berkeleylm", "javalm" (not recommended), or "none"
-# - LM order: the N of the N-gram language model
-# - whether to use left equivalent state (currently not supported)
-# - whether to use right equivalent state (currently not supported)
-# - the ceiling cost of any n-gram (currently ignored)
-# - LM file: the location of the language model file
-# You also need to add a weight for each language model below.
-
-lm = berkeleylm 5 false false 100 lm.berkeleylm
-
-# The suffix _OOV is appended to unknown source-language words if this
-# is set to true.
-
-mark-oovs = false
-
-# The pop-limit for decoding.  This determines how many hypotheses are
-# considered over each span of the input.
-
-pop-limit = 100
-
-# How many hypotheses to output
-
-top-n = 1
-
-# Whether those hypotheses should be distinct strings
-
-use-unique-nbest = true
-
-# The following two options control whether to output (a) the
-# derivation tree and (b) word alignment information (for each
-# hypothesis on the n-best list).  Note that setting these options to
-# 'true' will currently break MERT, so don't use these in the
-# pipeline.
-
-use-tree-nbest = false
-include-align-index = false
-
-## Feature functions and weights.
-#
-# This is the location of the file containing model weights.
-#
-weights-file = weights.final
-
-# And these are the feature functions to activate.
-feature_function = OOVPenalty
-feature_function = WordPenalty
-output-format = %S
-server-port = 5674
-"""
-
     def tearDown(self):
-        """
         if os.path.exists(self.test_dest_dir):
             clear_non_empty_dir(self.test_dest_dir)
-        """
         pass
-
-    def test_cli__force(self):
-        sys.argv = ["program",
-                    "--force",
-                    "/dev/null",
-                    "/dev/null",
-                    "haitian5-bundle",
-                    ""]
-        args = handle_args()
-        self.assertIsInstance(args.config, file)
-
-    def test_cli__no_force(self):
-        sys.argv = ["program",
-                    "/dev/null",
-                    "/dev/null",
-                    "haitian5-bundle",
-                    ""]
-        args = handle_args()
-        self.assertIsInstance(args.config, file)
 
     def test_clear_non_empty_dir(self):
         clear_non_empty_dir(self.test_dest_dir)
@@ -471,94 +380,157 @@ server-port = 5674
         make_dest_dir(self.test_dest_dir, False)
         self.assertTrue(os.path.exists(self.test_dest_dir))
 
-    def test_determine_copy_orig_path__abs(self):
-        expect = '/home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/data/test/grammar.filtered.gz'
-        actual = determine_copy_orig_path(self.config_line_abs.split()[-1], "")
-        self.assertEqual(expect, actual)
 
-    def test_determine_copy_orig_path__rel(self):
-        orig_dir = '/home/hltcoe/lorland/expts/haitian-creole-sms'
-        expect = os.path.join(orig_dir, 'lm.berkeleylm')
-        actual = determine_copy_orig_path(self.config_line_rel.split()[-1],
-                                          orig_dir)
-        self.assertEqual(expect, actual)
+class TestProcessedConfigLine_blank(unittest.TestCase):
 
-    def test_determine_copy_dest_path__rel(self):
-        expect = os.path.join(self.test_dest_dir, 'lm.berkeleylm')
-        actual = determine_copy_dest_path(self.config_line_rel.split()[-1],
-                                          self.test_dest_dir)
-        self.assertEqual(expect, actual)
+    def setUp(self):
+        self.args = handle_args(['/dev/null', '/dev/null', '/dev/null'])
 
-    def test_determine_copy_dest_path__abs(self):
-        expect = os.path.join(self.test_dest_dir, 'grammar.filtered.gz')
-        actual = determine_copy_dest_path(self.config_line_abs.split()[-1],
-                                          self.test_dest_dir)
-        self.assertEqual(expect, actual)
-
-    def test_process_config_line__rel(self):
-        make_dest_dir(self.test_dest_dir, True)
-
-        test_orig_dir = os.path.join(self.test_dest_dir, 'orig')
-        os.mkdir(os.path.join(test_orig_dir))
-        os.mkdir(os.path.join(test_orig_dir, 'rel'))
-        os.mkdir(os.path.join(test_orig_dir, 'rel', 'path'))
-        os.mkdir(os.path.join(test_orig_dir, 'rel', 'path', 'to'))
-        test_grammar_path = os.path.join(test_orig_dir, 'rel', 'path', 'to',
-                                         'lm.berkeleylm')
-
-        with open(test_grammar_path, 'w') as fh:
-            fh.write('grammar')
-        expect = 'lm = berkeleylm 5 false false 100 lm.berkeleylm'
-        actual = process_config_line('lm = berkeleylm 5 false false 100 rel/path/to/lm.berkeleylm',
-                                     test_orig_dir, self.test_dest_dir)
-        self.assertEqual(expect, actual)
-
-    def test_process_config_line__abs(self):
-        make_dest_dir(self.test_dest_dir, True)
-
-        test_orig_dir = os.path.join(self.test_dest_dir, 'orig')
-        make_dest_dir(test_orig_dir, True)
-
-        test_grammar_path = os.path.join(test_orig_dir, 'grammar.filtered.gz')
-
-        with open(test_grammar_path, 'w') as fh:
-            fh.write('grammar')
-        expect = 'tm = thrax pt 12 grammar.filtered.gz'
-        actual = process_config_line(self.config_line_abs, test_orig_dir,
-                                     self.test_dest_dir)
-        self.assertEqual(expect, actual)
-
-    def test_process_config_line__comment(self):
-        expect = '# This is the location of the file containing model weights.'
-        actual = process_config_line('# This is the location of the file containing model weights.',
-                                     '/dev/null', '/dev/null')
-        self.assertEqual(expect, actual)
-
-    def test_process_config_line__blank(self):
+    def test_output_is_input(self):
+        """
+        The resulting processed config line of a comment line is that same
+        comment line.
+        """
+        cl_object = processed_config_line('', self.args)
         expect = ''
-        actual = process_config_line('', '/dev/null', '/dev/null')
+        actual = cl_object.result()
         self.assertEqual(expect, actual)
 
-    def test_process_config_line__followed_by_comment(self):
-        expect = 'server-port = 5674  # A comment'
-        actual = process_config_line('server-port = 5674  # A comment',
-                                     '/dev/null', '/dev/null')
+
+class TestProcessedConfigLine_comment(unittest.TestCase):
+
+    def setUp(self):
+        self.line = '# This is the location of the file containing model weights.'
+        self.args = handle_args(['/dev/null', '/dev/null', '/dev/null'])
+
+    def test_line_type(self):
+        expect = ConfigLine
+        actual = processed_config_line(self.line, self.args).__class__
         self.assertEqual(expect, actual)
 
-    def test_process_config_line__file_line_followed_by_comment(self):
-        make_dest_dir(self.test_dest_dir, True)
-
-        test_orig_dir = os.path.join(self.test_dest_dir, 'orig')
-        os.mkdir(os.path.join(test_orig_dir))
-        os.mkdir(os.path.join(test_orig_dir, 'rel'))
-        os.mkdir(os.path.join(test_orig_dir, 'rel', 'path'))
-        os.mkdir(os.path.join(test_orig_dir, 'rel', 'path', 'to'))
-        test_grammar_path = os.path.join(test_orig_dir, 'rel', 'path', 'to',
-                                         'lm.berkeleylm')
-
-        with open(test_grammar_path, 'w') as fh:
-            fh.write('grammar')
-        expect = 'lm = berkeleylm 5 false false 100 lm.berkeleylm  # A comment'
-        actual = process_config_line('lm = berkeleylm 5 false false 100 rel/path/to/lm.berkeleylm  # A comment',
-                                     test_orig_dir, self.test_dest_dir)
+    def test_output_is_input(self):
+        """
+        The resulting processed config line of a comment line is that same
+        comment line.
+        """
+        expect = '# This is the location of the file containing model weights.'
+        actual = processed_config_line(expect, self.args).result()
         self.assertEqual(expect, actual)
+
+
+class TestProcessedConfigLine_copy1(unittest.TestCase):
+
+    def setUp(self):
+        self.line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        self.args = Mock()
+        self.args.origdir = os.path.join(JOSHUA_PATH, 'test','bn-en', 'hiero')
+        self.args.destdir = './testdestdir'
+
+    def tearDown(self):
+        if os.path.exists(self.args.destdir):
+            clear_non_empty_dir(self.args.destdir)
+
+    def test_line_type(self):
+        expect = CopyFileConfigLine
+        actual = processed_config_line(self.line, self.args).__class__
+        self.assertEqual(expect, actual)
+
+    def test_output_is_input(self):
+        """
+        The resulting processed config line of a comment line is that same
+        comment line.
+        """
+        expect = '# This is the location of the file containing model weights.'
+        actual = processed_config_line(expect, self.args).result()
+        self.assertEqual(expect, actual)
+
+class TestProcessedConfigLine_copy2(unittest.TestCase):
+
+    def setUp(self):
+        line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        args = Mock()
+        args.origdir = os.path.join(JOSHUA_PATH, 'test','bn-en', 'hiero')
+        args.destdir = './testdestdir'
+        # Create the destination directory.
+        if not os.path.exists(args.destdir):
+            os.mkdir(args.destdir)
+        self.result = processed_config_line(line, args)
+        self.result.set_source_file_token('grammar.gz')
+        self.result.set_dest_file_token('grammar.gz')
+        self.expected_source_file_path = \
+                os.path.abspath(os.path.join(args.origdir, 'grammar.gz'))
+        self.expected_dest_file_path = \
+                os.path.abspath(os.path.join(args.destdir, 'grammar.gz'))
+
+    def test_line_source_path(self):
+        actual = self.result.source_file_path
+        self.assertEqual(self.expected_source_file_path, actual)
+
+    def test_line_dest_path(self):
+        actual = self.result.dest_file_path
+        self.assertEqual(self.expected_dest_file_path, actual)
+
+    def test_line_copy_file(self):
+        self.result.process()
+        self.assertTrue(os.path.exists(self.result.dest_file_path))
+
+
+class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
+
+    def setUp(self):
+        # N.B. specify a path to copytree that is not inside you application.
+        # Otherwise it ends with an infinite recursion.
+        self.line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        self.args = Mock()
+        self.args.origdir = os.path.join(JOSHUA_PATH, 'examples')
+        self.args.destdir = './testdestdir'
+        # Create the destination directory.
+        if not os.path.exists(self.args.destdir):
+            os.mkdir(self.args.destdir)
+
+    def tearDown(self):
+        if os.path.exists(self.args.destdir):
+            clear_non_empty_dir(self.args.destdir)
+
+    def test_line_parts(self):
+        result = processed_config_line(self.line, self.args)
+        result.set_dest_file_token('support')
+        expect = {"command": ['tm', '=', 'thrax', 'pt', '12', 'grammar.gz'],
+                  "comment": '# foo bar'}
+        actual = result.line_parts
+        self.assertEqual(expect["command"], actual["command"])
+
+    def test_line_dest_path(self):
+        result = processed_config_line(self.line, self.args)
+        result.set_dest_file_token('support')
+        expect = '/Users/orluke/workspace/mt/joshua/scripts/support/testdestdir/support'
+        actual = result.dest_file_path
+        self.assertEqual(expect, actual)
+
+    def test_line_copy_dirtree(self):
+        result = processed_config_line(self.line, self.args)
+        result.set_source_file_token('example')
+        result.set_dest_file_token('example')
+        result.process()
+        expect = os.path.join(self.args.destdir, 'example', 'joshua.config')
+        self.assertTrue(os.path.exists(expect))
+
+    def test_line_copy_dirtree_result(self):
+        cl_object = processed_config_line(self.line, self.args)
+        cl_object.set_dest_file_token('example')
+        expect = 'tm = thrax pt 12 example # foo bar'
+        actual = cl_object.result()
+        self.assertEqual(expect, actual)
+
+class TestProcessedConfigLine_process(unittest.TestCase):
+
+    def test_line_grammar_packer(self):
+        pass
+
+    def test_line_grammar_lm_binarizer(self):
+        pass
+
+# todo
+# DONE: copying directories
+# : all resulting paths in configurations in bundle should be relative.
+# : more than one input file with the same name.
