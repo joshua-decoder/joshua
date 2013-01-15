@@ -35,14 +35,14 @@ from subprocess import Popen, PIPE
 JOSHUA_PATH = os.environ.get('JOSHUA')
 FILE_TYPE_TOKENS = set(['lm', 'tm', 'weights-file'])
 OUTPUT_CONFIG_FILE_NAME = 'joshua.config'
-BUNDLE_RUNNER_FILE_NAME = 'bundle-runner.sh'
-BUNDLE_RUNNER_TEXT = r"""#!/bin/bash
-# Usage: bundle_destdir/bundle-runner.sh [extra joshua config options]
+BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
+BUNDLE_RUNNER_TEXT = """#!/bin/bash
+# Usage: bundle_destdir/%s [extra joshua config options]
 
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
 $JOSHUA/joshua-decoder -c joshua.config $*
-"""
+""" % BUNDLE_RUNNER_FILE_NAME
 
 
 def clear_non_empty_dir(top):
