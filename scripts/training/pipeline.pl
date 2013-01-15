@@ -25,10 +25,10 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
-use Cwd;
+use Cwd qw[abs_path getcwd];
 use POSIX qw[ceil];
 use List::Util qw[max min sum];
-use File::Temp qw/ :mktemp /;
+use File::Temp qw[:mktemp];
 use CachePipe;
 # use Thread::Pool;
 
@@ -62,7 +62,7 @@ my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
 my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
-my $RUNDIR = $STARTDIR = getcwd;
+my $RUNDIR = $STARTDIR = getcwd();
 my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
 my $WITTEN_BELL = 0;
 
@@ -89,9 +89,17 @@ my %TUNEFILES = (
   'params.txt'      => "$TUNECONFDIR/params.txt",
 );
 
+# Whether to do MBR decoding on the n-best list (for test data).
 my $DO_MBR = 1;
 
+# Which aligner to use. The options are "giza" or "berkeley".
 my $ALIGNER = "giza"; # "berkeley" or "giza"
+
+# Filter rules to the following maximum scope (Hopkins & Langmead, 2011).
+my $SCOPE = 3;
+
+# What kind of filtering to use ("fast" or "exact").
+my $FILTERING = "fast";
 
 # This is the amount of memory made available to Joshua.  You'll need
 # a lot more than this for SAMT decoding (though really it depends
@@ -180,6 +188,8 @@ my $retval = GetOptions(
   "target=s"         => \$TARGET,
   "rundir=s"        => \$RUNDIR,
   "filter-tm!"        => \$DO_FILTER_TM,
+  "scope=i"           => \$SCOPE,
+  "filtering=s"       => \$FILTERING,
   "lm=s"              => \$LM_TYPE,
   "lmfile=s"        => \@LMFILES,
   "lm-gen=s"          => \$LM_GEN,
@@ -417,7 +427,19 @@ if ($TUNER ne "mert" and $TUNER ne "mira" and $TUNER ne "pro") {
   exit 1;
 }
 
-## Dependent variable setting ########################################
+$FILTERING = lc $FILTERING;
+if ($FILTERING eq "fast") {
+  $FILTERING = "-f"
+} elsif ($FILTERING eq "exact") {
+  $FILTERING = "";
+} else {
+  print "* FATAL: --filtering must be one of 'fast' (default) or 'exact'\n";
+  exit 1;
+}
+
+####################################################################################################
+## Dependent variable setting ######################################################################
+####################################################################################################
 
 # if parallelization is turned off, then use the sequential version of
 # the decoder command
@@ -892,7 +914,7 @@ TUNE:
 
 # prep the tuning data, unless already prepped
 if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
-  my $prefixes = prepare_data("tune",[$TUNE]);
+  my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
   $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
   $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TUNE} = 1;
@@ -987,7 +1009,7 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
-									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -us3 | grep -av '|||  |||' | gzip -9n > $TUNE_GRAMMAR",
+									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -us$SCOPE | grep -av '|||  |||' | gzip -9n > $TUNE_GRAMMAR",
 									$GRAMMAR_FILE,
 									$TUNE{source},
 									$TUNE_GRAMMAR);
@@ -1186,7 +1208,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
 # prepare the testing data
   if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
-    my $prefixes = prepare_data("test",[$TEST]);
+    my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
     $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
     $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
     $PREPPED{TEST} = 1;
@@ -1206,7 +1228,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
-                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -us3 | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
+                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -us$SCOPE | grep -av '|||  |||' | gzip -9n > $TEST_GRAMMAR",
                       $GRAMMAR_FILE,
                       $TEST{source},
                       $TEST_GRAMMAR);
@@ -1387,7 +1409,7 @@ if (! defined $NAME) {
 # }
 
 if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
-  my $prefixes = prepare_data("test",[$TEST]);
+  my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
   $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
   $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TEST} = 1;
@@ -1409,7 +1431,7 @@ if ($TEST_GRAMMAR_FILE) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test-$NAME",
-										"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -f -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -us3 | gzip -9n > $TEST_GRAMMAR",
+										"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -us$SCOPE | gzip -9n > $TEST_GRAMMAR",
 										$GRAMMAR_FILE,
 										$TEST{source},
 										$TEST_GRAMMAR);
@@ -1702,15 +1724,15 @@ sub count_num_features {
 
 # File names reflecting relative paths need to be absolute-ized for --rundir to work
 sub get_absolute_path {
-	my ($file,$basedir) = @_;
+  my ($file,$basedir) = @_;
   $basedir = $STARTDIR unless defined $basedir;
 
-	if (defined $file) {
-		# prepend startdir (which is absolute) unless the path is absolute.
-		$file = "$basedir/$file" unless $file =~ /^\//;
-	}
+  if (defined $file) {
+    # prepend startdir (which is absolute) unless the path is absolute.
+    $file = "$basedir/$file" unless $file =~ /^\//;
+  }
 
-	return $file;
+  return $file;
 }
 
 sub analyze_testrun {

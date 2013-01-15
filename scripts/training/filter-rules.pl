@@ -8,18 +8,24 @@ use List::Util qw/max/;
 use Getopt::Std;
 
 my %opts;
-my $ret = getopts("ups:", \%opts);
+my $ret = getopts("ups:v", \%opts);
 
 if (!$ret) {
-  print "Usage: filter-rules.pl [-u] [-s SCOPE]\n";
+  print "Usage: filter-rules.pl [-u] [-s SCOPE] [-v]\n";
   print "   -u: remove abstract unary rules\n";
   print "   -p: just print the rule's scope\n";
   print "   -s SCOPE: remove rules with scope > SCOPE (Hopkins & Langmead, 2010)\n";
+  print "   -v: be verbose\n";
   exit;
 }
 
 my ($total, $skipped) = (0, 0);
- while (my $line = <>) {
+my %skipped = (
+  unary => 0,
+  lex_scope => 0,
+  unlex_scope => 0
+);
+while (my $line = <>) {
   my ($lhs, $source, $target) = split(/ \|\|\| /, $line);
 
   $total++;
@@ -30,6 +36,8 @@ my ($total, $skipped) = (0, 0);
      # rule passes the filter if (a) it has more than one symbol or (b)
     # it has one symbol and that symbol is not a nonterminal
     if (@symbols == 1 and $symbols[0] =~ /^\[.*,1\]$/) {
+      print STDERR "SKIPPING unary abstract rule $line" if $opts{v};
+      $skipped{unary}++;
       $skipped++;
       next;
     }
@@ -43,7 +51,15 @@ my ($total, $skipped) = (0, 0);
       next;
     }
     if ($scope > $opts{s}) {
+      print STDERR "SKIPPING out-of-scope rule $line" if $opts{v};
+      $skipped{scope}++;
       $skipped++;
+
+      if (is_lex($source)) {
+        $skipped{"lex"}++;
+      } else {
+        $skipped{"unlex"}++;
+      }
       next;
     }
   }
@@ -51,8 +67,10 @@ my ($total, $skipped) = (0, 0);
   print $line;
 }
 
-print STDERR "skipped $skipped of $total\n";
-
+print STDERR "filter-rules.pl: skipped $skipped of $total rules\n";
+foreach my $key (keys %skipped) {
+  print STDERR "  skipped $key: $skipped{$key}\n";
+}
 
 sub get_scope {
   my ($source) = @_;
@@ -76,4 +94,9 @@ sub is_nt {
 
   return 1 if $word =~ /^\[.*,\d+\]$/;
   return 0;
+}
+
+sub is_lex {
+  my ($side) = @_;
+  return grep { ! is_nt($_) } split(' ', $side);
 }
