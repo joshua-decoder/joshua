@@ -263,7 +263,7 @@ def handle_args(clargs):
 
 
 def main():
-    args = handle_args(sys.argv)
+    args = handle_args(sys.argv[1:])
     try:
         make_dest_dir(args.destdir, args.force)
     except:
@@ -529,6 +529,7 @@ class TestProcessedConfigLine_process(unittest.TestCase):
 
     def test_line_grammar_lm_binarizer(self):
         pass
+
 
 # todo
 # DONE: copying directories
