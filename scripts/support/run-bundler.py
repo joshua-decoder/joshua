@@ -500,13 +500,6 @@ class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
         actual = result.line_parts
         self.assertEqual(expect["command"], actual["command"])
 
-    def test_line_dest_path(self):
-        result = processed_config_line(self.line, self.args)
-        result.set_dest_file_token('support')
-        expect = '/Users/orluke/workspace/mt/joshua/scripts/support/testdestdir/support'
-        actual = result.dest_file_path
-        self.assertEqual(expect, actual)
-
     def test_line_copy_dirtree(self):
         result = processed_config_line(self.line, self.args)
         result.set_source_file_token('example')
