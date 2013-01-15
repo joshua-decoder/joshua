@@ -1729,7 +1729,7 @@ sub get_absolute_path {
 
   if (defined $file) {
     # prepend startdir (which is absolute) unless the path is absolute.
-    $file = "$basedir/$file" unless $file =~ /^\//;
+    $file = abs_path("$basedir/$file") unless $file =~ /^\//;
   }
 
   return $file;
