@@ -534,4 +534,7 @@ class TestProcessedConfigLine_process(unittest.TestCase):
 # todo
 # DONE: copying directories
 # : all resulting paths in configurations in bundle should be relative.
-# : more than one input file with the same name.
+# : prevent more than one input file with the same name from clashing in the
+# bundle.
+# : any lm file ending with gz gets binarized
+# : any tm file that's not a directory gets packed
