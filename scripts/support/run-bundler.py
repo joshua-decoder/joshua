@@ -69,8 +69,8 @@ def filter_through_copy_config_script(configs, copy_configs):
     """
     cmd = "$JOSHUA/scripts/copy-config.pl " + copy_configs
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
-    result = p.communicate("\n".join(configs))[0].strip()
-    return result.split("\n")
+    result = p.communicate("\n".join(configs))[0]
+    return result.splitlines()
 
 
 class ConfigLine(object):
@@ -171,7 +171,7 @@ class CopyFileConfigLine(FileConfigLine):
     def result(self):
         """
         return the config line, changed if necessary, reflecting the new
-    location of the file.
+        location of the file.
         """
         # Update the config line to reference the changed path.
         # 1) Remove the directories from the path, since the files are
@@ -191,10 +191,8 @@ def processed_config_line(line, args):
     """
     Copy referenced file over to the destination directory and return the
     config line, changed if necessary, reflecting the new location of the file.
-
-    line is the configuration line.
-
-    args is a MyParser object.
+    * line is the configuration line.
+    * args is a MyParser object.
     """
     line_parts = extract_line_parts(line)
     tokens = line_parts["command"]
@@ -264,19 +262,18 @@ def main():
                              % args.destdir)
             sys.stderr.write('use -f or --force option to overwrite the directory.')
             sys.exit(2)
-
+    config_lines = [line.strip() for line in args.config]
     if args.copy_config_options:
-        config_lines = filter_through_copy_config_script(args.config,
+        config_lines = filter_through_copy_config_script(config_lines,
                 args.copy_config_options)
-    else:
-        config_lines = args.config
     # Create the resource files in the new bundle.
     # Some results might be a list of more than one line.
     result_config_lines = [processed_config_line(line.strip(), args).result()
                            for line in config_lines]
     # Create the Joshua configuration file for the package
     with open(os.path.join(args.destdir, OUTPUT_CONFIG_FILE_NAME), 'w') as fh:
-        fh.write('\n'.join(result_config_lines))
+        for line in result_config_lines:
+            fh.write(line + '\n')
     # Write the script that runs Joshua using the configuration and resources
     # in the bundle.
     with open(os.path.join(args.destdir, BUNDLE_RUNNER_FILE_NAME), 'w') as fh:
@@ -518,7 +515,7 @@ class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
 class TestMain(unittest.TestCase):
 
     def setUp(self):
-        self.line = 'tm = thrax pt 12 grammar.gz # foo bar'
+        self.line = 'tm = thrax pt 12 grammar.gz # foo bar\noutput-format = %1'
         self.origdir = '/tmp/testorigdir'
         self.destdir = '/tmp/testdestdir'
         for d in [self.origdir, self.destdir]:
@@ -547,8 +544,9 @@ class TestMain(unittest.TestCase):
         actual = os.path.exists(os.path.join(self.destdir, 'grammar.gz'))
         self.assertTrue(actual)
         with open(os.path.join(self.destdir, 'joshua.config')) as fh:
-            actual = fh.read()
-        self.assertEqual(self.line, actual)
+            actual = fh.read().splitlines()
+        expect = ['tm = thrax pt 12 grammar.gz # foo bar', 'output-format = %1']
+        self.assertEqual(expect, actual)
 
     def test_main_with_copy_config_options(self):
         """
@@ -558,10 +556,11 @@ class TestMain(unittest.TestCase):
         sys.argv = self.args + ["--copy-config-options", "-topn 1"]
         main()
         with open(os.path.join(self.destdir, 'joshua.config')) as fh:
-            lines = fh.readlines()
-        lines = [line.strip() for line in lines]
-        self.assertEqual([self.line, "topn = 1"], lines)
-        self.assertEqual(2, len(lines))
+            actual = fh.read().splitlines()
+	expect = ['tm = thrax pt 12 grammar.gz # foo bar',
+                  'output-format = %1', "topn = 1"]
+        self.assertEqual(expect, actual)
+        self.assertEqual(3, len(actual))
 
 
 class TestFilterThroughCopyConfigScript(unittest.TestCase):
