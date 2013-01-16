@@ -11,8 +11,6 @@ $JOSHUA/scripts/support/run-bundler.py \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/test/1/joshua.config \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5 \
   haitian5-bundle \
-  --pack-grammar \
-  --binarize-lm \
   --copy-config-options "-top-n 1 \
     -output-format %S \
     -mark-oovs false \
@@ -29,7 +27,7 @@ import re
 import shutil
 import stat
 import sys
-from subprocess import Popen, PIPE
+from subprocess import check_call, Popen, PIPE
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
 FILE_TYPE_TOKENS = set(['lm', 'tm', 'weights-file'])
@@ -61,6 +59,7 @@ def make_dest_dir(dest_dir, overwrite):
     if os.path.exists(dest_dir) and overwrite:
         clear_non_empty_dir(dest_dir)
     os.mkdir(dest_dir)
+
 
 def filter_through_copy_config_script(configs, copy_configs):
     """
@@ -132,13 +131,6 @@ class FileConfigLine(ConfigLine):
         return os.path.abspath(os.path.join(self.orig_dir, self.file_token))
 
 
-class ProcessFileConfigLine(FileConfigLine):
-    """
-    TODO
-    """
-    pass
-
-
 class CopyFileConfigLine(FileConfigLine):
 
     def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
@@ -150,7 +142,7 @@ class CopyFileConfigLine(FileConfigLine):
     def __determine_copy_dest_path(self):
         """
         If the path to the file to be copied is relative, then prepend it with
-        the origin directory.
+        the destination directory.
         The path might be relative or absolute, we don't know.
         """
         return os.path.abspath(os.path.join(self.dest_dir,
@@ -182,6 +174,51 @@ class CopyFileConfigLine(FileConfigLine):
         return self.join_command_comment(command_parts)
 
 
+class BinarizeLmFileConfigLine(CopyFileConfigLine):
+
+    def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
+            binarize_kenlm=None):
+        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
+                binarize_kenlm)
+        self.dest_file_path = self.__determine_copy_dest_path()
+
+    def process(self):
+        """
+        process referenced file or directory tree over to the destination
+        directory.
+        """
+        src = self.source_file_path
+        dst = self.dest_file_path
+        script = os.path.join(JOSHUA_PATH, "src/joshua/decoder/ff/lm/kenlm/build_binary")
+        cmd = ' '.join([script, src, dst])
+        check_call(cmd, shell=True)
+
+    def __determine_copy_dest_path(self):
+        """
+        If the path to the file to be copied is relative, then prepend it with
+        the destination directory.
+        The path might be relative or absolute, we don't know.
+        """
+        file_name = os.path.basename(self.line_parts["command"][-1])
+        self.new_name = re.sub(r'\.gz$', '.kenlm', file_name)
+        return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
+
+    def result(self):
+        """
+        return the config line, changed if necessary, reflecting the new
+        location of the file.
+        """
+        # Update the config line to reference the changed path.
+        # 1) Remove the directories from the path, since the files are
+        #    copied to the top level.
+        command_parts = self.line_parts["command"]
+        command_parts[-1] = self.new_name
+        command_parts[-1] = 'lm.kenlm'
+        # 2) Put back together the configuration line
+        return self.join_command_comment(command_parts)
+
+
+
 def extract_line_parts(line):
     config, hash_char, comment = line.partition('#')
     return {"command": config.split(), "comment": comment}
@@ -201,6 +238,14 @@ def processed_config_line(line, args):
     except:
         config_type_token = None
     if config_type_token in FILE_TYPE_TOKENS:
+        # This line refers to a file that should be copied or processed.
+        if tokens[0].startswith("lm") and tokens[-1].endswith(".gz"):
+            # This is a language model file to be binarized:
+            cl = BinarizeLmFileConfigLine(line_parts, args.origdir,
+                    args.destdir, args.pack_grammar, args.binarize_kenlm)
+            cl.process()
+            return cl
+        # This file doesn't need to be processed, so just copy it:
         cl = CopyFileConfigLine(line_parts, args.origdir, args.destdir,
                 args.pack_grammar, args.binarize_kenlm)
         cl.process()
@@ -395,9 +440,8 @@ class TestProcessedConfigLine_comment(unittest.TestCase):
         self.args = handle_args(['/dev/null', '/dev/null', '/dev/null'])
 
     def test_line_type(self):
-        expect = ConfigLine
-        actual = processed_config_line(self.line, self.args).__class__
-        self.assertEqual(expect, actual)
+        cl_object = processed_config_line(self.line, self.args)
+        self.assertIsInstance(cl_object, ConfigLine)
 
     def test_output_is_input(self):
         """
@@ -425,9 +469,8 @@ class TestProcessedConfigLine_copy1(unittest.TestCase):
             clear_non_empty_dir(self.args.destdir)
 
     def test_line_type(self):
-        expect = CopyFileConfigLine
-        actual = processed_config_line(self.line, self.args).__class__
-        self.assertEqual(expect, actual)
+        cl_object = processed_config_line(self.line, self.args)
+        self.assertIsInstance(cl_object, ConfigLine)
 
     def test_output_is_input(self):
         """
@@ -571,13 +614,92 @@ class TestFilterThroughCopyConfigScript(unittest.TestCase):
         self.assertEqual(expect, actual)
 
 
-class TestProcessedConfigLine_process(unittest.TestCase):
+class TestProcessedConfigLine_process_grammar_packer(unittest.TestCase):
 
     def test_line_grammar_packer(self):
         pass
 
-    def test_line_grammar_lm_binarizer(self):
-        pass
+
+class TestBinarizeLmFileConfigLine_process_lm_binarize(unittest.TestCase):
+
+    def setUp(self):
+        self.line = "lm = kenlm 5 false false 100 lm.gz"
+        self.origdir = os.path.join(JOSHUA_PATH, 'test/bn-en/hiero')
+        self.destdir = '/tmp/testdestdir'
+        # Create the destination directory.
+        if os.path.exists(self.destdir):
+            clear_non_empty_dir(self.destdir)
+        os.mkdir(self.destdir)
+        self.args = Mock()
+        self.args.origdir = self.origdir
+        self.args.destdir = self.destdir
+
+    def tearDown(self):
+        if os.path.exists(self.destdir):
+            clear_non_empty_dir(self.destdir)
+
+    def test_cl_object(self):
+        cl_object = processed_config_line(self.line, self.args)
+        self.assertIsInstance(cl_object, BinarizeLmFileConfigLine)
+
+    def test_file_name(self):
+        line_parts = {'command': self.line.split(), 'comment': ''}
+        cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
+                self.destdir, None, None)
+        expect = 'lm = kenlm 5 false false 100 lm.kenlm'
+        actual = cl_object.result()
+        self.assertEqual(expect, actual)
+
+    def test_line_lmfile_deprecated_statement(self):
+        config_line = 'lmfile = lm.gz'
+        line_parts = {'command': config_line.split(), 'comment': ''}
+        cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
+                self.destdir, None, None)
+        expect = 'lmfile = lm.kenlm'
+        actual = cl_object.result()
+        self.assertEqual(expect, actual)
+        # Now make sure this method properly detects this unbinarized lm file:
+        cl_object = processed_config_line(config_line, self.args)
+        actual = cl_object.result()
+        self.assertEqual(expect, actual)
+
+
+    def test_line_grammar_lm_binarizer_process(self):
+        line_parts = {'command': self.line.split(), 'comment': ''}
+        cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
+                self.destdir, None, None)
+        cl_object.process()
+        expect = os.path.join(self.destdir, 'lm.kenlm')
+        self.assertTrue(os.path.exists(expect))
+        orig_size = os.path.getsize(os.path.join(self.origdir, 'lm.gz'))
+        dest_size = os.path.getsize(os.path.join(self.destdir, 'lm.kenlm'))
+        self.assertTrue(dest_size > orig_size)
+
+
+class TestBinarizeLmFileConfigLine_process_lm_binarize(unittest.TestCase):
+
+    def setUp(self):
+        self.args = Mock()
+        self.args.origdir = os.path.join(JOSHUA_PATH, 'test/bn-en/hiero')
+        self.args.destdir = '/tmp/testdestdir'
+        self.line = 'something = lm.gz'
+
+    def test_line_not_lm_instance(self):
+        '''
+        The method should not detect this as a lm file and create a
+        BinarizeLmFileConfigLine object
+        '''
+        cl_object = processed_config_line(self.line, self.args)
+        self.assertNotIsInstance(cl_object, BinarizeLmFileConfigLine)
+
+    def test_line_not_lm_result(self):
+        '''
+        The method should not detect this as a lm file and binarize the file.
+        '''
+        cl_object = processed_config_line(self.line, self.args)
+        expect = 'something = lm.gz'
+        actual = cl_object.result()
+        self.assertEqual(expect, actual)
 
 
 # todo
@@ -586,7 +708,10 @@ class TestProcessedConfigLine_process(unittest.TestCase):
 # DONE: test copy_config_options
 # : prevent more than one input file with the same name from clashing in the
 # bundle.
-#      FileConfigLine.lm_files_cnt
-#      FileConfigLine.tm_files_cnt
-# : any lm file ending with gz gets binarized
+#      from collections import defaultdict
+#      file_name_cnts = defaultdict(int)
+#      FileConfigLine.file_name_cnts["lm.kenlm"]
+#      FileConfigLine.file_name_cnts["grammar.packed"]
+# DONE: any lm file ending with gz gets binarized
+#   tokens[0] == "lm" and tokens[-1] == "*.gz"
 # : any tm file that's not a directory gets packed
