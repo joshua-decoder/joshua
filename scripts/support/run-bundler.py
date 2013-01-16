@@ -133,7 +133,9 @@ class FileConfigLine(ConfigLine):
 
 
 class ProcessFileConfigLine(FileConfigLine):
-
+    """
+    TODO
+    """
     pass
 
 
@@ -572,7 +574,7 @@ class TestProcessedConfigLine_process(unittest.TestCase):
 # todo
 # DONE: copying directories
 # DONE: all resulting paths in configurations in bundle should be relative.
-# : test copy_config_options
+# DONE: test copy_config_options
 # : prevent more than one input file with the same name from clashing in the
 # bundle.
 #      FileConfigLine.lm_files_cnt
