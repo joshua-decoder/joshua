@@ -69,7 +69,7 @@ def filter_through_copy_config_script(configs, copy_configs):
     """
     cmd = "$JOSHUA/scripts/copy-config.pl " + copy_configs
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
-    result = p.communicate("\n".join(configs))[0]
+    result = p.communicate("\n".join(configs))[0].strip()
     return result.split("\n")
 
 
@@ -560,6 +560,14 @@ class TestMain(unittest.TestCase):
         with open(os.path.join(self.destdir, 'joshua.config')) as fh:
             lines = fh.readlines()
         self.assertEqual(2, len(lines))
+
+
+class TestFilterThroughCopyConfigScript(unittest.TestCase):
+
+    def test_method(self):
+        expect = ["# hello", "topn = 1"]
+        actual = filter_through_copy_config_script(["# hello"], "-topn 1")
+        self.assertEqual(expect, actual)
 
 
 class TestProcessedConfigLine_process(unittest.TestCase):
