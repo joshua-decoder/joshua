@@ -24,7 +24,6 @@ $JOSHUA/scripts/support/run-bundler.py \
 
 from __future__ import print_function
 import argparse
-import itertools
 import os
 import re
 import shutil
@@ -266,15 +265,13 @@ def main():
 
     if args.copy_config_options:
         config_lines = filter_through_copy_config_script(args.config,
-                args.copy_config_options, args.copy_config_options)
+                args.copy_config_options)
     else:
         config_lines = args.config
     # Create the resource files in the new bundle.
     # Some results might be a list of more than one line.
     result_config_lines = [processed_config_line(line, args).result()
                            for line in config_lines]
-    # Flatten the list (potentially containing items that are lists)
-    result_config_lines = list(itertools.chain(*result_config_lines))
     # Create the Joshua configuration file for the package
     with open(os.path.join(args.destdir, OUTPUT_CONFIG_FILE_NAME), 'w') as fh:
         fh.write('\n'.join(result_config_lines))
@@ -442,6 +439,7 @@ class TestProcessedConfigLine_copy1(unittest.TestCase):
         actual = processed_config_line(expect, self.args).result()
         self.assertEqual(expect, actual)
 
+
 class TestProcessedConfigLine_copy2(unittest.TestCase):
 
     def setUp(self):
@@ -518,7 +516,7 @@ class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
 class TestMain(unittest.TestCase):
 
     def setUp(self):
-        line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        self.line = 'tm = thrax pt 12 grammar.gz # foo bar'
         self.origdir = '/tmp/testorigdir'
         self.destdir = '/tmp/testdestdir'
         for d in [self.origdir, self.destdir]:
@@ -530,22 +528,36 @@ class TestMain(unittest.TestCase):
         # Write the files to be processed.
         config_file = os.path.join(self.origdir, 'joshua.config')
         with open(config_file, 'w') as fh:
-            fh.write(line)
+            fh.write(self.line)
         with open(os.path.join(self.origdir, 'grammar.gz'), 'w') as fh:
-            fh.write("grammar data")
+            fh.write("grammar data\n")
         self.args = ['thisprogram', '-f', config_file, self.origdir,
                      self.destdir]
 
-    #def tearDown(self):
-    #    for d in [self.origdir, self.destdir]:
-    #        if os.path.exists(d):
-    #            clear_non_empty_dir(d)
+    def tearDown(self):
+        for d in [self.origdir, self.destdir]:
+            if os.path.exists(d):
+                clear_non_empty_dir(d)
 
     def test_main(self):
         sys.argv = self.args
         main()
         actual = os.path.exists(os.path.join(self.destdir, 'grammar.gz'))
         self.assertTrue(actual)
+        with open(os.path.join(self.destdir, 'joshua.config')) as fh:
+            actual = fh.read()
+        self.assertEqual(self.line, actual)
+
+    def test_main_with_copy_config_options(self):
+        """
+        For --copy_config_options, Space-separated options surrounded by a pair
+        of quotes should not be split.
+        """
+        sys.argv = self.args + ["--copy-config-options", "-topn 1"]
+        main()
+        with open(os.path.join(self.destdir, 'joshua.config')) as fh:
+            lines = fh.readlines()
+        self.assertEqual(2, len(lines))
 
 
 class TestProcessedConfigLine_process(unittest.TestCase):
@@ -559,7 +571,8 @@ class TestProcessedConfigLine_process(unittest.TestCase):
 
 # todo
 # DONE: copying directories
-# : all resulting paths in configurations in bundle should be relative.
+# DONE: all resulting paths in configurations in bundle should be relative.
+# : test copy_config_options
 # : prevent more than one input file with the same name from clashing in the
 # bundle.
 #      FileConfigLine.lm_files_cnt
