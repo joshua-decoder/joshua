@@ -63,12 +63,12 @@ def make_dest_dir(dest_dir, overwrite):
         clear_non_empty_dir(dest_dir)
     os.mkdir(dest_dir)
 
-def filter_through_copy_config_script(configs, other_joshua_configs):
+def filter_through_copy_config_script(configs, copy_configs):
     """
     configs should be a list.
-    other_joshua_configs should be a list.
+    copy_configs should be a list.
     """
-    cmd = "$JOSHUA/scripts/copy-config.pl " + other_joshua_configs
+    cmd = "$JOSHUA/scripts/copy-config.pl " + copy_configs
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
     result = p.communicate("\n".join(configs))[0]
     return result.split("\n")
@@ -81,16 +81,17 @@ class ConfigLine(object):
     """
 
     def __init__(self, line_parts, orig_dir=None, dest_dir=None,
-            pack_grammar=None, binarize_lm=None):
+            pack_grammar=None, binarize_kenlm=None):
         self.line_parts = line_parts
         self.orig_dir = orig_dir
         self.dest_dir = dest_dir
         self.pack_grammar = pack_grammar
-        self.binarize_lm = binarize_lm
+        self.binarize_kenlm = binarize_kenlm
 
     def join_command_comment(self, custom_command_parts=None,
                 custom_comment=None):
         """
+        Merges line_parts to re-form resulting config line.
         If no values are given for the custom_command_parts and custom_comment
         parameters, the original input configuration string is returned.
         """
@@ -113,25 +114,23 @@ class ConfigLine(object):
 class FileConfigLine(ConfigLine):
 
     def __init__(self, line_parts, orig_dir, dest_dir,
-            pack_grammar=None, binarize_lm=None):
-        super(FileConfigLine, self).__init__(line_parts, orig_dir, dest_dir,
-                pack_grammar, binarize_lm)
-        self.source_file_path = None
+            pack_grammar=None, binarize_kenlm=None):
+        ConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
+                binarize_kenlm)
+        self.file_token = self.line_parts["command"][-1]
+        self.source_file_path = self.__set_source_file_token()
 
-    def set_source_file_token(self, file_token):
-        self.source_file_path = self.__determine_source_file_path(file_token)
-
-    def __determine_source_file_path(self, file_token):
+    def __set_source_file_token(self):
         """
         If the path to the file to be copied is relative, then prepend it with
         the origin directory.
         """
         # The path might be relative or absolute, we don't know.
-        match_orig_dir_prefix = re.search("^" + self.orig_dir, file_token)
-        match_abs_path = re.search("^/", file_token)
+        match_orig_dir_prefix = re.search("^" + self.orig_dir, self.file_token)
+        match_abs_path = re.search("^/", self.file_token)
         if match_abs_path or match_orig_dir_prefix:
-            return file_token
-        return os.path.abspath(os.path.join(self.orig_dir, file_token))
+            return self.file_token
+        return os.path.abspath(os.path.join(self.orig_dir, self.file_token))
 
 
 class ProcessFileConfigLine(FileConfigLine):
@@ -142,24 +141,21 @@ class ProcessFileConfigLine(FileConfigLine):
 class CopyFileConfigLine(FileConfigLine):
 
     def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
-            binarize_lm=None):
-        super(FileConfigLine, self).__init__(line_parts, orig_dir, dest_dir,
-                pack_grammar, binarize_lm)
-        self.dest_file_path = None
+            binarize_kenlm=None):
+        FileConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
+                binarize_kenlm)
+        self.dest_file_path = self.__determine_copy_dest_path()
 
-    def set_dest_file_token(self, file_token):
-        path = self.__determine_copy_dest_path(file_token)
-        self.dest_file_path = os.path.abspath(path)
-
-    def __determine_copy_dest_path(self, file_token):
+    def __determine_copy_dest_path(self):
         """
         If the path to the file to be copied is relative, then prepend it with
         the origin directory.
+        The path might be relative or absolute, we don't know.
         """
-        # The path might be relative or absolute, we don't know.
-        return os.path.join(self.dest_dir, os.path.basename(file_token))
+        return os.path.abspath(os.path.join(self.dest_dir,
+                os.path.basename(self.file_token)))
 
-    def __copy_file_to_bundle(self):
+    def process(self):
         """
         Copy referenced file or directory tree over to the destination
         directory.
@@ -170,13 +166,6 @@ class CopyFileConfigLine(FileConfigLine):
             shutil.copytree(src, dst)
         else:
             shutil.copy(src, dst)
-
-    def process(self):
-        """
-        Copy referenced file over to the destination directory and return the
-        config line, changed if necessary, reflecting the new location of the file.
-        """
-        self.__copy_file_to_bundle()
 
     def result(self):
         """
@@ -210,12 +199,13 @@ def processed_config_line(line, args):
     tokens = line_parts["command"]
     try:
         config_type_token = tokens[0]
-        #file_path_token = tokens[-1]
     except:
         config_type_token = None
     if config_type_token in FILE_TYPE_TOKENS:
-        return CopyFileConfigLine(line_parts, args.origdir, args.destdir,
-                args.pack_grammar, args.binarize_lm)
+        cl = CopyFileConfigLine(line_parts, args.origdir, args.destdir,
+                args.pack_grammar, args.binarize_kenlm)
+        cl.process()
+        return cl
     else:
         return ConfigLine(line_parts)
 
@@ -247,6 +237,7 @@ def handle_args(clargs):
     parser.add_argument('-f', '--force', action='store_true',
                         help='extant destination directory will be overwritten')
     parser.add_argument('-o', '--copy-config-options',
+                        default='',
                         help='optional additional or replacement configuration '
                         'options for Joshua, all surrounded by one pair of '
                         'quotes.')
@@ -272,12 +263,16 @@ def main():
                              % args.destdir)
             sys.stderr.write('use -f or --force option to overwrite the directory.')
             sys.exit(2)
-    filtered_config_lines = filter_through_copy_config_script(
-            args.filtered_config_lines, args.copy_config_options)
+
+    if args.copy_config_options:
+        config_lines = filter_through_copy_config_script(args.config,
+                args.copy_config_options, args.copy_config_options)
+    else:
+        config_lines = args.config
     # Create the resource files in the new bundle.
     # Some results might be a list of more than one line.
     result_config_lines = [processed_config_line(line, args).result()
-                           for line in filtered_config_lines]
+                           for line in config_lines]
     # Flatten the list (potentially containing items that are lists)
     result_config_lines = list(itertools.chain(*result_config_lines))
     # Create the Joshua configuration file for the package
@@ -424,7 +419,10 @@ class TestProcessedConfigLine_copy1(unittest.TestCase):
         self.line = 'tm = thrax pt 12 grammar.gz  # foo bar'
         self.args = Mock()
         self.args.origdir = os.path.join(JOSHUA_PATH, 'test','bn-en', 'hiero')
-        self.args.destdir = './testdestdir'
+        self.args.destdir = '/tmp/testdestdir'
+        if os.path.exists(self.args.destdir):
+            clear_non_empty_dir(self.args.destdir)
+        os.mkdir(self.args.destdir)
 
     def tearDown(self):
         if os.path.exists(self.args.destdir):
@@ -447,32 +445,37 @@ class TestProcessedConfigLine_copy1(unittest.TestCase):
 class TestProcessedConfigLine_copy2(unittest.TestCase):
 
     def setUp(self):
-        line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        self.line = 'tm = thrax pt 12 grammar.gz  # foo bar'
         args = Mock()
+        self.args = args
         args.origdir = os.path.join(JOSHUA_PATH, 'test','bn-en', 'hiero')
         args.destdir = './testdestdir'
         # Create the destination directory.
         if not os.path.exists(args.destdir):
             os.mkdir(args.destdir)
-        self.result = processed_config_line(line, args)
-        self.result.set_source_file_token('grammar.gz')
-        self.result.set_dest_file_token('grammar.gz')
+        self.cl_object = processed_config_line(self.line, args)
         self.expected_source_file_path = \
                 os.path.abspath(os.path.join(args.origdir, 'grammar.gz'))
         self.expected_dest_file_path = \
                 os.path.abspath(os.path.join(args.destdir, 'grammar.gz'))
 
     def test_line_source_path(self):
-        actual = self.result.source_file_path
+        actual = self.cl_object.source_file_path
         self.assertEqual(self.expected_source_file_path, actual)
 
+    def test_line_parts(self):
+        cl_object = processed_config_line(self.line, self.args)
+        expect = {"command": ['tm', '=', 'thrax', 'pt', '12', 'grammar.gz'],
+                  "comment": '# foo bar'}
+        actual = cl_object.line_parts
+        self.assertEqual(expect["command"], actual["command"])
+
     def test_line_dest_path(self):
-        actual = self.result.dest_file_path
+        actual = self.cl_object.dest_file_path
         self.assertEqual(self.expected_dest_file_path, actual)
 
     def test_line_copy_file(self):
-        self.result.process()
-        self.assertTrue(os.path.exists(self.result.dest_file_path))
+        self.assertTrue(os.path.exists(self.cl_object.dest_file_path))
 
 
 class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
@@ -480,40 +483,70 @@ class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
     def setUp(self):
         # N.B. specify a path to copytree that is not inside you application.
         # Otherwise it ends with an infinite recursion.
-        self.line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        self.line = 'tm = thrax pt 12 example # foo bar'
         self.args = Mock()
         self.args.origdir = os.path.join(JOSHUA_PATH, 'examples')
         self.args.destdir = './testdestdir'
         # Create the destination directory.
-        if not os.path.exists(self.args.destdir):
-            os.mkdir(self.args.destdir)
+        if os.path.exists(self.args.destdir):
+            clear_non_empty_dir(self.args.destdir)
+        os.mkdir(self.args.destdir)
 
     def tearDown(self):
         if os.path.exists(self.args.destdir):
             clear_non_empty_dir(self.args.destdir)
 
     def test_line_parts(self):
-        result = processed_config_line(self.line, self.args)
-        result.set_dest_file_token('support')
-        expect = {"command": ['tm', '=', 'thrax', 'pt', '12', 'grammar.gz'],
+        cl_object = processed_config_line(self.line, self.args)
+        expect = {"command": ['tm', '=', 'thrax', 'pt', '12', 'example'],
                   "comment": '# foo bar'}
-        actual = result.line_parts
+        actual = cl_object.line_parts
         self.assertEqual(expect["command"], actual["command"])
 
     def test_line_copy_dirtree(self):
-        result = processed_config_line(self.line, self.args)
-        result.set_source_file_token('example')
-        result.set_dest_file_token('example')
-        result.process()
+        processed_config_line(self.line, self.args)
         expect = os.path.join(self.args.destdir, 'example', 'joshua.config')
         self.assertTrue(os.path.exists(expect))
 
     def test_line_copy_dirtree_result(self):
         cl_object = processed_config_line(self.line, self.args)
-        cl_object.set_dest_file_token('example')
         expect = 'tm = thrax pt 12 example # foo bar'
         actual = cl_object.result()
         self.assertEqual(expect, actual)
+
+
+class TestMain(unittest.TestCase):
+
+    def setUp(self):
+        line = 'tm = thrax pt 12 grammar.gz  # foo bar'
+        self.origdir = '/tmp/testorigdir'
+        self.destdir = '/tmp/testdestdir'
+        for d in [self.origdir, self.destdir]:
+            if os.path.exists(d):
+                clear_non_empty_dir(d)
+        # Create the destination directory.
+        os.mkdir(self.destdir)
+        os.mkdir(self.origdir)
+        # Write the files to be processed.
+        config_file = os.path.join(self.origdir, 'joshua.config')
+        with open(config_file, 'w') as fh:
+            fh.write(line)
+        with open(os.path.join(self.origdir, 'grammar.gz'), 'w') as fh:
+            fh.write("grammar data")
+        self.args = ['thisprogram', '-f', config_file, self.origdir,
+                     self.destdir]
+
+    #def tearDown(self):
+    #    for d in [self.origdir, self.destdir]:
+    #        if os.path.exists(d):
+    #            clear_non_empty_dir(d)
+
+    def test_main(self):
+        sys.argv = self.args
+        main()
+        actual = os.path.exists(os.path.join(self.destdir, 'grammar.gz'))
+        self.assertTrue(actual)
+
 
 class TestProcessedConfigLine_process(unittest.TestCase):
 
@@ -529,5 +562,7 @@ class TestProcessedConfigLine_process(unittest.TestCase):
 # : all resulting paths in configurations in bundle should be relative.
 # : prevent more than one input file with the same name from clashing in the
 # bundle.
+#      FileConfigLine.lm_files_cnt
+#      FileConfigLine.tm_files_cnt
 # : any lm file ending with gz gets binarized
 # : any tm file that's not a directory gets packed
