@@ -272,7 +272,7 @@ def main():
         config_lines = args.config
     # Create the resource files in the new bundle.
     # Some results might be a list of more than one line.
-    result_config_lines = [processed_config_line(line, args).result()
+    result_config_lines = [processed_config_line(line.strip(), args).result()
                            for line in config_lines]
     # Create the Joshua configuration file for the package
     with open(os.path.join(args.destdir, OUTPUT_CONFIG_FILE_NAME), 'w') as fh:
@@ -559,6 +559,8 @@ class TestMain(unittest.TestCase):
         main()
         with open(os.path.join(self.destdir, 'joshua.config')) as fh:
             lines = fh.readlines()
+        lines = [line.strip() for line in lines]
+        self.assertEqual([self.line, "topn = 1"], lines)
         self.assertEqual(2, len(lines))
 
 
