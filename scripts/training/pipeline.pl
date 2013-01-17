@@ -1273,9 +1273,9 @@ for my $run (1..$OPTIMIZER_RUNS) {
     $TEST_GRAMMAR = $packed_dir;
   }
 
-  my $testrun = get_absolute_path((defined $NAME) ? "test/$NAME/$run" : "test/$run", $RUNDIR);
-  
+  my $testrun = (defined $NAME) ? "test/$NAME/$run" : "test/$run";
   system("mkdir -p $testrun") unless -d $testrun;
+  $testrun = get_absolute_path($testrun, $RUNDIR);
 
   # If we're decoding a lattice, also output the source side path we chose
   my $joshua_args = $JOSHUA_ARGS;
@@ -1722,14 +1722,17 @@ sub count_num_features {
   return scalar @numfeatures;
 }
 
-# File names reflecting relative paths need to be absolute-ized for --rundir to work
+# File names reflecting relative paths need to be absolute-ized for --rundir to work.
+# Does not work with paths that do not exist!
 sub get_absolute_path {
   my ($file,$basedir) = @_;
   $basedir = $STARTDIR unless defined $basedir;
 
   if (defined $file) {
+    $file = "$basedir/$file" unless $file =~ /^\//;
+
     # prepend startdir (which is absolute) unless the path is absolute.
-    $file = abs_path("$basedir/$file") unless $file =~ /^\//;
+    $file = abs_path($file);
   }
 
   return $file;
