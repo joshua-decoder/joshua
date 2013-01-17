@@ -6,7 +6,7 @@
 
 # Example invocation:
 '''
-$JOSHUA/scripts/support/run-bundler.py \
+$JOSHUA/scripts/support/run_bundler.py \
   --force \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/test/1/joshua.config \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5 \
@@ -29,7 +29,7 @@ import re
 import shutil
 import stat
 import sys
-from subprocess import check_call, Popen, PIPE
+from subprocess import Popen, PIPE
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
 FILE_TYPE_TOKENS = set(['lm', 'lmfile', 'tmfile', 'tm', 'weights-file'])
@@ -149,6 +149,12 @@ class CopyFileConfigLine(FileConfigLine):
         """
         return os.path.abspath(os.path.join(self.dest_dir,
                 os.path.basename(self.file_token)))
+        #file_name = os.path.basename(self.line_parts["command"][-1])
+        #if file_name.endswith('.gz'):
+        #    self.new_name = re.sub(r'\.gz$', '.kenlm', file_name)
+        #else:
+        #    self.new_name = file_name + '.kenlm'
+        #return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
 
     def process(self):
         """
@@ -176,94 +182,6 @@ class CopyFileConfigLine(FileConfigLine):
         return self.join_command_comment(command_parts)
 
 
-class BinarizeLmFileConfigLine(CopyFileConfigLine):
-
-    def __init__(self, line_parts, orig_dir, dest_dir):
-        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
-        self.dest_file_path = self.__determine_copy_dest_path()
-
-    def process(self):
-        """
-        process referenced file or directory tree over to the destination
-        directory.
-        """
-        src = self.source_file_path
-        dst = self.dest_file_path
-        script = os.path.join(JOSHUA_PATH, "src/joshua/decoder/ff/lm/kenlm/build_binary")
-        cmd = ' '.join([script, src, dst])
-        check_call(cmd, shell=True)
-
-    def __determine_copy_dest_path(self):
-        """
-        If the path to the file to be copied is relative, then prepend it with
-        the destination directory.
-        The path might be relative or absolute, we don't know.
-        """
-        file_name = os.path.basename(self.line_parts["command"][-1])
-        if file_name.endswith('.gz'):
-            self.new_name = re.sub(r'\.gz$', '.kenlm', file_name)
-        else:
-            self.new_name = file_name + '.kenlm'
-        return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
-
-    def result(self):
-        """
-        return the config line, changed if necessary, reflecting the new
-        location of the file.
-        """
-        # Update the config line to reference the changed path.
-        # 1) Remove the directories from the path, since the files are
-        #    copied to the top level.
-        command_parts = self.line_parts["command"]
-        command_parts[-1] = self.new_name
-        # 2) Put back together the configuration line
-        return self.join_command_comment(command_parts)
-
-
-class PackGrammarFileConfigLine(CopyFileConfigLine):
-
-    def __init__(self, line_parts, orig_dir, dest_dir):
-        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
-        self.dest_file_path = self.__determine_copy_dest_path()
-
-    def process(self):
-        """
-        process referenced file or directory tree over to the destination
-        directory.
-        """
-        src = self.source_file_path
-        dst = self.dest_file_path
-        script = os.path.join(JOSHUA_PATH, "scripts/support/grammar-packer.pl")
-        cmd = ' '.join([script, src, dst])
-        check_call(cmd, shell=True)
-
-    def __determine_copy_dest_path(self):
-        """
-        If the path to the file to be copied is relative, then prepend it with
-        the destination directory.
-        The path might be relative or absolute, we don't know.
-        """
-        file_name = os.path.basename(self.line_parts["command"][-1])
-        if file_name.endswith('.gz'):
-            self.new_name = re.sub(r'\.gz$', '.packed', file_name)
-        else:
-            self.new_name = file_name + '.packed'
-        return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
-
-    def result(self):
-        """
-        return the config line, changed if necessary, reflecting the new
-        location of the file.
-        """
-        # Update the config line to reference the changed path.
-        # 1) Remove the directories from the path, since the files are
-        #    copied to the top level.
-        command_parts = self.line_parts["command"]
-        command_parts[-1] = self.new_name
-        # 2) Put back together the configuration line
-        return self.join_command_comment(command_parts)
-
-
 def extract_line_parts(line):
     """
     Builds a dict containing tokenized command portion and comment portion of a
@@ -287,20 +205,7 @@ def config_line_factory(line, args):
     except:
         config_type_token = None
     if config_type_token in FILE_TYPE_TOKENS:
-        # This line refers to a file that should be copied or processed.
-        # Absolute path to the source file:
-        source_file_path = abs_file_path(args.origdir, tokens[-1])
-        if tokens[0].startswith("lm") and source_file_path.endswith(".gz"):
-            # This is a language model file to be binarized:
-            cl = BinarizeLmFileConfigLine(line_parts, args.origdir,
-                    args.destdir)
-            return cl
-        if tokens[0].startswith("tm") and not os.path.isdir(source_file_path):
-            # This is a translation model file to be packed:
-            cl = PackGrammarFileConfigLine(line_parts, args.origdir,
-                    args.destdir)
-            return cl
-        # This file doesn't need to be processed, so just copy it:
+        # This line refers to a file that should be copied.
         cl = CopyFileConfigLine(line_parts, args.origdir, args.destdir)
         return cl
     else:
@@ -672,219 +577,6 @@ class TestFilterThroughCopyConfigScript(unittest.TestCase):
         self.assertEqual(expect, actual)
 
 
-class TestBinarizeLmFileConfigLine_process_lm_binarize(unittest.TestCase):
-
-    def setUp(self):
-        self.line = "lm = kenlm 5 false false 100 lm.gz"
-        self.origdir = os.path.join(JOSHUA_PATH, 'test/bn-en/hiero')
-        self.destdir = '/tmp/testdestdir'
-        # Create the destination directory.
-        if os.path.exists(self.destdir):
-            clear_non_empty_dir(self.destdir)
-        os.mkdir(self.destdir)
-        self.args = Mock()
-        self.args.origdir = self.origdir
-        self.args.destdir = self.destdir
-
-    def tearDown(self):
-        if os.path.exists(self.destdir):
-            clear_non_empty_dir(self.destdir)
-
-    def test_cl_object(self):
-        cl_object = processed_config_line(self.line, self.args)
-        self.assertIsInstance(cl_object, BinarizeLmFileConfigLine)
-
-    def test_file_name(self):
-        line_parts = extract_line_parts(self.line)
-        cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
-                self.destdir)
-        expect = 'lm = kenlm 5 false false 100 lm.kenlm'
-        actual = cl_object.result()
-        self.assertEqual(expect, actual)
-
-    def test_line_grammar_lm_binarizer_process(self):
-        line_parts = extract_line_parts(self.line)
-        cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
-                self.destdir)
-        cl_object.process()
-        expect = os.path.join(self.destdir, 'lm.kenlm')
-        self.assertTrue(os.path.exists(expect))
-        orig_size = os.path.getsize(os.path.join(self.origdir, 'lm.gz'))
-        dest_size = os.path.getsize(os.path.join(self.destdir, 'lm.kenlm'))
-        self.assertTrue(dest_size > orig_size)
-
-
-class TestBinarizeLmFileConfigLine_process_lmfile_binarize(unittest.TestCase):
-
-    def setUp(self):
-        self.origdir = os.path.join(JOSHUA_PATH, 'test', 'bn-en', 'hiero')
-        self.destdir = '/tmp/testdestdir'
-        self.config_line = 'lmfile = lm.gz'
-        self.expect = 'lmfile = lm.kenlm'
-
-    def test_line_lmfile_deprecated_statement__class(self):
-        cl_object = \
-                BinarizeLmFileConfigLine(extract_line_parts(self.config_line),
-                        self.origdir, self.destdir)
-        actual = cl_object.result()
-        self.assertEqual(self.expect, actual)
-
-    def test_line_lmfile_deprecated_statement__factory(self):
-        """
-        Processed_config_line should properly detect this unbinarized lm file.
-        """
-        args = Mock()
-        args.origdir = self.origdir
-        args.destdir = self.destdir
-        cl_object = config_line_factory(self.config_line, args)
-        self.assertIsInstance(cl_object, BinarizeLmFileConfigLine)
-        actual = cl_object.result()
-        self.assertEqual(self.expect, actual)
-
-
-class TestBinarizeLmFileConfigLine_process_lm_binarize_2(unittest.TestCase):
-
-    def setUp(self):
-        self.args = Mock()
-        self.args.origdir = os.path.join(JOSHUA_PATH, 'test/bn-en/hiero')
-        self.args.destdir = '/tmp/testdestdir'
-        self.line = 'something = lm.gz'
-
-    def test_line_not_lm_instance(self):
-        '''
-        The method should not detect this as a lm file and create a
-        BinarizeLmFileConfigLine object
-        '''
-        cl_object = processed_config_line(self.line, self.args)
-        self.assertNotIsInstance(cl_object, BinarizeLmFileConfigLine)
-
-    def test_line_not_lm_result(self):
-        '''
-        The method should not detect this as a lm file and binarize the file.
-        '''
-        cl_object = config_line_factory(self.line, self.args)
-        expect = 'something = lm.gz'
-        actual = cl_object.result()
-        self.assertEqual(expect, actual)
-
-
-class TestPackGrammarFileConfigLine(unittest.TestCase):
-
-    def setUp(self):
-        self.line = 'tm = thrax pt 12 grammar.gz # foo bar'
-        self.line_parts = {'command': 'tm = thrax pt 12 grammar.gz'.split(),
-                           'comment': ' foo bar'}
-        self.origdir = os.path.join(JOSHUA_PATH, 'test/bn-en/hiero')
-        self.destdir = '/tmp/testdestdir'
-        # Create the destination directory.
-        if os.path.exists(self.destdir):
-            clear_non_empty_dir(self.destdir)
-        os.mkdir(self.destdir)
-        self.args = Mock()
-        self.args.origdir = self.origdir
-        self.args.destdir = self.destdir
-
-    def tearDown(self):
-        if os.path.exists(self.destdir):
-            clear_non_empty_dir(self.destdir)
-
-    def test_cl_object(self):
-        cl_object = processed_config_line(self.line, self.args)
-        self.assertIsInstance(cl_object, PackGrammarFileConfigLine)
-
-    def test_file_name(self):
-        cl_object = PackGrammarFileConfigLine(self.line_parts, self.origdir,
-                self.destdir)
-        expect = 'tm = thrax pt 12 grammar.packed # foo bar'
-        actual = cl_object.result()
-        self.assertEqual(expect, actual)
-
-    def test_packed_grammar_is_directory(self):
-        """
-        The resulting grammar.packed should be a directory.
-        """
-        cl_object = PackGrammarFileConfigLine(self.line_parts, self.origdir,
-                self.destdir)
-        cl_object.process()
-        expect = os.path.join(self.destdir, 'grammar.packed')
-        self.assertTrue(os.path.isdir(expect))
-
-
-class TestPackGrammarFileConfigLine_different_name(unittest.TestCase):
-
-    def setUp(self):
-        line = 'tm = thrax pt 12 another_grammar # foo bar'
-        self.line_parts = extract_line_parts(line)
-        self.origdir = '/tmp'
-        self.destdir = '/tmp/testdestdir'
-        self.grammar_file_path = os.path.join(self.origdir, 'another_grammar')
-        if not os.path.exists(self.grammar_file_path):
-            with open(self.grammar_file_path, 'w') as fh:
-                fh.write('another_grammar')
-
-    def tearDown(self):
-        if os.path.exists(self.grammar_file_path):
-            os.remove(self.grammar_file_path)
-
-    def test_rename(self):
-        '''
-        A single-file grammar with a name that doesn't end with .gz should get packed.
-        '''
-        cl_object = PackGrammarFileConfigLine(self.line_parts, self.origdir,
-                self.destdir)
-        line = 'tm = thrax pt 12 another_grammar.packed # foo bar'
-        self.assertEqual(line, cl_object.result())
-
-
-class TestPackGrammarFileConfigLine_dont_pack(unittest.TestCase):
-    """
-    If the grammar is already packed, don't re-pack it.
-    """
-
-    def setUp(self):
-        self.line = 'tm = thrax pt 12 grammar.packed # foo bar'
-        self.origdir = '/tmp/testorigdir'
-        self.destdir = '/tmp/testdestdir'
-        for d in [self.origdir, self.destdir]:
-            if os.path.exists(d):
-                clear_non_empty_dir(d)
-        # Create the destination directory.
-        os.mkdir(self.origdir)
-        os.mkdir(os.path.join(self.origdir, 'grammar.packed'))
-        os.mkdir(self.destdir)
-        self.args = Mock()
-        self.args.origdir = self.origdir
-        self.args.destdir = self.destdir
-
-    def tearDown(self):
-        for d in [self.origdir, self.destdir]:
-            if os.path.exists(d):
-                clear_non_empty_dir(d)
-
-    def test_instance(self):
-        '''
-        The method should not detect this as a tm file that needs to be packed.
-        '''
-        cl_object = processed_config_line(self.line, self.args)
-        self.assertNotIsInstance(cl_object, PackGrammarFileConfigLine)
-        self.assertIsInstance(cl_object, CopyFileConfigLine)
-
-    def test_result(self):
-        '''
-        The method should not detect this as a tm file that needs to be packed.
-        '''
-        cl_object = processed_config_line(self.line, self.args)
-        self.assertEqual(self.line, cl_object.result())
-
-    def test_copy(self):
-        '''
-        The method should not detect this as a tm file that needs to be packed.
-        '''
-        processed_config_line(self.line, self.args)
-        actual = os.path.isdir(os.path.join(self.destdir, 'grammar.packed'))
-        self.assertTrue(actual)
-
-
 class TestAbsFilePath(unittest.TestCase):
 
     def test_abs_file_path_path_in_file_token_1(self):
@@ -922,12 +614,20 @@ class TestAbsFilePath(unittest.TestCase):
 # DONE: copying directories
 # DONE: all resulting paths in configurations in bundle should be relative.
 # DONE: test copy_config_options
+# DONE: any tm file that's not a directory gets packed
+# DONE: any lm file ending with gz gets binarized
+#   tokens[0] == "lm" and tokens[-1] == "*.gz"
+# NOT DOING: ony one grammar can be packed at a time, due to a Joshua
+# limitation that might change in the future.
+# DONE: Remove binarizing and packing options.
+# DONE: Remove automatic binarizing and packing.
 # : prevent more than one input file with the same name from clashing in the
 # bundle.
 #      from collections import defaultdict
 #      file_name_cnts = defaultdict(int)
 #      FileConfigLine.file_name_cnts["lm.kenlm"]
 #      FileConfigLine.file_name_cnts["grammar.packed"]
-# DONE: any lm file ending with gz gets binarized
-#   tokens[0] == "lm" and tokens[-1] == "*.gz"
-# DONE: any tm file that's not a directory gets packed
+# : -v --verbose option that would print out a message for when copy-config is
+# run, files are copied or processed.
+# : create a README that states something like:
+# This Joshua Decoder Bundle was created with Joshua commit v283i72isdh...
