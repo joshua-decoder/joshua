@@ -11,7 +11,13 @@ $JOSHUA/scripts/support/run-bundler.py \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/test/1/joshua.config \
   /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5 \
   haitian5-bundle \
-  --copy-config-options '-top-n 1 -output-format %S -mark-oovs false -server-port 5674 -tm/pt "thrax pt 20 /path/to/copied/unfiltered/grammar.gz"'
+  --copy-config-options \
+    '-top-n 1 \
+    -output-format %S \
+    -mark-oovs false \
+    -server-port 5674 \
+    -weights-file test/1/weights.final \
+    -tm/pt "thrax pt 20 /path/to/copied/unfiltered/grammar.gz"'
 '''
 # Then, go run the executable file
 #   haitian5-bundle/bundle-runner.sh
@@ -83,13 +89,10 @@ class ConfigLine(object):
     are meant to deal with files that get copied or processed.
     """
 
-    def __init__(self, line_parts, orig_dir=None, dest_dir=None,
-            pack_grammar=None, binarize_kenlm=None):
+    def __init__(self, line_parts, orig_dir=None, dest_dir=None):
         self.line_parts = line_parts
         self.orig_dir = orig_dir
         self.dest_dir = dest_dir
-        self.pack_grammar = pack_grammar
-        self.binarize_kenlm = binarize_kenlm
 
     def join_command_comment(self, custom_command_parts=None,
                 custom_comment=None):
@@ -119,10 +122,8 @@ class ConfigLine(object):
 
 class FileConfigLine(ConfigLine):
 
-    def __init__(self, line_parts, orig_dir, dest_dir,
-            pack_grammar=None, binarize_kenlm=None):
-        ConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
-                binarize_kenlm)
+    def __init__(self, line_parts, orig_dir, dest_dir):
+        ConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
         self.file_token = self.line_parts["command"][-1]
         self.source_file_path = self.__set_source_file_token()
 
@@ -136,10 +137,8 @@ class FileConfigLine(ConfigLine):
 
 class CopyFileConfigLine(FileConfigLine):
 
-    def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
-            binarize_kenlm=None):
-        FileConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
-                binarize_kenlm)
+    def __init__(self, line_parts, orig_dir, dest_dir):
+        FileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
         self.dest_file_path = self.__determine_copy_dest_path()
 
     def __determine_copy_dest_path(self):
@@ -179,10 +178,8 @@ class CopyFileConfigLine(FileConfigLine):
 
 class BinarizeLmFileConfigLine(CopyFileConfigLine):
 
-    def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
-            binarize_kenlm=None):
-        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
-                binarize_kenlm)
+    def __init__(self, line_parts, orig_dir, dest_dir):
+        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
         self.dest_file_path = self.__determine_copy_dest_path()
 
     def process(self):
@@ -225,10 +222,8 @@ class BinarizeLmFileConfigLine(CopyFileConfigLine):
 
 class PackGrammarFileConfigLine(CopyFileConfigLine):
 
-    def __init__(self, line_parts, orig_dir, dest_dir, pack_grammar=None,
-            binarize_kenlm=None):
-        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir, pack_grammar,
-                binarize_kenlm)
+    def __init__(self, line_parts, orig_dir, dest_dir):
+        CopyFileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
         self.dest_file_path = self.__determine_copy_dest_path()
 
     def process(self):
@@ -254,7 +249,6 @@ class PackGrammarFileConfigLine(CopyFileConfigLine):
         else:
             self.new_name = file_name + '.packed'
         return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
-
 
     def result(self):
         """
@@ -299,16 +293,15 @@ def config_line_factory(line, args):
         if tokens[0].startswith("lm") and source_file_path.endswith(".gz"):
             # This is a language model file to be binarized:
             cl = BinarizeLmFileConfigLine(line_parts, args.origdir,
-                    args.destdir, args.pack_grammar, args.binarize_kenlm)
+                    args.destdir)
             return cl
         if tokens[0].startswith("tm") and not os.path.isdir(source_file_path):
             # This is a translation model file to be packed:
             cl = PackGrammarFileConfigLine(line_parts, args.origdir,
-                    args.destdir, args.pack_grammar, args.binarize_kenlm)
+                    args.destdir)
             return cl
         # This file doesn't need to be processed, so just copy it:
-        cl = CopyFileConfigLine(line_parts, args.origdir, args.destdir,
-                args.pack_grammar, args.binarize_kenlm)
+        cl = CopyFileConfigLine(line_parts, args.origdir, args.destdir)
         return cl
     else:
         return ConfigLine(line_parts)
@@ -357,15 +350,6 @@ def handle_args(clargs):
                         help='optional additional or replacement configuration '
                         'options for Joshua, all surrounded by one pair of '
                         'quotes.')
-    parser.add_argument('--pack-grammar',
-                        action="store_true",
-                        help='use the grammar packer script to pack the '
-                        'grammar.')
-    parser.add_argument('--binarize-kenlm',
-                        nargs='+',
-                        help='use the build_binary script to binarize the '
-                        'language model(s) listed, for shorter loading at run '
-                        'time.')
     return parser.parse_args(clargs)
 
 
@@ -713,7 +697,7 @@ class TestBinarizeLmFileConfigLine_process_lm_binarize(unittest.TestCase):
     def test_file_name(self):
         line_parts = extract_line_parts(self.line)
         cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
-                self.destdir, None, None)
+                self.destdir)
         expect = 'lm = kenlm 5 false false 100 lm.kenlm'
         actual = cl_object.result()
         self.assertEqual(expect, actual)
@@ -721,7 +705,7 @@ class TestBinarizeLmFileConfigLine_process_lm_binarize(unittest.TestCase):
     def test_line_grammar_lm_binarizer_process(self):
         line_parts = extract_line_parts(self.line)
         cl_object = BinarizeLmFileConfigLine(line_parts, self.origdir,
-                self.destdir, None, None)
+                self.destdir)
         cl_object.process()
         expect = os.path.join(self.destdir, 'lm.kenlm')
         self.assertTrue(os.path.exists(expect))
@@ -741,7 +725,7 @@ class TestBinarizeLmFileConfigLine_process_lmfile_binarize(unittest.TestCase):
     def test_line_lmfile_deprecated_statement__class(self):
         cl_object = \
                 BinarizeLmFileConfigLine(extract_line_parts(self.config_line),
-                        self.origdir, self.destdir, None, None)
+                        self.origdir, self.destdir)
         actual = cl_object.result()
         self.assertEqual(self.expect, actual)
 
@@ -810,7 +794,7 @@ class TestPackGrammarFileConfigLine(unittest.TestCase):
 
     def test_file_name(self):
         cl_object = PackGrammarFileConfigLine(self.line_parts, self.origdir,
-                self.destdir, None, None)
+                self.destdir)
         expect = 'tm = thrax pt 12 grammar.packed # foo bar'
         actual = cl_object.result()
         self.assertEqual(expect, actual)
@@ -820,7 +804,7 @@ class TestPackGrammarFileConfigLine(unittest.TestCase):
         The resulting grammar.packed should be a directory.
         """
         cl_object = PackGrammarFileConfigLine(self.line_parts, self.origdir,
-                self.destdir, None, None)
+                self.destdir)
         cl_object.process()
         expect = os.path.join(self.destdir, 'grammar.packed')
         self.assertTrue(os.path.isdir(expect))
@@ -847,7 +831,7 @@ class TestPackGrammarFileConfigLine_different_name(unittest.TestCase):
         A single-file grammar with a name that doesn't end with .gz should get packed.
         '''
         cl_object = PackGrammarFileConfigLine(self.line_parts, self.origdir,
-                self.destdir, None, None)
+                self.destdir)
         line = 'tm = thrax pt 12 another_grammar.packed # foo bar'
         self.assertEqual(line, cl_object.result())
 
