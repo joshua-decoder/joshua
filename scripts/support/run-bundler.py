@@ -369,8 +369,8 @@ def handle_args(clargs):
     return parser.parse_args(clargs)
 
 
-def main():
-    args = handle_args(sys.argv[1:])
+def main(argv):
+    args = handle_args(argv[1:])
     try:
         make_dest_dir(args.destdir, args.force)
     except:
@@ -402,7 +402,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
 
 
 ######################
@@ -658,8 +658,7 @@ class TestMain(unittest.TestCase):
                 clear_non_empty_dir(d)
 
     def test_main(self):
-        sys.argv = self.args
-        main()
+        main(self.args)
         actual = os.path.exists(os.path.join(self.destdir, 'weights'))
         self.assertTrue(actual)
         with open(os.path.join(self.destdir, 'joshua.config')) as fh:
@@ -672,8 +671,7 @@ class TestMain(unittest.TestCase):
         For --copy_config_options, Space-separated options surrounded by a pair
         of quotes should not be split.
         """
-        sys.argv = self.args + ["--copy-config-options", "-topn 1"]
-        main()
+        main(self.args + ["--copy-config-options", "-topn 1"])
         with open(os.path.join(self.destdir, 'joshua.config')) as fh:
             actual = fh.read().splitlines()
         expect = ['weights-file = weights # foo bar', 'output-format = %1',
