@@ -29,6 +29,7 @@ import re
 import shutil
 import stat
 import sys
+from collections import defaultdict
 from subprocess import Popen, PIPE
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
@@ -137,6 +138,14 @@ class FileConfigLine(ConfigLine):
 
 class CopyFileConfigLine(FileConfigLine):
 
+    # The number of times each file name has been seen
+    file_name_counts = defaultdict(int)
+
+    @staticmethod
+    def clear_file_name_counts():
+        CopyFileConfigLine.file_name_counts = defaultdict(int)
+
+
     def __init__(self, line_parts, orig_dir, dest_dir):
         FileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
         self.dest_file_path = self.__determine_copy_dest_path()
@@ -147,14 +156,17 @@ class CopyFileConfigLine(FileConfigLine):
         the destination directory.
         The path might be relative or absolute, we don't know.
         """
-        return os.path.abspath(os.path.join(self.dest_dir,
-                os.path.basename(self.file_token)))
-        #file_name = os.path.basename(self.line_parts["command"][-1])
-        #if file_name.endswith('.gz'):
-        #    self.new_name = re.sub(r'\.gz$', '.kenlm', file_name)
-        #else:
-        #    self.new_name = file_name + '.kenlm'
-        #return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
+        file_name = os.path.basename(os.path.basename(self.file_token))
+        # Prevent more than one input file with the same name from clashing in
+        # the bundle.
+        count = CopyFileConfigLine.file_name_counts[file_name]
+        if count:
+            pre_extension, extension = os.path.splitext(file_name)
+            self.new_name = pre_extension + '-' + str(count) + extension
+        else:
+            self.new_name = file_name
+        CopyFileConfigLine.file_name_counts[file_name] += 1
+        return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
 
     def process(self):
         """
@@ -177,7 +189,7 @@ class CopyFileConfigLine(FileConfigLine):
         # 1) Remove the directories from the path, since the files are
         #    copied to the top level.
         command_parts = self.line_parts["command"]
-        command_parts[-1] = os.path.basename(self.dest_file_path)
+        command_parts[-1] = self.new_name
         # 2) Put back together the configuration line
         return self.join_command_comment(command_parts)
 
@@ -459,6 +471,7 @@ class TestProcessedConfigLine_copy2(unittest.TestCase):
         self.expected_source_file_path = os.path.abspath(os.path.join(args.origdir,
                     'test', 'parser', 'weights'))
         self.expected_dest_file_path = os.path.abspath(os.path.join(args.destdir, 'weights'))
+        CopyFileConfigLine.clear_file_name_counts()
 
     def tearDown(self):
         if not os.path.exists(self.destdir):
@@ -496,6 +509,7 @@ class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
         if os.path.exists(self.args.destdir):
             clear_non_empty_dir(self.args.destdir)
         os.mkdir(self.args.destdir)
+        CopyFileConfigLine.clear_file_name_counts()
 
     def tearDown(self):
         if os.path.exists(self.args.destdir):
@@ -523,6 +537,7 @@ class TestProcessedConfigLine_copy_dirtree(unittest.TestCase):
 class TestMain(unittest.TestCase):
 
     def setUp(self):
+        CopyFileConfigLine.clear_file_name_counts()
         self.line = 'weights-file = weights # foo bar\noutput-format = %1'
         self.origdir = '/tmp/testorigdir'
         self.destdir = '/tmp/testdestdir'
@@ -610,6 +625,41 @@ class TestAbsFilePath(unittest.TestCase):
         self.assertEqual(expect, actual)
 
 
+class TestUniqueFileNames(unittest.TestCase):
+
+    def setUp(self):
+        self.args = Mock()
+        self.args.origdir = '/dev/null'
+        self.args.destdir = '/dev/null'
+        CopyFileConfigLine.clear_file_name_counts()
+
+    def test_2_files_same_name__without_filename_extension(self):
+        line = 'weights-file = weights'
+        cl = config_line_factory(line, self.args)
+        self.assertEqual('weights-file = weights', cl.result())
+        # Another file with the same name appears.
+        line = 'weights-file = otherdir/weights'
+        cl = config_line_factory(line, self.args)
+        self.assertEqual('weights-file = weights-1', cl.result())
+
+    def test_2_files_same_name__with_filename_extension(self):
+        line = 'tm = blah blah blah grammar.packed'
+        cl = config_line_factory(line, self.args)
+        self.assertEqual('tm = blah blah blah grammar.packed', cl.result())
+        # Another file with the same name appears.
+        line = 'tm = blah blah blah otherdir/grammar.packed'
+        cl = config_line_factory(line, self.args)
+        self.assertEqual('tm = blah blah blah grammar-1.packed', cl.result())
+
+    def test_clear_file_name_counts(self):
+        line = 'tm = blah blah blah grammar.packed'
+        cl = config_line_factory(line, self.args)
+        cl = config_line_factory(line, self.args)
+        CopyFileConfigLine.clear_file_name_counts()
+        cl = config_line_factory(line, self.args)
+        self.assertEqual('tm = blah blah blah grammar.packed', cl.result())
+
+
 # todo
 # DONE: copying directories
 # DONE: all resulting paths in configurations in bundle should be relative.
@@ -621,13 +671,12 @@ class TestAbsFilePath(unittest.TestCase):
 # limitation that might change in the future.
 # DONE: Remove binarizing and packing options.
 # DONE: Remove automatic binarizing and packing.
-# : prevent more than one input file with the same name from clashing in the
+# DONE: prevent more than one input file with the same name from clashing in the
 # bundle.
-#      from collections import defaultdict
-#      file_name_cnts = defaultdict(int)
-#      FileConfigLine.file_name_cnts["lm.kenlm"]
-#      FileConfigLine.file_name_cnts["grammar.packed"]
 # : -v --verbose option that would print out a message for when copy-config is
 # run, files are copied or processed.
+# VerbosityPrinter(active=False)
+# verbose.activate(blah)
+# verbose.print(blah)
 # : create a README that states something like:
 # This Joshua Decoder Bundle was created with Joshua commit v283i72isdh...
