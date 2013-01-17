@@ -77,7 +77,7 @@ def filter_through_copy_config_script(configs, copy_configs):
     configs should be a list.
     copy_configs should be a list.
     """
-    cmd = "$JOSHUA/scripts/copy-config.pl " + copy_configs
+    cmd = JOSHUA_PATH + "/scripts/copy-config.pl " + copy_configs
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
     result = p.communicate("\n".join(configs))[0]
     return result.splitlines()
@@ -430,7 +430,7 @@ class TestProcessedConfigLine_copy1(unittest.TestCase):
             clear_non_empty_dir(self.args.destdir)
 
     def test_line_type(self):
-        cl_object = processed_config_line(self.line, self.args)
+        cl_object = config_line_factory(self.line, self.args)
         self.assertIsInstance(cl_object, ConfigLine)
 
     def test_output_is_input(self):
