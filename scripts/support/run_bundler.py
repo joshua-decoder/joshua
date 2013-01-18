@@ -678,5 +678,7 @@ class TestUniqueFileNames(unittest.TestCase):
 # VerbosityPrinter(active=False)
 # verbose.activate(blah)
 # verbose.print(blah)
-# : create a README that states something like:
+# : create a README in the bundle that states something like:
 # This Joshua Decoder Bundle was created with Joshua commit v283i72isdh...
+# however, this doesn't say anything about the version of Joshua with which the
+# configuration was created.
