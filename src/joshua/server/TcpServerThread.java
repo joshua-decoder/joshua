@@ -52,6 +52,7 @@ public class TcpServerThread extends Thread {
 
         try {
           translation.print(out);
+          out.flush();
         } catch (SocketException e) {
           System.err.println("* WARNING: Socket interrupted");
           request.shutdown();
