@@ -608,12 +608,17 @@ while (1) {
   my $score_file        = "run$run.${base_score_file}";
 
   my $cmd = "$mert_extract_cmd $mert_extract_args --scfile $score_file --ffile $feature_file -r " . join(",", @references) . " -n $nbest_file";
+
   $cmd = &create_extractor_script($cmd, $___WORKING_DIR);
   &submit_or_exec($cmd, "extract.out","extract.err");
 
   # Remove the trailing underscores from feature labels, which were introduced to trick the Moses'
   # extractor into treating everything as a sparse feature.
   system("perl -pi -e 's/_:/:/g' $feature_file");
+
+  # Remove colons from feature names, which confuse MIRA (these patterns are chosen to match tree
+  # features).
+  system("perl -pi -e 's/:_/-COLON-_/g; s/\":\"/\"-COLON-\"/g;' $feature_file";
 
   my %CURR;
   map { $CURR{$_} = $featlist->{$_}{value} } keys(%$featlist); # save the current features
@@ -700,6 +705,9 @@ while (1) {
   } elsif ($___BATCH_MIRA) { # batch MIRA optimization
     $cmd = "$mert_mira_cmd $mira_settings $seed_settings $pro_file_settings -o $mert_outfile";
     &submit_or_exec($cmd, "run$run.mert.out", $mert_logfile);
+
+    # Now replace the -COLON-s that were introduced to prevent confusion from MIRA.
+    system("perl -pi -e 's/-COLON-/:/g' $mert_outfile");
   } else {  # just mert
     &submit_or_exec($cmd . $mert_settings, $mert_outfile, $mert_logfile);
   }
