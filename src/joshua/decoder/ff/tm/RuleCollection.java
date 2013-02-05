@@ -16,15 +16,6 @@ import joshua.decoder.ff.FeatureFunction;
 public interface RuleCollection {
 
   /**
-   * Sorts the grammar rules in this collection using the provided feature functions.
-   * 
-   * Implementations of this function should be synchronized.
-   * 
-   * @param weights the model weights.
-   */
-  void sortRules(List<FeatureFunction> models);
-
-  /**
    * Returns true if the rules are sorted. This is used to allow rules to be sorted in an amortized
    * fashion; rather than sorting all trie nodes when the grammar is originally loaded, we sort them
    * only as the decoder actually needs them.

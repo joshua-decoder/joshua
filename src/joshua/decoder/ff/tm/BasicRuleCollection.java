@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
@@ -22,14 +7,12 @@ import java.util.PriorityQueue;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.FeatureVector;
 
 /**
  * Basic collection of translation rules.
  * 
  * @author Lane Schwartz
  * @author Zhifei Li
- * @version $LastChangedDate$
  */
 public class BasicRuleCollection implements RuleCollection {
 
@@ -99,10 +82,12 @@ public class BasicRuleCollection implements RuleCollection {
   }
   
   public boolean isSorted() {
-    return sorted;
+    synchronized (this) {
+      return sorted;
+    }
   }
 
-  public static void sortRules(List<Rule> rules, List<FeatureFunction> models) {
+  private void sortRules(List<Rule> rules, List<FeatureFunction> models) {
     // use a priority queue to help sort
     PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegativeCostComparator);
     for (Rule rule : rules) {
@@ -110,7 +95,7 @@ public class BasicRuleCollection implements RuleCollection {
       t_heapRules.add(rule);
     }
 
-    // rearange the sortedRules based on t_heapRules
+    // rearrange the sortedRules based on t_heapRules
     rules.clear();
     while (t_heapRules.size() > 0) {
       Rule t_r = t_heapRules.poll();
@@ -119,9 +104,11 @@ public class BasicRuleCollection implements RuleCollection {
   }
 
   /* See Javadoc comments for RuleCollection interface. */
-  public synchronized void sortRules(List<FeatureFunction> models) {
-    sortRules(this.rules, models);
-    this.sorted = true;
+  public void sortRules(List<FeatureFunction> models) {
+    synchronized (this) {
+      sortRules(this.rules, models);
+      this.sorted = true;
+    }
   }
 
   /* See Javadoc comments for RuleCollection interface. */

@@ -282,15 +282,16 @@ public class PackedGrammar extends BatchGrammar {
      */
     @Override
     public boolean isSorted() {
-      int num_children = grammar.source[position];
-      int rule_position = position + 2 * (num_children + 1);
-      int num_rules = grammar.source[rule_position - 1];
-      int block_id = grammar.source[rule_position + 2];
-      return (num_rules == 0 || grammar.estimated[block_id] != Float.NEGATIVE_INFINITY);
+      synchronized (grammar) {
+        int num_children = grammar.source[position];
+        int rule_position = position + 2 * (num_children + 1);
+        int num_rules = grammar.source[rule_position - 1];
+        int block_id = grammar.source[rule_position + 2];
+        return (num_rules == 0 || grammar.estimated[block_id] != Float.NEGATIVE_INFINITY);
+      }
     }
 
-    @Override
-    public synchronized void sortRules(List<FeatureFunction> models) {
+    private void sortRules(List<FeatureFunction> models) {
       int num_children = grammar.source[position];
       int rule_position = position + 2 * (num_children + 1);
       int num_rules = grammar.source[rule_position - 1];
@@ -335,9 +336,11 @@ public class PackedGrammar extends BatchGrammar {
 
     @Override
     public synchronized List<Rule> getSortedRules(List<FeatureFunction> featureFunctions) {
-      if (! isSorted())
-        sortRules(featureFunctions);
-      return getRules();
+      synchronized (grammar) {
+        if (! isSorted())
+          sortRules(featureFunctions);
+        return getRules();
+      }
     }
 
     @Override
