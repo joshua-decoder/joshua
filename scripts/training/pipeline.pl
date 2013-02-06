@@ -780,7 +780,7 @@ THRAX:
 
 system("mkdir -p $DATA_DIRS{train}") unless -d $DATA_DIRS{train};
 
-if ($GRAMMAR_TYPE eq "samt") {
+if ($GRAMMAR_TYPE eq "samt" || $GRAMMAR_TYPE eq "ghkm") {
 
   # if we jumped right here, $TRAIN{target} should be parsed
   if (exists $TRAIN{parsed}) {
