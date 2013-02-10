@@ -88,13 +88,13 @@ while (my $rule = <>) {
   my @alignments = sort by_first split(' ', $alignment);
   foreach my $pair (@alignments) {
     my ($l1,$l2) = split(/-/, $pair);
-    push(@permutation, $l2orders[$l2]);
+    push(@permutation, $l2orders[$l2]) if defined $l2orders[$l2];
   }
 
   if (scalar(@permutation) != scalar(@l2nts)) {
-    print STDERR "* WARNING: permutation length is too short\n";
-    print STDERR "*  " . (scalar @l2nts) . $/;
-    print STDERR "*  " . (scalar @permutation) . $/;
+    my $a = scalar(@l2nts);
+    my $b = scalar(@permutation);
+    print STDERR "* [line $.] WARNING: permutation length is too short (l2nts $a, perm $b)\n";
     next;
   }
 
