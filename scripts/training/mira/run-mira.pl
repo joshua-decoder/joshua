@@ -537,7 +537,9 @@ if ($continue) {
     ($bestpoint, $devbleu) = &get_weights_from_mert("run$step.$mert_outfile","run$step.$mert_logfile", scalar(keys(%$featlist)));
     die "Failed to parse mert.log, missed Best point there."
       if !defined $bestpoint || !defined $devbleu;
-    print "($step) BEST at $step $bestpoint => $devbleu at ".`date`;
+#    print "($step) BEST at $step $bestpoint => $devbleu at ".`date`;
+    my $num_features = scalar(keys(%$bestpoint));
+    print "($step) BEST at $step ($num_features features) => $devbleu at ".`date`;
     my %newweights = %$bestpoint;
 
     # update my cache of lambda values
@@ -732,14 +734,12 @@ while (1) {
   die "Failed to parse mert.log, missed Best point there."
     if !defined $bestpoint || !defined $devbleu;
 
-  print "($run) BEST at $run: " . (join(" ", map { "$_:$bestpoint->{$_}" } keys %$bestpoint)) . " => $devbleu at ".`date`;
+  my $num_features = scalar(keys(%$bestpoint));
+  print "($run) BEST at $run: ($num_features features) => $devbleu at ".`date`;
 
+  # Update all features regardless of whether they existed before.
   foreach my $name (keys(%newweights)) {
-    if (exists $featlist->{$name}) {
-      $featlist->{$name}{value} = $newweights{$name};
-    } else {
-      print STDERR "WARNING: no old weight value for updated weight $name\n";
-    }
+    $featlist->{$name}{value} = $newweights{$name};
   }
 
   ## additional stopping criterion: weights have not changed
