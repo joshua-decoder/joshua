@@ -434,6 +434,7 @@ public class JoshuaConfiguration {
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))
                 || parameter.equals(normalize_key("use-tree-nbest"))
+                || parameter.equals(normalize_key("use-kenlm"))
                 || parameter.equals(normalize_key("regexp-grammar"))) {  
               logger.warning(String.format("WARNING: ignoring deprecated parameter '%s'", fds[0]));
 
