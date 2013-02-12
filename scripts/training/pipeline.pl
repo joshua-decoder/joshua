@@ -1192,9 +1192,11 @@ for my $run (1..$OPTIMIZER_RUNS) {
   } elsif ($TUNER eq "mira") {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
-
+    
+    my $extra_args = $JOSHUA_ARGS;
+    $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations 15 --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations 15 --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/weights.final");
@@ -1774,10 +1776,10 @@ sub compute_bleu_summary {
   # Now average the runs, report BLEU
   my @bleus;
   my $numrecs = 0;
-  open CMD, "grep ' BLEU = ' $filepattern |";
+  open CMD, "grep --color=never ' BLEU = ' $filepattern |";
   while (<CMD>) {
     my @F = split;
-    push(@bleus, $F[-1]);
+    push(@bleus, 1.0 * $F[-1]);
   }
   close(CMD);
 
