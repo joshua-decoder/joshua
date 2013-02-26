@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.lattice.Lattice;
 import joshua.util.Regex;
 
@@ -14,7 +15,7 @@ import joshua.util.Regex;
  * This class represents a basic input sentence. A sentence is a sequence of UTF-8 characters
  * denoting a string of source language words. The sequence can optionally be wrapped in <seg
  * id="N">...</seg> tags, which are then used to set the sentence number (a 0-indexed ID).
- *
+ * 
  * @author Matt Post <post@cs.jhu.edu>
  */
 
@@ -34,20 +35,18 @@ public class Sentence {
 
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
-  /*
-   * The distinction between sequenceId and id is important. The former is the identifier assigned
-   * by the input handler; these are guaranteed to be sequential with no missing numbers. However,
-   * sentences themselves can claim to be whatever number they want (for example, if wrapped in <seg
-   * id=N>...</seg> tags). It's important to respect what the sentence claims to be for tuning
-   * procedures, but the sequence id is also necessary for ensuring that the output translations are
-   * assembled in the order they were found in the input file.
-   *
-   * In most cases, these numbers should be the same.
-   */
-
+  /* The sentence number. */
   private int id = -1;
+
+  /*
+   * The source and target sides of the input sentence. Target sides are present when doing
+   * alignment or forced decoding.
+   */
   protected String sentence;
   protected String target = null;
+
+  /* Lattice representation of the source sentence. */
+  protected Lattice<Integer> sourceLattice = null;
 
   private final List<ConstraintSpan> constraints;
 
@@ -85,11 +84,22 @@ public class Sentence {
   }
 
   /**
-   * Returns the length of the sentence.  For lattices, the length is the shortest path through the
+   * Returns the length of the sentence. For lattices, the length is the shortest path through the
    * lattice.
    */
   private int length() {
     return this.intLattice().getShortestDistance();
+  }
+
+  /*
+   * This function uses the supplied grammars to find OOVs in its input and create "detours" around
+   * them by splitting the OOVs on internal word boundaries. The idea is to break apart noun
+   * compounds in languages like German (such as the word "golfloch" = "golf" (golf) + "loch" (hole)
+   * that artificiallly inflate the vocabulary with OOVs.
+   */
+  public void addOOVDetour(List<GrammarFactory> grammars) {
+    
+    
   }
 
   /**
@@ -102,8 +112,9 @@ public class Sentence {
     int size = lattice.size();
 
     if (size > MAX_SENTENCE_NODES) {
-      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to 0 length", id(), size));
-      
+      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to 0 length",
+          id(), size));
+
       // Replace the input sentence (and target)
       sentence = "";
       if (target != null) {
@@ -131,11 +142,11 @@ public class Sentence {
   /**
    * If a target side was supplied with the sentence, this will be non-null. This is used when doing
    * synchronous parsing or constrained decoding. The input format is:
-   *
+   * 
    * Bill quiere ir a casa ||| Bill wants to go home
-   *
+   * 
    * If the parameter parse=true is set, parsing will be triggered, otherwise constrained decoding.
-   *
+   * 
    * @return
    */
   public String target() {
@@ -151,7 +162,9 @@ public class Sentence {
   }
 
   public Lattice<Integer> intLattice() {
-    return Lattice.createIntLattice(intSentence());
+    if (this.sourceLattice == null)
+      this.sourceLattice = Lattice.createIntLattice(intSentence());
+    return this.sourceLattice;
   }
 
   @Override

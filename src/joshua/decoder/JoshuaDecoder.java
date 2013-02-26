@@ -63,7 +63,7 @@ public class JoshuaDecoder {
       if (translation == null)
         break;
       
-      translation.print(new BufferedWriter(new OutputStreamWriter(System.out)));
+      System.out.print(translation);
     }
 
     logger.info("Decoding completed.");

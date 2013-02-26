@@ -43,7 +43,7 @@ public class KBestExtractor {
   static int rootID;// TODO: bug
 
   private enum Side { SOURCE, TARGET };
-  
+
   // configuratoin option
   private boolean extractUniqueNbest = true;
   private boolean includeAlign = false;
@@ -52,7 +52,7 @@ public class KBestExtractor {
   private int sentID;
 
   private FeatureVector weights;
-  
+
   public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean includeAlign,
       boolean isMonolingual) {
     rootID = Vocabulary.id(rootSym);
@@ -94,10 +94,11 @@ public class KBestExtractor {
         outputString = outputString.replace("%t",
             derivationState.getHypothesis(this, true, null, models, Side.TARGET));
       }
-      
+
       if (JoshuaConfiguration.outputFormat.contains("%e"))
-        outputString = outputString.replace("%e", derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
-    
+        outputString = outputString.replace("%e",
+            derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
+
       return outputString;
     }
   }
@@ -114,7 +115,7 @@ public class KBestExtractor {
   /**
    * This is the entry point for extracting k-best hypotheses.
    * 
-   * @param hg the hypergraph to extract from 
+   * @param hg the hypergraph to extract from
    * @param featureFunctions the feature functions to use
    * @param topN how many to extract
    * @param sentID the sentence number
@@ -625,8 +626,10 @@ public class KBestExtractor {
               sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
                   kbestExtractor, useTreeFormat, features, models, side));
             } else {
-              if (JoshuaConfiguration.parse || english[c] != Vocabulary.id(Vocabulary.START_SYM)
-                  && english[c] != Vocabulary.id(Vocabulary.STOP_SYM))
+              if (JoshuaConfiguration.parse
+                  || useTreeFormat
+                  || (english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary
+                      .id(Vocabulary.STOP_SYM)))
                 sb.append(Vocabulary.word(english[c]));
             }
             if (c < english.length - 1)

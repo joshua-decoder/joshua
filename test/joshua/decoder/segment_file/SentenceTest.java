@@ -6,12 +6,15 @@ import org.testng.annotations.AfterMethod;
 import static org.testng.Assert.*;
 
 public class SentenceTest {
+  private String tooLongInput;
+
   @BeforeMethod
-  public void beforeMethod() {
+  public void setUp() {
+    tooLongInput = concatTokens("*", Sentence.MAX_SENTENCE_NODES * 2);
   }
 
   @AfterMethod
-  public void afterMethod() {
+  public void tearDown() {
   }
 
   @Test
@@ -47,57 +50,29 @@ public class SentenceTest {
     return result;
   }
 
+  /**
+   * The too long input sentence should be replaced with an empty string.
+   */
   @Test
-  public void testMaxTokens() {
-    // Concatenate MAX_SENTENCE_NODES
-    // Since the maximum-tokens threshold was not crossed, the input sentence should not be blanked.
-    String input = concatTokens("*", Sentence.MAX_SENTENCE_NODES);
-
-    Sentence sentence;
-    // Source only
-    sentence = new Sentence(input, 0);
-    assertFalse(sentence.isEmpty());
-    assertNull(sentence.target);
-
-    // Source + target
-    sentence = new Sentence(input + " ||| target side", 0);
-    assertFalse(sentence.isEmpty());
-    assertEquals(sentence.target, "target side");
+  public void testTooManyTokensSourceOnlyEmpty() {
+    assertTrue(new Sentence(this.tooLongInput, 0).isEmpty());
   }
 
   @Test
-  public void testTooManyTokens() {
-    // Concatenate more than MAX_SENTENCE_NODES
-    // Since the maximum-tokens threshold is crossed, the input sentence should be blanked.
-    String input = concatTokens("*", Sentence.MAX_SENTENCE_NODES + 1);
+  public void testTooManyTokensSourceOnlyNotNull() {
+    assertNotNull(new Sentence(this.tooLongInput, 0));
+  }
 
-    Sentence sentence;
-    // Source only
-    sentence = new Sentence(input, 0);
-    assertTrue(sentence.isEmpty());
-    assertNull(sentence.target);
-
-    // Source + target
-    sentence = new Sentence(input + " ||| target side", 0);
-    assertTrue(sentence.isEmpty());
+  @Test
+  public void testTooManyTokensSourceAndTargetIsEmpty() {
+    Sentence sentence = new Sentence(this.tooLongInput + " ||| target side", 0);
     assertEquals(sentence.target, "");
   }
 
   @Test
-  public void testAlmostButNotTooManyTokens() {
-    // Concatenate MAX_SENTENCE_NODES, each shorter than the average length, joined by a space.
-    String input = concatTokens("12345", Sentence.MAX_SENTENCE_NODES);
-
-    Sentence sentence;
-    // Source only
-    sentence = new Sentence(input, 0);
-    assertFalse(sentence.isEmpty());
-    assertNull(sentence.target);
-
-    // Source + target
-    sentence = new Sentence(input + " ||| target side", 0);
-    assertFalse(sentence.isEmpty());
-    assertEquals(sentence.target, "target side");
+  public void testTooManyTokensSourceAndTargetEmptyString() {
+    Sentence sentence = new Sentence(this.tooLongInput + " ||| target side", 0);
+    assertTrue(sentence.isEmpty());
   }
 
   @Test

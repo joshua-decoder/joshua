@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# 2011-07-14 Matt Post <post@jhu.edu>
+# 2011-07-14 Matt Post <post@cs.jhu.edu>
 
 # Converts a Moses configuration file to a Joshua configuration file
 # (including phrase table conversion)

@@ -15,18 +15,24 @@
 
 use strict;
 use warnings;
+use Getopt::Std;
+
+my %opts = (
+  m => '4g',    # amount of memory to give the packer
+  c => '',       # use alternate packer config
+);
+getopts("m:c:", \%opts);
 
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
 
 sub usage {
-  print "Usage: grammar-packer.pl input-grammar [output-dir=grammar.packed [packer-config]]\n";
+  print "Usage: grammar-packer.pl [-m MEM] [-c packer-config] input-grammar [output-dir=grammar.packed\n";
   exit;
 }
 
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
-my $config  = shift || undef;
 
 system("$CAT $grammar | sort -k3,3 | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
 
@@ -38,16 +44,23 @@ my $num_features = count_num_features("grammar-labeled.gz");
 my $feature_str = join(" ", 0..($num_features-1));
 my $packer_config = "packer.config.tmp";
 open CONFIG, ">$packer_config" or die "can't write to $packer_config";
-print CONFIG "slice_size 400000\n\nquantizer   float   $feature_str\n";
+print CONFIG "slice_size 100000\n\nquantizer   float   $feature_str\n";
 close(CONFIG);
 
 # Do the packing using the config.
-system("java -Xmx8g -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz");
+my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz";
+print STDERR "Packing with $cmd\n";
+my $retval = system($cmd);
 
-# Clean up.
-unlink("grammar-labeled.gz");
-system("mv dense_map $output_dir");
-system("mv $packer_config $output_dir/packer.config");
+if ($retval == 0) {
+  # Clean up.
+  unlink("grammar-labeled.gz");
+  system("mv dense_map $output_dir");
+  system("mv $packer_config $output_dir/packer.config");
+} else {
+  print STDERR "* FATAL: Couldn't pack the grammar.\n";
+  exit 1;
+}
 
 ################################################################################
 ## SUBROUTINES #################################################################

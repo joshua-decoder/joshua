@@ -102,7 +102,13 @@ public class DecoderThread extends Thread {
         JoshuaConfiguration.goal_symbol);
 
     /* Parsing */
-    HyperGraph hypergraph = chart.expand();
+    HyperGraph hypergraph = null;
+    try {
+      hypergraph = chart.expand();
+    } catch (java.lang.OutOfMemoryError e) {
+      logger.warning(String.format("sentence %d: out of memory", sentence.id()));
+      hypergraph = null;
+    }
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
     logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",

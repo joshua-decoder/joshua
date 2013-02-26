@@ -17,6 +17,8 @@ use warnings;
 my %SINGLETONS;
 
 my $lexicon_file = shift or die "need lexicon";
+# If a second argument is passed, replace the preterminal instead of inserting below it.
+my $REPLACE = shift || 0;
 
 # pass over once to find the minimum count of any item in the lexicon
 my $min_count = 0;
@@ -39,15 +41,17 @@ while (my $line = <LEX>) {
 close(LEX);
 
 while (<>) {
-  s/(\S+)\)/maybe_add_OOV($1).")"/ge;
+  s/\((\S+)\s+(\S+)\)/maybe_add_OOV($1,$2)/ge;
   print;
 }
 
 sub maybe_add_OOV {
-  my ($word) = @_;
+  my ($pos,$word) = @_;
 
-  return (exists $SINGLETONS{$word})
-	  ? "(OOV $word)"
-	  : $word;
+  if (exists $SINGLETONS{$word}) {
+    return $REPLACE ? "(OOV $word)" : "($pos (OOV $word))";
+  } else {
+    return "($pos $word)";
+  }
 }
 
