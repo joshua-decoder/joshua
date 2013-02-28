@@ -1,27 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# First, study the $JOSHUA/scripts/copy-config.pl script for the special
-# parameters.
-
-# Example invocation:
-'''
-$JOSHUA/scripts/support/run_bundler.py \
-  --force \
-  /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5/test/1/joshua.config \
-  /home/hltcoe/lorland/expts/haitian-creole-sms/runs/5 \
-  haitian5-bundle \
-  --copy-config-options \
-    '-top-n 1 \
-    -output-format %S \
-    -mark-oovs false \
-    -server-port 5674 \
-    -weights-file test/1/weights.final \
-    -tm/pt "thrax pt 20 /path/to/copied/unfiltered/grammar.gz"'
-'''
-# Then, go run the executable file
-#   haitian5-bundle/bundle-runner.sh
-
 from __future__ import print_function
 import argparse
 import os
@@ -31,6 +9,88 @@ import stat
 import sys
 from collections import defaultdict
 from subprocess import Popen, PIPE
+
+
+EXAMPLE = """
+example invocation:
+
+$JOSHUA/scripts/support/run_bundler.py \\
+  --force \\
+  /path/to/origin/directory/test/1/joshua.config \\
+  /path/to/origin/directory \\
+  new-bundle \\
+  --copy-config-options \\
+    '-top-n 1 \\
+    -output-format %S \\
+    -mark-oovs false \\
+    -server-port 5674 \\
+    -weights-file test/1/weights.final \\
+    -tm/pt "thrax pt 20 /path/to/origin/directory/grammar.gz"'
+
+note: The options included in the value string for the --copy-config-options
+argument can either be Joshua options or options for the
+$JOSHUA/scripts/copy-config.pl script. The -tm/pt option above is a special
+parameter for the copy-config script.
+"""
+
+README_TEMPLATE = """Joshua Configuration Run Bundle
+===============================
+
+To use the bundle, invoke the command
+  ./new-bundle/bundle-runner.sh [[JOSHUA] OPTIONS ... ]
+
+The Joshua decoder will start running.
+
+
+Other Joshua configuration options can be appended after the script. Some
+options that may be useful during decoding include:
+
+
+-threads N
+
+N is the number of simultaneous decoding threads to launch. If this option is
+omitted from the command line and the configuration file, the default number of
+threads, which is 1, will be used.
+
+Decoded outputs are assembled in order and Joshua has to hold on to the
+complete target hypergraph until it is ready to be processed for output, so too
+many simultaneous threads could result in lots of memory usage if a long
+sentence results in many sentences being queued up. We have run Joshua with as
+many as 48 threads without any problems of this kind, but it’s useful to keep
+in the back of your mind.
+
+
+-pop-limit N
+
+N is the number of candidates that the decoder stores in its stack. Decreasing
+the stack size increases the speed of decoding. However, the tradeoff is a
+potential penalty in accuracy.
+
+
+-output-format "formatting string"
+
+Specify the output-format variable, which is interpolated for the following
+variables:
+
+%i : the 0-index sentence number
+%s : the translated sentence
+%f : the list of feature values (as name=value pairs)
+%c : the model cost
+%w : the weight vector (unimplemented)
+%a : the alignments between source and target words (currently unimplemented)
+%S : provides built-in denormalization for Joshua. The beginning character is
+     capitalized, and punctuation is denormalized.
+
+The default value is: -output-format = "%i ||| %s ||| %f ||| %c"
+The most readable setting would be: -output-format = "%S"
+
+
+-mark-oovs false
+
+If the value of this option is 'true', then any word that is not in the
+vocabulary will have '_OOV' appended to it.
+
+"""
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
 FILE_TYPE_TOKENS = set(['lm', 'lmfile', 'tmfile', 'tm', 'weights-file'])
@@ -245,6 +305,7 @@ def handle_args(clargs):
         def error(self, message):
             sys.stderr.write('error: %s\n' % message)
             self.print_help()
+            print(EXAMPLE)
             sys.exit(2)
 
     # Parse the command line arguments.
@@ -300,31 +361,19 @@ def main(argv):
         mode = stat.S_IREAD | stat.S_IEXEC | stat.S_IRGRP | stat.S_IXGRP \
                 | stat.S_IROTH | stat.S_IXOTH
         os.chmod(os.path.join(args.destdir, BUNDLE_RUNNER_FILE_NAME), mode)
+    # Write the README file
+    with open(os.path.join(args.destdir, 'README'), 'w') as fh:
+        fh.write(README_TEMPLATE)
 
 
 if __name__ == "__main__":
     main(sys.argv)
 
 
-# todo
-# DONE: copying directories
-# DONE: all resulting paths in configurations in bundle should be relative.
-# DONE: test copy_config_options
-# DONE: any tm file that's not a directory gets packed
-# DONE: any lm file ending with gz gets binarized
-#   tokens[0] == "lm" and tokens[-1] == "*.gz"
-# NOT DOING: ony one grammar can be packed at a time, due to a Joshua
-# limitation that might change in the future.
-# DONE: Remove binarizing and packing options.
-# DONE: Remove automatic binarizing and packing.
-# DONE: prevent more than one input file with the same name from clashing in the
-# bundle.
+# TODO
 # : -v --verbose option that would print out a message for when copy-config is
 # run, files are copied or processed.
 # VerbosityPrinter(active=False)
 # verbose.activate(blah)
 # verbose.print(blah)
-# : create a README in the bundle that states something like:
-# This Joshua Decoder Bundle was created with Joshua commit v283i72isdh...
-# however, this doesn't say anything about the version of Joshua with which the
-# configuration was created.
+# DONE: create a README in the bundle
