@@ -247,11 +247,11 @@ class CopyFileConfigLine(FileConfigLine):
         """
         src = self.source_file_path
         dst = self.dest_file_path
+        logging.info('Copying ' + src + ' to ' + dst)
         if os.path.isdir(src):
             shutil.copytree(src, dst)
         else:
             shutil.copy(src, dst)
-        logging.info('Copying ' + src + ' to ' + dst)
 
     def result(self):
         """
@@ -350,7 +350,7 @@ def main(argv):
     args = handle_args(argv[1:])
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+        logging.basicConfig(level=logging.DEBUG, format='* %(message)s')
 
     try:
         make_dest_dir(args.destdir, args.force)
