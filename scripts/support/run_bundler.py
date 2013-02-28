@@ -100,9 +100,17 @@ BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
 BUNDLE_RUNNER_TEXT = """#!/bin/bash
 # Usage: bundle_destdir/%s [extra joshua config options]
 
+## memory usage; default is 4 GB
+mem=4g
+if [[ $1 == "-m" ]]; then
+    mem=$2
+    shift
+    shift
+fi
+
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
-$JOSHUA/joshua-decoder -c joshua.config $*
+$JOSHUA/joshua-decoder -m ${mem} -c joshua.config $*
 """ % BUNDLE_RUNNER_FILE_NAME
 
 
