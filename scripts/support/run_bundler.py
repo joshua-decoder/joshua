@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import argparse
+import logging
 import os
 import re
 import shutil
@@ -106,6 +107,7 @@ $JOSHUA/joshua-decoder -c joshua.config $*
 
 
 def clear_non_empty_dir(top):
+    logging.info('Deleting the directory ' + top + ' and all its contents.')
     for root, dirs, files in os.walk(top, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
@@ -131,6 +133,7 @@ def make_dest_dir(dest_dir, overwrite):
     if os.path.exists(dest_dir) and overwrite:
         clear_non_empty_dir(dest_dir)
     os.mkdir(dest_dir)
+    logging.info('Creating the directory ' + dest_dir)
 
 
 def filter_through_copy_config_script(configs, copy_configs):
@@ -139,6 +142,7 @@ def filter_through_copy_config_script(configs, copy_configs):
     copy_configs should be a list.
     """
     cmd = JOSHUA_PATH + "/scripts/copy-config.pl " + copy_configs
+    logging.info('Running the copy config script with the command: ' + cmd)
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
     result = p.communicate("\n".join(configs))[0]
     return result.splitlines()
@@ -239,6 +243,7 @@ class CopyFileConfigLine(FileConfigLine):
             shutil.copytree(src, dst)
         else:
             shutil.copy(src, dst)
+        logging.info('Copying ' + src + ' to ' + dst)
 
     def result(self):
         """
@@ -328,11 +333,17 @@ def handle_args(clargs):
                         help='optional additional or replacement configuration '
                         'options for Joshua, all surrounded by one pair of '
                         'quotes.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='print informational messages')
     return parser.parse_args(clargs)
 
 
 def main(argv):
     args = handle_args(argv[1:])
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+
     try:
         make_dest_dir(args.destdir, args.force)
     except:
@@ -368,12 +379,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
-# TODO
-# : -v --verbose option that would print out a message for when copy-config is
-# run, files are copied or processed.
-# VerbosityPrinter(active=False)
-# verbose.activate(blah)
-# verbose.print(blah)
-# DONE: create a README in the bundle
