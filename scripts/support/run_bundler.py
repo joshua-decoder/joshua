@@ -47,6 +47,14 @@ Other Joshua configuration options can be appended after the script. Some
 options that may be useful during decoding include:
 
 
+-server-port 5674
+
+Instead of running as a command line processing tool, the Joshua decoder can be
+run as a TCP server which responds to (concurrently connectedO inputs with the
+resulting translated outputs. If the -server-port option is included, with the
+port specified as the value, Joshua will start up in server mode.
+
+
 -threads N
 
 N is the number of simultaneous decoding threads to launch. If this option is
