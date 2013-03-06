@@ -18,6 +18,7 @@ import joshua.decoder.ff.FeatureFunction;
  * 
  * @author Zhifei Li
  * @author Lane Schwartz
+ * @author Matt Post <post@cs.jhu.edu
  */
 public abstract class AbstractGrammar implements Grammar {
 
@@ -28,7 +29,16 @@ public abstract class AbstractGrammar implements Grammar {
    * Indicates whether the rules in this grammar have been sorted based on the latest feature
    * function values.
    */
-  protected boolean sorted;
+  protected boolean sorted = false;
+
+  /*
+   * The grammar's owner, used to determine which weights are applicable to the dense features found
+   * within.
+   */
+  protected int owner = -1;
+
+  /* The maximum span of the input this rule can be applied to. */
+  protected int spanLimit = 1;
 
   /**
    * Constructs an empty, unsorted grammar.
@@ -37,6 +47,12 @@ public abstract class AbstractGrammar implements Grammar {
    */
   public AbstractGrammar() {
     this.sorted = false;
+  }
+
+  public AbstractGrammar(int owner, int spanLimit) {
+    this.sorted = false;
+    this.owner = owner;
+    this.spanLimit = spanLimit;
   }
 
   public static final int OOV_RULE_ID = 0;
@@ -100,8 +116,8 @@ public abstract class AbstractGrammar implements Grammar {
           StringBuilder s = new StringBuilder();
           for (Rule r : rules.getSortedRules(models)) {
             s.append("\n\t" + r.getLHS() + " ||| " + Arrays.toString(r.getFrench()) + " ||| "
-                + Arrays.toString(r.getEnglish()) + " ||| " + r.getFeatureVector()
-                + " ||| " + r.getEstimatedCost() + "  " + r.getClass().getName() + "@"
+                + Arrays.toString(r.getEnglish()) + " ||| " + r.getFeatureVector() + " ||| "
+                + r.getEstimatedCost() + "  " + r.getClass().getName() + "@"
                 + Integer.toHexString(System.identityHashCode(r)));
           }
           logger.finest(s.toString());
@@ -119,6 +135,7 @@ public abstract class AbstractGrammar implements Grammar {
   }
 
   // write grammar to disk
-  public void writeGrammarOnDisk(String file) {}
+  public void writeGrammarOnDisk(String file) {
+  }
 
 }

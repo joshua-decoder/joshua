@@ -36,10 +36,6 @@ public class PackedGrammar extends BatchGrammar {
 
   private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
 
-  private int spanLimit = -1;
-
-  private int owner;
-
   private QuantizerConfiguration quantization;
   private HashMap<Integer, Integer> featureNameMap;
 
