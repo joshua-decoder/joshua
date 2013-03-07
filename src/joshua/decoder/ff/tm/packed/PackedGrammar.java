@@ -230,8 +230,17 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
       // TODO: implement this
-      System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
-      return new HashMap<Integer, PackedTrie>();
+//      System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
+//      return new HashMap<Integer, PackedTrie>();
+      
+      HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
+      int num_children = grammar.source[position];
+      for (int i = 0; i < num_children; i++) {
+        int symbol = grammar.source[position + 1 + 2 * i];
+        int address = grammar.source[position + 2 + 2 * i];
+        children.put(symbol, new PackedTrie(grammar, address, src, arity, symbol));
+      }
+      return children;
     }
 
     public boolean hasExtensions() {
@@ -382,8 +391,13 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
       // TODO: implement this
-      System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
-      return new HashMap<Integer, PackedRoot>();
+//      System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
+//      return new HashMap<Integer, PackedRoot>();
+      HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
+      for (int key : lookup.keySet()) {
+        children.put(key, match(key));
+      }
+      return children;
     }
 
     @Override

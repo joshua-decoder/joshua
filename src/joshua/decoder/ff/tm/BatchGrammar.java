@@ -209,8 +209,9 @@ public abstract class BatchGrammar extends AbstractGrammar implements GrammarFac
        * than 0), then recurse, pretending we've consumed all possible spans starting at this
        * position.
        */
-      if (unfilteredTrieNode.getChildren() != null) {
-        for (int label : unfilteredTrieNode.getChildren().keySet()) {
+      HashMap<Integer, ? extends Trie> children = unfilteredTrieNode.getChildren();
+      if (children != null) {
+        for (int label : children.keySet()) {
           if (label < 0) {
             SentenceFilteredTrie nextFilteredTrie = filteredTrieNode.match(label);
             if (nextFilteredTrie == null) {
@@ -218,8 +219,15 @@ public abstract class BatchGrammar extends AbstractGrammar implements GrammarFac
               filteredTrieNode.children.put(label, nextFilteredTrie);
             }
 
-            /* Recurse. If the last match was a nonterminal, we can only consume one more token. */
-            int maxJ = lastWasNT ? (i + 1) : (tokens.length);
+            /*
+             * Recurse. If the last match was a nonterminal, we can only consume one more token.
+             * 
+             * TODO: This goes too far by looking at the whole sentence; each grammar has a maximum
+             * span limit which should be consulted. What we should be doing is passing the point
+             * where we started matching the current sentence, so we can apply this span limit,
+             * which is easily accessible (baseGrammar.spanLimit).
+             */
+            int maxJ = lastWasNT ? (i + 1) : tokens.length;
             for (int j = i + 1; j <= maxJ; j++) {
               filter(j, nextFilteredTrie, true);
             }
