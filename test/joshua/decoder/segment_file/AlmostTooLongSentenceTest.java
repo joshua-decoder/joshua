@@ -1,9 +1,12 @@
 package joshua.decoder.segment_file;
 
 import org.testng.annotations.Test;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.AfterMethod;
 import static org.testng.Assert.*;
+
+import joshua.decoder.JoshuaConfiguration;
 
 public class AlmostTooLongSentenceTest {
   private String almostTooLongInput;
@@ -11,7 +14,7 @@ public class AlmostTooLongSentenceTest {
 
   @BeforeMethod
   public void setUp() {
-    almostTooLongInput = concatStrings(".", Sentence.MAX_SENTENCE_NODES);
+    almostTooLongInput = concatStrings(".", JoshuaConfiguration.maxlen);
     sentencePlusTarget = new Sentence(this.almostTooLongInput + " ||| target side", 0);
   }
 

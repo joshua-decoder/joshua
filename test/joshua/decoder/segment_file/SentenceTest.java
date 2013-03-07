@@ -1,5 +1,7 @@
 package joshua.decoder.segment_file;
 
+import joshua.decoder.JoshuaConfiguration;
+
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.AfterMethod;
@@ -10,7 +12,7 @@ public class SentenceTest {
 
   @BeforeMethod
   public void setUp() {
-    tooLongInput = concatTokens("*", Sentence.MAX_SENTENCE_NODES * 2);
+    tooLongInput = concatTokens("*", JoshuaConfiguration.maxlen * 2);
   }
 
   @AfterMethod

@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.lattice.Lattice;
 import joshua.util.Regex;
 
@@ -20,18 +21,6 @@ import joshua.util.Regex;
  */
 
 public class Sentence {
-
-  /**
-   * The maximum number of tokens in a Sentence before the sentence gets replaced by an empty
-   * sentence.
-   * <UL>
-   * <LI>TODO: Move this setting to JoshuaConfiguration and provide a configurable parameter to the
-   * user.</LI>
-   * <LI>TODO: Provide the option to truncate to this many tokens instead of making the whole input
-   * empty.</LI>
-   * </UL>
-   */
-  public static final int MAX_SENTENCE_NODES = 200;
 
   private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
@@ -109,14 +98,18 @@ public class Sentence {
   private void adjustForLength() {
 
     Lattice<Integer> lattice = this.intLattice();
-    int size = lattice.size();
+    int size = lattice.size() - 2; // subtract off the start- and end-of-sentence tokens
 
-    if (size > MAX_SENTENCE_NODES) {
-      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to 0 length",
-          id(), size));
+    if (size > JoshuaConfiguration.maxlen - 2) {
+      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
+          id(), size, JoshuaConfiguration.maxlen));
 
       // Replace the input sentence (and target)
-      sentence = "";
+      String[] tokens = source().split("\\s+");
+      sentence = tokens[0];
+      for (int i = 1; i < JoshuaConfiguration.maxlen; i++)
+        sentence += " " + tokens[i];
+      sourceLattice = null;
       if (target != null) {
         target = "";
       }
