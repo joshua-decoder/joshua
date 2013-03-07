@@ -435,6 +435,10 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             features.add("feature_function = " + fds[1]);
 
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // add the feature to the list of features for later processing
+            maxlen = Integer.parseInt(fds[1]);
+            
           } else {
             
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
