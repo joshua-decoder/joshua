@@ -10,11 +10,12 @@ closedir DIR;
 foreach my $dir (@dirs) {
   chomp(my $readme = `cat $dir/README`);
   my $bleu = get_bleu("$dir/test/final-bleu");
-  my $mbr =  get_bleu("$dir/test/final-bleu-mbr");
+  # my $mbr =  get_bleu("$dir/test/final-bleu-mbr");
 
   my $dirstring = dirstring($dir);
 
-  print "$dirstring\t$bleu\t$mbr\t$readme\n";
+  # print "$dirstring\t$bleu\t$mbr\t$readme\n";
+  print "$dirstring\t$bleu\t$readme\n";
 }
 
 sub get_bleu {
