@@ -57,19 +57,19 @@ def handle_args(argv):
                  'temp dir is not automatically deleted.'
     )
     # Determine the path to the srilm tool's binaries
-    srilm_env_var = 'SRILM_BIN'
     try:
-        srilm_env_var_val = os.environ[srilm_env_var]
+        srilm_env_var_val = os.environ['SRILM']
     except KeyError:
         srilm_env_var_val = 'not set'
     parser.add_argument(
             '--srilm-bin',
-            default=srilm_env_var_val,
-            help="path to where the srilm tool's binaries have been "
-                 "compiled. By default this is the value of the %s system "
-                 "variable, which is currently %s in your system. The path "
-                 "should look something like /path/to/srilm_src/bin/i686-m64 "
-                 % (srilm_env_var, srilm_env_var_val)
+            default=os.path.join(srilm_env_var_val, 'bin', 'i686-m64'),
+            help='path to where the srilm tool\'s binaries have been '
+                 'compiled. By default this is "$SRILM/bin/i686-m64". '
+                 'Use this option if your srilm binaries are compiled to a '
+                 'different location. The SRILM environment variable is '
+                 'currently set to "%s" in your system. '
+                 % (srilm_env_var_val)
     )
     parser.add_argument(
             '--kenlm',
@@ -114,9 +114,8 @@ def handle_args(argv):
     # Assert that srilm_bin has a variable
     if args.srilm_bin is 'not set':
         parser.error(
-                message='No value was provided for %s, and the %s environment '
-                        'variable is not set. '
-                        % ('--srilm-bin', srilm_env_var)
+                message="No value was provided for '--srilm-bin', and the "
+                        "SRILM environment variable is not set."
         )
 
     # Assert that the srilm tools are located in the location specified.
