@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -83,13 +84,18 @@ def handle_args(argv):
     args = parser.parse_args(arguments)
 
     fail = False
-    # Assert that all the input LMs exist
+    # Assert that there are at least 2 input LM files.
+    if len(args.input_lms) < 2:
+        fail = 2
+        logging.error('2 or more input LM files are required.')
+
+    # Assert that all the input LMs exist.
     for lm_path in args.input_lms:
         if not os.path.exists(lm_path):
             fail = 2
             logging.error("The input LM '%s' was not found." % (lm_path))
 
-    # Assert that the dev text exists
+    # Assert that the dev text exists.
     if not os.path.exists(args.dev_text):
         fail = 2
         logging.error("The dev text '%s' was not found." % (args.dev_text))
@@ -102,10 +108,10 @@ def handle_args(argv):
                 'be overwritten.' % args.merged_lm_path
         )
 
-    # Handle the temp dir
+    # Handle the temp dir.
     if not os.path.isdir(args.temp_dir):
         if os.path.exists(args.temp_dir):
-            fail = True
+            fail = 2
             logging.error("%s is not a directory." % args.temp_dir)
         else:
             logging.info("Making temporary directory %s" % args.temp_dir)
@@ -140,6 +146,8 @@ def exec_shell(cmd_str):
     )
     try:
         stdoutdata, stderrdata = p.communicate()
+        logging.info(stdoutdata)
+        logging.info(stderrdata)
     except OSError as xcpt:
         logging.info(stdoutdata)
         logging.error(stderrdata)
@@ -169,55 +177,106 @@ def best_mix(args):
         stdoutdata, stderrdata = exec_shell(cmd)
         with open(ppl_destinations[i], 'w') as fh:
             fh.write(stdoutdata)
-        logging.info(stderrdata)
     # Compute best mix
     cmd = '{} {}'.format(
             os.path.join(args.srilm_bin, 'compute-best-mix'),
             ' '.join(ppl_destinations),
     )
-    stdoutdata, stderrdata = exec_shell(cmd)
+    best_mix_result, stderrdata = exec_shell(cmd)
     best_mix_ppl_path = os.path.join(args.temp_dir, 'best-mix.ppl')
     with open(best_mix_ppl_path, 'w') as fh:
         logging.info('Writing %s' % best_mix_ppl_path)
-        fh.write(stdoutdata)
-    logging.info(stderrdata)
-    return parse_lambdas(stdoutdata)
+        fh.write(best_mix_result)
+    weights = parse_lambdas(best_mix_result)
+    if len(weights) != len(ppl_destinations):
+        sys.exit('The number of weights found in %s is inconsistent with the '
+                 'number of .ppl files.')
+    return weights
 
 
 def parse_lambdas(data):
-    pass
+    m = re.search(r"\((.*)\)", data)
+    if not m:
+        logging.error('The lambda values were not found.')
+        sys.exit(-1)
+    return m.group(1).split()
 
 
-def merge_lms(data):
-    pass
+def construct_merge_cmd(weights, args):
+    result = """
+            {0}/ngram -order 5 -unk
+            -lm     {1[0]} -lambda {2[0]}
+            -mix-lm {1[1]}
+    """.format(args.srilm_bin, args.input_lms, weights)
+    idx = 2
+    while idx < len(weights):
+        result += """
+                -mix-lm{0} {1} -mix-lambda{0} {2}
+        """.format(idx, args.input_lms[idx], weights[idx])
+        idx += 1
+    return ' '.join(result.split() + ['-write-lm', args.merged_lm_path])
+
+
+
+def merge_lms(weights, args):
+    cmd = construct_merge_cmd(weights, args)
+    logging.info('Merging LMs int %s' % args.merged_lm_path)
+    exec_shell(cmd)
 
 
 def convert_to_kenlm(data):
-    pass
+    # TODO: see Template()
+    # http://docs.python.org/2/library/string.html#string.Template.template
+    cmd = """
+            $JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary
+            mixed_lm.gz
+            mixed_lm.kenlm
+    """
+    exec_shell(cmd)
 
 
 if __name__ == '__main__':
     args = handle_args(sys.argv)
     weights = best_mix(args)
-    '''
     merge_lms(weights, args)
+    '''
     if args.kenlm:
         convert_to_kenlm(args)
     '''
 
 
-'''
-LAMBDAS=(0.00631272 0.000647602 0.251555 0.0134726 0.348953 0.371566 0.00749238)
+import unittest
+from mock import Mock
 
-$NGRAM -order 5 -unk \
-  -lm      ${DIRS[0]}/lm.gz     -lambda  ${LAMBDAS[0]} \
-  -mix-lm  ${DIRS[1]}/lm.gz \
-  -mix-lm2 ${DIRS[2]}/lm.gz -mix-lambda2 ${LAMBDAS[2]} \
-  -mix-lm3 ${DIRS[3]}/lm.gz -mix-lambda3 ${LAMBDAS[3]} \
-  -mix-lm4 ${DIRS[4]}/lm.gz -mix-lambda4 ${LAMBDAS[4]} \
-  -mix-lm5 ${DIRS[5]}/lm.gz -mix-lambda5 ${LAMBDAS[5]} \
-  -mix-lm6 ${DIRS[6]}/lm.gz -mix-lambda6 ${LAMBDAS[6]} \
-  -write-lm mixed_lm.gz
 
-$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary mixed_lm.gz mixed_lm.kenlm
-'''
+class TestScript(unittest.TestCase):
+
+    def test_should_return_list_of_strings(self):
+        best_mix_result = '13730 non-oov words, best lambda (0.456124 0.220317 0.0663619 0.117041 0.140156)'
+        expect = ['0.456124', '0.220317', '0.0663619', '0.117041', '0.140156']
+        actual = parse_lambdas(best_mix_result)
+        self.assertEqual(expect, actual)
+
+    def test_should_return_merge_cmd(self):
+        args = Mock()
+        args.input_lms = [
+                'lm-0.gz',
+                'lm-1.gz',
+                'lm-2.gz',
+                'lm-3.gz',
+                'lm-4.gz',
+        ]
+        args.merged_lm_path = 'mixed_lm.gz'
+        args.srilm_bin = 'srilm'
+        lambdas = ['0.456124', '0.220317', '0.0663619', '0.117041', '0.140156']
+        expect = ' '.join(
+                'srilm/ngram -order 5 -unk '
+                '-lm      lm-0.gz     -lambda  0.456124 '
+                '-mix-lm  lm-1.gz '
+                '-mix-lm2 lm-2.gz -mix-lambda2 0.0663619 '
+                '-mix-lm3 lm-3.gz -mix-lambda3 0.117041 '
+                '-mix-lm4 lm-4.gz -mix-lambda4 0.140156 '
+                '-write-lm mixed_lm.gz'.split()
+        )
+        actual = construct_merge_cmd(lambdas, args)
+        self.assertEqual(expect, actual)
