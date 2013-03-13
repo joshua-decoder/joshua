@@ -53,7 +53,7 @@ sub run_giza {
                   "rm -f $chunkdir/corpus.0-0.*; $args{giza_trainer} --root-dir $chunkdir -e $args{target}.$chunkno -f $args{source}.$chunkno -corpus $args{train_dir}/splits/corpus -merge $args{giza_merge} $parallel > $chunkdir/giza.log 2>&1",
                   "$args{train_dir}/splits/corpus.$args{source}.$chunkno",
                   "$args{train_dir}/splits/corpus.$args{target}.$chunkno",
-                  "$chunkdir/model/aligned.grow-diag-final");
+                  "$chunkdir/model/aligned.$args{giza_merge}");
 }
 
 sub run_berkeley_aligner {
