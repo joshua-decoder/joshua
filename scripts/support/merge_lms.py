@@ -9,16 +9,6 @@ import sys
 FORMAT = '%(levelname)s: %(message)s'
 logging.basicConfig(level=0, format=FORMAT)
 
-try:
-    JOSHUA = os.environ['JOSHUA']
-except KeyError:
-    print('ERROR: The JOSHUA environment variable is not set.')
-    sys.exit(2)
-
-if not os.path.exists(JOSHUA):
-    print("ERROR: The JOSHUA directory '%s' does not exist." % JOSHUA)
-    sys.exit(2)
-
 def handle_args(argv):
     program = argv[0]
     arguments = argv[1:]
@@ -71,14 +61,6 @@ def handle_args(argv):
                  'different location. The SRILM environment variable is '
                  'currently set to "%s" in your system. '
                  % (srilm_env_var_val)
-    )
-    parser.add_argument(
-            '--kenlm',
-            action='store_true',
-            help='if this option is included, the final step will be to '
-                 'compress the merged language model into KenLM format. '
-                 'Otherwise, the resulting language model will be in the '
-                 'form of a gzipped ARPA format.'
     )
 
     args = parser.parse_args(arguments)
@@ -224,25 +206,10 @@ def merge_lms(weights, args):
     exec_shell(cmd)
 
 
-def convert_to_kenlm(data):
-    # TODO: see Template()
-    # http://docs.python.org/2/library/string.html#string.Template.template
-    cmd = """
-            $JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary
-            mixed_lm.gz
-            mixed_lm.kenlm
-    """
-    exec_shell(cmd)
-
-
 if __name__ == '__main__':
     args = handle_args(sys.argv)
     weights = best_mix(args)
     merge_lms(weights, args)
-    '''
-    if args.kenlm:
-        convert_to_kenlm(args)
-    '''
 
 
 import unittest
