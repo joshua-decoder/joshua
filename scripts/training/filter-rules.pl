@@ -8,13 +8,14 @@ use List::Util qw/max/;
 use Getopt::Std;
 
 my %opts;
-my $ret = getopts("ups:v", \%opts);
+my $ret = getopts("bps:uv", \%opts);
 
 if (!$ret) {
   print "Usage: filter-rules.pl [-u] [-s SCOPE] [-v]\n";
-  print "   -u: remove abstract unary rules\n";
+  print "   -b: skip blank source and target sides\n";
   print "   -p: just print the rule's scope\n";
   print "   -s SCOPE: remove rules with scope > SCOPE (Hopkins & Langmead, 2010)\n";
+  print "   -u: remove abstract unary rules\n";
   print "   -v: be verbose\n";
   exit;
 }
@@ -29,6 +30,14 @@ while (my $line = <>) {
   my ($lhs, $source, $target) = split(/ \|\|\| /, $line);
 
   $total++;
+
+  if ($opts{b}) {
+    if (/\|\|\|\s+\|\|\|/) {
+      $skipped{blanks}++;
+      $skipped++;
+      next;
+    }
+  }
 
   if ($opts{u}) {
     my @symbols = split(' ', $source);
