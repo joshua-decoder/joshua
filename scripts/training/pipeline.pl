@@ -184,6 +184,7 @@ my $retval = GetOptions(
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
   "aligner-mem=s"     => \$ALIGNER_MEM,
+  "giza-merge=s"      => \$GIZA_MERGE,
   "source=s"          => \$SOURCE,
   "target=s"         => \$TARGET,
   "rundir=s"        => \$RUNDIR,
@@ -688,7 +689,7 @@ if (! defined $ALIGNMENT) {
 
   my @aligned_files;
   if ($ALIGNER eq "giza") {
-    @aligned_files = map { "alignments/$_/model/aligned.grow-diag-final" } (0..$lastchunk);
+    @aligned_files = map { "alignments/$_/model/aligned.$GIZA_MERGE" } (0..$lastchunk);
   } elsif ($ALIGNER eq "berkeley") {
     @aligned_files = map { "alignments/$_/training.align" } (0..$lastchunk);
   }
