@@ -5,11 +5,18 @@ import shlex
 import subprocess
 import sys
 
-if not os.environ['JOSHUA']:
-    sys.exit('The JOSHUA environment variable is not set.')
-JOSHUA = os.environ['JOSHUA']
-assert os.path.exists(JOSHUA), \
-        "The JOSHUA directory %s does not exist." % JOSHUA
+FORMAT = '%(levelname)s: %(message)s'
+logging.basicConfig(level=0, format=FORMAT)
+
+try:
+    JOSHUA = os.environ['JOSHUA']
+except KeyError:
+    print('ERROR: The JOSHUA environment variable is not set.')
+    sys.exit(2)
+
+if not os.path.exists(JOSHUA):
+    print("ERROR: The JOSHUA directory '%s' does not exist." % JOSHUA)
+    sys.exit(2)
 
 def handle_args(argv):
     program = argv[0]
@@ -18,7 +25,7 @@ def handle_args(argv):
     class MyParser(argparse.ArgumentParser):
         def error(self, message=None):
             if message:
-                sys.stderr.write('error: %s\n' % message)
+                logging.error('%s' % message)
             self.print_help()
             sys.exit(2)
 
@@ -44,7 +51,7 @@ def handle_args(argv):
             help='path to where the output merged LM file should be written'
     )
     parser.add_argument(
-            '--temp-dir', default='merge-lms-tmp',
+            '--temp-dir', default=os.path.join(os.getcwd(), 'merge-lms-tmp'),
             help='path to the directory where perplexity calculations will '
                  'be stored. "./%(default)s/" is the default location. The '
                  'temp dir is not automatically deleted.'
@@ -75,16 +82,17 @@ def handle_args(argv):
 
     args = parser.parse_args(arguments)
 
+    fail = False
     # Assert that all the input LMs exist
     for lm_path in args.input_lms:
         if not os.path.exists(lm_path):
             fail = 2
-            print("ERROR: The input LM '%s' was not found." % (lm_path))
+            logging.error("The input LM '%s' was not found." % (lm_path))
 
     # Assert that the dev text exists
     if not os.path.exists(args.dev_text):
         fail = 2
-        print("ERROR: The dev text '%s' was not found." % (args.dev_text))
+        logging.error("The dev text '%s' was not found." % (args.dev_text))
 
     # If merged-lm-path already exists, warn that it is about to be
     # overwritten.
@@ -93,6 +101,15 @@ def handle_args(argv):
                 'The merged LM output destination %s already exists and will '
                 'be overwritten.' % args.merged_lm_path
         )
+
+    # Handle the temp dir
+    if not os.path.isdir(args.temp_dir):
+        if os.path.exists(args.temp_dir):
+            fail = True
+            logging.error("%s is not a directory." % args.temp_dir)
+        else:
+            logging.info("Making temporary directory %s" % args.temp_dir)
+            os.makedirs(args.temp_dir)
 
     # Assert that srilm_bin has a variable
     if args.srilm_bin is 'not set':
@@ -106,8 +123,8 @@ def handle_args(argv):
     for tool in ['ngram', 'compute-best-mix']:
         if not os.path.exists(os.path.join(args.srilm_bin, tool)):
             fail = 2
-            print("ERROR: The SRILM tool '%s' was not found in %s."
-                  % (tool, args.srilm_bin))
+            logging.error("The SRILM tool '%s' was not found in %s."
+                          % (tool, args.srilm_bin))
 
     if fail:
         sys.exit(fail)
@@ -116,12 +133,20 @@ def handle_args(argv):
 
 
 def exec_shell(cmd_str):
+    logging.info(cmd_str)
     p = subprocess.Popen(
             shlex.split(cmd_str),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
     )
-    return p.communicate()
+    try:
+        stdoutdata, stderrdata = p.communicate()
+    except OSError as xcpt:
+        logging.info(stdoutdata)
+        logging.error(stderrdata)
+        logging.error(xcpt.args[1])
+        sys.exit(xcpt.args[0])
+    return stdoutdata, stderrdata
 
 
 def best_mix(args):
@@ -152,7 +177,9 @@ def best_mix(args):
             ' '.join(ppl_destinations),
     )
     stdoutdata, stderrdata = exec_shell(cmd)
-    with open(os.path.join(args.temp_dir, 'best-mix.ppl'), 'w') as fh:
+    best_mix_ppl_path = os.path.join(args.temp_dir, 'best-mix.ppl')
+    with open(best_mix_ppl_path, 'w') as fh:
+        logging.info('Writing %s' % best_mix_ppl_path)
         fh.write(stdoutdata)
     logging.info(stderrdata)
     return parse_lambdas(stdoutdata)
