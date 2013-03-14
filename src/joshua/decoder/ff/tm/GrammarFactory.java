@@ -30,4 +30,10 @@ public interface GrammarFactory {
    */
   Grammar getGrammarForSentence(Sentence sentence);
 
+  /**
+   * Returns the entire grammar represented by this sentence.
+   * 
+   * @return the whole grammar
+   */
+  Grammar getGrammar();
 }

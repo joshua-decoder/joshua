@@ -7,9 +7,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.JoshuaConfiguration;
+import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
+import joshua.lattice.Node;
 import joshua.util.Regex;
 
 /**
@@ -45,6 +47,13 @@ public class Sentence {
       .compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
   protected static final Pattern SEG_END = Pattern.compile("\\s*</seg\\s*>\\s*$");
 
+  /**
+   * Constructor. Receives a string representing the input sentence. This string may be a
+   * string-encoded lattice or a plain text string for decoding.
+   * 
+   * @param inputSentence
+   * @param id
+   */
   public Sentence(String inputSentence, int id) {
 
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
@@ -80,27 +89,63 @@ public class Sentence {
     return this.intLattice().getShortestDistance();
   }
 
-  /*
+  /**
    * This function uses the supplied grammars to find OOVs in its input and create "detours" around
    * them by splitting the OOVs on internal word boundaries. The idea is to break apart noun
    * compounds in languages like German (such as the word "golfloch" = "golf" (golf) + "loch" (hole)
-   * that artificiallly inflate the vocabulary with OOVs.
+   * that artificially inflate the vocabulary with OOVs.
+   * 
+   * @param grammars a list of grammars to consult to find in- and out-of-vocabulary items
    */
-  public void addOOVDetour(List<GrammarFactory> grammars) {
+  public void addOOVDetours(List<Grammar> grammars) {
+    Lattice<Integer> lattice = this.intLattice();
     
-    
+    Node<Integer> node = lattice.getNode(0);
+    for (Arc<Integer> arc : node.getOutgoingArcs()) {
+      int label = arc.getLabel();
+      boolean isOOV = true;
+      for (Grammar grammar: grammars) {
+        if (grammar.getTrieRoot().match(label) != null) {
+          isOOV = false;
+          break;
+        }
+      }
+
+      /* If the word is an OOV, we now parse it at the character-level, with cells in the dynamic programming
+       * chart recording whether each span represents a valid decomposition of in-vocabulary sequences of words.
+       */
+      if (isOOV) {
+        String word = Vocabulary.word(label);
+        int[][] chart = new int[word.length()][word.length()];
+        
+        for (int width = 1; width <= word.length(); width++) {
+          for (int i = 0; i <= word.length() - width; i++) {
+            int j = i + width;
+            
+//            chart[i][j]  
+          }
+        }
+        
+      }
+      
+      Node<Integer> head = arc.getHead();
+
+    }
   }
 
   /**
-   * Hacky approach: if the input sentence is deemed too long, replace it (and the target, if not
-   * null) with an empty string.
+   * If the input sentence is too long (not counting the <s> and </s> tokens), it is truncated to
+   * the maximum length, specified with the "maxlen" parameter.
+   * 
+   * Note that this code assumes the underlying representation is a sentence, and not a lattice. Its
+   * behavior is undefined for lattices.
    */
   private void adjustForLength() {
 
     Lattice<Integer> lattice = this.intLattice();
     int size = lattice.size() - 2; // subtract off the start- and end-of-sentence tokens
 
-    if (size > JoshuaConfiguration.maxlen - 2) {
+    if (size > JoshuaConfiguration.maxlen) {
       logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
           id(), size, JoshuaConfiguration.maxlen));
 

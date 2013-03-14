@@ -26,11 +26,20 @@ public abstract class BatchGrammar extends AbstractGrammar implements GrammarFac
    * @param sentence the sentence to be translated
    * @return a grammar that represents a set of translation rules
    */
+  @Override
   public Grammar getGrammarForSentence(Sentence sentence) {
     if (JoshuaConfiguration.filter_grammar)
       return new SentenceFilteredGrammar(this, sentence);
     else
       return this;
+  }
+  
+  /**
+   * Returns the grammar itself.
+   */
+  @Override
+  public Grammar getGrammar() {
+    return this;
   }
 
   /**
