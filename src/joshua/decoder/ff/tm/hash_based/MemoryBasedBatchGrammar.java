@@ -39,16 +39,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   /* The trie root. */
   private MemoryBasedTrie root = null;
 
-  /* The grammar's owner, used to determine which weights are applicable to the dense features found
-   * within. 
-   */
-  private int owner = -1;
-
   /* The file containing the grammar. */
   private String grammarFile;
-
-  /* The maximum span of the input this rule can be applied to. */
-  private int spanLimit = 1;
 
   private GrammarReader<BilingualRule> modelReader;
 
@@ -148,8 +140,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
   public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords,
       float[] denseScores, int arity) {
-    System.err.println("* WARNING: constructManualRule() not working");
-    return new BilingualRule(lhs, sourceWords, targetWords, "", arity);
+    return null;
   }
 
   /**

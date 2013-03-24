@@ -75,6 +75,9 @@ public class JoshuaConfiguration {
 
   // oov-specific
   public static boolean true_oovs_only = false;
+  
+  /* Sentence-level filtering. */
+  public static boolean filter_grammar = false;
 
   // pruning config
 
@@ -316,6 +319,9 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("true_oovs_only"))) {
             true_oovs_only = Boolean.parseBoolean(fds[1]);
 
+          } else if (parameter.equals(normalize_key("filter-grammar"))) {
+            filter_grammar = Boolean.parseBoolean(fds[1]);
+                      
           } else if (parameter.equals(normalize_key("use_pos_labels"))) {
             use_pos_labels = Boolean.parseBoolean(fds[1]);
 
@@ -429,6 +435,10 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             features.add("feature_function = " + fds[1]);
 
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // add the feature to the list of features for later processing
+            maxlen = Integer.parseInt(fds[1]);
+            
           } else {
             
             if (parameter.equals(normalize_key("use-sent-specific-tm"))

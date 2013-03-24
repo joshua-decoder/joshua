@@ -28,18 +28,15 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
-import joshua.util.encoding.Encoder;
 import joshua.util.io.LineReader;
+import joshua.util.quantization.Quantizer;
+import joshua.util.quantization.QuantizerConfiguration;
 
 public class PackedGrammar extends BatchGrammar {
 
   private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
 
-  private int spanLimit = -1;
-
-  private int owner;
-
-  private EncoderConfiguration quantization;
+  private QuantizerConfiguration quantization;
   private HashMap<Integer, Integer> featureNameMap;
 
   private PackedRoot root;
@@ -233,8 +230,17 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
       // TODO: implement this
-      System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
-      return new HashMap<Integer, PackedTrie>();
+//      System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
+//      return new HashMap<Integer, PackedTrie>();
+      
+      HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
+      int num_children = grammar.source[position];
+      for (int i = 0; i < num_children; i++) {
+        int symbol = grammar.source[position + 1 + 2 * i];
+        int address = grammar.source[position + 2 + 2 * i];
+        children.put(symbol, new PackedTrie(grammar, address, src, arity, symbol));
+      }
+      return children;
     }
 
     public boolean hasExtensions() {
@@ -385,8 +391,13 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
       // TODO: implement this
-      System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
-      return new HashMap<Integer, PackedRoot>();
+//      System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
+//      return new HashMap<Integer, PackedRoot>();
+      HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
+      for (int key : lookup.keySet()) {
+        children.put(key, match(key));
+      }
+      return children;
     }
 
     @Override
@@ -621,7 +632,7 @@ public class PackedGrammar extends BatchGrammar {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < num_features; i++) {
         int feature_id = features.getInt(feature_position);
-        Encoder quantizer = quantization.get(feature_id);
+        Quantizer quantizer = quantization.get(feature_id);
         int index = featureNameMap.get(feature_id);
         sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
             quantizer.read(features, feature_position)));
