@@ -1197,7 +1197,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations 15 --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations 8 --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/weights.final");
