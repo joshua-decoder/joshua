@@ -206,13 +206,13 @@ public class SimilarityAnnotator {
     return phrase_pairs;
   }
 
-  private int expandMin(int index, ArrayList<Integer> aligned) {
+  private static int expandMin(int index, ArrayList<Integer> aligned) {
     for (int a : aligned)
       index = Math.min(index, a);
     return index;
   }
 
-  private int expandMax(int index, ArrayList<Integer> aligned) {
+  private static int expandMax(int index, ArrayList<Integer> aligned) {
     for (int a : aligned)
       index = Math.max(index, a);
     return index;
