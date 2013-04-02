@@ -34,8 +34,7 @@ sub usage {
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 
-system("$CAT $grammar | sort -k3,3 | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
-
+system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
 
 # Create a dummy packer configuration file, since that is needed by the packer. We do no
 # quantization, and simply create a single float quantizer item that applies to all features found
