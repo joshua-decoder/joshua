@@ -90,7 +90,7 @@ my %TUNEFILES = (
 );
 
 # Whether to do MBR decoding on the n-best list (for test data).
-my $DO_MBR = 1;
+my $DO_MBR = 0;
 
 # Which aligner to use. The options are "giza" or "berkeley".
 my $ALIGNER = "giza"; # "berkeley" or "giza"
