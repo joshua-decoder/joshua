@@ -110,6 +110,9 @@ my $JOSHUA_MEM = "3100m";
 # Hadoop via -Dmapred.child.java.opts
 my $HADOOP_MEM = "2g";
 
+# The location of a custom core-site.xml file, if desired (optional).
+my $HADOOP_CONF = undef;
+
 # memory available to the parser
 my $PARSER_MEM = "2g";
 
@@ -231,6 +234,7 @@ my $retval = GetOptions(
   "last-step=s"      => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
   "hadoop=s"          => \$HADOOP,
+  "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
 );
 
@@ -395,6 +399,7 @@ $TUNE_GRAMMAR_FILE = get_absolute_path($TUNE_GRAMMAR_FILE);
 $TEST_GRAMMAR_FILE = get_absolute_path($TEST_GRAMMAR_FILE);
 $THRAX_CONF_FILE = get_absolute_path($THRAX_CONF_FILE);
 $ALIGNMENT = get_absolute_path($ALIGNMENT);
+$HADOOP_CONF = get_absolute_path($HADOOP_CONF);
 
 foreach my $corpus (@CORPORA) {
   foreach my $ext ($TARGET,$SOURCE) {
@@ -441,6 +446,13 @@ if ($FILTERING eq "fast") {
   print "* FATAL: --filtering must be one of 'fast' (default) or 'exact'\n";
   exit 1;
 }
+
+if (defined $HADOOP_CONF && ! -e $HADOOP_CONF) {
+  print STDERR "* FATAL: Couldn't find \$HADOOP_CONF file '$HADOOP_CONF'\n";
+  exit 1;
+}
+
+## END SANITY CHECKS
 
 ####################################################################################################
 ## Dependent variable setting ######################################################################
@@ -1684,6 +1696,10 @@ sub rollout_hadoop_cluster {
 
 		system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz");
 		system("ln -sf hadoop-0.20.2 hadoop");
+    if (defined $HADOOP_CONF) {
+      print STDERR "Copying HADOOP_CONF($HADOOP_CONF) to hadoop/conf/core-site.xml\n";
+      system("cp $HADOOP_CONF hadoop/conf/core-site.xml");
+    }
   }
   
   $ENV{HADOOP} = $HADOOP = "hadoop";
@@ -1698,7 +1714,7 @@ sub stop_hadoop_cluster {
 
 sub teardown_hadoop_cluster {
   stop_hadoop_cluster();
-  system("rm -rf hadoop-0.20.203.0 hadoop");
+  system("rm -rf hadoop-0.20.2 hadoop");
 }
 
 sub is_lattice {
