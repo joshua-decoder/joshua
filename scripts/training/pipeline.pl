@@ -170,6 +170,9 @@ my $GIZA_MERGE = "grow-diag-final";
 # Which tuner to use by default
 my $TUNER = "mert";  # or "pro" or "mira"
 
+# The number of iterations of the mira to run
+my $MIRA_ITERATIONS = 8;
+
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
 
@@ -216,6 +219,7 @@ my $retval = GetOptions(
   "packer-mem=s"      => \$PACKER_MEM,
   "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
+  "mira-iterations=i" => \$MIRA_ITERATIONS,
   "thrax=s"           => \$THRAX,
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -1197,7 +1201,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations 8 --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/weights.final");
