@@ -32,7 +32,7 @@ while (my $line = <>) {
   $total++;
 
   if ($opts{b}) {
-    if (/\|\|\|\s+\|\|\|/) {
+    if ($line =~ /\|\|\|\s+\|\|\|/) {
       $skipped{blanks}++;
       $skipped++;
       next;
