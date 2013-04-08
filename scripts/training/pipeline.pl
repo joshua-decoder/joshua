@@ -1394,6 +1394,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   my $dir = (defined $NAME) ? "test/$NAME" : "test";
   compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
   compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
+  compute_time_summary("$dir/*/joshua.log", "$dir/final-times");
 
   # Now do the analysis
   if ($DOING_LATTICES) {
@@ -1812,5 +1813,32 @@ sub compute_bleu_summary {
     open BLEU, ">$outputfile" or die "Can't write to $outputfile";
     printf(BLEU "%s / %d = %.4f\n", join(" + ", @bleus), scalar @bleus, $final_bleu);
     close(BLEU);
+  }
+}
+
+sub compute_time_summary {
+  my ($filepattern, $outputfile) = @_;
+
+  # Now average the runs, report BLEU
+  my @times;
+  foreach my $file (glob($filepattern)) {
+    open FILE, $file;
+    my $time = 0.0;
+    my $numrecs = 0;
+    while (<FILE>) {
+      next unless /translation of .* took/;
+      my @F = split;
+      $time += $F[5];
+      $numrecs++;
+    }
+    close(FILE);
+
+    push(@times, $time);
+  }
+
+  if (scalar @times) {
+    open TIMES, ">$outputfile" or die "Can't write to $outputfile";
+    printf(TIMES "%s / %d = %s\n", join(" + ", @times), scalar(@times), 1.0 * sum(@times) / scalar(@times));
+    close(TIMES);
   }
 }
