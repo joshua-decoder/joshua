@@ -170,6 +170,9 @@ my $NAME = undef;
 # Options are union, {intersect, grow, srctotgt, tgttosrc}-{diag,final,final-and,diag-final,diag-final-and}
 my $GIZA_MERGE = "grow-diag-final";
 
+# Whether to merge all the --lmfile LMs into a single LM using weights based on the development corpus
+my $MERGE_LMS = 0;
+
 # Which tuner to use by default
 my $TUNER = "mert";  # or "pro" or "mira"
 
@@ -199,6 +202,7 @@ my $retval = GetOptions(
   "filtering=s"       => \$FILTERING,
   "lm=s"              => \$LM_TYPE,
   "lmfile=s"        => \@LMFILES,
+  "merge-lms!"        => \$MERGE_LMS,
   "lm-gen=s"          => \$LM_GEN,
   "lm-order=i"        => \$LM_ORDER,
   "corpus-lm!"        => \$DO_BUILD_LM_FROM_CORPUS,
@@ -296,6 +300,20 @@ if (scalar @LMFILES == 0) {
 # an error about easily-inferrable intentions.
 if (scalar @LMFILES && ! scalar(@CORPORA)) {
   $DO_BUILD_LM_FROM_CORPUS = 0;
+}
+
+
+# if merging LMs, make sure there are at least 2 LMs to merge.
+# first, pin $DO_BUILD_LM_FROM_CORPUS to 0 or 1 so that the subsequent check works.
+if ($MERGE_LMS) {
+  if ($DO_BUILD_LM_FROM_CORPUS != 0) {
+    $DO_BUILD_LM_FROM_CORPUS = 1
+  }
+
+  if (@LMFILES + $DO_BUILD_LM_FROM_CORPUS < 2) {
+    print "* FATAL: I need 2 or more language models to merge (including the corpus target-side LM).";
+    exit 2;
+  }
 }
 
 # absolutize LM file paths
@@ -939,6 +957,28 @@ if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
   $PREPPED{TUNE} = 1;
 }
 
+sub compile_lm($) {
+  my $lmfile = shift;
+  if ($LM_TYPE eq "kenlm") {
+    my $kenlm_file = basename($lmfile, ".gz") . ".kenlm";
+    $cachepipe->cmd("compile-kenlm",
+                    "$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary $lmfile $kenlm_file",
+                    $lmfile, $kenlm_file);
+    return $kenlm_file;
+
+  } elsif ($LM_TYPE eq "berkeleylm") {
+    my $berkeleylm_file = basename($lmfile, ".gz") . ".berkeleylm";
+    $cachepipe->cmd("compile-berkeleylm",
+                    "java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa $lmfile $berkeleylm_file",
+                    $lmfile, $berkeleylm_file);
+    return $berkeleylm_file;
+
+  } else {
+    print "* FATAL: trying to compile an LM to neither kenlm nor berkeleylm.";
+    exit 2;
+  }
+}
+
 # Build the language model if needed
 if ($DO_BUILD_LM_FROM_CORPUS) {
 
@@ -972,25 +1012,36 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 										$lmfile);
   }
 
-	if ($LM_TYPE eq "kenlm") {
-		my $kenlm_file = "lm.kenlm";
-		$cachepipe->cmd("compile-kenlm",
-										"$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary lm.gz lm.kenlm",
-										$lmfile, $kenlm_file);
+  if ((! $MERGE_LMS) && ($LM_TYPE eq "kenlm" || $LM_TYPE eq "berkeleylm")) {
+    push (@LMFILES, get_absolute_path(compile_lm $lmfile, $RUNDIR));
+  } else {
+    push (@LMFILES, get_absolute_path($lmfile, $RUNDIR));
+  }
+}
 
-		push (@LMFILES, get_absolute_path($kenlm_file, $RUNDIR));
+if ($MERGE_LMS) {
+  # Merge @LMFILES.
+  my $merged_lm = "lm-merged.gz";
+  print "@LMFILES";
+  $cachepipe->cmd("merge-lms",
+                  "$JOSHUA/scripts/support/merge_lms.py "
+                    . "@LMFILES "
+                    . "$TUNE{source} "
+                    . "lm-merged.gz "
+                    . "--temp-dir data/merge_lms ",
+                  @LMFILES,
+                  $merged_lm);
 
-	} elsif ($LM_TYPE eq "berkeleylm") {
-		my $berkeleylm_file = "lm.berkeleylm";
-		$cachepipe->cmd("compile-berkeleylm",
-										"java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa lm.gz lm.berkeleylm",
-										$lmfile, $berkeleylm_file);
+  # Empty out @LMFILES.
+  @LMFILES = ();
 
-		push (@LMFILES, get_absolute_path($berkeleylm_file, $RUNDIR));
-	} else {
+  # Compile merged LM
+  if ($LM_TYPE eq "kenlm" || $LM_TYPE eq "berkeleylm") {
+    push (@LMFILES, get_absolute_path(compile_lm $merged_lm, $RUNDIR));
 
-		push (@LMFILES, get_absolute_path($lmfile, $RUNDIR));
-	}
+  } else {
+    push (@LMFILES, get_absolute_path($merged_lm, $RUNDIR));
+  }
 }
 
 system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
