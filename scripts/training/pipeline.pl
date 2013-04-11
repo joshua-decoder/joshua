@@ -1026,7 +1026,7 @@ if ($MERGE_LMS) {
   $cachepipe->cmd("merge-lms",
                   "$JOSHUA/scripts/support/merge_lms.py "
                     . "@LMFILES "
-                    . "$TUNE{source} "
+                    . "$TUNE{target} "
                     . "lm-merged.gz "
                     . "--temp-dir data/merge_lms ",
                   @LMFILES,
