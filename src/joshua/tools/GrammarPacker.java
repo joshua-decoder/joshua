@@ -16,8 +16,9 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.util.FormatUtils;
-import joshua.util.encoding.Encoder;
-import joshua.util.encoding.AdaptableEncoderConfiguration;
+import joshua.util.encoding.EncoderConfiguration;
+import joshua.util.encoding.FeatureTypeAnalyzer;
+import joshua.util.encoding.IntEncoder;
 import joshua.util.io.LineReader;
 
 public class GrammarPacker {
@@ -42,7 +43,8 @@ public class GrammarPacker {
   private boolean packAlignments;
   private String alignments;
 
-  private AdaptableEncoderConfiguration encodingConfig;
+  private FeatureTypeAnalyzer types;
+  private EncoderConfiguration encoderConfig;
 
   static {
     SLICE_SIZE = 5000000;
@@ -57,7 +59,7 @@ public class GrammarPacker {
     this.output = output_filename;
 
     // TODO: Always open encoder config? This is debatable.
-    this.encodingConfig = new AdaptableEncoderConfiguration(true);
+    this.types = new FeatureTypeAnalyzer(true);
 
     this.alignments = alignments_filename;
     packAlignments = (alignments != null);
@@ -68,11 +70,13 @@ public class GrammarPacker {
       System.exit(0);
     }
 
-    if (config_filename != null)
+    if (config_filename != null) {
       readConfig(config_filename);
-    else
-      logger.info("No config specified. Attempting auto-detect of features.");
-    
+      types.readConfig(config_filename);
+    } else {
+      logger.info("No config specified. Attempting auto-detection of feature types.");
+    }
+
     File working_dir = new File(output);
     working_dir.mkdir();
     if (!working_dir.exists()) {
@@ -86,8 +90,10 @@ public class GrammarPacker {
     while (reader.hasNext()) {
       // Clean up line, chop comments off and skip if the result is empty.
       String line = reader.next().trim();
-      if (line.indexOf('#') != -1) line = line.substring(0, line.indexOf('#'));
-      if (line.isEmpty()) continue;
+      if (line.indexOf('#') != -1)
+        line = line.substring(0, line.indexOf('#'));
+      if (line.isEmpty())
+        continue;
       String[] fields = line.split("[\\s]+");
 
       if (fields.length < 2) {
@@ -97,18 +103,6 @@ public class GrammarPacker {
       if ("slice_size".equals(fields[0])) {
         // Number of records to concurrently load into memory for sorting.
         SLICE_SIZE = Integer.parseInt(fields[1]);
-
-      } else if ("encoder".equals(fields[0])) {
-        // Adding an encoder to the mix.
-        if (fields.length < 3) {
-          logger.severe("Incomplete encoder line in config.");
-          System.exit(0);
-        }
-        String encoder_key = fields[1];
-        ArrayList<Integer> feature_ids = new ArrayList<Integer>();
-        for (int i = 2; i < fields.length; i++)
-          feature_ids.add(Vocabulary.id(fields[i]));
-        encodingConfig.add(encoder_key, feature_ids);
       }
     }
     reader.close();
@@ -124,40 +118,39 @@ public class GrammarPacker {
     LineReader grammar_reader = null;
     LineReader alignment_reader = null;
 
-    encodingConfig.initialize();
-
     // Explore pass. Learn vocabulary and feature value histograms.
     logger.info("Exploring: " + grammar);
     grammar_reader = new LineReader(grammar);
     explore(grammar_reader);
 
     logger.info("Exploration pass complete. Freezing vocabulary and finalizing encoders.");
-    encodingConfig.inferTypes(this.labeled);
+    types.inferTypes(this.labeled);
     logger.info("Type inference complete.");
-    
+
     logger.info("Finalizing encoding.");
-    encodingConfig.finalize();
-    
+
     logger.info("Writing encoding.");
-    encodingConfig.write(output + File.separator + "encoding");
-    
+    types.write(output + File.separator + "encoding");
+
     logger.info("Freezing vocab.");
     Vocabulary.freeze();
-    
+
     logger.info("Writing vocab.");
     Vocabulary.write(output + File.separator + "vocabulary");
+
     // Read previously written encoder configuration to match up to changed
     // vocabulary id's.
-    
     logger.info("Reading encoding.");
-    encodingConfig.read(output + File.separator + "encoding");
+    encoderConfig = new EncoderConfiguration();
+    encoderConfig.load(output + File.separator + "encoding");
 
     logger.info("Beginning packing pass.");
     Queue<PackingFileTuple> slices = new PriorityQueue<PackingFileTuple>();
     // Actual binarization pass. Slice and pack source, target and data.
     grammar_reader = new LineReader(grammar);
 
-    if (packAlignments) alignment_reader = new LineReader(alignments);
+    if (packAlignments)
+      alignment_reader = new LineReader(alignments);
     binarize(grammar_reader, alignment_reader, slices);
     logger.info("Packing complete.");
 
@@ -204,7 +197,7 @@ public class GrammarPacker {
           // We assume that if there is one unlabeled feature the entire grammar is unlabeled.
           labeled = false;
         }
-        this.encodingConfig.setLabeled(labeled);
+        this.types.setLabeled(labeled);
         first_line = false;
       }
 
@@ -213,10 +206,9 @@ public class GrammarPacker {
       for (int f = 0; f < features.length; ++f) {
         if (labeled) {
           String[] fe = features[f].split("=");
-          encodingConfig.get(Vocabulary.id(fe[0])).add(Float.parseFloat(fe[1]));
-        }
-        else{
-          encodingConfig.get(f).add(Float.parseFloat(features[f]));
+          types.observe(Vocabulary.id(fe[0]), Float.parseFloat(fe[1]));
+        } else {
+          types.observe(f, Float.parseFloat(features[f]));
         }
       }
     }
@@ -236,7 +228,8 @@ public class GrammarPacker {
     FeatureBuffer feature_buffer = new FeatureBuffer();
 
     AlignmentBuffer alignment_buffer = null;
-    if (packAlignments) alignment_buffer = new AlignmentBuffer();
+    if (packAlignments)
+      alignment_buffer = new AlignmentBuffer();
 
     TreeMap<Integer, Float> features = new TreeMap<Integer, Float>();
     while (grammar_reader.hasNext()) {
@@ -255,8 +248,9 @@ public class GrammarPacker {
       String[] feature_entries = fields[3].split("\\s");
 
       // Reached slice limit size, indicate that we're closing up.
-      if (!ready_to_flush && (slice_counter > SLICE_SIZE || feature_buffer.overflowing() || 
-          (packAlignments && alignment_buffer.overflowing()))) {
+      if (!ready_to_flush
+          && (slice_counter > SLICE_SIZE || feature_buffer.overflowing() || (packAlignments && alignment_buffer
+              .overflowing()))) {
         ready_to_flush = true;
         first_source_word = source_words[0];
       }
@@ -266,7 +260,8 @@ public class GrammarPacker {
         source_trie.clear();
         target_trie.clear();
         feature_buffer.clear();
-        if (packAlignments) alignment_buffer.clear();
+        if (packAlignments)
+          alignment_buffer.clear();
 
         num_slices++;
         slice_counter = 0;
@@ -304,10 +299,12 @@ public class GrammarPacker {
           String[] parts = feature_entry.split("=");
           int feature_id = Vocabulary.id(parts[0]);
           float feature_value = Float.parseFloat(parts[1]);
-          if (feature_value != 0) features.put(encodingConfig.getRank(feature_id), feature_value);
+          if (feature_value != 0)
+            features.put(encoderConfig.innerId(feature_id), feature_value);
         } else {
           float feature_value = Float.parseFloat(feature_entry);
-          if (feature_value != 0) features.put(f, feature_value);
+          if (feature_value != 0)
+            features.put(f, feature_value);
         }
       }
       int features_index = feature_buffer.add(features);
@@ -434,7 +431,8 @@ public class GrammarPacker {
 
     // Ready data buffers for writing.
     feature_buffer.initialize();
-    if (packAlignments) alignment_buffer.initialize();
+    if (packAlignments)
+      alignment_buffer.initialize();
 
     // Packing loop for downwards-pointing source trie.
     while (!source_queue.isEmpty()) {
@@ -475,12 +473,14 @@ public class GrammarPacker {
     }
     // Flush the data stream.
     feature_buffer.flush(feature_stream);
-    if (packAlignments) alignment_buffer.flush(alignment_stream);
+    if (packAlignments)
+      alignment_buffer.flush(alignment_stream);
 
     target_stream.close();
     source_stream.close();
     feature_stream.close();
-    if (packAlignments) alignment_stream.close();
+    if (packAlignments)
+      alignment_stream.close();
 
     return slice;
   }
@@ -545,8 +545,8 @@ public class GrammarPacker {
       logger.info("Will be writing to " + output_filename);
     }
 
-    GrammarPacker packer =
-        new GrammarPacker(grammar_filename, config_filename, output_filename, alignments_filename);
+    GrammarPacker packer = new GrammarPacker(grammar_filename, config_filename, output_filename,
+        alignments_filename);
     packer.pack();
   }
 
@@ -620,9 +620,11 @@ public class GrammarPacker {
         size += 2;
       }
       // Non-skeletal packing: number of data items.
-      if (!skeletal) size += 1;
+      if (!skeletal)
+        size += 1;
       // Non-skeletal packing: write size taken up by data items.
-      if (!skeletal && !values.isEmpty()) size += values.size() * values.get(0).size();
+      if (!skeletal && !values.isEmpty())
+        size += values.size() * values.get(0).size();
 
       return size;
     }
@@ -642,7 +644,8 @@ public class GrammarPacker {
     int data;
     int target;
 
-    public SourceValue() {}
+    public SourceValue() {
+    }
 
     SourceValue(int lhs, int data) {
       this.lhs = lhs;
@@ -695,7 +698,8 @@ public class GrammarPacker {
 
     // Reallocate the backing array and buffer, copies data over.
     protected void reallocate() {
-      if (backing.length == Integer.MAX_VALUE) return;
+      if (backing.length == Integer.MAX_VALUE)
+        return;
       long attempted_length = backing.length * 2l;
       int new_length;
       // Detect overflow.
@@ -786,11 +790,11 @@ public class GrammarPacker {
 
   class FeatureBuffer extends PackingBuffer<TreeMap<Integer, Float>> {
 
-    private Encoder idEncoder;
-    
+    private IntEncoder idEncoder;
+
     FeatureBuffer() throws IOException {
       super();
-      idEncoder = encodingConfig.getIdEncoder();
+      idEncoder = types.getIdEncoder();
       logger.info("Encoding feature ids in: " + idEncoder.getKey());
     }
 
@@ -803,11 +807,13 @@ public class GrammarPacker {
     int add(TreeMap<Integer, Float> features) {
       int data_position = buffer.position();
 
-      // Over-estimate how much room this addition will need: 12 bytes per
-      // feature (4 for label, "upper bound" of 8 for the value), plus 4 for
+      // Over-estimate how much room this addition will need: for each
+      // feature (ID_SIZE for label, "upper bound" of 4 for the value), plus ID_SIZE for
       // the number of features. If this won't fit, reallocate the buffer.
-      int size_estimate = 12 * features.size() + 4;
-      if (buffer.capacity() - buffer.position() <= size_estimate) reallocate();
+      int size_estimate = (4 + EncoderConfiguration.ID_SIZE) * features.size()
+          + EncoderConfiguration.ID_SIZE;
+      if (buffer.capacity() - buffer.position() <= size_estimate)
+        reallocate();
 
       // Write features to buffer.
       idEncoder.write(buffer, features.size());
@@ -816,7 +822,7 @@ public class GrammarPacker {
         // Sparse features.
         if (v != 0.0) {
           idEncoder.write(buffer, k);
-          encodingConfig.get(k).write(buffer, v);
+          encoderConfig.encoder(k).write(buffer, v);
         }
       }
       // Store position the block was written to.
@@ -844,7 +850,8 @@ public class GrammarPacker {
     int add(byte[] alignments) {
       int data_position = buffer.position();
       int size_estimate = alignments.length + 1;
-      if (buffer.capacity() - buffer.position() <= size_estimate) reallocate();
+      if (buffer.capacity() - buffer.position() <= size_estimate)
+        reallocate();
 
       // Write alignment points to buffer.
       buffer.put((byte) (alignments.length / 2));
@@ -897,7 +904,8 @@ public class GrammarPacker {
     }
 
     DataOutputStream getAlignmentOutput() throws IOException {
-      if (alignmentFile != null) return getOutput(alignmentFile);
+      if (alignmentFile != null)
+        return getOutput(alignmentFile);
       return null;
     }
 

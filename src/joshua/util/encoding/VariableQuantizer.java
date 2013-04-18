@@ -8,7 +8,7 @@ public class VariableQuantizer {
 
   /**
    * @param bytes bytes from which this will read bits. Bits will be read from the first byte first.
-   *        Bits are read within a byte from most-significant to least-significant bit.
+   *          Bits are read within a byte from most-significant to least-significant bit.
    */
   public VariableQuantizer(byte[] bytes) {
     this.bytes = bytes;

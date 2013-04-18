@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.BasicRuleCollection;
@@ -28,85 +27,41 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
-import joshua.util.io.LineReader;
-import joshua.util.quantization.Quantizer;
-import joshua.util.quantization.QuantizerConfiguration;
+import joshua.util.encoding.FloatEncoder;
+import joshua.util.encoding.EncoderConfiguration;
 
 public class PackedGrammar extends BatchGrammar {
 
   private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
 
-  private QuantizerConfiguration quantization;
-  private HashMap<Integer, Integer> featureNameMap;
+  private EncoderConfiguration encoding;
 
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
-  private final float maxId;
-
-  public PackedGrammar(String grammar_directory, int span_limit, String owner)
+  public PackedGrammar(String grammar_dir, int span_limit, String owner)
       throws FileNotFoundException, IOException {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
-    logger.info("Reading vocabulary: " + grammar_directory + File.separator + "vocabulary");
-    Vocabulary.read(grammar_directory + File.separator + "vocabulary");
-    maxId = (float) Vocabulary.size();
+    logger.info("Reading vocabulary: " + grammar_dir + File.separator + "vocabulary");
+    Vocabulary.read(grammar_dir + File.separator + "vocabulary");
 
     // Read the quantizer setup.
-    logger.info("Reading quantization configuration: " + grammar_directory + File.separator
-        + "quantization");
-    quantization = new QuantizerConfiguration();
-    quantization.read(grammar_directory + File.separator + "quantization");
+    logger.info("Reading encoder configuration: " + grammar_dir + File.separator + "encoding");
+    encoding = new EncoderConfiguration();
+    encoding.load(grammar_dir + File.separator + "encoding");
 
     // Set phrase owner.
     this.owner = Vocabulary.id(owner);
 
-    // Read the dense feature name map.
-    if (JoshuaConfiguration.dense_features)
-      loadFeatureNameMap(grammar_directory + File.separator + "dense_map");
-
-    String[] listing = new File(grammar_directory).list();
+    String[] listing = new File(grammar_dir).list();
     slices = new ArrayList<PackedSlice>();
     for (int i = 0; i < listing.length; i++) {
       if (listing[i].startsWith("slice_") && listing[i].endsWith(".source"))
-        slices
-            .add(new PackedSlice(grammar_directory + File.separator + listing[i].substring(0, 11)));
+        slices.add(new PackedSlice(grammar_dir + File.separator + listing[i].substring(0, 11)));
     }
     root = new PackedRoot(this);
-  }
-
-  private void loadFeatureNameMap(String map_file_name) throws IOException {
-    featureNameMap = new HashMap<Integer, Integer>();
-
-    LineReader reader = new LineReader(map_file_name);
-    while (reader.hasNext()) {
-      String line = reader.next().trim();
-      String[] fields = line.split("\\s+");
-      if (fields.length != 2) {
-        logger.severe("Invalid feature map format: " + line);
-        System.exit(0);
-      }
-      int feature_index = Integer.parseInt(fields[0]);
-      int feature_id = Vocabulary.id(fields[1]);
-
-      if (featureNameMap.values().contains(feature_index)) {
-        logger.severe("Duplicate index in feature map: " + feature_index);
-        System.exit(0);
-      }
-      featureNameMap.put(feature_id, feature_index);
-    }
-    reader.close();
-
-    // Run a sanity check.
-    for (int feature_id : featureNameMap.keySet()) {
-      int index = featureNameMap.get(feature_id);
-      if (0 > index || index >= featureNameMap.size()) {
-        logger.severe("Out of scope feature index in map: " + Vocabulary.word(feature_id) + " -> "
-            + index);
-        System.exit(0);
-      }
-    }
   }
 
   @Override
@@ -229,10 +184,6 @@ public class PackedGrammar extends BatchGrammar {
 
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
-      // TODO: implement this
-//      System.err.println("* WARNING: PackedTrie doesn't implement getChildren()");
-//      return new HashMap<Integer, PackedTrie>();
-      
       HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
       int num_children = grammar.source[position];
       for (int i = 0; i < num_children; i++) {
@@ -342,7 +293,7 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public synchronized List<Rule> getSortedRules(List<FeatureFunction> featureFunctions) {
       synchronized (grammar) {
-        if (! isSorted())
+        if (!isSorted())
           sortRules(featureFunctions);
         return getRules();
       }
@@ -391,8 +342,8 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
       // TODO: implement this
-//      System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
-//      return new HashMap<Integer, PackedRoot>();
+      // System.err.println("* WARNING: PackedRoot doesn't implement getChildren()");
+      // return new HashMap<Integer, PackedRoot>();
       HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
       for (int key : lookup.keySet()) {
         children.put(key, match(key));
@@ -567,10 +518,12 @@ public class PackedGrammar extends BatchGrammar {
       estimated = new float[num_blocks];
       precomputable = new float[num_blocks];
       featureSize = features.getInt(4);
+      int header_pos = 8;
       for (int i = 0; i < num_blocks; i++) {
-        featureLookup[i] = features.getInt(8 + 4 * i);
+        featureLookup[i] = features.getInt(header_pos);
         estimated[i] = Float.NEGATIVE_INFINITY;
         precomputable[i] = Float.NEGATIVE_INFINITY;
+        header_pos += 4;
       }
 
       DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
@@ -626,20 +579,35 @@ public class PackedGrammar extends BatchGrammar {
       int feature_position = featureLookup[block_id];
 
       /* The number of non-zero features stored with the rule. */
-      int num_features = features.getInt(feature_position);
-      /* The vector will have to grow but it will be at least this size. */
-      feature_position += 4;
+      int num_features = encoding.readId(features, feature_position);
+
+      feature_position += EncoderConfiguration.ID_SIZE;
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < num_features; i++) {
-        int feature_id = features.getInt(feature_position);
-        Quantizer quantizer = quantization.get(feature_id);
-        int index = featureNameMap.get(feature_id);
-        sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
-            quantizer.read(features, feature_position)));
-        feature_position += 4 + quantizer.size();
-      }
+        int feature_id = encoding.readId(features, feature_position);
 
+        FloatEncoder encoder = encoding.encoder(feature_id);
+        if (encoding.isLabeled()) {
+          String name = Vocabulary.word(encoding.outerId(feature_id));
+
+          // System.err.println("Inner feature " + feature_id + " has outer id " + name
+          // + " and type " + encoder.getKey() + " offset " + EncoderConfiguration.ID_SIZE);
+
+          sb.append(String.format(" tm_%s_%s=%.5f", Vocabulary.word(owner), name,
+              encoder.read(features, feature_position)));
+        } else {
+          int index = encoding.outerId(feature_id);
+
+          // System.err.println("Inner feature " + feature_id + " has outer id " + index
+          // + " and type " + encoder.getKey() + " offset " + EncoderConfiguration.ID_SIZE);
+
+          sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
+              encoder.read(features, feature_position)));
+        }
+        feature_position += EncoderConfiguration.ID_SIZE + encoder.size();
+      }
       // System.err.println("GETFEATURES() = " + sb.toString().trim());
+
       return sb.toString().trim();
     }
 

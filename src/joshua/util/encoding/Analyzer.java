@@ -7,16 +7,16 @@ import java.util.TreeMap;
 
 import joshua.util.io.LineReader;
 
-public class HistogramQuantizer {
-  
+public class Analyzer {
+
   private TreeMap<Float, Integer> histogram;
   private int total;
-  
-  public HistogramQuantizer() {
+
+  public Analyzer() {
     histogram = new TreeMap<Float, Integer>();
-    total = 0;
+    initialize();
   }
-  
+
   public void initialize() {
     histogram.clear();
     // TODO: drop zero bucket; we won't encode zero-valued features anyway.
@@ -34,7 +34,7 @@ public class HistogramQuantizer {
 
   public float[] quantize(int num_bits) {
     float[] buckets = new float[1 << num_bits];
-    
+
     // We make sure that 0.0f always has its own bucket, so the bucket
     // size is determined excluding the zero values.
     int size = (total - histogram.get(0.0f)) / (buckets.length - 1);
@@ -73,7 +73,8 @@ public class HistogramQuantizer {
           count = 0;
           sum = 0;
         }
-        if (key == 0) continue;
+        if (key == 0)
+          continue;
       }
       count += value;
       sum += key * value;
@@ -85,50 +86,84 @@ public class HistogramQuantizer {
       }
       last_key = key;
     }
-    if (index < buckets.length - 1) buckets[index++] = (float) sum / count;
-    
+    if (index < buckets.length - 1)
+      buckets[index++] = (float) sum / count;
+
     return buckets;
   }
-  
-  
-  public boolean isBoolean() { 
+
+  public boolean isBoolean() {
     for (float value : histogram.keySet())
-      if (value != 0 && value != 1) return false;
-     return true;
+      if (value != 0 && value != 1)
+        return false;
+    return true;
   }
-  
-  public boolean isByte() { 
+
+  public boolean isByte() {
     for (float value : histogram.keySet())
       if (Math.ceil(value) != value || value < Byte.MIN_VALUE || value > Byte.MAX_VALUE)
         return false;
-     return true;
+    return true;
   }
-  
-  public boolean isShort() { 
+
+  public boolean isShort() {
     for (float value : histogram.keySet())
       if (Math.ceil(value) != value || value < Short.MIN_VALUE || value > Short.MAX_VALUE)
         return false;
-     return true;
+    return true;
   }
-  
-  public boolean isChar() { 
+
+  public boolean isChar() {
     for (float value : histogram.keySet())
       if (Math.ceil(value) != value || value < Character.MIN_VALUE || value > Character.MAX_VALUE)
         return false;
-     return true;
+    return true;
   }
-  
-  public boolean isInt() { 
+
+  public boolean isInt() {
     for (float value : histogram.keySet())
       if (Math.ceil(value) != value)
         return false;
-     return true;
+    return true;
   }
-  
+
   public boolean is8Bit() {
     return (histogram.keySet().size() <= 256);
   }
+
+  public FloatEncoder inferUncompressedType() {
+    if (isBoolean())
+      return PrimitiveFloatEncoder.BOOLEAN;
+    if (isByte())
+      return PrimitiveFloatEncoder.BYTE;
+    if (is8Bit())
+      return new EightBitQuantizer(this.quantize(8));
+    if (isChar())
+      return PrimitiveFloatEncoder.CHAR;
+    if (isShort())
+      return PrimitiveFloatEncoder.SHORT;
+    if (isInt())
+      return PrimitiveFloatEncoder.INT;
+    return PrimitiveFloatEncoder.FLOAT;
+  }
   
+  public FloatEncoder inferType(int bits) {
+    if (isBoolean())
+      return PrimitiveFloatEncoder.BOOLEAN;
+    if (isByte())
+      return PrimitiveFloatEncoder.BYTE;
+    if (bits == 8 || is8Bit())
+      return new EightBitQuantizer(this.quantize(8));
+    // TODO: Could add sub-8-bit encoding here (or larger).
+    if (isChar())
+      return PrimitiveFloatEncoder.CHAR;
+    if (isShort())
+      return PrimitiveFloatEncoder.SHORT;
+    if (isInt())
+      return PrimitiveFloatEncoder.INT;
+    return PrimitiveFloatEncoder.FLOAT;
+  }
+
   public static void main(String[] args) throws IOException {
     LineReader reader = new LineReader(args[0]);
     ArrayList<Float> s = new ArrayList<Float>();
@@ -140,7 +175,7 @@ public class HistogramQuantizer {
     int n = s.size();
     byte[] c = new byte[n];
     ByteBuffer b = ByteBuffer.wrap(c);
-    HistogramQuantizer q = new HistogramQuantizer();
+    Analyzer q = new Analyzer();
 
     q.initialize();
     for (int i = 0; i < n; i++)

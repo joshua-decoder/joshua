@@ -1,22 +1,21 @@
 package joshua.util.encoding;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class FloatEncoder extends StatelessEncoder {
+public interface FloatEncoder {
 
-  public final float read(ByteBuffer stream, int position) {
-    return stream.getFloat(position + 4);
-  }
+  public float read(ByteBuffer stream, int position);
 
-  public final void write(ByteBuffer stream, float value) {
-    stream.putFloat(value);
-  }
+  public void write(ByteBuffer stream, float value);
 
-  public String getKey() {
-    return "float";
-  }
+  public String getKey();
 
-  public final int size() {
-    return 4;
-  }
+  public void writeState(DataOutputStream out) throws IOException;
+
+  public void readState(DataInputStream in) throws IOException;
+
+  public int size();
 }
