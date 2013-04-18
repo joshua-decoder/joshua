@@ -90,7 +90,7 @@ my %TUNEFILES = (
 );
 
 # Whether to do MBR decoding on the n-best list (for test data).
-my $DO_MBR = 1;
+my $DO_MBR = 0;
 
 # Which aligner to use. The options are "giza" or "berkeley".
 my $ALIGNER = "giza"; # "berkeley" or "giza"
@@ -109,6 +109,9 @@ my $JOSHUA_MEM = "3100m";
 # the amount of memory available for hadoop processes (passed to
 # Hadoop via -Dmapred.child.java.opts
 my $HADOOP_MEM = "2g";
+
+# The location of a custom core-site.xml file, if desired (optional).
+my $HADOOP_CONF = undef;
 
 # memory available to the parser
 my $PARSER_MEM = "2g";
@@ -167,8 +170,14 @@ my $NAME = undef;
 # Options are union, {intersect, grow, srctotgt, tgttosrc}-{diag,final,final-and,diag-final,diag-final-and}
 my $GIZA_MERGE = "grow-diag-final";
 
+# Whether to merge all the --lmfile LMs into a single LM using weights based on the development corpus
+my $MERGE_LMS = 0;
+
 # Which tuner to use by default
 my $TUNER = "mert";  # or "pro" or "mira"
+
+# The number of iterations of the mira to run
+my $MIRA_ITERATIONS = 8;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
@@ -193,6 +202,7 @@ my $retval = GetOptions(
   "filtering=s"       => \$FILTERING,
   "lm=s"              => \$LM_TYPE,
   "lmfile=s"        => \@LMFILES,
+  "merge-lms!"        => \$MERGE_LMS,
   "lm-gen=s"          => \$LM_GEN,
   "lm-order=i"        => \$LM_ORDER,
   "corpus-lm!"        => \$DO_BUILD_LM_FROM_CORPUS,
@@ -216,6 +226,7 @@ my $retval = GetOptions(
   "packer-mem=s"      => \$PACKER_MEM,
   "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
+  "mira-iterations=i" => \$MIRA_ITERATIONS,
   "thrax=s"           => \$THRAX,
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -227,6 +238,7 @@ my $retval = GetOptions(
   "last-step=s"      => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
   "hadoop=s"          => \$HADOOP,
+  "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
 );
 
@@ -288,6 +300,20 @@ if (scalar @LMFILES == 0) {
 # an error about easily-inferrable intentions.
 if (scalar @LMFILES && ! scalar(@CORPORA)) {
   $DO_BUILD_LM_FROM_CORPUS = 0;
+}
+
+
+# if merging LMs, make sure there are at least 2 LMs to merge.
+# first, pin $DO_BUILD_LM_FROM_CORPUS to 0 or 1 so that the subsequent check works.
+if ($MERGE_LMS) {
+  if ($DO_BUILD_LM_FROM_CORPUS != 0) {
+    $DO_BUILD_LM_FROM_CORPUS = 1
+  }
+
+  if (@LMFILES + $DO_BUILD_LM_FROM_CORPUS < 2) {
+    print "* FATAL: I need 2 or more language models to merge (including the corpus target-side LM).";
+    exit 2;
+  }
 }
 
 # absolutize LM file paths
@@ -391,6 +417,7 @@ $TUNE_GRAMMAR_FILE = get_absolute_path($TUNE_GRAMMAR_FILE);
 $TEST_GRAMMAR_FILE = get_absolute_path($TEST_GRAMMAR_FILE);
 $THRAX_CONF_FILE = get_absolute_path($THRAX_CONF_FILE);
 $ALIGNMENT = get_absolute_path($ALIGNMENT);
+$HADOOP_CONF = get_absolute_path($HADOOP_CONF);
 
 foreach my $corpus (@CORPORA) {
   foreach my $ext ($TARGET,$SOURCE) {
@@ -437,6 +464,13 @@ if ($FILTERING eq "fast") {
   print "* FATAL: --filtering must be one of 'fast' (default) or 'exact'\n";
   exit 1;
 }
+
+if (defined $HADOOP_CONF && ! -e $HADOOP_CONF) {
+  print STDERR "* FATAL: Couldn't find \$HADOOP_CONF file '$HADOOP_CONF'\n";
+  exit 1;
+}
+
+## END SANITY CHECKS
 
 ####################################################################################################
 ## Dependent variable setting ######################################################################
@@ -756,12 +790,14 @@ if ($GRAMMAR_TYPE eq "samt" || $GRAMMAR_TYPE eq "ghkm") {
       #         "$DATA_DIRS{train}/corpus.parsed.$TARGET");
 
       $cachepipe->cmd("parse",
-                      "$CAT $file_to_parse | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -p 8g -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^(())\$//; s/^(/(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+                      "$CAT $file_to_parse | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -p 8g -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^(())\$//; s/^(/(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.Parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
                       "$TRAIN{target}",
                       "$DATA_DIRS{train}/corpus.parsed.$TARGET");
     } else {
+      # Multi-threading in the Berkeley parser is broken, so we use a black-box parallelizer on top
+      # of it.
       $cachepipe->cmd("parse",
-                      "$CAT $file_to_parse | java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads $NUM_THREADS | sed 's/^(())\$//; s/^(/(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+                      "$CAT $file_to_parse | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_THREADS --use-fork -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^(())\$//; s/^(/(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.Parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
                       "$TRAIN{target}",
                       "$DATA_DIRS{train}/corpus.parsed.$TARGET");
     }
@@ -921,6 +957,28 @@ if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
   $PREPPED{TUNE} = 1;
 }
 
+sub compile_lm($) {
+  my $lmfile = shift;
+  if ($LM_TYPE eq "kenlm") {
+    my $kenlm_file = basename($lmfile, ".gz") . ".kenlm";
+    $cachepipe->cmd("compile-kenlm",
+                    "$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary $lmfile $kenlm_file",
+                    $lmfile, $kenlm_file);
+    return $kenlm_file;
+
+  } elsif ($LM_TYPE eq "berkeleylm") {
+    my $berkeleylm_file = basename($lmfile, ".gz") . ".berkeleylm";
+    $cachepipe->cmd("compile-berkeleylm",
+                    "java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa $lmfile $berkeleylm_file",
+                    $lmfile, $berkeleylm_file);
+    return $berkeleylm_file;
+
+  } else {
+    print "* FATAL: trying to compile an LM to neither kenlm nor berkeleylm.";
+    exit 2;
+  }
+}
+
 # Build the language model if needed
 if ($DO_BUILD_LM_FROM_CORPUS) {
 
@@ -954,25 +1012,36 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 										$lmfile);
   }
 
-	if ($LM_TYPE eq "kenlm") {
-		my $kenlm_file = "lm.kenlm";
-		$cachepipe->cmd("compile-kenlm",
-										"$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary lm.gz lm.kenlm",
-										$lmfile, $kenlm_file);
+  if ((! $MERGE_LMS) && ($LM_TYPE eq "kenlm" || $LM_TYPE eq "berkeleylm")) {
+    push (@LMFILES, get_absolute_path(compile_lm $lmfile, $RUNDIR));
+  } else {
+    push (@LMFILES, get_absolute_path($lmfile, $RUNDIR));
+  }
+}
 
-		push (@LMFILES, get_absolute_path($kenlm_file, $RUNDIR));
+if ($MERGE_LMS) {
+  # Merge @LMFILES.
+  my $merged_lm = "lm-merged.gz";
+  print "@LMFILES";
+  $cachepipe->cmd("merge-lms",
+                  "$JOSHUA/scripts/support/merge_lms.py "
+                    . "@LMFILES "
+                    . "$TUNE{target} "
+                    . "lm-merged.gz "
+                    . "--temp-dir data/merge_lms ",
+                  @LMFILES,
+                  $merged_lm);
 
-	} elsif ($LM_TYPE eq "berkeleylm") {
-		my $berkeleylm_file = "lm.berkeleylm";
-		$cachepipe->cmd("compile-berkeleylm",
-										"java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa lm.gz lm.berkeleylm",
-										$lmfile, $berkeleylm_file);
+  # Empty out @LMFILES.
+  @LMFILES = ();
 
-		push (@LMFILES, get_absolute_path($berkeleylm_file, $RUNDIR));
-	} else {
+  # Compile merged LM
+  if ($LM_TYPE eq "kenlm" || $LM_TYPE eq "berkeleylm") {
+    push (@LMFILES, get_absolute_path(compile_lm $merged_lm, $RUNDIR));
 
-		push (@LMFILES, get_absolute_path($lmfile, $RUNDIR));
-	}
+  } else {
+    push (@LMFILES, get_absolute_path($merged_lm, $RUNDIR));
+  }
 }
 
 system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
@@ -1197,7 +1266,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations 8 --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/weights.final");
@@ -1376,6 +1445,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   my $dir = (defined $NAME) ? "test/$NAME" : "test";
   compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
   compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
+  compute_time_summary("$dir/*/joshua.log", "$dir/final-times");
 
   # Now do the analysis
   if ($DOING_LATTICES) {
@@ -1680,6 +1750,10 @@ sub rollout_hadoop_cluster {
 
 		system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz");
 		system("ln -sf hadoop-0.20.2 hadoop");
+    if (defined $HADOOP_CONF) {
+      print STDERR "Copying HADOOP_CONF($HADOOP_CONF) to hadoop/conf/core-site.xml\n";
+      system("cp $HADOOP_CONF hadoop/conf/core-site.xml");
+    }
   }
   
   $ENV{HADOOP} = $HADOOP = "hadoop";
@@ -1694,7 +1768,7 @@ sub stop_hadoop_cluster {
 
 sub teardown_hadoop_cluster {
   stop_hadoop_cluster();
-  system("rm -rf hadoop-0.20.203.0 hadoop");
+  system("rm -rf hadoop-0.20.2 hadoop");
 }
 
 sub is_lattice {
@@ -1790,5 +1864,32 @@ sub compute_bleu_summary {
     open BLEU, ">$outputfile" or die "Can't write to $outputfile";
     printf(BLEU "%s / %d = %.4f\n", join(" + ", @bleus), scalar @bleus, $final_bleu);
     close(BLEU);
+  }
+}
+
+sub compute_time_summary {
+  my ($filepattern, $outputfile) = @_;
+
+  # Now average the runs, report BLEU
+  my @times;
+  foreach my $file (glob($filepattern)) {
+    open FILE, $file;
+    my $time = 0.0;
+    my $numrecs = 0;
+    while (<FILE>) {
+      next unless /translation of .* took/;
+      my @F = split;
+      $time += $F[5];
+      $numrecs++;
+    }
+    close(FILE);
+
+    push(@times, $time);
+  }
+
+  if (scalar @times) {
+    open TIMES, ">$outputfile" or die "Can't write to $outputfile";
+    printf(TIMES "%s / %d = %s\n", join(" + ", @times), scalar(@times), 1.0 * sum(@times) / scalar(@times));
+    close(TIMES);
   }
 }
