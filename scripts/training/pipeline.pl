@@ -1110,7 +1110,7 @@ if ($DO_PACK_GRAMMARS) {
 # creating all the needed rules.
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-tune",
-  "java -Xmx2g -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
+  "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
   $TUNE_GRAMMAR,
   "$DATA_DIRS{tune}/grammar.glue");
   $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
@@ -1329,7 +1329,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # Create the glue file.
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
-    "java -Xmx1g -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
+    "java -Xmx1g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
     $TEST_GRAMMAR,
     "$DATA_DIRS{test}/grammar.glue");
     $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
@@ -1514,7 +1514,7 @@ if ($TEST_GRAMMAR_FILE) {
 # build the glue grammar if needed
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-test-$NAME",
-									"java -Xmx2g -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
+									"java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
 									$TEST_GRAMMAR,
 									"$DATA_DIRS{test}/grammar.glue");
   $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
