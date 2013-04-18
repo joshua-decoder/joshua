@@ -34,48 +34,23 @@ sub usage {
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 
-system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
-
 # Create a dummy packer configuration file, since that is needed by the packer. We do no
 # quantization, and simply create a single float quantizer item that applies to all features found
 # in the grammar. Note that this isn't recommended for working with sparse grammars!
-my $num_features = count_num_features("grammar-labeled.gz");
-my $feature_str = join(" ", 0..($num_features-1));
 my $packer_config = "packer.config.tmp";
 open CONFIG, ">$packer_config" or die "can't write to $packer_config";
-print CONFIG "slice_size 100000\n\nquantizer   float   $feature_str\n";
+print CONFIG "slice_size 100000\n";
 close(CONFIG);
 
 # Do the packing using the config.
-my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar-labeled.gz";
+my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g $grammar";
 print STDERR "Packing with $cmd\n";
 my $retval = system($cmd);
 
 if ($retval == 0) {
   # Clean up.
-  unlink("grammar-labeled.gz");
-  system("mv dense_map $output_dir");
   system("mv $packer_config $output_dir/packer.config");
 } else {
   print STDERR "* FATAL: Couldn't pack the grammar.\n";
   exit 1;
-}
-
-################################################################################
-## SUBROUTINES #################################################################
-################################################################################
-
-# This counts the number of TM features present in a grammar
-sub count_num_features {
-  my ($grammar) = @_;
-
-  open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
-  chomp(my $line = <GRAMMAR>);
-  close(GRAMMAR);
-
-  my @tokens = split(/ \|\|\| /, $line);
-  my @numfeatures = split(' ', $tokens[-1]);
-	my $num = scalar(@numfeatures);
-
-  return scalar @numfeatures;
 }
