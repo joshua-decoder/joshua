@@ -86,10 +86,13 @@ public class Analyzer {
       }
       last_key = key;
     }
-    if (index < buckets.length - 1)
+    if (count > 0 && index < buckets.length - 1)
       buckets[index++] = (float) sum / count;
-
-    return buckets;
+    
+    float[] shortened = new float[index];
+    for (int i = 0; i < shortened.length; ++i)
+      shortened[i] = buckets[i];
+    return shortened;
   }
 
   public boolean isBoolean() {

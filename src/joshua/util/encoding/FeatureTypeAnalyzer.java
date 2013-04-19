@@ -117,12 +117,8 @@ public class FeatureTypeAnalyzer {
     Arrays.sort(known_features);
 
     featureIdMap.clear();
-    for (i = 0; i < known_features.length; ++i) {
+    for (i = 0; i < known_features.length; ++i)
       featureIdMap.put(known_features[i], i);
-      System.err.println("OUTER TO INNER: " + known_features[i] + " => " + i);
-    }
-    
-    
   }
 
   public int getRank(int feature_id) {

@@ -12,9 +12,9 @@ public class EightBitQuantizer implements FloatEncoder {
   public EightBitQuantizer() {
     this.buckets = new float[256];
   }
-  
+
   public EightBitQuantizer(float[] buckets) {
-    if (buckets.length != 256)
+    if (buckets.length > 256)
       throw new RuntimeException("Incompatible number of buckets: " + buckets.length);
     this.buckets = buckets;
   }
@@ -26,17 +26,22 @@ public class EightBitQuantizer implements FloatEncoder {
   }
 
   @Override
-  public final void write(ByteBuffer stream, float value) {
+  public final void write(ByteBuffer stream, float val) {
     byte index = -128;
 
     // We search for the bucket best matching the value. Only zeroes will be
     // mapped to the zero bucket.
-    if (value != 0) {
-      index++;
-      while (index < 126
-          && (Math.abs(buckets[index + 128] - value) > (Math.abs(buckets[index + 129] - value)))) {
-        index++;
+    if (val != 0 && buckets.length > 1) {
+      int t = 1;
+      int b = buckets.length - 1;
+      while ((b - t) > 1) {
+        int half = (t + b) / 2;
+        if (val >= buckets[half])
+          t = half;
+        if (val <= buckets[half])
+          b = half;
       }
+      index = (byte) ((Math.abs(buckets[t] - val) > (Math.abs(buckets[b] - val)) ? b : t) - 128);
     }
     stream.put(index);
   }

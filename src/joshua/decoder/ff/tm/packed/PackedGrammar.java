@@ -578,7 +578,7 @@ public class PackedGrammar extends BatchGrammar {
     final String getFeatures(int block_id) {
       int feature_position = featureLookup[block_id];
 
-      /* The number of non-zero features stored with the rule. */
+      // The number of non-zero features stored with the rule.
       int num_features = encoding.readId(features, feature_position);
 
       feature_position += EncoderConfiguration.ID_SIZE;
@@ -589,25 +589,15 @@ public class PackedGrammar extends BatchGrammar {
         FloatEncoder encoder = encoding.encoder(feature_id);
         if (encoding.isLabeled()) {
           String name = Vocabulary.word(encoding.outerId(feature_id));
-
-          // System.err.println("Inner feature " + feature_id + " has outer id " + name
-          // + " and type " + encoder.getKey() + " offset " + EncoderConfiguration.ID_SIZE);
-
           sb.append(String.format(" tm_%s_%s=%.5f", Vocabulary.word(owner), name,
               encoder.read(features, feature_position)));
         } else {
           int index = encoding.outerId(feature_id);
-
-          // System.err.println("Inner feature " + feature_id + " has outer id " + index
-          // + " and type " + encoder.getKey() + " offset " + EncoderConfiguration.ID_SIZE);
-
           sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
               encoder.read(features, feature_position)));
         }
         feature_position += EncoderConfiguration.ID_SIZE + encoder.size();
       }
-      // System.err.println("GETFEATURES() = " + sb.toString().trim());
-
       return sb.toString().trim();
     }
 
