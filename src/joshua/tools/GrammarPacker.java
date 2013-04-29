@@ -66,7 +66,7 @@ public class GrammarPacker {
     if (!packAlignments) {
       logger.info("No alignments file specified, skipping.");
     } else if (!new File(alignments_filename).exists()) {
-      logger.severe("Alignements file does not exist: " + alignments);
+      logger.severe("Alignments file does not exist: " + alignments);
       System.exit(0);
     }
 
@@ -206,6 +206,8 @@ public class GrammarPacker {
       for (int f = 0; f < features.length; ++f) {
         if (labeled) {
           String[] fe = features[f].split("=");
+          if (fe[0].equals("Alignment"))
+            continue;
           types.observe(Vocabulary.id(fe[0]), Float.parseFloat(fe[1]));
         } else {
           types.observe(f, Float.parseFloat(features[f]));
@@ -297,6 +299,8 @@ public class GrammarPacker {
         String feature_entry = feature_entries[f];
         if (this.labeled) {
           String[] parts = feature_entry.split("=");
+          if (parts[0].equals("Alignment"))
+            continue;
           int feature_id = Vocabulary.id(parts[0]);
           float feature_value = Float.parseFloat(parts[1]);
           if (feature_value != 0)
