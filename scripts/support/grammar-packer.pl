@@ -20,21 +20,26 @@ use Getopt::Std;
 my %opts = (
   m => '4g',    # amount of memory to give the packer
   c => '',       # use alternate packer config
+  T => '/state/partition1',
 );
-getopts("m:c:", \%opts);
+getopts("m:c:T:", \%opts);
 
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
 
 sub usage {
   print "Usage: grammar-packer.pl [-m MEM] [-c packer-config] input-grammar [output-dir=grammar.packed\n";
-  exit;
+  exit 1;
 }
 
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 
-system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
+my $retval = system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | $JOSHUA/scripts/label_grammar.py | gzip -9n > grammar-labeled.gz");
+if ($retval != 0) {
+  print STDERR "* FATAL: sorting and labeling failed\n";
+  exit 1;
+}
 
 # Create a dummy packer configuration file, since that is needed by the packer. We do no
 # quantization, and simply create a single float quantizer item that applies to all features found
