@@ -623,7 +623,7 @@ while (1) {
   # finds, but its easier to use Moses internal tools unmodified. This is mostly for fragmentLM
   # features. Colons appear in preterminal names (both left side :_ and right side _:) and in
   # terminals (":").
-  system("perl -pi -e 's/:_/-COLON-_/g; s/_:/_-COLON-/g; s/\":\"/\"-COLON-\"/g' $feature_file");
+  system("perl -pi -e 's/:_/-COLON-_/g; s/_:([^\s])/_-COLON-$1/g; s/\":\"/\"-COLON-\"/g' $feature_file");
 
   my %CURR;
   map { $CURR{$_} = $featlist->{$_}{value} } keys(%$featlist); # save the current features

@@ -34,6 +34,7 @@ use CachePipe;
 
 my $HADOOP = $ENV{HADOOP};
 my $MOSES = $ENV{MOSES};
+delete $ENV{GREP_OPTIONS};
 
 my $THRAX = "$JOSHUA/thrax";
 
@@ -482,7 +483,7 @@ if ($NUM_JOBS == 1) {
   $TUNEFILES{'decoder_command'} = "$TUNECONFDIR/decoder_command.sequential";
 }
 
-my $OOV = ($GRAMMAR_TYPE eq "hiero") ? "X" : "OOV";
+my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? "X" : "OOV";
 
 # use this default unless it's already been defined by a command-line argument
 $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
@@ -753,7 +754,7 @@ PARSE:
 
 # Parsing only happens for SAMT grammars.
 
-if ($FIRST_STEP eq "PARSE" and $GRAMMAR_TYPE eq "hiero") {
+if ($FIRST_STEP eq "PARSE" and ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal")) {
   print STDERR "* FATAL: parsing doesn't apply to hiero grammars; You need to add '--type samt'\n";
   exit;
 }
@@ -868,7 +869,7 @@ if (! defined $ALIGNMENT) {
 # If the grammar file wasn't specified
 if (! defined $GRAMMAR_FILE) {
 
-  my $target_file = ($GRAMMAR_TYPE eq "hiero") ? $TRAIN{target} : $TRAIN{parsed};
+  my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? $TRAIN{target} : $TRAIN{parsed};
 
   if ($GRAMMAR_TYPE eq "ghkm") {
     $cachepipe->cmd("ghkm-extract",
@@ -1307,8 +1308,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
     }
   }
 
-  # Pack the grammar.
-if ($DO_PACK_GRAMMARS && !($TEST_GRAMMAR =~ m/packed$/)) {
+	# Pack the grammar.
+	if ($DO_PACK_GRAMMARS && !($TEST_GRAMMAR =~ m/packed$/)) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
@@ -1325,7 +1326,7 @@ if ($DO_PACK_GRAMMARS && !($TEST_GRAMMAR =~ m/packed$/)) {
     # The actual grammar used for decoding is the packed directory.
     $TEST_GRAMMAR = $packed_dir;
   }
-  
+  	
   # Create the glue file.
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
@@ -1525,6 +1526,24 @@ if ($TUNEFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
   exit 1;
 }
 
+if ($DO_PACK_GRAMMARS) {
+  my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
+
+  $cachepipe->cmd("pack-test",
+                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                  $TEST_GRAMMAR,
+                  "$packed_dir/vocabulary",
+                  "$packed_dir/slice_00000.source");
+
+  # $TEST_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
+  # tuning grammar, is now used to record the text-based grammar, which is needed later for
+  # different things.
+  $TEST_GRAMMAR_FILE = $TEST_GRAMMAR;
+
+  # The actual grammar used for decoding is the packed directory.
+  $TEST_GRAMMAR = $packed_dir;
+}
+
 # this needs to be in a function since it is done all over the place
 open FROM, $TUNEFILES{decoder_command} or die "can't find file '$TUNEFILES{decoder_command}'";
 open TO, ">$testrun/decoder_command";
@@ -1532,8 +1551,17 @@ print TO "cat $TEST{source} | \$JOSHUA/bin/joshua-decoder -m $JOSHUA_MEM -thread
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
+my $weights_file = dirname($TUNEFILES{'joshua.config'}) . "/weights";
+$cachepipe->cmd("test-$NAME-copy-weights",
+                "cp $weights_file $testrun/weights",
+                $weights_file,
+                "$testrun/weights");
+
 # copy over the config file
-system("cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt 20 $TEST_GRAMMAR' -non-terminal $OOV > $testrun/joshua.config");
+$cachepipe->cmd("test-$NAME-copy-config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt 20 $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                $TUNEFILES{'joshua.config'},
+                "$testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
@@ -1851,7 +1879,7 @@ sub compute_bleu_summary {
   # Now average the runs, report BLEU
   my @bleus;
   my $numrecs = 0;
-  open CMD, "grep --color=never ' BLEU = ' $filepattern |";
+  open CMD, "grep ' BLEU = ' $filepattern |";
   while (<CMD>) {
     my @F = split;
     push(@bleus, 1.0 * $F[-1]);
