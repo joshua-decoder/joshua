@@ -486,10 +486,20 @@ public class Decoder {
       // Initialize the features: requires that LM model has been initialized.
       this.initializeFeatureFunctions();
 
-      long pre_sort_time = System.currentTimeMillis();
       // Sort the TM grammars (needed to do cube pruning)
-      logger.info(String.format("Grammar sorting took: %d seconds.",
-          (System.currentTimeMillis() - pre_sort_time) / 1000));
+      if (JoshuaConfiguration.amortized_sorting) {
+        logger.info("Grammar sorting happening lazily on-demand.");
+      } else {
+        long pre_sort_time = System.currentTimeMillis();
+        for (GrammarFactory grammarFactory : this.grammarFactories) {
+          if (grammarFactory instanceof Grammar) {
+            Grammar batchGrammar = (Grammar) grammarFactory;
+            batchGrammar.sortGrammar(this.featureFunctions);
+          }
+        }
+        logger.info(String.format("Grammar sorting took: %d seconds.",
+            (System.currentTimeMillis() - pre_sort_time) / 1000));
+      }        
 
       /* Create the threads */
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
