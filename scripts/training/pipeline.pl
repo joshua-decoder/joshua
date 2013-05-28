@@ -259,6 +259,9 @@ if ($JOSHUA_ARGS ne "" and $JOSHUA_ARGS !~ /^\s/) {
   $JOSHUA_ARGS = " $JOSHUA_ARGS";
 }
 
+$TUNEFILES{'joshua.config'} = get_absolute_path($TUNEFILES{'joshua.config'});
+$TUNEFILES{'decoder_command'} = get_absolute_path($TUNEFILES{'decoder_command'});
+
 my %DATA_DIRS = (
   train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
   tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
@@ -484,6 +487,11 @@ if ($NUM_JOBS == 1) {
 }
 
 my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? "X" : "OOV";
+
+# The phrasal system should use the ITG grammar, allowing for limited distortion
+if ($GRAMMAR_TYPE eq "phrasal") {
+  $GLUE_GRAMMAR_FILE = get_absolute_path("$JOSHUA/data/glue-grammar.itg");
+}
 
 # use this default unless it's already been defined by a command-line argument
 $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;

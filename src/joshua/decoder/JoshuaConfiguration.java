@@ -62,6 +62,10 @@ public class JoshuaConfiguration {
 
   public static boolean dense_features = true;
 
+  /* If false, sorting of the complete grammar is done at load time. If true, grammar tries are not
+   * sorted till they are first accessed. */
+  public static boolean amortized_sorting = true;
+
   public static String tm_file = null;
   public static String tm_format = "thrax";
 
@@ -322,6 +326,9 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("filter-grammar"))) {
             filter_grammar = Boolean.parseBoolean(fds[1]);
                       
+          } else if (parameter.equals(normalize_key("amortize"))) {
+            amortized_sorting = Boolean.parseBoolean(fds[1]);
+
           } else if (parameter.equals(normalize_key("use_pos_labels"))) {
             use_pos_labels = Boolean.parseBoolean(fds[1]);
 
