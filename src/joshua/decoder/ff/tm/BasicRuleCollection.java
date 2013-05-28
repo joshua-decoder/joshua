@@ -82,9 +82,7 @@ public class BasicRuleCollection implements RuleCollection {
   }
   
   public boolean isSorted() {
-    synchronized (this) {
-      return sorted;
-    }
+    return sorted;
   }
 
   private void sortRules(List<Rule> rules, List<FeatureFunction> models) {
@@ -104,15 +102,20 @@ public class BasicRuleCollection implements RuleCollection {
   }
 
   /* See Javadoc comments for RuleCollection interface. */
-  public void sortRules(List<FeatureFunction> models) {
-    synchronized (this) {
+  public synchronized void sortRules(List<FeatureFunction> models) {
+    /* The first check for whether to sort rules was outside a synchronized block, for
+     * efficiency. This creates a race condition, though, since sorting could have finished in
+     * another thread after the unsynchronized check and before this thread got the lock. Now that
+     * we have the lock, we check again, to prevent this condition.
+     */
+    if (! isSorted()) {
       sortRules(this.rules, models);
       this.sorted = true;
     }
   }
 
   /* See Javadoc comments for RuleCollection interface. */
-  public synchronized List<Rule> getSortedRules(List<FeatureFunction> models) {
+  public List<Rule> getSortedRules(List<FeatureFunction> models) {
     if (! isSorted())
       sortRules(models);
 
