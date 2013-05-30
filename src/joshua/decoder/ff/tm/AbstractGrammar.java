@@ -112,6 +112,9 @@ public abstract class AbstractGrammar implements Grammar {
         if (logger.isLoggable(Level.FINE))
           logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));
 
+        /* This causes the rules at this trie node to be sorted */
+        rules.getSortedRules(models);
+
         if (logger.isLoggable(Level.FINEST)) {
           StringBuilder s = new StringBuilder();
           for (Rule r : rules.getSortedRules(models)) {
