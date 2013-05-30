@@ -48,6 +48,9 @@ my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 # The maximum length of training sentences (--maxlen). The threshold is applied to both sides.
 my $MAXLEN = 50;
 
+# The maximum span rules in the main grammar can be applied to
+my $MAXSPAN = 20;
+
 # The maximum length of tuning and testing sentences (--maxlen-tune and --maxlen-test).
 my $MAXLEN_TUNE = 0;
 my $MAXLEN_TEST = 0;
@@ -212,6 +215,7 @@ my $retval = GetOptions(
   "test-grammar=s"    => \$TEST_GRAMMAR_FILE,
   "grammar=s"        => \$GRAMMAR_FILE,
   "glue-grammar=s"     => \$GLUE_GRAMMAR_FILE,
+  "maxspan=i"         => \$MAXSPAN,
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
   "maxlen=i"        => \$MAXLEN,
@@ -1228,6 +1232,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
 			s/<GRAMMAR_FILE>/$TUNE_GRAMMAR/g;
 			s/<GLUE_GRAMMAR>/$GLUE_GRAMMAR_FILE/g;
+			s/<MAXSPAN>/$MAXSPAN/g;
 			s/<OOV>/$OOV/g;
 			s/<NUMJOBS>/$NUM_JOBS/g;
 			s/<NUMTHREADS>/$NUM_THREADS/g;
@@ -1398,7 +1403,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 20 $TEST_GRAMMAR' > $testrun/joshua.config",
+                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config",
 									"$testrun/joshua.config");
 
@@ -1567,7 +1572,7 @@ $cachepipe->cmd("test-$NAME-copy-weights",
 
 # copy over the config file
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt 20 $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 
