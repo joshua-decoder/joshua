@@ -78,8 +78,8 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n"
-        + sentence.source());
+    logger.info(String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(), sentence.source()));
+
     if (sentence.target() != null)
       logger.info("Constraining to target sentence '" + sentence.target() + "'");
 
