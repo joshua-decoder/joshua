@@ -43,6 +43,8 @@ public class SimilarityAnnotator {
   private PrintWriter out;
   private BufferedReader in;
 
+  private String similarityLabel = "SimpleSimilarity";
+
   private String glue = null;
 
   public SimilarityAnnotator(String grammar_file, String alignment_file) throws IOException {
@@ -50,6 +52,10 @@ public class SimilarityAnnotator {
     alignmentReader = new LineReader(alignment_file);
   }
 
+  public void setSimilarityLabel(String label) {
+    this.similarityLabel = label;
+  }
+  
   private void initialize(String connection_string) throws NumberFormatException,
       UnknownHostException, IOException {
     String[] cfields = connection_string.split(":");
@@ -67,7 +73,7 @@ public class SimilarityAnnotator {
     ArrayList<Integer>[] tgt_alignment;
     int counter = 0;
 
-    glue = labeled ? " SimpleSimilarity=" : " ";
+    glue = labeled ? " " + similarityLabel + "=" : " ";
 
     while (grammarReader.hasNext() && alignmentReader.hasNext()) {
       counter++;
@@ -79,20 +85,21 @@ public class SimilarityAnnotator {
       src = gfields[1].split(" ");
       tgt = gfields[2].split(" ");
 
-      String aline = alignmentReader.readLine();
-      String[] afields = aline.trim().split("\\s\\|{3}\\s");
+      String aline = alignmentReader.readLine().trim();
+      // String[] afields = aline.trim().split("\\s\\|{3}\\s");
 
       try {
         // We have an alignment.
-        if (afields.length == 3) {
-          // Make sure we're talking about the same rule.
-          if (!afields[0].equals(gfields[1]) || !afields[1].equals(gfields[2])) {
-            logger.warning("Skipping line mismatch in line " + counter + ":\n" + "Grammar: "
-                + gline + "\n" + "Aligner: " + aline);
-            throw new RuntimeException("Giving this zero-similarity.");
-          }
+//        if (afields.length == 3) {
+//          // Make sure we're talking about the same rule.
+//          if (!afields[0].equals(gfields[1]) || !afields[1].equals(gfields[2])) {
+//            logger.warning("Skipping line mismatch in line " + counter + ":\n" + "Grammar: "
+//                + gline + "\n" + "Aligner: " + aline);
+//            throw new RuntimeException("Giving this zero-similarity.");
+//          }
 
-          String[] apoints = afields[2].split(" ");
+//          String[] apoints = afields[2].split(" ");
+          String[] apoints = aline.split(" ");
 
           src_alignment = new ArrayList[src.length];
           tgt_alignment = new ArrayList[tgt.length];
@@ -118,10 +125,11 @@ public class SimilarityAnnotator {
             src_alignment[src_coord].add(tgt_coord);
             tgt_alignment[tgt_coord].add(src_coord);
           }
-          if (alignment_broken) continue;
+          if (alignment_broken)
+            continue;
 
-          List<PhrasePair> phrase_pairs =
-              generatePhrasePairs(src, tgt, src_alignment, tgt_alignment);
+          List<PhrasePair> phrase_pairs = generatePhrasePairs(src, tgt, src_alignment,
+              tgt_alignment);
 
           for (PhrasePair phrase_pair : phrase_pairs) {
             double sim = getSimilarity(phrase_pair);
@@ -130,15 +138,18 @@ public class SimilarityAnnotator {
               sim_count++;
             }
           }
-          if (sim_count != 0) sim_score /= sim_count;
-        } else {
-          logger.warning("No alignment in line " + counter);
-        }
+          if (sim_count != 0)
+            sim_score /= sim_count;
+//        } else {
+//          logger.warning("No alignment in line " + counter);
+//        }
         System.out.print(gline);
-        if (!sparse || sim_score > 0) System.out.println(glue + sim_score);
+        if (!sparse || sim_score > 0)
+          System.out.println(glue + sim_score);
       } catch (Exception e) {
         System.out.print(gline);
-        if (!sparse) System.out.print(glue + "0");
+        if (!sparse)
+          System.out.print(glue + "0");
       }
     }
   }
@@ -152,16 +163,19 @@ public class SimilarityAnnotator {
     // Source and target from and to indices. Indices are inclusive.
     int sf, st, tf, tt;
     for (sf = 0; sf < src.length; sf++) {
-      if (FormatUtils.isNonterminal(src[sf]) || src_alignment[sf].isEmpty()) continue;
+      if (FormatUtils.isNonterminal(src[sf]) || src_alignment[sf].isEmpty())
+        continue;
       StringBuilder sp = new StringBuilder();
       tf = Integer.MAX_VALUE;
       tt = -1;
       // Extending source-side phrase.
       for (st = sf; st < Math.min(sf + max_length, src.length); st++) {
         // Next word is NT: stop phrase extraction here.
-        if (FormatUtils.isNonterminal(src[st])) break;
+        if (FormatUtils.isNonterminal(src[st]))
+          break;
         // Add source word to source phrase.
-        if (sp.length() != 0) sp.append(" ");
+        if (sp.length() != 0)
+          sp.append(" ");
         sp.append(src[st]);
 
         // Expand the target-side phrase.
@@ -177,7 +191,8 @@ public class SimilarityAnnotator {
         }
         // Projecting target-side phrase back onto source doesn't match up
         // with seed source phrase.
-        if (spf < sf || spt > st) continue;
+        if (spf < sf || spt > st)
+          continue;
         // Build target side phrase string.
         StringBuilder tp = new StringBuilder();
         for (int t = tf; t < tt; t++)
@@ -191,13 +206,13 @@ public class SimilarityAnnotator {
     return phrase_pairs;
   }
 
-  private int expandMin(int index, ArrayList<Integer> aligned) {
+  private static int expandMin(int index, ArrayList<Integer> aligned) {
     for (int a : aligned)
       index = Math.min(index, a);
     return index;
   }
 
-  private int expandMax(int index, ArrayList<Integer> aligned) {
+  private static int expandMax(int index, ArrayList<Integer> aligned) {
     for (int a : aligned)
       index = Math.max(index, a);
     return index;
@@ -205,7 +220,8 @@ public class SimilarityAnnotator {
 
   @SuppressWarnings("unused")
   private double getSimilarity(PhrasePair phrase_pair) throws IOException {
-    if (phrase_pair.isIdentity()) return 1.0;
+    if (phrase_pair.isIdentity())
+      return 1.0;
     try {
       out.println("s\t" + phrase_pair);
       String response = in.readLine();
@@ -244,6 +260,7 @@ public class SimilarityAnnotator {
     String grammar_file = null;
     String alignment_file = null;
     String connection_string = null;
+    String similarity_label = null;
 
     for (int i = 0; i < args.length; i++) {
       if ("-g".equals(args[i]) && (i < args.length - 1)) {
@@ -252,6 +269,8 @@ public class SimilarityAnnotator {
         alignment_file = args[++i];
       } else if ("-c".equals(args[i]) && (i < args.length - 1)) {
         connection_string = args[++i];
+      } else if ("-f".equals(args[i]) && (i < args.length - 1)) {
+        similarity_label = args[++i];
       } else if ("-l".equals(args[i])) {
         labeled = true;
       } else if ("-s".equals(args[i])) {
@@ -275,15 +294,19 @@ public class SimilarityAnnotator {
       logger.severe("I cannot condone grammars that are both sparse " + "and unlabeled.");
       return;
     }
-    if (args.length < 3) usage();
+    if (args.length < 3)
+      usage();
 
     SimilarityAnnotator annotator = new SimilarityAnnotator(grammar_file, alignment_file);
+    if (similarity_label != null) {
+      logger.info("Setting label: " + similarity_label);
+      annotator.setSimilarityLabel(similarity_label);
+    }
 
     annotator.initialize(connection_string);
     annotator.annotate();
     annotator.cleanup();
   }
-
 
   class PhrasePair {
     private String src;

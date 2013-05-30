@@ -1098,24 +1098,10 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
 									$TUNE_GRAMMAR);
 }
 
-# Create the glue grammars. This is done by looking at all the symbols in the grammar file and
-# creating all the needed rules.
-if (! defined $GLUE_GRAMMAR_FILE) {
-  $cachepipe->cmd("glue-tune",
-									"java -Xmx2g -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
-									$TUNE_GRAMMAR,
-									"$DATA_DIRS{tune}/grammar.glue");
-  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
-} else {
-  # just create a symlink to it
-  my $filename = $DATA_DIRS{tune} . "/" . basename($GLUE_GRAMMAR_FILE);
-  system("ln -sf $GLUE_GRAMMAR_FILE $filename");
-}
-
 # Pack the grammar, if requested (yes by default). This must be done after the glue grammar is
 # created, since we don't have a script (yet) to dump the rules from a packed grammar, which
 # information we need to create the glue grammar.
-if ($DO_PACK_GRAMMARS) {
+if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
@@ -1131,6 +1117,20 @@ if ($DO_PACK_GRAMMARS) {
 
   # The actual grammar used for decoding is the packed directory.
   $TUNE_GRAMMAR = $packed_dir;
+}
+
+# Create the glue grammars. This is done by looking at all the symbols in the grammar file and
+# creating all the needed rules.
+if (! defined $GLUE_GRAMMAR_FILE) {
+  $cachepipe->cmd("glue-tune",
+  "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
+  $TUNE_GRAMMAR,
+  "$DATA_DIRS{tune}/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
+} else {
+  # just create a symlink to it
+  my $filename = $DATA_DIRS{tune} . "/" . basename($GLUE_GRAMMAR_FILE);
+  system("ln -sf $GLUE_GRAMMAR_FILE $filename");
 }
 
 # For each language model, we need to create an entry in the Joshua
@@ -1321,27 +1321,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
     }
   }
 
-  # Create the glue file.
-  if (! defined $GLUE_GRAMMAR_FILE) {
-    $cachepipe->cmd("glue-test",
-                    "java -Xmx1g -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
-                    $TEST_GRAMMAR,
-                    "$DATA_DIRS{test}/grammar.glue");
-    $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
-
-  } else {
-    # just create a symlink to it
-    my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
-
-    if ($GLUE_GRAMMAR_FILE =~ /^\//) {
-      system("ln -sf $GLUE_GRAMMAR_FILE $filename"); 
-    } else {
-      system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename"); 
-    }
-  }
-
-  # Pack the grammar.
-  if ($DO_PACK_GRAMMARS) {
+	# Pack the grammar.
+	if ($DO_PACK_GRAMMARS && !($TEST_GRAMMAR =~ m/packed$/)) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
@@ -1357,6 +1338,25 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
     # The actual grammar used for decoding is the packed directory.
     $TEST_GRAMMAR = $packed_dir;
+  }
+  	
+  # Create the glue file.
+  if (! defined $GLUE_GRAMMAR_FILE) {
+    $cachepipe->cmd("glue-test",
+    "java -Xmx1g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
+    $TEST_GRAMMAR,
+    "$DATA_DIRS{test}/grammar.glue");
+    $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
+    
+  } else {
+    # just create a symlink to it
+    my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
+    
+    if ($GLUE_GRAMMAR_FILE =~ /^\//) {
+      system("ln -sf $GLUE_GRAMMAR_FILE $filename");
+    } else {
+      system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename");
+    }
   }
 
   my $testrun = (defined $NAME) ? "test/$NAME/$run" : "test/$run";
@@ -1528,7 +1528,7 @@ if ($TEST_GRAMMAR_FILE) {
 # build the glue grammar if needed
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-test-$NAME",
-									"java -Xmx1g -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
+									"java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
 									$TEST_GRAMMAR,
 									"$DATA_DIRS{test}/grammar.glue");
   $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";

@@ -7,6 +7,10 @@
 use strict;
 use warnings;
 
+binmode(STDIN, ":utf8");
+binmode(STDOUT, ":utf8");
+binmode(STDERR, ":utf8");
+
 my ($language) = shift(@ARGV) || "en";
 
 while(<STDIN>) {

@@ -5,11 +5,11 @@ set -u
 export THRAX=$JOSHUA/thrax
 
 # pack the grammar
-rm -rf dense_map grammar.packed
+rm -rf grammar.packed
 $JOSHUA/scripts/support/grammar-packer.pl grammar.gz grammar.packed 2> packer.log
 
 # generate the glue grammar
-gzip -cd grammar.gz | $JOSHUA/thrax/scripts/create_glue_grammar.sh > grammar.glue
+$JOSHUA/thrax/scripts/create_glue_grammar.sh grammar.packed > grammar.glue
 
 # decode
 cat input.bn | $JOSHUA/bin/joshua-decoder -m 1g -threads 2 -c joshua.config > output 2> log
