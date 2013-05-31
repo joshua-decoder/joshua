@@ -204,7 +204,7 @@
   <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Delete the compiled files -->
-  <target name="clean" depends="clean-java">
+  <target name="clean" depends="clean-thrax,clean-java">
     <exec executable="make">
       <arg value="-C" />
       <arg value="scripts/training/giza-pp" />
@@ -227,6 +227,14 @@
       </fileset>
     </delete>
   </target>
+
+	<target name="clean-thrax">
+		<delete verbose="true" quiet="true">
+			<fileset dir="${thraxlib}">
+				<include name="**/*.class"/>
+			</fileset>
+		</delete>
+	</target>
 
   <!-- EXPERIMENTAL: Delete *all* generated files -->
   <target name="distclean" depends="clean">

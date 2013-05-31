@@ -48,6 +48,9 @@ my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 # The maximum length of training sentences (--maxlen). The threshold is applied to both sides.
 my $MAXLEN = 50;
 
+# The maximum span rules in the main grammar can be applied to
+my $MAXSPAN = 20;
+
 # The maximum length of tuning and testing sentences (--maxlen-tune and --maxlen-test).
 my $MAXLEN_TUNE = 0;
 my $MAXLEN_TEST = 0;
@@ -212,6 +215,7 @@ my $retval = GetOptions(
   "test-grammar=s"    => \$TEST_GRAMMAR_FILE,
   "grammar=s"        => \$GRAMMAR_FILE,
   "glue-grammar=s"     => \$GLUE_GRAMMAR_FILE,
+  "maxspan=i"         => \$MAXSPAN,
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
   "maxlen=i"        => \$MAXLEN,
@@ -258,6 +262,9 @@ my $DOING_LATTICES = 0;
 if ($JOSHUA_ARGS ne "" and $JOSHUA_ARGS !~ /^\s/) {
   $JOSHUA_ARGS = " $JOSHUA_ARGS";
 }
+
+$TUNEFILES{'joshua.config'} = get_absolute_path($TUNEFILES{'joshua.config'});
+$TUNEFILES{'decoder_command'} = get_absolute_path($TUNEFILES{'decoder_command'});
 
 my %DATA_DIRS = (
   train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
@@ -484,6 +491,11 @@ if ($NUM_JOBS == 1) {
 }
 
 my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? "X" : "OOV";
+
+# The phrasal system should use the ITG grammar, allowing for limited distortion
+if ($GRAMMAR_TYPE eq "phrasal") {
+  $GLUE_GRAMMAR_FILE = get_absolute_path("$JOSHUA/data/glue-grammar.itg");
+}
 
 # use this default unless it's already been defined by a command-line argument
 $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
@@ -1220,6 +1232,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
 			s/<GRAMMAR_FILE>/$TUNE_GRAMMAR/g;
 			s/<GLUE_GRAMMAR>/$GLUE_GRAMMAR_FILE/g;
+			s/<MAXSPAN>/$MAXSPAN/g;
 			s/<OOV>/$OOV/g;
 			s/<NUMJOBS>/$NUM_JOBS/g;
 			s/<NUMTHREADS>/$NUM_THREADS/g;
@@ -1390,7 +1403,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt 20 $TEST_GRAMMAR' > $testrun/joshua.config",
+                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config",
 									"$testrun/joshua.config");
 
@@ -1559,7 +1572,7 @@ $cachepipe->cmd("test-$NAME-copy-weights",
 
 # copy over the config file
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt 20 $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 
