@@ -39,6 +39,7 @@ import java.util.zip.GZIPInputStream;
  * @since 28 February 2009
  * @version $LastChangedDate$
  */
+@SuppressWarnings("resource")
 public class FileUtility {
 
   /*

@@ -1,9 +1,8 @@
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.packed.PackedGrammar.PackedRule;
-import joshua.decoder.chart_parser.SourcePath;
 import joshua.corpus.Vocabulary;
+import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.tm.Rule;
 
 /**
  * This feature handles the list of features that are found with grammar rules in the grammar file.
