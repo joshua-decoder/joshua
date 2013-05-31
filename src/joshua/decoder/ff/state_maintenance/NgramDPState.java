@@ -84,7 +84,7 @@ public class NgramDPState implements DPState {
          * states[i]!=Symbol.NULL_LEFT_LM_STATE_SYM_ID && states[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID
          */
         ) {
-          sb.append(Vocabulary.word(state.get(i)));
+          sb.append(String.format("%d", state.get(i)));
           if (i < state.size() - 1) {
             sb.append(' ');
           }
