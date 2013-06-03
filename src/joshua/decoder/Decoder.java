@@ -255,6 +255,7 @@ public class Decoder {
         threadPool.put(decoderThread);
       } catch (InterruptedException e) {
         // TODO Auto-generated catch block
+        System.err.println("* WARNING: I encountered an error trying to return the decoder thread.");
         e.printStackTrace();
       }
     }
