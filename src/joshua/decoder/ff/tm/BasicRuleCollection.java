@@ -69,7 +69,7 @@ public class BasicRuleCollection implements RuleCollection {
     }
     this.sourceTokens = sourceTokens;
     this.arity = arity;
-    this.sorted = true;
+    this.sorted = false;
   }
 
   /* See Javadoc comments for RuleCollection interface. */
