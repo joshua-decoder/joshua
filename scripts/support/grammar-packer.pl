@@ -35,6 +35,9 @@ sub usage {
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 
+# Sort the grammar.
+system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} | gzip -9n > grammar.sorted.gz");
+
 # Create a dummy packer configuration file, since that is needed by the packer. We do no
 # quantization, and simply create a single float quantizer item that applies to all features found
 # in the grammar. Note that this isn't recommended for working with sparse grammars!
@@ -44,9 +47,11 @@ print CONFIG "slice_size 100000\n";
 close(CONFIG);
 
 # Do the packing using the config.
-my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g $grammar";
+my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -c $packer_config -p $output_dir -g grammar.sorted.gz";
 print STDERR "Packing with $cmd\n";
 my $retval = system($cmd);
+
+unlink("grammar.sorted.gz");
 
 if ($retval == 0) {
   # Clean up.
