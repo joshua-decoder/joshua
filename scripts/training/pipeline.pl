@@ -1329,6 +1329,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
                     "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
+                    "$packed_dir/encoding",
                     "$packed_dir/slice_00000.source");
 
     # $TEST_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
