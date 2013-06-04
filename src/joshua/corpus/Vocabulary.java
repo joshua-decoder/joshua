@@ -180,13 +180,8 @@ public class Vocabulary {
   }
 
   public static String word(int id) {
-    synchronized (lock) {
-      id = Math.abs(id);
-      if (id >= idToString.size()) {
-        throw new UnknownSymbolException(id);
-      }
-      return idToString.get(id);
-    }
+    id = Math.abs(id);
+    return idToString.get(id);
   }
 
   public static String getWords(int[] ids) {
