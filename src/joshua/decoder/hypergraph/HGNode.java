@@ -153,7 +153,7 @@ public class HGNode implements Prunable<HGNode> {
           return false;
         if (dpStates == null)
           return (that.dpStates == null);
-        if (dpStates == null)
+        if (that.dpStates == null)
           return false;
         if (dpStates.size() != that.dpStates.size())
           return false;
