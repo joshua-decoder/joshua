@@ -1,6 +1,6 @@
 package joshua.decoder.ff.state_maintenance;
 
-import java.util.List;
+import java.util.Arrays;
 
 import joshua.corpus.Vocabulary;
 
@@ -8,75 +8,75 @@ import joshua.corpus.Vocabulary;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author Juri Ganitkevitch, <juri@cs.jhu.edu>
  */
-public class NgramDPState implements DPState {
+public class NgramDPState extends DPState {
 
-  private List<Integer> leftLMStateWords;
-  private List<Integer> rightLMStateWords;
+  private int[] left;
+  private int[] right;
 
   private int hash = 0;
 
-  public NgramDPState(List<Integer> leftLMStateWords, List<Integer> rightLMStateWords) {
-    this.leftLMStateWords = leftLMStateWords;
-    this.rightLMStateWords = rightLMStateWords;
+  public NgramDPState(int[] l, int[] r) {
+    left = l;
+    right = r;
+    assertLengths();
   }
 
-  public void setLeftLMStateWords(List<Integer> words_) {
-    this.leftLMStateWords = words_;
+  public void setLeftLMStateWords(int[] words) {
+    left = words;
+    assertLengths();
   }
 
-  public List<Integer> getLeftLMStateWords() {
-    return this.leftLMStateWords;
+  public int[] getLeftLMStateWords() {
+    return left;
   }
 
-  public void setRightLMStateWords(List<Integer> words_) {
-    this.rightLMStateWords = words_;
+  public void setRightLMStateWords(int[] words) {
+    right = words;
+    assertLengths();
   }
 
-  public List<Integer> getRightLMStateWords() {
-    return this.rightLMStateWords;
+  public int[] getRightLMStateWords() {
+    return right;
+  }
+
+  private final void assertLengths() {
+    if (left.length != right.length)
+      throw new RuntimeException("Unequal lengths in left and right state: < "
+          + Vocabulary.getWords(left) + " | " + Vocabulary.getWords(right) + " >");
   }
 
   @Override
   public int hashCode() {
     if (hash == 0) {
-      hash = 31 + stateHash(leftLMStateWords);
-      hash = hash * 19 + stateHash(rightLMStateWords);
+      hash = 31 + Arrays.hashCode(left);
+      hash = hash * 19 + Arrays.hashCode(right);
     }
     return hash;
   }
-  
+
   @Override
   public boolean equals(Object other) {
     if (other instanceof NgramDPState) {
       NgramDPState that = (NgramDPState) other;
-      if (this.leftLMStateWords.size() != that.leftLMStateWords.size()) return false;
-      if (this.rightLMStateWords.size() != that.rightLMStateWords.size()) return false;
-      for (int i = 0; i < this.leftLMStateWords.size(); ++i)
-        if (!this.leftLMStateWords.get(i).equals(that.leftLMStateWords.get(i)))
-          return false;
-      for (int i = 0; i < this.rightLMStateWords.size(); ++i)
-        if (!this.rightLMStateWords.get(i).equals(that.rightLMStateWords.get(i)))
+      if (this.left.length != that.left.length)
+        return false;
+      if (this.right.length != that.right.length)
+        return false;
+      for (int i = 0; i < left.length; ++i)
+        if (this.left[i] != that.left[i] || this.right[i] != that.right[i])
           return false;
       return true;
     }
     return false;
   }
 
-  private int stateHash(List<Integer> state) {
-    int state_hash = 17;
-    if (null != state)
-      for (int i : state)
-        state_hash = state_hash * 19 + i;
-    return state_hash;
-  }
-
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("<");
-    for (int id : leftLMStateWords)
+    for (int id : left)
       sb.append(" " + Vocabulary.word(id));
     sb.append(" |");
-    for (int id : rightLMStateWords)
+    for (int id : right)
       sb.append(" " + Vocabulary.word(id));
     sb.append(" >");
     return sb.toString();
