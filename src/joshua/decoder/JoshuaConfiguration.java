@@ -29,7 +29,7 @@ public class JoshuaConfiguration {
 
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
-  public static double lm_ceiling_cost = 100;
+  public static float lm_ceiling_cost = 100;
   public static boolean use_left_equivalent_state = false;
   public static boolean use_right_equivalent_state = false;
   public static int lm_order = 3;
@@ -271,7 +271,7 @@ public class JoshuaConfiguration {
             }
 
           } else if (parameter.equals(normalize_key("lm_ceiling_cost"))) {
-            lm_ceiling_cost = Double.parseDouble(fds[1]);
+            lm_ceiling_cost = Float.parseFloat(fds[1]);
             logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 
           } else if (parameter.equals(normalize_key("use_left_equivalent_state"))) {

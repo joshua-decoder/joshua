@@ -82,7 +82,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     int lm_state_size = 0;
     for (HGNode node : tailNodes) {
       NgramDPState state = (NgramDPState) node.getDPState(stateComputer);
-      lm_state_size += state.getLeftLMStateWords().size() + state.getRightLMStateWords().size();
+      lm_state_size += state.getLeftLMStateWords().length + state.getRightLMStateWords().length;
     }
 
     ArrayList<int[]> batch = new ArrayList<int[]>();

@@ -165,20 +165,20 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
    * 
    * @return the linearly-interpolated Witten-Bell smoothed probability of an ngram
    */
-  private double wittenBell(int[] ngram, int ngramOrder) {
+  private float wittenBell(int[] ngram, int ngramOrder) {
     int end = ngram.length;
     double p = p0; // current calculated probability
     // note that p0 and lambda0 are independent of the given
     // ngram so they are calculated ahead of time.
     int MAX_QCOUNT = getCount(ngram, ngram.length - 1, ngram.length, maxQ);
     if (MAX_QCOUNT == 0) // OOV!
-      return p;
+      return (float) p;
     double pML = Math.log(unQuantize(MAX_QCOUNT)) - numTokens;
 
     // p += lambda0 * pML;
     p = logAdd(p, (lambda0 + pML));
     if (ngram.length == 1) { // if it's a unigram, we're done
-      return p;
+      return (float) p;
     }
     // otherwise we calculate the linear interpolation
     // with higher order models.
@@ -188,7 +188,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
       // terms in the interpolation must be zero, so we
       // are done here.
       if (historyCnt == 0) {
-        return p;
+        return (float) p;
       }
       int historyTypesAfter = getTypesAfter(ngram, i, end, historyCnt);
       // unQuantize the counts we got from the BF
@@ -202,11 +202,11 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
       int wordCount = getCount(ngram, i + 1, end, historyTypesAfter);
       double WC = unQuantize(wordCount);
       // p += lambda * p_ML(w|h)
-      if (WC == 0) return p;
+      if (WC == 0) return (float) p;
       p = logAdd(p, lambda + Math.log(WC) - Math.log(HC));
       MAX_QCOUNT = wordCount;
     }
-    return p;
+    return (float) p;
   }
 
   /**
@@ -561,7 +561,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
   }
 
   @Override
-  protected double logProbabilityOfBackoffState_helper(int[] ngram, int order,
+  protected float logProbabilityOfBackoffState_helper(int[] ngram, int order,
       int qtyAdditionalBackoffWeight) {
     throw new UnsupportedOperationException(
         "probabilityOfBackoffState_helper undefined for bloom filter LM");
@@ -577,7 +577,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
    * @return the language model score of the ngram
    */
   @Override
-  protected double ngramLogProbability_helper(int[] ngram, int order) {
+  protected float ngramLogProbability_helper(int[] ngram, int order) {
     int[] lm_ngram = new int[ngram.length];
     for (int i = 0; i < ngram.length; i++) {
       lm_ngram[i] = Vocabulary.id(Vocabulary.word(ngram[i]));
