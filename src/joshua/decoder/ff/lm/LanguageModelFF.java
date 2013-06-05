@@ -176,7 +176,7 @@ public class LanguageModelFF extends StatefulFF {
    */
   private float computeTransition(int[] enWords, List<HGNode> tailNodes) {
 
-    List<Integer> currentNgram = new LinkedList<Integer>();
+    LinkedList<Integer> currentNgram = new LinkedList<Integer>();
     float transitionLogP = 0.0f;
 
     for (int c = 0; c < enWords.length; c++) {
@@ -204,7 +204,7 @@ public class LanguageModelFF extends StatefulFF {
                 currentNgram.size(), numAdditionalBackoffWeight);
 
             if (currentNgram.size() == this.ngramOrder) {
-              currentNgram.remove(0);
+              currentNgram.removeFirst();
             }
           } else if (currentNgram.size() == this.ngramOrder) {
             // Compute the current word probability, and remove it.s
@@ -213,7 +213,7 @@ public class LanguageModelFF extends StatefulFF {
             // System.err.println(String.format("NGRAM(%s) = %.5f",
             // Vocabulary.getWords(currentNgram), prob));
             transitionLogP += prob;
-            currentNgram.remove(0);
+            currentNgram.removeFirst();
           }
 
         }
@@ -252,7 +252,7 @@ public class LanguageModelFF extends StatefulFF {
   private float computeFinalTransition(NgramDPState state) {
 
     float res = 0.0f;
-    List<Integer> currentNgram = new LinkedList<Integer>();
+    LinkedList<Integer> currentNgram = new LinkedList<Integer>();
     int[] leftContext = state.getLeftLMStateWords();
     int[] rightContext = state.getRightLMStateWords();
 
@@ -282,18 +282,19 @@ public class LanguageModelFF extends StatefulFF {
         }
       }
       if (currentNgram.size() == this.ngramOrder) {
-        currentNgram.remove(0);
+        currentNgram.removeFirst();
       }
     }
 
     // ================ right context
     // switch context, we will never score the right context probability because they are either
-    // duplicate or partional ngrams
+    // duplicate or partial ngrams
     if (addStartAndEndSymbol) {
       int tSize = currentNgram.size();
-      for (int i = 0; i < rightContext.length; i++) {// replace context
-        currentNgram.set(tSize - rightContext.length + i, rightContext[i]);
-      }
+      for (int i = 0; i < rightContext.length; i++)
+        currentNgram.removeLast();
+      for (int i = 0; i < rightContext.length; i++)
+        currentNgram.add(rightContext[i]);
 
       currentNgram.add(STOP_SYM_ID);
       float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
