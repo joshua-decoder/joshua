@@ -38,7 +38,7 @@ class Cell {
   private int goalSymID;
 
   // to maintain uniqueness of nodes
-  private HashMap<String, HGNode> nodesSigTbl = new HashMap<String, HGNode>();
+  private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new HashMap<HGNode.Signature, HGNode>();
 
   // signature by lhs
   private Map<Integer, SuperNode> superNodesTbl = new HashMap<Integer, SuperNode>();
@@ -188,7 +188,7 @@ class Cell {
        * each node has a list of hyperedges, need to check whether the node is already exist, if
        * yes, just add the hyperedges, this may change the best logP of the node
        * */
-      HGNode oldNode = this.nodesSigTbl.get(newNode.getSignature());
+      HGNode oldNode = this.nodesSigTbl.get(newNode.signature());
       if (null != oldNode) { // have an item with same states, combine items
         this.chart.nMerged++;
 
@@ -202,11 +202,9 @@ class Cell {
             oldNode.setDead();// this.heapItems.remove(oldItem);
             beamPruner.incrementDeadObjs();
           }
-
           newNode.addHyperedgesInNode(oldNode.hyperedges);
-          addNewNode(newNode, noPrune); // this will update the HashMap, so that the oldNode is
-          // destroyed
-
+          // This will update the HashMap, so that the oldNode is destroyed.
+          addNewNode(newNode, noPrune);
         } else {// merge new to old, does not trigger pruningItems
           oldNode.addHyperedgesInNode(newNode.hyperedges);
         }
@@ -240,17 +238,15 @@ class Cell {
    * is worse than the new hyperedge's logP
    * */
   private void addNewNode(HGNode node, boolean noPrune) {
-    this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
+    this.nodesSigTbl.put(node.signature(), node); // add/replace the item
     this.sortedNodes = null; // reset the list
-
-    // System.err.println("Adding: " + node);
 
     if (beamPruner != null) {
       if (noPrune == false) {
         List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
         this.chart.nPrunedItems += prunedNodes.size();
         for (HGNode prunedNode : prunedNodes)
-          nodesSigTbl.remove(prunedNode.getSignature());
+          nodesSigTbl.remove(prunedNode.signature());
       } else {
         beamPruner.addOneObjInHeapWithoutPrune(node);
       }
@@ -273,10 +269,8 @@ class Cell {
    * mainly needed for goal_bin and cube-pruning
    */
   private void ensureSorted() {
-
     if (null == this.sortedNodes) {
-      // == get sortedNodes
-      // HGNode[] tCollection =(HGNode[])((Collection<HGNode>)this.nodesSigTbl.values()).toArray();
+      // Get sortedNodes.
       HGNode[] nodesArray = new HGNode[this.nodesSigTbl.size()];
       int i = 0;
       for (HGNode node : this.nodesSigTbl.values())
@@ -290,12 +284,11 @@ class Cell {
       this.sortedNodes = new ArrayList<HGNode>();
       for (HGNode node : nodesArray) {
         this.sortedNodes.add(node);
-        // System.out.println(node.getPruneLogP());
       }
 
       // TODO: we cannot create new SuperItem here because the DotItem link to them
 
-      // == update superNodesTbl
+      // Update superNodesTbl
       List<SuperNode> tem_list = new ArrayList<SuperNode>(this.superNodesTbl.values());
       for (SuperNode t_si : tem_list) {
         t_si.nodes.clear();
@@ -309,7 +302,7 @@ class Cell {
         si.nodes.add(it);
       }
 
-      // == remove SuperNodes who may not contain any node any more due to pruning
+      // Remove SuperNodes who may not contain any node any more due to pruning
       List<Integer> toRemove = new ArrayList<Integer>();
       for (Integer k : this.superNodesTbl.keySet()) {
         if (this.superNodesTbl.get(k).nodes.size() <= 0) {

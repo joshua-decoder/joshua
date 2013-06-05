@@ -17,10 +17,11 @@
 package joshua.decoder.ff.state_maintenance;
 
 /**
+ * No longer necessary, actually, since it doesn't enforce anything.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Juri Ganitkevitch, <juri@cs.jhu.edu>
  */
 public interface DPState {
-  String getSignature(boolean forceRecompute);
+  // Nothing.
 }

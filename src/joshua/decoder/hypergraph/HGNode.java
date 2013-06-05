@@ -1,7 +1,5 @@
 package joshua.decoder.hypergraph;
 
-import joshua.corpus.Vocabulary;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -17,9 +15,11 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
  * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Juri Ganitkevitch, <juri@cs.jhu.edu>
  */
 
-// @todo: handle the case that the Hypergraph only maintains the one-best tree
+// TODO: handle the case that the Hypergraph only maintains the one-best tree
+@SuppressWarnings("rawtypes")
 public class HGNode implements Prunable<HGNode> {
 
   public int i, j;
@@ -37,22 +37,18 @@ public class HGNode implements Prunable<HGNode> {
   // for LM model
   TreeMap<StateComputer, DPState> dpStates;
 
-  // ============== auxiluary variables, no need to store on disk
-  // signature of this item: lhs, states
-  private String signature = null;
-  // seperator for the signature for each state
-  private static final String STATE_SIG_SEP = " -f- ";
+  private Signature signature = null;
 
-  // ============== for pruning purpose
+  // For pruning purposes.
   public boolean isDead = false;
   private double estTotalLogP = 0.0; // it includes the estimated LogP
-
 
   // ===============================================================
   // Constructors
   // ===============================================================
 
-  public HGNode(int i, int j, int lhs, TreeMap<StateComputer, DPState> dpStates, HyperEdge hyperEdge, double pruningEstimate) {
+  public HGNode(int i, int j, int lhs, TreeMap<StateComputer, DPState> dpStates,
+      HyperEdge hyperEdge, double pruningEstimate) {
     this.lhs = lhs;
     this.i = i;
     this.j = j;
@@ -60,7 +56,6 @@ public class HGNode implements Prunable<HGNode> {
     this.estTotalLogP = pruningEstimate;
     addHyperedgeInNode(hyperEdge);
   }
-
 
   // used by disk hg
   public HGNode(int i, int j, int lhs, List<HyperEdge> hyperedges, HyperEdge bestHyperedge,
@@ -86,12 +81,9 @@ public class HGNode implements Prunable<HGNode> {
     if (hyperEdge != null) {
       if (null == hyperedges)
         hyperedges = new ArrayList<HyperEdge>();
-
       hyperedges.add(hyperEdge);
       // Update the cache of this node's best incoming edge.
       semiringPlus(hyperEdge);
-      
-//      System.err.println(String.format("ADD_EDGES_TO_NODE: adding \n\tEDGE %s to \n\tNODE %s", hyperEdge, this));
     }
   }
 
@@ -102,7 +94,6 @@ public class HGNode implements Prunable<HGNode> {
     for (HyperEdge hyperEdge : hyperedges)
       addHyperedgeInNode(hyperEdge);
   }
-
 
   /**
    * Updates the cache of the best incoming hyperedge.
@@ -125,45 +116,59 @@ public class HGNode implements Prunable<HGNode> {
     }
   }
 
-
   public void printInfo(Level level) {
     if (HyperGraph.logger.isLoggable(level))
       HyperGraph.logger.log(level,
           String.format("lhs: %s; logP: %.3f", lhs, bestHyperedge.bestDerivationLogP));
   }
 
+  public Signature signature() {
+    if (signature == null)
+      signature = new Signature();
+    return signature;
+  }
 
-  /**
-   * Produce the signature of the item.  The span (i,j) is implicit and does not need to be part of
-   * the signature.
-   *
-   * TODO: we shouldn't be using string signatures.
-   */
-  public String getSignature() {
-    if (null == this.signature) {
-      StringBuffer s = new StringBuffer();
-      s.append(lhs);
-      s.append(" ");
+  public class Signature {
+    // Cached hash code.
+    private int hash = 0;
 
-      /* Iterate over all the node's states, creating the signature. */
-      if (null != this.dpStates && this.dpStates.size() > 0) {
-        for (StateComputer stateComputer: this.dpStates.keySet()) {
-          s.append(this.dpStates.get(stateComputer).getSignature(false));
-          s.append(STATE_SIG_SEP);
-        }
-
-        // Iterator<Map.Entry<Integer, DPState>> it = this.dpStates.entrySet().iterator();
-        // while (it.hasNext()) {
-        //   Map.Entry<Integer, DPState> entry = it.next();
-        //   s.append(entry.getValue().getSignature(false));
-        //   if (it.hasNext()) s.append(STATE_SIG_SEP);
-        // }
+    @Override
+    public int hashCode() {
+      if (hash == 0) {
+        hash = 31 * lhs;
+        // BUG: This is unsafe, because no guarantees of order are made between state types.
+        // Iterate over all the node's states, hashing.
+        if (null != dpStates && dpStates.size() > 0)
+          for (DPState dps : dpStates.values())
+            hash = hash * 19 + dps.hashCode();
       }
-
-      this.signature = s.toString();
+      return hash;
     }
 
-    return this.signature;
+    @Override
+    public boolean equals(Object other) {
+      if (other instanceof Signature) {
+        HGNode that = ((Signature) other).node();
+        if (lhs != that.lhs)
+          return false;
+        if (dpStates == null)
+          return (that.dpStates == null);
+        if (that.dpStates == null)
+          return false;
+        if (dpStates.size() != that.dpStates.size())
+          return false;
+        for (StateComputer sc : dpStates.keySet()) {
+          if (!dpStates.get(sc).equals(that.dpStates.get(sc)))
+            return false;
+        }
+        return true;
+      }
+      return false;
+    }
+
+    public HGNode node() {
+      return HGNode.this;
+    }
   }
 
   public double getEstTotalLogP() {
@@ -194,13 +199,12 @@ public class HGNode implements Prunable<HGNode> {
       int span2 = item2.j - item2.i;
       if (span1 < span2)
         return -1;
-      else if (span1 > span2) 
+      else if (span1 > span2)
         return 1;
-      else
-        if (item1.i < item2.i)
-          return -1;
-        else if (item1.i > item2.i)
-          return 1;
+      else if (item1.i < item2.i)
+        return -1;
+      else if (item1.i > item2.i)
+        return 1;
       return 0;
     }
   };
@@ -240,11 +244,9 @@ public class HGNode implements Prunable<HGNode> {
     return this.isDead;
   }
 
-
   public double getPruneLogP() {
     return this.estTotalLogP;
   }
-
 
   public void setDead() {
     this.isDead = true;
@@ -257,19 +259,21 @@ public class HGNode implements Prunable<HGNode> {
   public String toString() {
     StringBuilder sb = new StringBuilder();
 
-    sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j, bestHyperedge.bestDerivationLogP));
+    sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j,
+        bestHyperedge.bestDerivationLogP));
     if (dpStates != null)
-      for (DPState state: dpStates.values())
+      for (DPState state : dpStates.values())
         sb.append(" <" + state + ">");
-    
-    //    if (this.hyperedges != null) {
-    //      sb.append(" hyperedges: " + hyperedges.size());
-    //      for (HyperEdge edge: hyperedges) {
-    //        sb.append("\n\t" + edge.getRule() + " ||| pathcost=" + edge.getSourcePath() + " ref="+ Integer.toHexString(edge.hashCode()));
-    //      }
-    //    }
-        
-    //    sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
+
+    // if (this.hyperedges != null) {
+    // sb.append(" hyperedges: " + hyperedges.size());
+    // for (HyperEdge edge: hyperedges) {
+    // sb.append("\n\t" + edge.getRule() + " ||| pathcost=" + edge.getSourcePath() + " ref="+
+    // Integer.toHexString(edge.hashCode()));
+    // }
+    // }
+
+    // sb.append("\n\ttransition score = " + bestHyperedge.getTransitionLogP(true));
     return sb.toString();
   }
 

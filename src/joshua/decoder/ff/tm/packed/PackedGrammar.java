@@ -568,6 +568,20 @@ public class PackedGrammar extends BatchGrammar {
         public float estimateRuleCost(List<FeatureFunction> models) {
           return estimated[source[address + 2]];
         }
+        
+        @Override
+        public String toString() {
+          StringBuffer sb = new StringBuffer();
+          sb.append(Vocabulary.word(this.getLHS()));
+          sb.append(" ||| ");
+          sb.append(Vocabulary.getWords(this.getFrench()));
+          sb.append(" ||| ");
+          sb.append(Vocabulary.getWords(getEnglish()));
+          sb.append(" |||");
+          sb.append(" " + getFeatureVector());
+          sb.append(String.format(" ||| %.3f", getEstimatedCost()));
+          return sb.toString();
+        }
       }
     }
   }
