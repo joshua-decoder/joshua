@@ -134,7 +134,7 @@
   <target name="all" depends="giza, kenlm, parallelize">
   </target>
 
-  <target name="devel" depends="init, java, all">
+  <target name="devel" depends="init, java, giza, kenlm, parallelize">
   </target>
 
   <!-- Compile the Java code. -->
