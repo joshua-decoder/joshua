@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat input | $JOSHUA/bin/joshua-decoder -m 500m config > output 2> log
+cat input | $JOSHUA/bin/joshua-decoder -m 500m config 2> log | sort > output
 
 if [[ $? -ne 0 ]]; then
 	echo FAILED
