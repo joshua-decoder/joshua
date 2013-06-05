@@ -41,13 +41,13 @@ public class TargetBigram extends StatefulFF {
       int sentID) {
   
     NgramDPState state = (NgramDPState) tailNode.getDPState(this.getStateComputer());
-    Integer leftWord = state.getLeftLMStateWords().get(0);
-    List<Integer> rightContext = state.getRightLMStateWords();
-    Integer rightWord = rightContext.get(rightContext.size() - 1);
+    int leftWord = state.getLeftLMStateWords()[0];
+    int[] rightContext = state.getRightLMStateWords();
+    int rightWord = rightContext[rightContext.length - 1];
     
     FeatureVector features = new FeatureVector();
-    features.put("<s> " + leftWord.toString(), 1.0f);
-    features.put(rightWord.toString() + " </s>", 1.0f);
+    features.put("<s> " + leftWord, 1.0f);
+    features.put(rightWord + " </s>", 1.0f);
     
     return features;
   }
@@ -66,7 +66,6 @@ public class TargetBigram extends StatefulFF {
    * @param features
    */
   private FeatureVector computeTransition(int[] enWords, List<HGNode> tailNodes) {
-
     List<Integer> currentNgram = new LinkedList<Integer>();
     FeatureVector features = new FeatureVector();
     
@@ -75,42 +74,28 @@ public class TargetBigram extends StatefulFF {
 
       if (Vocabulary.nt(curID)) {
         int index = -(curID + 1);
-
         NgramDPState state = (NgramDPState) tailNodes.get(index)
             .getDPState(this.getStateComputer());
-        List<Integer> leftContext = state.getLeftLMStateWords();
-        List<Integer> rightContext = state.getRightLMStateWords();
-        if (leftContext.size() != rightContext.size()) {
-          throw new RuntimeException(
-              "computeTransition: left and right contexts have unequal lengths");
-        }
+        int[] leftContext = state.getLeftLMStateWords();
+        int[] rightContext = state.getRightLMStateWords();
 
         // Left context.
-        for (int i = 0; i < leftContext.size(); i++) {
-          int t = leftContext.get(i);
+        for (int t : leftContext) {
           currentNgram.add(t);
-
           if (currentNgram.size() == 2) {
-            // System.err.println(String.format("NGRAM(%s) = %.5f",
-            // Vocabulary.getWords(currentNgram), prob));
-
             String ngram = join(currentNgram);
             if (features.containsKey(ngram))
               features.put(ngram, 1);
             else
               features.put(ngram, features.get(ngram) + 1);
-
             currentNgram.remove(0);
           }
         }
-
-        // Right context.
+        // Replace right context.
         int tSize = currentNgram.size();
-        for (int i = 0; i < rightContext.size(); i++) {
-          // replace context
-          currentNgram.set(tSize - rightContext.size() + i, rightContext.get(i));
-        }
-
+        for (int i = 0; i < rightContext.length; i++)
+          currentNgram.set(tSize - rightContext.length + i, rightContext[i]);
+        
       } else { // terminal words
         currentNgram.add(curID);
         if (currentNgram.size() == 2) {
@@ -119,7 +104,6 @@ public class TargetBigram extends StatefulFF {
             features.put(ngram, 1);
           else
             features.put(ngram, features.get(ngram) + 1);
-
           currentNgram.remove(0);
         }
       }

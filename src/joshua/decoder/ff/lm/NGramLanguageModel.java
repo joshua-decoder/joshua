@@ -55,7 +55,6 @@ public interface NGramLanguageModel {
   boolean registerWord(String token, int id);
 
 
-  // BUG: why do we pass the order? Does this method reduce the order as well?
   /**
    * @param sentence the sentence to be scored
    * @param order the order of N-grams for the LM
@@ -63,17 +62,11 @@ public interface NGramLanguageModel {
    *        get the prob for the whole sentence, then startIndex should be 1
    * @return the LogP of the whole sentence
    */
-  double sentenceLogProbability(List<Integer> sentence, int order, int startIndex);
+  float sentenceLogProbability(int[] sentence, int order, int startIndex);
 
+  float ngramLogProbability(int[] ngram, int order);
 
-  /**
-   * @param order used to temporarily reduce the order used by the model.
-   */
-  double ngramLogProbability(List<Integer> ngram, int order);
-
-  double ngramLogProbability(int[] ngram, int order);
-
-  double ngramLogProbability(int[] ngram);
+  float ngramLogProbability(int[] ngram);
 
 
   // ===============================================================
@@ -86,9 +79,9 @@ public interface NGramLanguageModel {
    * for each such token, and then call ngramLogProbability for the remaining actual N-gram.
    */
   // TODO Is this really the best interface?
-  double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
+  float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
 
-  double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight);
+  float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight);
 
   int[] leftEquivalentState(int[] originalState, int order, double[] cost);
 

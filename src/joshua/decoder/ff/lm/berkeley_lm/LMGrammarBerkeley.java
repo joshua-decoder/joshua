@@ -28,13 +28,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Support;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
-import edu.berkeley.nlp.lm.WordIndexer;
 import edu.berkeley.nlp.lm.StringWordIndexer;
+import edu.berkeley.nlp.lm.WordIndexer;
 import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
 import edu.berkeley.nlp.lm.util.StrUtils;
@@ -123,17 +121,17 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
   }
 
   @Override
-  public double sentenceLogProbability(List<Integer> sentence, int order, int startIndex) {
-    if (sentence == null) return 0.0;
-    int sentenceLength = sentence.size();
-    if (sentenceLength <= 0) return 0.0;
+  public float sentenceLogProbability(int[] sentence, int order, int startIndex) {
+    if (sentence == null) return 0;
+    int sentenceLength = sentence.length;
+    if (sentenceLength <= 0) return 0;
 
-    double probability = 0.0;
+    float probability = 0;
     // partial ngrams at the begining
     for (int j = startIndex; j < order && j <= sentenceLength; j++) {
-      // TODO: startIndex dependents on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm,
+      // TODO: startIndex dependens on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm,
       // start_index=2. othercase, need to check)
-      int[] ngram = Support.subIntArray(sentence, 0, j);
+      int[] ngram = Arrays.copyOfRange(sentence, 0, j);
       double logProb = ngramLogProbability_helper(ngram, false);
       if (logger.isLoggable(Level.FINE)) {
         String words = Vocabulary.getWords(ngram);
@@ -144,7 +142,7 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
     // regular-order ngrams
     for (int i = 0; i <= sentenceLength - order; i++) {
-      int[] ngram = Support.subIntArray(sentence, i, i + order);
+      int[] ngram = Arrays.copyOfRange(sentence, i, i + order);
       double logProb =  ngramLogProbability_helper(ngram, false);
       if (logger.isLoggable(Level.FINE)) {
         String words = Vocabulary.getWords(ngram);
@@ -156,7 +154,7 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     return probability;
   }
 
-  protected double ngramLogProbability_helper(int[] ngram, boolean log) {
+  protected float ngramLogProbability_helper(int[] ngram, boolean log) {
 
     int[] mappedNgram = arrayScratch.get();
     if (mappedNgram.length < ngram.length) {
@@ -182,15 +180,15 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     logHandler = handler;
   }
 
-  public double ngramLogProbability(int[] ngram) {
+  public float ngramLogProbability(int[] ngram) {
     return ngramLogProbability_helper(ngram,true);
   }
 
-  public double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0;
   }
 
-  public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0;
   }
 
@@ -203,7 +201,7 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
   }
 
   @Override
-  public double ngramLogProbability(int[] ngram, int order) {
+  public float ngramLogProbability(int[] ngram, int order) {
     return ngramLogProbability(ngram);
   }
 
