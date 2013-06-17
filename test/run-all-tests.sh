@@ -7,7 +7,11 @@
 # Important!  Do not rename this script to match the pattern test*.sh, or it will execute
 # recursively.
 
-for file in $(find . -name test*.sh); do
+
+tests=$(find . -name test*.sh | perl -pe 's/\n/ /g')
+echo "TESTS: $tests"
+
+for file in $tests; do
   if [[ ! -x $file ]]; then
     continue;
   fi

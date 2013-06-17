@@ -1108,6 +1108,7 @@ if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
                   "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
+                  "$packed_dir/encoding",
                   "$packed_dir/slice_00000.source");
 
   # $TUNE_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
@@ -1123,9 +1124,9 @@ if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
 # creating all the needed rules.
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-tune",
-  "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
-  $TUNE_GRAMMAR,
-  "$DATA_DIRS{tune}/grammar.glue");
+                  "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
+                  $TUNE_GRAMMAR_FILE,
+                  "$DATA_DIRS{tune}/grammar.glue");
   $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
 } else {
   # just create a symlink to it
@@ -1329,6 +1330,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
                     "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
+                    "$packed_dir/encoding",
                     "$packed_dir/slice_00000.source");
 
     # $TEST_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
@@ -1546,6 +1548,7 @@ if ($DO_PACK_GRAMMARS) {
                   "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                   $TEST_GRAMMAR,
                   "$packed_dir/vocabulary",
+                  "$packed_dir/encoding",
                   "$packed_dir/slice_00000.source");
 
   # $TEST_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered

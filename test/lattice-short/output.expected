@@ -1,17 +1,17 @@
 0 ||| A
 0 ||| a_OOV
-1 ||| A X
 1 ||| a_OOV X
-1 ||| A x_OOV
 1 ||| a_OOV x_OOV
+1 ||| A X
+1 ||| A x_OOV
 2 ||| B
 2 ||| b_OOV
-3 ||| B X
-3 ||| B x_OOV
 3 ||| b_OOV X
 3 ||| b_OOV x_OOV
-4 ||| B X
-4 ||| A X
+3 ||| B X
+3 ||| B x_OOV
 4 ||| a_OOV X
-4 ||| B x_OOV
+4 ||| A X
 4 ||| A x_OOV
+4 ||| b_OOV X
+4 ||| B X

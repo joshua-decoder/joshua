@@ -2,23 +2,30 @@ Running the Joshua Decoder:
 ---------------------------
 
 If you wish to run the complete machine translation pipeline, Joshua includes a
-black-box implementation.  See the documentation at:
+black-box implementation that enables the entire pipeline to be run by typing
+a single restartable command.  See the documentation for a walkthrough and more
+information about the many options available to the pipeline.
 
-   - web:           http://joshua-decoder.org/4.0/pipeline.html 
-   - local mirror:  ./joshua-decoder.org/4.0/pipeline.html
+   - web:           http://joshua-decoder.org/5.0/pipeline.html 
+   - local mirror:  ./joshua-decoder.org/5.0/pipeline.html
 
 Manually Running the Joshua Decoder:
 ------------------------------------
 
-First, make sure you have compiled the code.  You can do this by typing:
-
-    ant
-
 To run the decoder, first set these environment variables:
 
+    export JAVA_HOME=/path/to/java  # maybe /usr/java/home
     export JOSHUA=/path/to/joshua
+
+You might also find it helpful to set these:
+
     export LC_ALL=en_US.UTF-8
     export LANG=en_US.UTF-8
+
+Then, compile Joshua by typing:
+
+    cd $JOSHUA
+    ant
 
 The basic method for invoking the decoder looks like this:
 

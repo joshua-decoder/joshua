@@ -6,12 +6,13 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Support;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -25,6 +26,7 @@ import joshua.decoder.hypergraph.HGNode;
  * </ol>
  * 
  * @author Matt Post <post@cs.jhu.edu>
+ * @author Juri Ganitkevitch <juri@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
 public class LanguageModelFF extends StatefulFF {
@@ -174,7 +176,7 @@ public class LanguageModelFF extends StatefulFF {
    */
   private float computeTransition(int[] enWords, List<HGNode> tailNodes) {
 
-    List<Integer> currentNgram = new LinkedList<Integer>();
+    LinkedList<Integer> currentNgram = new LinkedList<Integer>();
     float transitionLogP = 0.0f;
 
     for (int c = 0; c < enWords.length; c++) {
@@ -185,16 +187,12 @@ public class LanguageModelFF extends StatefulFF {
 
         NgramDPState state = (NgramDPState) tailNodes.get(index)
             .getDPState(this.getStateComputer());
-        List<Integer> leftContext = state.getLeftLMStateWords();
-        List<Integer> rightContext = state.getRightLMStateWords();
-        if (leftContext.size() != rightContext.size()) {
-          throw new RuntimeException(
-              "computeTransition: left and right contexts have unequal lengths");
-        }
+        int[] leftContext = state.getLeftLMStateWords();
+        int[] rightContext = state.getRightLMStateWords();
 
         // Left context.
-        for (int i = 0; i < leftContext.size(); i++) {
-          int t = leftContext.get(i);
+        for (int i = 0; i < leftContext.length; i++) {
+          int t = leftContext[i];
           currentNgram.add(t);
 
           // Always calculate logP for <bo>: additional backoff weight
@@ -206,31 +204,33 @@ public class LanguageModelFF extends StatefulFF {
                 currentNgram.size(), numAdditionalBackoffWeight);
 
             if (currentNgram.size() == this.ngramOrder) {
-              currentNgram.remove(0);
+              currentNgram.removeFirst();
             }
           } else if (currentNgram.size() == this.ngramOrder) {
-            // compute the current word probablity, and remove it
-            float prob = (float) this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
+            // Compute the current word probability, and remove it.s
+            float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+                this.ngramOrder);
             // System.err.println(String.format("NGRAM(%s) = %.5f",
             // Vocabulary.getWords(currentNgram), prob));
             transitionLogP += prob;
-            currentNgram.remove(0);
+            currentNgram.removeFirst();
           }
 
         }
 
         // Right context.
         int tSize = currentNgram.size();
-        for (int i = 0; i < rightContext.size(); i++) {
+        for (int i = 0; i < rightContext.length; i++) {
           // replace context
-          currentNgram.set(tSize - rightContext.size() + i, rightContext.get(i));
+          currentNgram.set(tSize - rightContext.length + i, rightContext[i]);
         }
 
       } else { // terminal words
         currentNgram.add(curID);
         if (currentNgram.size() == this.ngramOrder) {
           // compute the current word probablity, and remove it
-          float prob = (float) this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
+          float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+              this.ngramOrder);
           transitionLogP += prob;
           // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
           // prob));
@@ -252,21 +252,16 @@ public class LanguageModelFF extends StatefulFF {
   private float computeFinalTransition(NgramDPState state) {
 
     float res = 0.0f;
-    List<Integer> currentNgram = new LinkedList<Integer>();
-    List<Integer> leftContext = state.getLeftLMStateWords();
-    List<Integer> rightContext = state.getRightLMStateWords();
-
-    if (leftContext.size() != rightContext.size()) {
-      throw new RuntimeException(
-          "LMModel.compute_equiv_state_final_transition: left and right contexts have unequal lengths");
-    }
+    LinkedList<Integer> currentNgram = new LinkedList<Integer>();
+    int[] leftContext = state.getLeftLMStateWords();
+    int[] rightContext = state.getRightLMStateWords();
 
     // ================ left context
     if (addStartAndEndSymbol)
       currentNgram.add(START_SYM_ID);
 
-    for (int i = 0; i < leftContext.size(); i++) {
-      int t = leftContext.get(i);
+    for (int i = 0; i < leftContext.length; i++) {
+      int t = leftContext[i];
       currentNgram.add(t);
 
       if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {// calculate logP for <bo>: additional backoff weight
@@ -279,29 +274,31 @@ public class LanguageModelFF extends StatefulFF {
       } else { // partial ngram
         // compute the current word probablity
         if (currentNgram.size() >= 2) { // start from bigram
-          float prob = (float) this.lmGrammar
-              .ngramLogProbability(currentNgram, currentNgram.size());
+          float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+              currentNgram.size());
           // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
           // prob));
           res += prob;
         }
       }
       if (currentNgram.size() == this.ngramOrder) {
-        currentNgram.remove(0);
+        currentNgram.removeFirst();
       }
     }
 
     // ================ right context
     // switch context, we will never score the right context probability because they are either
-    // duplicate or partional ngrams
+    // duplicate or partial ngrams
     if (addStartAndEndSymbol) {
       int tSize = currentNgram.size();
-      for (int i = 0; i < rightContext.size(); i++) {// replace context
-        currentNgram.set(tSize - rightContext.size() + i, rightContext.get(i));
-      }
+      for (int i = 0; i < rightContext.length; i++)
+        currentNgram.removeLast();
+      for (int i = 0; i < rightContext.length; i++)
+        currentNgram.add(rightContext[i]);
 
       currentNgram.add(STOP_SYM_ID);
-      float prob = (float) this.lmGrammar.ngramLogProbability(currentNgram, currentNgram.size());
+      float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+          currentNgram.size());
       res += prob;
       // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
       // prob));
@@ -327,7 +324,6 @@ public class LanguageModelFF extends StatefulFF {
       int currentWord = enWords[c];
       if (Vocabulary.nt(currentWord)) {
         estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
-        considerIncompleteNgrams = true;
         words.clear();
         skipStart = false;
       } else {
@@ -344,13 +340,14 @@ public class LanguageModelFF extends StatefulFF {
   private float estimateStateLogProb(NgramDPState state, boolean addStart, boolean addEnd) {
 
     float res = 0.0f;
-    List<Integer> leftContext = state.getLeftLMStateWords();
+    int[] leftContext = state.getLeftLMStateWords();
 
     if (null != leftContext) {
       List<Integer> words = new ArrayList<Integer>();
       if (addStart == true)
         words.add(START_SYM_ID);
-      words.addAll(leftContext);
+      for (int w : leftContext)
+        words.add(w);
 
       boolean considerIncompleteNgrams = true;
       boolean skipStart = true;
@@ -361,8 +358,10 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     if (addEnd == true) {
-      List<Integer> rightContext = state.getRightLMStateWords();
-      List<Integer> list = new ArrayList<Integer>(rightContext);
+      int[] rightContext = state.getRightLMStateWords();
+      List<Integer> list = new ArrayList<Integer>(rightContext.length);
+      for (int w : rightContext)
+        list.add(w);
       list.add(STOP_SYM_ID);
       float tem = scoreChunkLogP(list, false, false);
       res += tem;
@@ -390,8 +389,16 @@ public class LanguageModelFF extends StatefulFF {
         startIndex = 1;
       }
       // System.err.println("Estimate: " + Vocabulary.getWords(words));
-      return (float) this.lmGrammar.sentenceLogProbability(words, this.ngramOrder, startIndex);
+      return (float) this.lmGrammar.sentenceLogProbability(
+          Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
     }
   }
 
+  private final int[] toArray(List<Integer> input) {
+    int[] output = new int[input.size()];
+    int i = 0;
+    for (int v : input)
+      output[i++] = v;
+    return output;
+  }
 }

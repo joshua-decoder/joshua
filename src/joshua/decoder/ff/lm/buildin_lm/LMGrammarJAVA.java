@@ -109,14 +109,14 @@ public class LMGrammarJAVA extends AbstractLM {
    * srilm may be smaller than by java, this happens only when the LM file have "<unk>" in backoff
    * state
    */
-  protected double ngramLogProbability_helper(int[] ngram, int order) {
+  protected float ngramLogProbability_helper(int[] ngram, int order) {
     Double res;
 
     int[] ngram_wrds = replace_with_unk(ngram); // TODO
     // TODO: wrong implementation in hiero
     if (ngram_wrds[ngram_wrds.length - 1] == UNK_SYM_ID) {
 
-      res = -JoshuaConfiguration.lm_ceiling_cost;
+      res = (double) -JoshuaConfiguration.lm_ceiling_cost;
     } else {
       // TODO: untranslated words
       if (null == root) {
@@ -149,7 +149,7 @@ public class LMGrammarJAVA extends AbstractLM {
       }
       res = prob + bow_sum;
     }
-    return res;
+    return (float) res.doubleValue();
   }
 
   private Double get_valid_prob(LMHash pos, int wrd) {
@@ -343,10 +343,10 @@ public class LMGrammarJAVA extends AbstractLM {
     return (null != prob && prob <= MIN_LOG_P);
   }
 
-  protected double logProbabilityOfBackoffState_helper(int[] ngram_wrds, int order,
+  protected float logProbabilityOfBackoffState_helper(int[] ngram_wrds, int order,
       int n_additional_bow) {
     int[] backoff_wrds = Support.sub_int_array(ngram_wrds, 0, ngram_wrds.length - 1);
-    double[] sum_bow = new double[1];
+    float[] sum_bow = new float[1];
     check_backoff_weight(backoff_wrds, sum_bow, n_additional_bow);
     return sum_bow[0];
   }
@@ -355,10 +355,10 @@ public class LMGrammarJAVA extends AbstractLM {
   // backoff weight
   // if there is no backoff weight for backoff_words, then, we can return the
   // finalized backoff weight
-  private boolean check_backoff_weight(int[] backoff_words, double[] sum_bow, int num_backoff) {
+  private boolean check_backoff_weight(int[] backoff_words, float[] sum_bow, int num_backoff) {
     if (backoff_words.length <= 0) return false;
 
-    double sum = 0;
+    float sum = 0;
     LMHash pos = root;
 
     // the start index that backoff should be applied

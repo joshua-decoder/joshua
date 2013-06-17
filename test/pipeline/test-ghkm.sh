@@ -18,7 +18,7 @@ $JOSHUA/scripts/training/pipeline.pl \
 
 #diff -u 1/test/final-bleu final-bleu.gold
 
-size=$(stat -c %s 2/grammar.gz)
+size=$(perl -e "print +(stat('2/grammar.gz'))[7]")
 if [[ $size -ne 0 ]]; then
 	echo "PASSED (grammar file size check)"
 	exit 0

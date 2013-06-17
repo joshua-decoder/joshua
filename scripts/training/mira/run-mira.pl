@@ -616,14 +616,14 @@ while (1) {
 
   # Remove the trailing underscores from feature labels, which were introduced to trick the Moses'
   # extractor into treating everything as a sparse feature.
-  system("perl -pi -e 's/(\\S+)_:(\\S+)/\$1:\$2/g' $feature_file");
+  system("perl -pi -e 's/(\\S+)_=(\\S+)/\$1=\$2/g' $feature_file");
 
   # We also need to rename features that contain a colon in them, since that causes MIRA to
   # barf. This could be addressed by having MIRA split the feature name on the *last* colon it
   # finds, but its easier to use Moses internal tools unmodified. This is mostly for fragmentLM
   # features. Colons appear in preterminal names (both left side :_ and right side _:) and in
   # terminals (":").
-  system("perl -pi -e 's/:_/-COLON-_/g; s/_:([^\s])/_-COLON-$1/g; s/\":\"/\"-COLON-\"/g' $feature_file");
+#  system("perl -pi -e 's/:_/-COLON-_/g; s/_:([^\s])/_-COLON-$1/g; s/\":\"/\"-COLON-\"/g' $feature_file");
 
   my %CURR;
   map { $CURR{$_} = $featlist->{$_}{value} } keys(%$featlist); # save the current features

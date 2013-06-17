@@ -25,8 +25,8 @@ fi
 set -u
 
 exec java -Xmx${mem} \
-	-cp $JOSHUA/class:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
-	joshua.decoder.JoshuaDecoder "$@"
+	-jar $JOSHUA/class/joshua.jar \
+	"$@"

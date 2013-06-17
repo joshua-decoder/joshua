@@ -131,14 +131,14 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-  <target name="all" depends="giza, kenlm, parallelize">
+  <target name="all" depends="jar, giza, kenlm, parallelize">
   </target>
 
-  <target name="devel" depends="init, java, all">
+  <target name="devel" depends="init, thrax, java, giza, kenlm, parallelize">
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="thrax">
+  <target name="java" depends="set-joshua-home">
     <mkdir dir="${build}" />
     <javac compiler="javac1.5" srcdir="${src}" destdir="${build}" classpathref="compile.all.classpath" debug="on" encoding="utf8" sourcepath="" includeantruntime="false">
       <!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
@@ -151,7 +151,7 @@
   </target>
 
   <!-- Create a JAR file -->
-  <target name="jar" depends="java,set-joshua-home">
+  <target name="jar" depends="java,thrax,set-joshua-home">
     <jar destfile="${build}/joshua.jar" index="true">
       <fileset dir="${build}">
         <include name="**/*.class" />
