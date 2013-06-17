@@ -1108,6 +1108,7 @@ if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
                   "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
+                  "$packed_dir/encoding",
                   "$packed_dir/slice_00000.source");
 
   # $TUNE_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
@@ -1547,6 +1548,7 @@ if ($DO_PACK_GRAMMARS) {
                   "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                   $TEST_GRAMMAR,
                   "$packed_dir/vocabulary",
+                  "$packed_dir/encoding",
                   "$packed_dir/slice_00000.source");
 
   # $TEST_GRAMMAR_FILE, which previously held an optional command-line argument of a pre-filtered
