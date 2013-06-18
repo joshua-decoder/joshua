@@ -118,12 +118,13 @@ public class JoshuaConfiguration {
    * 
    *   %i the 0-index sentence number 
    *   %s the translated sentence 
-   *   %S the translated sentence, denormalized
+   *   %S the translated sentence with some basic capitalization and denormalization
    *   %t the synchronous derivation
    *   %f the list of feature values (as name=value pairs) 
    *   %c the model cost 
    *   %w the weight vector 
    *   %a the alignments between source and target words (currently unimplemented) 
+   *   %d a verbose, many-line version of the derivation
    */
   public static String outputFormat = "%i ||| %s ||| %f ||| %c";
 
