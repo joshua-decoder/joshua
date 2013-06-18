@@ -12,7 +12,6 @@
 	<classpathentry kind="lib" path="lib/jung-graph-impl-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/jung-visualization-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/pmd-4.2.5.jar"/>
-	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
 	<classpathentry kind="lib" path="lib/testng-6.7-javadoc.jar"/>
@@ -21,5 +20,6 @@
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-javadoc.jar"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-sources.jar"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5.jar"/>
+	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
 	<classpathentry kind="output" path="class"/>
 </classpath>
