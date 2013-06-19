@@ -25,7 +25,9 @@ rules are applied.
  are:
  
  - *Rule arity*: the arity of the rule being applied
+
  - *OOV penalty*: a counter of the number of untranslated words in the current rule or hypothesis
+
  - *Context*: input words bordering the current span (i,j)
 
 Sparse features in Joshua
@@ -60,9 +62,7 @@ Feature functions are arranged into the following hierarchy, found in `$JOSHUA/s
     + decoder
       + ff
         FeatureFunction (interface)
-        |
         +- StatelessFF (abstract class)
-        |
         +- StatefulFF (abstract class)
 
 `FeatureFunction` is an interface, and `StatelessFF` and `StatefulFF` are abstract base classes
@@ -81,7 +81,7 @@ Adding a new feature function involves just a few steps. It should be helpful to
 
 - Feature functions are triggered by a line of the form
 
-    feature_function = NAME [ARGS]
+      feature_function = NAME [ARGS]
     
   where NAME is the name keying your feature function and ARGS denote optional arguments for the
   feature. 
@@ -104,6 +104,7 @@ Adding a new feature function involves just a few steps. It should be helpful to
 
         this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
             owner, startArity, endArity)));
+       }
 
    The arguments are processed and then passed to the `ArityPhrasePenaltyFF` constructor, adding
    to the list of feature functions.
@@ -129,29 +130,33 @@ Existing stateless feature functions
 
 Here is a list of feature functions that exist in Joshua.
 
-1. `WordPenaltyFF`.  Each target language word incurs a penalty of -0.435 (-log_10(e)).
+- `WordPenaltyFF`. Each target language word incurs a penalty of -0.435 (-log_10(e)). The weight is
+  named `WordPenalty`.
 
-1. `ArityPhrasePenaltyFF`.  This feature is parameterized by `min` and `max`, and it fires on
-      application of rules with arity (= rank = number of nonterminals on the righthand side)
-      between `min` and `max`, inclusive.
+- `PhraseModelFF`. One of these is defined for each distinct grammar "owner" (part of the grammar
+  initialization line). The "owner" concept allows grammars to share weights or have distinct weight
+  sets. Features have the name `tm_OWNER_INDEX`.
 
-1. `PhraseModelFF`.  One of these feature functions is active for each of the features listed in
-      the grammar.
+- `ArityPhrasePenaltyFF`.  This feature is parameterized by `min`, `max`, and `owner`, and it fires
+  on application of rules with arity (= rank = number of nonterminals on the righthand side) between
+  `min` and `max`, inclusive, belonging to grammars with the specified owner. The weight is named
+  `ArityPhrasePenalty`.
 
-1. `OOVFF`.  This feature fires each time an OOV is entered into the chart.
+- `OOVFF`.  This feature fires each time an OOV is entered into the chart. The weight is named
+  `OOVFF`. 
 
-1. `SourceDependentFF`.  A new class of feature function.
+- `SourceDependentFF`.
 
-1. `SourcePathFF`.  This feature contains the weight of the source word (for support of weighted
-lattices).
-
+- `SourcePathFF`. This feature contains the weight of the source word (for support of weighted
+  lattices).
 
 Stateful Feature Functions
 --------------------------
 
 This is a list of stateful feature functions.
 
-1. `LangaugeModelFF`.
+- `LanguageModelFF`. One of these is instantiated for each language model listed in the
+   configuration file, with weights assigned as `lm_0`, `lm_1`, and so on.
 
-1. `EdgePhraseSimilarityFF`.  This function contacts a server to compute the similarity of a rule
-with a set of paraphrases.
+- `EdgePhraseSimilarityFF`.  This function contacts a server to compute the similarity of a rule
+   with a set of paraphrases.
