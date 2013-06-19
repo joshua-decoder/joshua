@@ -720,7 +720,7 @@ public class Decoder {
 
         logger.info(String.format(
             "FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity,
-            endArity, weight));
+            endArity, weights.get("ArityPenalty")));
       }
 
       else if (feature.equals("wordpenalty")) {
