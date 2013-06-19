@@ -28,5 +28,6 @@ exec java -Xmx${mem} \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
-	-jar $JOSHUA/class/joshua.jar \
+	-cp "$JOSHUA/class/joshua.jar:$JOSHUA/lib/berkeleylm.jar" \
+	joshua.decoder.JoshuaDecoder \
 	"$@"

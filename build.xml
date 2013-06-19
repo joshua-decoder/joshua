@@ -156,16 +156,9 @@
       <fileset dir="${build}">
         <include name="**/*.class" />
       </fileset>
-      <indexjars>
-        <fileset dir="${lib}" />
-      </indexjars>
       <manifest>
-        <attribute name="Class-Path" value="thrax.jar" />
         <attribute name="Main-Class" value="joshua.decoder.JoshuaDecoder" />
       </manifest>
-      <fileset dir="${thraxlib}">
-        <include name="thrax.jar" />
-      </fileset>
     </jar>
   </target>
 
@@ -305,7 +298,7 @@
 
   <!-- Compile the Javadocs and Markdown documentation into web pages -->
   <target name="documentation">
-    <doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+    <doxygen:doxygen configFilename="${doc}/Doxyfile" />
   </target>
 
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
