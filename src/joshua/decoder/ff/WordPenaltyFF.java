@@ -1,7 +1,9 @@
 package joshua.decoder.ff;
 
+import java.util.List;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.hypergraph.HGNode;
 
 /**
  * 
@@ -43,7 +45,8 @@ public final class WordPenaltyFF extends StatelessFF {
   }
 
   @Override
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     return computeFeatures(rule);
   }
 
@@ -52,7 +55,8 @@ public final class WordPenaltyFF extends StatelessFF {
    * weight.
    */
   @Override
-  public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     return weight * OMEGA * (rule.getEnglish().length - rule.getArity());
   }
 }

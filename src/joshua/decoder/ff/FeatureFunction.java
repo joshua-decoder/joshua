@@ -20,7 +20,9 @@ import joshua.decoder.hypergraph.HyperEdge;
  * features, which are associated with weights. The task of the feature function is to compute the
  * features that are fired in different circumstances and then return the inner product of those
  * features with the weight vector. Feature functions can also produce estimates of their future
- * cost; these values are not used in computing the score, but are only used for pruning.
+ * cost; these values are not used in computing the score, but are only used for pruning. The
+ * individual features produced by each template should have globally unique names; a good 
+ * convention is to prefix each feature with the name of the template that produced it.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevich <juri@cs.jhu.edu>
