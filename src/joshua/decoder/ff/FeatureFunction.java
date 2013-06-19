@@ -158,35 +158,10 @@ public abstract class FeatureFunction {
   /**
    * This function could be implemented to process the feature-line arguments in a generic way, if
    * so desired.
+   *
+   * TODO: implement this.
    */
   private void processArgs(String argString) {
     return;
   }
-
-  /**************************************************************
-   * OLD INTERFACE DON'T USE WILL SOON DELETE *******************
-   **************************************************************/
-
-  /**
-   * estimate future logP, e.g., the logPs of partial n-grams asscociated with the left-edge ngram
-   * state
-   * */
-  // double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);
-
-  // double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-  // SourcePath srcPath, int sentID);
-
-  // double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
-
-  // double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-  // SourcePath srcPath, int sentID);
-
-  /**
-   * Edges calling finalTransition do not have concret rules associated with them.
-   * */
-  // double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
-  // int sentID);
-
-  // double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
-
 }

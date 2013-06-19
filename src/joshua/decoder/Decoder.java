@@ -714,9 +714,7 @@ public class Decoder {
         String owner = fields[1];
         int startArity = Integer.parseInt(fields[2].trim());
         int endArity = Integer.parseInt(fields[3].trim());
-        float weight = Float.parseFloat(fields[4].trim());
 
-        weights.put("aritypenalty", weight);
         this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
             owner, startArity, endArity)));
 
@@ -740,7 +738,6 @@ public class Decoder {
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
-        float weight = Float.parseFloat(fields[3].trim());
 
         // Find the language model with the largest state.
         int maxOrder = 0;
@@ -756,7 +753,7 @@ public class Decoder {
         try {
           this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host,
               port));
-          weights.put("EdgePhraseSimilarity", weight);
+
         } catch (Exception e) {
           e.printStackTrace();
           System.exit(1);
