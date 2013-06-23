@@ -1,7 +1,10 @@
 package joshua.decoder.ff;
 
+import java.util.List;
+
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 
 /**
  * This feature returns the scored path through the source lattice, which is recorded in a
@@ -30,12 +33,14 @@ public final class SourcePathFF extends StatelessFF {
   }
   
   @Override
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     return new FeatureVector(name, sourcePath.getPathCost());
   }
 
   @Override
-  public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     return weight * sourcePath.getPathCost();
   }
 }

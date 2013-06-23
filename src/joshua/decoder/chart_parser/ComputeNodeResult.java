@@ -90,7 +90,7 @@ public class ComputeNodeResult {
       transitionCost += feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID);
 //      features.add(feature.computeFeatures(rule,tailNodes,i,j,sourcePath,sentID));
 //      sb.append(String.format(" %s: %.3f", feature.getClass().getSimpleName(), feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID)));
-      if (feature instanceof StatefulFF) {
+      if (feature.getStateComputer() != null) {
         futureCostEstimate += feature.estimateFutureCost(rule, allDPStates.get(feature.getStateComputer()), sentID);
       }
     }

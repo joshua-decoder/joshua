@@ -1,8 +1,11 @@
 package joshua.decoder.ff;
 
+import java.util.List;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 
 /**
  * This feature handles the list of features that are found with grammar rules in the grammar file.
@@ -29,19 +32,20 @@ public class PhraseModelFF extends StatelessFF {
 
   @Override
   public float estimateCost(final Rule rule, int sentID) {
-    return computeCost(rule, null, sentID);
+    return computeCost(rule, null, -1, -1, null, sentID);
   }
 
   /**
    * Computes the cost of applying the feature.
    */
   @Override
-  public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     float cost = 0.0f;
 
     if (rule != null && this.ownerID == rule.getOwner()) {
       if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-        float t = computeFeatures(rule, sourcePath, sentID).innerProduct(weights);
+        float t = computeFeatures(rule, tailNodes, i, j, sourcePath, sentID).innerProduct(weights);
         rule.setPrecomputableCost(t);
       }
       cost = rule.getPrecomputableCost();
@@ -53,7 +57,8 @@ public class PhraseModelFF extends StatelessFF {
    * Just chain to computeFeatures(rule), since this feature doesn't use the sourcePath or sentID. *
    */
   @Override
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     if (rule != null && rule.getOwner() == ownerID) {
       return rule.getFeatureVector();
     } else {

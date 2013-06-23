@@ -63,15 +63,17 @@ public class KBestExtractor {
     this.defaultSide = (isMonolingual ? Side.SOURCE : Side.TARGET);
   }
 
-  // k start from 1
-  // ***************** you may need to reset_state() before you call this function for the first
-  // time
+  /**
+   * k starts from 1.
+   *
+   * You may need to reset_state() before you call this function for the first time.
+   */
   public String getKthHyp(HGNode node, int k, int sentID, List<FeatureFunction> models) {
 
     this.sentID = sentID;
     VirtualNode virtualNode = addVirtualNode(node);
 
-    // ==== setup the kbest at each hgnode
+    // Determine the k-best hypotheses at each HGNode
     DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
     if (derivationState == null) {
       return null;
@@ -79,8 +81,6 @@ public class KBestExtractor {
 
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
-
-      // return derivationState.getDerivation(this, features, models, 0);
 
       String hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
       String outputString = JoshuaConfiguration.outputFormat
@@ -98,6 +98,12 @@ public class KBestExtractor {
       if (JoshuaConfiguration.outputFormat.contains("%e"))
         outputString = outputString.replace("%e",
             derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
+
+      /* %d causes a derivation with rules one per line to be output */
+      if (JoshuaConfiguration.outputFormat.contains("%d")) {
+        outputString = outputString.replace("%d",
+          derivationState.getDerivation(this, new FeatureVector(), models, 0));
+      }
 
       return outputString;
     }
@@ -505,26 +511,26 @@ public class KBestExtractor {
     }
 
     /**
-     * Returns a string representing the derivation of a hypothesis.
+     * Returns a string representing the derivation of a hypothesis, with each rule application
+     * listed one per line in an indented fashion.
      * 
      * @param kbestExtractor
      * @param useTreeFormat
      * @param features
      * @param models
-     * @return
+     * @return a string representation of the derivation
      */
     private String getDerivation(KBestExtractor kbestExtractor, FeatureVector features,
         List<FeatureFunction> models, int indent) {
+
+      StringBuffer sb = new StringBuffer();
+      Rule rule = edge.getRule();
 
       FeatureVector transitionFeatures = new FeatureVector();
       if (null != features) {
         computeCost(parentNode, edge, transitionFeatures, models);
         features.add(transitionFeatures);
       }
-
-      // ### get hyp string recursively
-      StringBuffer sb = new StringBuffer();
-      Rule rule = edge.getRule();
 
       for (int i = 0; i < indent; i++)
         sb.append(" ");
@@ -536,8 +542,8 @@ public class KBestExtractor {
             kbestExtractor, features, models, indent + 2));
 
         sb.append(Vocabulary.word(rootID)).append(
-            " ||| " + transitionFeatures + " ||| " + features + " ||| "
-                + KBestExtractor.this.weights.innerProduct(features));
+          " ||| " + transitionFeatures + " ||| " + features + " ||| "
+            + -weights.innerProduct(features));
         sb.append("\n");
         sb.append(childString);
 
@@ -553,11 +559,11 @@ public class KBestExtractor {
 
         // sb.append(rule).append(" ||| " + features + " ||| " +
         // KBestExtractor.this.weights.innerProduct(features));
-        sb.append(String.format("(%d-%d) ", parentNode.i, parentNode.j));
+        sb.append(String.format("%d-%d", parentNode.i, parentNode.j));
         sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> "
-            + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglish());
+            + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglishWords());
         sb.append(" ||| " + transitionFeatures);
-        sb.append(" ||| " + KBestExtractor.this.weights.innerProduct(transitionFeatures));
+        sb.append(" ||| " + -weights.innerProduct(transitionFeatures));
         sb.append("\n");
         sb.append(childStrings);
       }

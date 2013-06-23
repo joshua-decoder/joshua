@@ -117,21 +117,31 @@ public class MonolingualRule implements Rule {
     return this.lhs;
   }
 
+  @Override
   public void setEnglish(int[] eng) {
-    // TODO: do nothing
   }
 
+  @Override
   public int[] getEnglish() {
-    // TODO
     return null;
   }
 
+  @Override
+  public String getEnglishWords() {
+    return null;
+  }
+  
   public final void setFrench(int[] french) {
     this.pFrench = french;
   }
 
   public final int[] getFrench() {
     return this.pFrench;
+  }
+  
+  @Override
+  public String getFrenchWords() {
+    return Vocabulary.getWords(getFrench());
   }
 
   /*
