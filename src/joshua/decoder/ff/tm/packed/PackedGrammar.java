@@ -61,7 +61,13 @@ public class PackedGrammar extends BatchGrammar {
       if (listing[i].startsWith("slice_") && listing[i].endsWith(".source"))
         slices.add(new PackedSlice(grammar_dir + File.separator + listing[i].substring(0, 11)));
     }
+
+    long count = 0;
+    for (PackedSlice s : slices)
+      count += s.estimated.length;
     root = new PackedRoot(this);
+
+    logger.info("Loaded " + count + " rules.");
   }
 
   @Override
@@ -152,13 +158,13 @@ public class PackedGrammar extends BatchGrammar {
     private MappedByteBuffer features;
     private int featureSize;
     private int[] featureLookup;
+    private RandomAccessFile featureFile;
 
     private float[] estimated;
     private float[] precomputable;
 
     private HashMap<Integer, PackedTrie> tries;
 
-    @SuppressWarnings("resource")
     public PackedSlice(String prefix) throws IOException {
       name = prefix;
 
@@ -168,22 +174,27 @@ public class PackedGrammar extends BatchGrammar {
       File feature_file = new File(prefix + ".features");
 
       // Get the channels etc.
-      FileChannel source_channel = new FileInputStream(source_file).getChannel();
+      FileInputStream source_fis = new FileInputStream(source_file);
+      FileChannel source_channel = source_fis.getChannel();
       int source_size = (int) source_channel.size();
 
-      FileChannel target_channel = new FileInputStream(target_file).getChannel();
+      FileInputStream target_fis = new FileInputStream(target_file);
+      FileChannel target_channel = target_fis.getChannel();
       int target_size = (int) target_channel.size();
 
-      FileChannel feature_channel = new RandomAccessFile(feature_file, "r").getChannel();
+      featureFile = new RandomAccessFile(feature_file, "r");
+      FileChannel feature_channel = featureFile.getChannel();
       int feature_size = (int) feature_channel.size();
 
       IntBuffer source_buffer = source_channel.map(MapMode.READ_ONLY, 0, source_size).asIntBuffer();
       source = new int[source_size / 4];
       source_buffer.get(source);
+      source_fis.close();
 
       IntBuffer target_buffer = target_channel.map(MapMode.READ_ONLY, 0, target_size).asIntBuffer();
       target = new int[target_size / 4];
       target_buffer.get(target);
+      target_fis.close();
 
       features = feature_channel.map(MapMode.READ_ONLY, 0, feature_size);
       features.load();
@@ -206,9 +217,20 @@ public class PackedGrammar extends BatchGrammar {
       targetLookup = new int[target_lookup_stream.readInt()];
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
-
+      target_lookup_stream.close();
+      
       tries = new HashMap<Integer, PackedTrie>();
     }
+
+    
+    @SuppressWarnings("unused")
+    private final Object guardian = new Object() {
+      @Override
+      // Finalizer object to ensure feature file handle get closed upon slice's dismissal.
+      protected void finalize() throws Throwable {
+        featureFile.close();
+      }
+    };
 
     private final int[] getTarget(int pointer) {
       // Figure out level.
@@ -236,7 +258,8 @@ public class PackedGrammar extends BatchGrammar {
       return t;
     }
 
-    private synchronized PackedTrie getTrie(int node_address, int[] parent_src, int parent_arity, int symbol) {
+    private synchronized PackedTrie getTrie(int node_address, int[] parent_src, int parent_arity,
+        int symbol) {
       PackedTrie t = tries.get(node_address);
       if (t == null) {
         t = new PackedTrie(node_address, parent_src, parent_arity, symbol);
@@ -307,7 +330,7 @@ public class PackedGrammar extends BatchGrammar {
       private final int position;
 
       private boolean sorted = false;
-      
+
       private int[] src;
       private int arity;
 
@@ -568,7 +591,7 @@ public class PackedGrammar extends BatchGrammar {
         public float estimateRuleCost(List<FeatureFunction> models) {
           return estimated[source[address + 2]];
         }
-        
+
         @Override
         public String toString() {
           StringBuffer sb = new StringBuffer();

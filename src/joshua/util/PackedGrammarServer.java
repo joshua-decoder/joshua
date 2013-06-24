@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import joshua.corpus.Vocabulary;
@@ -34,11 +35,11 @@ public class PackedGrammarServer {
     return walker.getRuleCollection().getRules();
   }
   
-  public String scores(String source, String target) {
+  public Map<String, Float> scores(String source, String target) {
     return scores(source.trim().split("\\s+"), target.trim().split("\\s+"));
   }
   
-  public String scores(String[] source, String[] target) {
+  public Map<String, Float> scores(String[] source, String[] target) {
     List<Rule> rules = get(source);
     
     if (rules == null)
@@ -47,7 +48,7 @@ public class PackedGrammarServer {
     int[] tgt = Vocabulary.addAll(target);
     for (Rule r : rules)
       if (Arrays.equals(tgt, r.getEnglish()))
-        return r.getFeatureVector().toString();
+        return r.getFeatureVector().getMap();
     
     return null;
   }
