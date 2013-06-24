@@ -66,6 +66,7 @@ public class BilingualRule extends MonolingualRule {
    * 
    * @return The string of English words
    */
+  @Override
   public String getEnglishWords() {
     ArrayList<String> foreignNTs = new ArrayList<String>();
     for (int i = 0; i < this.getFrench().length; i++)

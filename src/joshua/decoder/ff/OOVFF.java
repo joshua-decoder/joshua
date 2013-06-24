@@ -1,6 +1,9 @@
 package joshua.decoder.ff;
 
+import java.util.List;
+
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 
@@ -35,8 +38,9 @@ public class OOVFF extends StatelessFF {
    * cached when the feature was created.
    */
   @Override
-  public float computeCost(final Rule rule, SourcePath sourcePath, int sentID) {
-    if (rule != null && this.ownerID == rule.getOwner()) 
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
+    if (rule != null && this.ownerID == rule.getOwner())
       return weight;
 
     return 0.0f;
@@ -46,8 +50,10 @@ public class OOVFF extends StatelessFF {
    * If the supplied rule is an OOV rule, we fire the OOVPenalty feature with a value of 1.
    */
   @Override
-  public FeatureVector computeFeatures(final Rule rule, SourcePath sourcePath, int sentID) {
-    if (rule != null && this.ownerID == rule.getOwner()) return new FeatureVector(name, 1.0f);
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID) {
+    if (rule != null && this.ownerID == rule.getOwner())
+      return new FeatureVector(name, 1.0f);
 
     return new FeatureVector();
   }

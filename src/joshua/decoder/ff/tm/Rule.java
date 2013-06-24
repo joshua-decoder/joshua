@@ -35,10 +35,14 @@ public interface Rule {
   void setEnglish(int[] eng);
 
   int[] getEnglish();
+  
+  String getEnglishWords();
 
   void setFrench(int[] french);
 
   int[] getFrench();
+  
+  String getFrenchWords();
 
   /**
    * This function returns the dense (phrasal) features discovered when the rule was loaded. Dense

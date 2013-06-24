@@ -1,165 +1,162 @@
-This document describes the organization of the sparse feature implementation, and in particular,
-how we got there from our old dense feature implementation.  This implementation associates an
-object with each feature, which is not sustainable with a sparse representation.  
 
-The central ideas of the implementation, following discussions with Colin Cherry and Barry Haddow at
-[MT Marathon 2012](http://www.statmt.org/mtm12/), are as follows:
+Sparse Features
+===============
 
-- Features should be instantiated as templates that can contribute any number of features. The
-  weight vector is explicitly represented (it has to be), and is passed to every feature template
-  object, which query the weight vector for the weights of features it wants to assign values to.
+Historically, most decoders have had only on the order of tens of features whose weights are tuned
+in a linear model. Recently, the introduction of large-scale discriminative tuners have enabled
+decoders to use many, many more features. Efficiently decoding with large feature sets requires
+sparse feature representations that are a bit more general than a set of more-or-less hard-coded
+feature sets of the past, that perhaps mostly varied by the number of features associated with rules
+in the grammar.
+
+Typically in machine translation we distinguish between stateless and stateful features, which names
+refer to whether the feature contributes state to the dynamic programming chart beyond the coverage
+vector (i.e., span) needed by the decoder to ensure coherent translations. *Stateful* features also
+depend on the (hypothesized) decoder output, and therefore require that the dynamic programming
+state of the decoding algorithm be extended with sufficient information about those hypotheses. The
+classic example of a stateful feature function is the language model, which must record, for each
+state in the hypergraph, the boundary words needed for language model score computation when new
+rules are applied.
+
+*Stateless* features depend on the basic information needed for CKY parsing: the span of the input,
+ the rule being applied, and the rule's antecedents or tail nodes. Basically, this is any portion of
+ the input sentence of portions of the hypergraph that have already been assembled (and can
+ therefore be assumed to be fixed along with the input). Examples of stateless feature functions
+ are:
+ 
+ - *Rule arity*: the arity of the rule being applied
+
+ - *OOV penalty*: a counter of the number of untranslated words in the current rule or hypothesis
+
+ - *Context*: input words bordering the current span (i,j)
+
+Sparse features in Joshua
+-------------------------
+
+Joshua uses a sparse feature implementation backed by hash tables for all features in the
+decoder. Features are triggered and grouped together with feature functions, each of which can
+contribute an arbitrary number of features to the decoder, and a separate weight is expected for
+each. Feature functions serve to group together logically related features, and typically assign
+related feature a common prefix. For example, the weights on grammar rules read from the model each
+have separate weights and are handled by the `PhraseModel(NAME)` feature function, which assigns the
+features the names `tm_NAME_0`, `tm_name_1`, and so on. Similarly, the `TargetBigram` feature might
+emit features such as `TargetBigram_<s>_I` and `TargetBigram_others_say`.
+
+Efficiency considerations
+-------------------------
+
+For efficiency reasons, it is important not to store the entire accumulated feature vector at each
+edge in the hypergraph. Instead, each edge stores only the features incurred by that rule, and the
+entire feature vector can be reconstructed by following backpointers. Actually, each edge only
+stores the inner product of the delta, i.e., the score incurred by taking the dot product of the
+weight vector with the features incurred by that hyperedge. This decreases decoding time measurably,
+although at a cost of increasing the amount of time it takes to do k-best extraction (when the
+feature vectors must be recomputed at every edge and sparse vectors accumulated).
+
+Feature Function interface
+--------------------------
+
+Feature functions are arranged into the following hierarchy, found in `$JOSHUA/src`:
+
+    joshua
+    + decoder
+      + ff
+        FeatureFunction (interface)
+        +- StatelessFF (abstract class)
+        +- StatefulFF (abstract class)
+
+`FeatureFunction` is an interface, and `StatelessFF` and `StatefulFF` are abstract base classes
+implementing that interface and providing some defaults for each class. For example, `StatelessFF`
+enforces the stateless nature of `getStateComputer()` by finalizing its definition to return null.
+
+Implementing a new feature function
+-----------------------------------
+
+Adding a new feature function involves just a few steps. It should be helpful to examine the
+`FeatureFunction` class to see the functions that need to be defined.
+
+- Create the feature function class. This will likely go in `$JOSHUA/src/joshua/decoder/ff` if it is
+  just a single file. If you have more files to add, create a subdirectory and put it there to keep
+  things neat. Your feature function should inherit from either `StatelessFF` or `StatefulFF`.
+
+- Feature functions are triggered by a line of the form
+
+      feature_function = NAME [ARGS]
+    
+  where NAME is the name keying your feature function and ARGS denote optional arguments for the
+  feature. 
+
+- Add initialization code to `Decoder::initializeFeatureFunctions()` (in
+  `$JOSHUA/src/joshua/decoder/Decoder.java`). You can find the block where other feature functions
+  are initialized and add one for yours. Note that feature names are case-insensitive. You'll see in
+  these initialization blocks that currently, each feature is responsible for parsing its own
+  arguments. In the future, we plan to add generic argument processing to save each feature function
+  the trouble of doing this by hand.
   
-- Efficiency is a major concern.  First, you don't want to explicitly represent ever-growing sparse
-  vectors for each of the nodes; second, you don't want to incur the cost of expensive vector
-  operations in computing the score for each node.  The solutions to these issues are to only store
-  the delta at each hyperedge in the chart (that is, the delta in feature cost incurred by combining
-  the hyperedge's two antecents / tails to produce its consequent / head).  The score is then a
-  function of the scores of the tail nodes and the inner product of the delta in feature values with
-  the weight vector.  This score can be cached with the node, and reconstructed only on demand.
-
-- State should be maintained separately from features, since features themselves are stateless.  At
-  the moment I don't have the full implications of this in mind, but it seems sensible.  Joshua
-  currently implements state separate from features, which is useful, for example, in supporting
-  multiple language models, so this is useful.
+  Here is an example: the ArityPhrasePenalty penalizes phrases in a range of arities that share a
+  particular owner. This is handled as follows:
   
-- For feature file format, we should borrow from cdec, which (from the small example I've read),
-  supports two formats: the first is Joshua's format, where unlabeled feature values trail each
-  grammar rule.  The second is labeled feature values in the form "feature=value".  I think a
-  combined format would be useful in a grammar: a list of unlabeled dense features followed by an
-  optional list of labeled features.
+      ...
+      else if (feature.equals("arityphrasepenalty") || feature.equals("aritypenalty")) {
+        String owner = fields[1];
+        int startArity = Integer.parseInt(fields[2].trim());
+        int endArity = Integer.parseInt(fields[3].trim());
+
+        this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
+            owner, startArity, endArity)));
+       }
+
+   The arguments are processed and then passed to the `ArityPhrasePenaltyFF` constructor, adding
+   to the list of feature functions.
+   
+- Each feature function is given access to the global `weights` vector (of type
+  `FeatureVector`). This is basically a hash table of named features and their weights. Your feature
+  can simply query the hash table to find out the weights assigned to its features. Feature names
+  must be globally unique, so the convention is to prepend your feature name to any weights is
+  computes, as mentioned above.
   
-So what are the actual steps that need to be accomplished?
-
-- To begin, we need to do three separate things: (1) load the feature weights, (2) instantiate
-  requested feature templates (listed in the Joshua configuration file), and (3) load the weights
-  associated with each rule.
-
-  1. The list of features should be read from a separate file containing the weights.  For
-     compatibility with current code, features should be listed one per line, with two fields, the
-     feature name, and the value.  Each feature name would have a prefix so to avoid feature name
-     classes (for example, a target-side bigram pair feature could use TargetBigram as its prefix,
-     and append the actual bigrams as they are counted).  We need to choose some delimiter for
-     suffixes, e.g., //, or _, or |||, and so on.
-     
-     In the Joshua configuration, the key specifying the location of this file could be
-     "weights-file".
-     
-  2. Because there may be an arbitrary number of feature templates, we want to be able to specify
-     which of them to load.  We could borrow from cdec's implementation and use something like
-     
-         feature_function=NAME
-         
-     where NAME is the name of the feature function prefix mentioned above.  This name is stored
-     internally to map to the class that implements the feature and is also used as the feature name
-     prefix in the weights file.  By convention these two names (the class name and the feature
-     name) should be the same (perhaps the key name should be the class name to enforce this).
-     
-     To be explicit, this means that features not explicitly loaded in this manner would not be
-     loaded.  For example, the OOV penalty is currently loaded by virtue of giving it a weight.  We
-     would want to do away with this.
-
-     A further benefit of this approach is that arguments could be passed to the feature.  We could
-     define a general command-line processing procedure for each feature template implemented in the
-     parent type and thus easily usable by any feature implementation.
-     
-     So what does the design look like?  
-     
-     - Each feature is triggered with a `feature_function=NAME` line.  NAME is the exact name of the
-       feature function class.
-     - Features are templates that might produce any number of actual features (zero or more).
-     - When the feature is instantiated, it is given (1) all the arguments passed to it and (2) the
-       weight vector.
-     - Currently, feature functions know
-        - their weight
-        - their feature ID
-        - whether they are stateful
-        - how to compute their cost initially (estimateLogP())
-        - how to recompute their cost (reEstimateTransitionLogP())
-        - how to compute their final cost
-     - The new feature interface needs to do all these things, but I think we should rename some of
-       the functions.  This will start by distinguishing at the design stage between stateful and
-       stateless feature functions.  Stateful features are ones that contribute to the state of the
-       object (such as a target-side (n>1)-gram language model).  Stateless features are sometimes
-       precomputable.
-       
-  3. When instantiating grammar rules, we can look up the weights of each key found listed with the
-     rule directly, and use it to produce the cached score for the rule application.  There is no
-     need to instantiate objects here.
-     
-     Since we want to support the dense representation as well, we will simply use a default name
-     for each of the grammar features, perhaps `phrasemodel_OWNER_INDEX`, where OWNER is the
-     grammar's owner and INDEX is a 0-indexed number for each rule in the grammar.
-     
-The next issue to deal with is in merging hypotheses.  When that occurs, we need to query each of
-the active feature functions for new features that they trigger.  We will then store these features
-in some form, associated with the hyperedge, and also score the cached inner product of those
-feature values with their weights.
-
-The Current Implementation
--------
-
-Currently, Joshua maintains a `FeatureFunction` interface.  There are two default implementations of
-this interface, `DefaultStatelessFF` and `DefaultStatefulFF`, which implement stateless and stateful
-feature functions, respectively.  These functions share some functionality (mostly getters and
-setters) that could be folded together if FeatureFunction were an abstract class instead of an
-interface. 
-
-This section is incomplete.
-
-Checklist
---------
-
-Here is a list of things that need to get done.
-
-X = done
-. = in progress
-
-- [X] Build a FeatureVector class, a sparse representation that can be used to hold both feature
-  values and weight vectors
-- [X] Read in the weight vector from a supplied file (a new Joshua parameter, weights-file)
-- [X] Change JoshuaDecoder.java to activate features only when feature_function= lines are present
-  in the configuration
-- [X] Write script to take an old config file and change it to the new format.
-- [ ] The grammar reading code needs to know about sparse features
-  - [X] MemoryBasedBatchGrammar
-  - [ ] PackedGrammar
-    - [ ] getFeatures() is broken
-    - [ ] grammar needs to correctly implement get/setPrecomputableCost() (currently does the same as get/setEstimatedCost())
-- [X] Rewrite the feature function interface.
-  - [X] Stateful features: computeCost(), computeFinalCost(), computeFeatures(), estimateFutureCost()
-  - [X] Stateless features: computeCost(), computeFeatures()
-  - [X] A separate precomputable feature type?
-- [X] Adapt all existing features to the new interface
-  - [X] ArityPenalty
-  - [X] OOVFF
-  - [X] WordPenalty
-  - [X] PhraseModel
-  - [X] LanguageModel
-  - [X] EdgePhraseSimilarity
-- [X] features need to know to make sure that rule is not null (signifies final transition).
-  Alternately separate the interface for transitions and final transitions.
-- [X] make sure AbstractGrammar.sortGrammar(List<FeatureFunction>) works.  
-
-  This function chains to MonolingualRule.estimateRuleCost(), which is where the action happens.
-  This function iterates over the feature functions, calling -
+- The main functions you need to consider are `computeCost(...)`, which computes the cost of
+  applying a rule, and `computeFeatures(...)`, which computes the features incurred by a rule. Note
+  that the simplest implementation (and the default, actually) of `computeCost(...)` is:
   
-    -ff.estimateLogP() * ff.getWeight()
-	
-  If the weight vector is updated, this can work simply by changing this to computeCost();
+    weights.innerProduct(computeFeatures())
+    
+  But for your feature, there may be a more efficient way to compute it (e.g., without explicitly
+  producing a FeatureVector object and taking an expensive inner product).
 
-- [X] Change the way OOV rules are applied (should be separately-owned grammar with one feature
-  count OOVs, instead of clunky approach applied now
-  - [X] get rid of `JoshuaConfiguration.num_phrasal_features`
-  - [X] get rid of `JoshuaConfiguration.oov_feature_index`
-  - [X] get rid of `JoshuaConfiguration.oov_feature_cost`
-  - [X] get rid of `JoshuaConfiguration.use_max_lm_cost_for_oov`
-- [X] ComputeNodeResult needs to know how to compute features
-  - [X] Producing a score
-  - [X] Producing a list of features
-- [X] Rewrite the k-best extraction code to know about sparse features, apply labels to the output
-- [X] Modify MERT to know about labeled features
-  This could probably be done by (a) having sparse features output in the order they are declared in
-  the file and (b) modifying MERT to assume a dense representation that (perhaps) allows labels that
-  are then just ignored.
-- [ ] Modify PRO to work with sparse labeled features
-* [ ] Get batch MIRA working with sparse features
+
+Existing stateless feature functions
+------------------------------------
+
+Here is a list of feature functions that exist in Joshua.
+
+- `WordPenaltyFF`. Each target language word incurs a penalty of -0.435 (-log_10(e)). The weight is
+  named `WordPenalty`.
+
+- `PhraseModelFF`. One of these is defined for each distinct grammar "owner" (part of the grammar
+  initialization line). The "owner" concept allows grammars to share weights or have distinct weight
+  sets. Features have the name `tm_OWNER_INDEX`.
+
+- `ArityPhrasePenaltyFF`.  This feature is parameterized by `min`, `max`, and `owner`, and it fires
+  on application of rules with arity (= rank = number of nonterminals on the righthand side) between
+  `min` and `max`, inclusive, belonging to grammars with the specified owner. The weight is named
+  `ArityPhrasePenalty`.
+
+- `OOVFF`.  This feature fires each time an OOV is entered into the chart. The weight is named
+  `OOVFF`. 
+
+- `SourceDependentFF`.
+
+- `SourcePathFF`. This feature contains the weight of the source word (for support of weighted
+  lattices).
+
+Stateful Feature Functions
+--------------------------
+
+This is a list of stateful feature functions.
+
+- `LanguageModelFF`. One of these is instantiated for each language model listed in the
+   configuration file, with weights assigned as `lm_0`, `lm_1`, and so on.
+
+- `EdgePhraseSimilarityFF`.  This function contacts a server to compute the similarity of a rule
+   with a set of paraphrases.

@@ -1,17 +1,19 @@
 package joshua.decoder.ff;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.corpus.Vocabulary;
 
 /**
  * This feature function counts rules from a particular grammar (identified by the owner) having an
- * arity within a specific range.  It expects three parameters upon initialization: the owner, the
+ * arity within a specific range. It expects three parameters upon initialization: the owner, the
  * minimum arity, and the maximum arity.
- *
+ * 
  * @author Matt Post <post@cs.jhu.edu
  * @author Zhifei Li <zhifei.work@gmail.com>
  */
@@ -22,14 +24,14 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
   private final int minArity;
   private final int maxArity;
 
-	// Cache the weight from the weight vector;
-	private float weight;
+  // Cache the weight from the weight vector;
+  private float weight;
 
   public ArityPhrasePenaltyFF(final FeatureVector weights, String argString) {
     super(weights, "ArityPenalty", argString);
 
-    // Process the args for the owner, minimum, and maximum.  
-    
+    // Process the args for the owner, minimum, and maximum.
+
     // TODO: This should be done in a general way by FeatureFunction::processArgs, in a way that
     // allows any feature to have arguments.
     String args[] = argString.split("\\s+");
@@ -37,28 +39,31 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
     this.minArity = Integer.parseInt(args[1]);
     this.maxArity = Integer.parseInt(args[2]);
 
-		if (! weights.containsKey(name))
-			System.err.println("WARNING: no weight found for feature '" + name + "'");
+    if (!weights.containsKey(name))
+      System.err.println("WARNING: no weight found for feature '" + name + "'");
 
-		this.weight = weights.get(name);
- }
+    this.weight = weights.get(name);
+  }
 
   /**
-   * Returns 1 if the arity penalty feature applies to the current rule
+   * Returns 1 if the arity penalty feature applies to the current rule.
    */
   private int isEligible(final Rule rule) {
-    if (this.owner == rule.getOwner() && rule.getArity() >= this.minArity && rule.getArity() <= this.maxArity)
+    if (this.owner == rule.getOwner() && rule.getArity() >= this.minArity
+        && rule.getArity() <= this.maxArity)
       return 1;
 
     return 0;
   }
-  
-  public float computeCost(Rule rule, SourcePath sourcePath, int sentID) {
+
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
     return weight * isEligible(rule);
   }
 
   @Override
-  public FeatureVector computeFeatures(Rule rule, SourcePath sourcePath, int sentID) {
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID) {
     return new FeatureVector(name, isEligible(rule));
   }
 }

@@ -547,6 +547,23 @@ public class PackedGrammar extends BatchGrammar {
           }
           return tgt;
         }
+        
+        @Override
+        public String getEnglishWords() {
+          ArrayList<String> foreignNTs = new ArrayList<String>();
+          for (int i = 0; i < this.getFrench().length; i++)
+            if (this.getFrench()[i] < 0) foreignNTs.add(Vocabulary.word(this.getFrench()[i]));
+
+          StringBuilder sb = new StringBuilder();
+          for (int i = 0; i < this.getEnglish().length; i++) {
+            if (this.getEnglish()[i] >= 0)
+              sb.append(Vocabulary.word(this.getEnglish()[i]) + " ");
+            else
+              sb.append(foreignNTs.get(Math.abs(this.getEnglish()[i]) - 1) + "," + Math.abs(this.getEnglish()[i]) + " ");
+          }
+
+          return sb.toString().trim();
+        }
 
         @Override
         public void setFrench(int[] french) {
@@ -557,6 +574,11 @@ public class PackedGrammar extends BatchGrammar {
           return src;
         }
 
+        @Override
+        public String getFrenchWords() {
+          return Vocabulary.getWords(getFrench());
+        }
+        
         @Override
         public FeatureVector getFeatureVector() {
           if (features == null) {

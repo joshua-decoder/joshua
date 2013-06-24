@@ -20,7 +20,9 @@ import joshua.decoder.hypergraph.HyperEdge;
  * features, which are associated with weights. The task of the feature function is to compute the
  * features that are fired in different circumstances and then return the inner product of those
  * features with the weight vector. Feature functions can also produce estimates of their future
- * cost; these values are not used in computing the score, but are only used for pruning.
+ * cost; these values are not used in computing the score, but are only used for pruning. The
+ * individual features produced by each template should have globally unique names; a good 
+ * convention is to prefix each feature with the name of the template that produced it.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevich <juri@cs.jhu.edu>
@@ -156,35 +158,10 @@ public abstract class FeatureFunction {
   /**
    * This function could be implemented to process the feature-line arguments in a generic way, if
    * so desired.
+   *
+   * TODO: implement this.
    */
   private void processArgs(String argString) {
     return;
   }
-
-  /**************************************************************
-   * OLD INTERFACE DON'T USE WILL SOON DELETE *******************
-   **************************************************************/
-
-  /**
-   * estimate future logP, e.g., the logPs of partial n-grams asscociated with the left-edge ngram
-   * state
-   * */
-  // double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);
-
-  // double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-  // SourcePath srcPath, int sentID);
-
-  // double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
-
-  // double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
-  // SourcePath srcPath, int sentID);
-
-  /**
-   * Edges calling finalTransition do not have concret rules associated with them.
-   * */
-  // double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath,
-  // int sentID);
-
-  // double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
-
 }
