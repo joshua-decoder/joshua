@@ -172,7 +172,10 @@ public class Vocabulary {
   }
 
   public static int[] addAll(String sentence) {
-    String[] tokens = sentence.split("\\s+");
+    return addAll(sentence.split("\\s+"));
+  }
+  
+  public static int[] addAll(String[] tokens) {
     int[] ids = new int[tokens.length];
     for (int i = 0; i < tokens.length; i++)
       ids[i] = id(tokens[i]);
