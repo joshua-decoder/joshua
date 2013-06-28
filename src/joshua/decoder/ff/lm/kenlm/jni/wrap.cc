@@ -155,15 +155,17 @@ VirtualBase *ConstructModel(const char *file_name) {
 	if (!RecognizeBinary(file_name, model_type))
 		model_type = HASH_PROBING;
 	switch (model_type) {
-	case HASH_PROBING:
+	case PROBING:
 		return new VirtualImpl<ProbingModel>(file_name);
-	case TRIE_SORTED:
+	case REST_PROBING:
+		return new VirtualImpl<RestProbingModel>(file_name);
+	case TRIE:
 		return new VirtualImpl<TrieModel>(file_name);
-	case ARRAY_TRIE_SORTED:
+	case ARRAY_TRIE:
 		return new VirtualImpl<ArrayTrieModel>(file_name);
-	case QUANT_TRIE_SORTED:
+	case QUANT_TRIE:
 		return new VirtualImpl<QuantTrieModel>(file_name);
-	case QUANT_ARRAY_TRIE_SORTED:
+	case QUANT_ARRAY_TRIE:
 		return new VirtualImpl<QuantArrayTrieModel>(file_name);
 	default:
 		UTIL_THROW(
