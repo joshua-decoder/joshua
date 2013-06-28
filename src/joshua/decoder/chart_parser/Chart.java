@@ -202,8 +202,8 @@ public class Chart {
         int[] targetWords = { targetWord };
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
-          Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber(),
-              node.getNumber() + 1);
+          Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber() - 1,
+              node.getNumber());
           for (int label : labels) {
             BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0);
             oovRules.add(oovRule);
