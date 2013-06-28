@@ -211,12 +211,12 @@ public class Chart {
             oovRule.estimateRuleCost(featureFunctions);
           }
 
-        } else {
-          BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
-          oovRules.add(oovRule);
-          oovGrammar.addRule(oovRule);
-          oovRule.estimateRuleCost(featureFunctions);
         }
+        // Always add default OOV rule, as parse labels might not match with glue grammar.
+        BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
+        oovRules.add(oovRule);
+        oovGrammar.addRule(oovRule);
+        oovRule.estimateRuleCost(featureFunctions);
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()
             .getNumber())) {
