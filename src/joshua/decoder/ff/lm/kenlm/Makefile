@@ -44,6 +44,6 @@ libken.so: $(CORE) $(HEADERS) jni/wrap.cc
 	g++ -I. -DNO_ICU $(CPPFLAGS) jni/wrap.cc -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux $(CORE) -fpic -shared -Wl,-soname,libken.so -o libken.so -lz -Wno-deprecated -pthread $(RT)
 
 install: libken.so $(EXES)
-	cp -f libken.so $(libdir)/libken.so
+	cp -f libken.so $(JOSHUA)/lib/libken.so
 	cp -f $(EXES) $(JOSHUA)/bin/
 endif
