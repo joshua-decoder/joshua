@@ -163,7 +163,7 @@ my $DO_PREPARE_CORPORA = 1;
 my $OPTIMIZER_RUNS = 1;
 
 # what to use to create language models ("berkeleylm" or "srilm")
-my $LM_GEN = "berkeleylm";
+my $LM_GEN = "kenlm";
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -185,6 +185,9 @@ my $MIRA_ITERATIONS = 8;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
+
+# Allows the user to set a temp dir for various tasks
+my $TMPDIR = "/tmp";
 
 my $retval = GetOptions(
   "readme=s"    => \$README,
@@ -245,6 +248,7 @@ my $retval = GetOptions(
   "hadoop=s"          => \$HADOOP,
   "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
+  "tmp=s"             => \$TMPDIR,
 );
 
 if (! $retval) {
@@ -446,8 +450,8 @@ if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
   exit 1;
 }
 
-if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm") {
-  print "* FATAL: lm generating code (--lm-gen) must be one of 'berkeleylm' (default) or 'srilm'\n";
+if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm" and $LM_GEN ne "kenlm") {
+  print "* FATAL: lm generating code (--lm-gen) must be one of 'kenlm' (default), 'berkeleylm', or 'srilm'\n";
   exit 1;
 }
 
@@ -1018,11 +1022,18 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 		my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 		$cachepipe->cmd("srilm",
 										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target} -lm lm.gz",
+                    $TRAIN{target},
 										$lmfile);
-  } else {
+  } elsif ($LM_GEN eq "berkeleylm") {
 		$cachepipe->cmd("berkeleylm",
 										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
+                    $TRAIN{target},
 										$lmfile);
+  } else {
+    $cachepipe->cmd("kenlm",
+                    "cat $TRAIN{target} | $JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR --verbose_header | gzip -9n > lm.gz",
+                    $TRAIN{target},
+                    $lmfile);
   }
 
   if ((! $MERGE_LMS) && ($LM_TYPE eq "kenlm" || $LM_TYPE eq "berkeleylm")) {
