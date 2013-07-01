@@ -1,4 +1,4 @@
-bin/
+class/
 lib/libsrilm.dylib
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Ngram.java
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Vocab.java
@@ -31,6 +31,7 @@ src/joshua/decoder/ff/lm/kenlm/build_binary
 src/joshua/decoder/ff/lm/kenlm/libken.dylib
 src/joshua/decoder/ff/lm/kenlm/ngram_query
 src/joshua/decoder/ff/lm/kenlm/query
+src/joshua/decoder/ff/lm/kenlm/lmplz
 examples/example2/example2.1best
 examples/example2/example2.1best.sgm
 examples/example2/example2.config.kenlm
@@ -68,3 +69,13 @@ doxygen_*.tmp
 *.so
 test/scripts/tokenization/diff
 test/scripts/tokenization/output
+.cachepipe
+
+joshua-decoder.org
+release
+test/bn-en/samt/output.scores
+test/decoder/n-ary/diff
+test/decoder/n-ary/log
+test/decoder/n-ary/output
+test/decoder/n-ary/output.scores
+debug.txt

@@ -1,0 +1,32 @@
+## Model weights #####################################################
+
+# For each langage model line listed above, create a weight in the
+# following format: the keyword "lm", a 0-based index, and the weight.
+# lm_INDEX WEIGHT
+
+<LMWEIGHTS>
+
+# The phrasal weights correspond to weights stored with each of the
+# grammar rules.  The format is
+#
+#   tm_OWNER_COLUMN WEIGHT
+#
+# where COLUMN denotes the 0-based order of the parameter in the
+# grammar file and WEIGHT is the corresponding weight.  In the future,
+# we plan to add a sparse feature representation which will simplify
+# this.
+
+<TMWEIGHTS>
+
+# The wordpenalty feature counts the number of words in each hypothesis.
+
+WordPenalty -1.0
+
+# This feature counts the number of unknown words in the hypothesis.
+
+OOVPenalty -100
+
+# This feature weights paths through an input lattice.  It is only activated
+# when decoding lattices.
+
+<LATTICEWEIGHT>

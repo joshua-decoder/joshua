@@ -2,6 +2,8 @@ package joshua.pro;
 
 import java.util.Vector;
 
+import joshua.corpus.Vocabulary;
+
 // sparse feature representation version
 public class ClassifierPerceptron implements ClassifierInterface {
   @Override
@@ -23,7 +25,6 @@ public class ClassifierPerceptron implements ClassifierInterface {
 
     System.out.print("Perceptron iteration ");
     int numError = 0;
-    int featID = 0;
     // int numPosSamp = 0;
     String[] feat_info;
 
@@ -48,8 +49,9 @@ public class ClassifierPerceptron implements ClassifierInterface {
          */
 
         for (int d = 0; d < featVal.length - 1; d++) {
-          feat_info = featVal[d].split(":");
-          score += Double.parseDouble(feat_info[1]) * lambda[Integer.parseInt(feat_info[0])];
+          feat_info = featVal[d].split("[:=]");
+          int featID = Vocabulary.id(feat_info[0]);
+          score += Double.parseDouble(feat_info[1]) * lambda[featID];
         }
 
         label = Double.parseDouble(featVal[featVal.length - 1]);
@@ -65,8 +67,8 @@ public class ClassifierPerceptron implements ClassifierInterface {
            */
 
           for (int d = 0; d < featVal.length - 1; d++) {
-            feat_info = featVal[d].split(":");
-            featID = Integer.parseInt(feat_info[0]);
+            feat_info = featVal[d].split("[:=]");
+            int featID = Vocabulary.id(feat_info[0]);            
 
             lambda[featID] += learningRate * label * Double.parseDouble(feat_info[1]);
             sum_lambda[featID] += lambda[featID];

@@ -1,20 +1,25 @@
 #ifndef UTIL_ERSATZ_PROGRESS__
 #define UTIL_ERSATZ_PROGRESS__
 
-#include <iosfwd>
+#include <iostream>
 #include <string>
+
+#include <stdint.h>
 
 // Ersatz version of boost::progress so core language model doesn't depend on
 // boost.  Also adds option to print nothing.  
 
 namespace util {
+
+extern const char kProgressBanner[];
+
 class ErsatzProgress {
   public:
     // No output.  
     ErsatzProgress();
 
     // Null means no output.  The null value is useful for passing along the ostream pointer from another caller.   
-    ErsatzProgress(std::ostream *to, const std::string &message, std::size_t complete);
+    explicit ErsatzProgress(uint64_t complete, std::ostream *to = &std::cerr, const std::string &message = "");
 
     ~ErsatzProgress();
 
@@ -23,14 +28,13 @@ class ErsatzProgress {
       return *this;
     }
 
-    ErsatzProgress &operator+=(std::size_t amount) {
+    ErsatzProgress &operator+=(uint64_t amount) {
       if ((current_ += amount) >= next_) Milestone();
       return *this;
     }
 
-    void Set(std::size_t to) {
+    void Set(uint64_t to) {
       if ((current_ = to) >= next_) Milestone();
-      Milestone();
     }
 
     void Finished() {
@@ -40,7 +44,7 @@ class ErsatzProgress {
   private:
     void Milestone();
 
-    std::size_t current_, next_, complete_;
+    uint64_t current_, next_, complete_;
     unsigned char stones_written_;
     std::ostream *out_;
 

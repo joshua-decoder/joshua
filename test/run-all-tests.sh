@@ -7,21 +7,18 @@
 # Important!  Do not rename this script to match the pattern test*.sh, or it will execute
 # recursively.
 
-for file in $(find . -name test*.sh); do
+
+tests=$(find . -name test*.sh | perl -pe 's/\n/ /g')
+echo "TESTS: $tests"
+
+for file in $tests; do
   if [[ ! -x $file ]]; then
     continue;
   fi
-
-	dir=$(dirname $file)
-
-	echo -n "Running test in $dir..."
-	pushd $dir > /dev/null
-	bash test.sh
-
-	# fail on failure
-	if [[ $? -ne 0 ]]; then
-		exit 1
-	fi
-
-	popd > /dev/null
+  dir=$(dirname $file)
+  name=$(basename $file)
+  echo -n "Running test '$name' in $dir..."
+  pushd $dir > /dev/null
+  bash $name
+  popd > /dev/null
 done

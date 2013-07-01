@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.corpus;
 
 import java.io.BufferedInputStream;
@@ -56,6 +41,9 @@ public class Vocabulary {
   private static final int UNKNOWN_ID;
   private static final String UNKNOWN_WORD;
 
+  public static final String START_SYM = "<s>";
+  public static final String STOP_SYM = "</s>";
+  
   static {
     logger = Logger.getLogger(Vocabulary.class.getName());
 
@@ -184,7 +172,10 @@ public class Vocabulary {
   }
 
   public static int[] addAll(String sentence) {
-    String[] tokens = sentence.split("\\s+");
+    return addAll(sentence.split("\\s+"));
+  }
+  
+  public static int[] addAll(String[] tokens) {
     int[] ids = new int[tokens.length];
     for (int i = 0; i < tokens.length; i++)
       ids[i] = id(tokens[i]);
@@ -192,13 +183,8 @@ public class Vocabulary {
   }
 
   public static String word(int id) {
-    synchronized (lock) {
-      id = Math.abs(id);
-      if (id >= idToString.size()) {
-        throw new UnknownSymbolException(id);
-      }
-      return idToString.get(id);
-    }
+    id = Math.abs(id);
+    return idToString.get(id);
   }
 
   public static String getWords(int[] ids) {

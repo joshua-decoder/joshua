@@ -77,8 +77,7 @@ private:
 
 template<class Model> class VirtualImpl: public VirtualBase {
 public:
-	VirtualImpl(const char *name, float fake_oov_cost) :
-			m_(name), fake_oov_cost_(fake_oov_cost) {
+	VirtualImpl(const char *name) : m_(name) {
 		// Insert unknown id mapping.
 		map_.push_back(0);
 	}
@@ -91,12 +90,11 @@ public:
 
 		std::reverse(begin, end - 1);
 		lm::ngram::State ignored;
-		return *(end - 1) ?
+		return 
 				m_.FullScoreForgotState(
-						reinterpret_cast<const lm::WordIndex*>(begin),
-						reinterpret_cast<const lm::WordIndex*>(end - 1), *(end - 1),
-						ignored).prob :
-				fake_oov_cost_;
+					reinterpret_cast<const lm::WordIndex*>(begin),
+					reinterpret_cast<const lm::WordIndex*>(end - 1), *(end - 1),
+					ignored).prob;
 	}
 
 	float ProbString(jint * const begin, jint * const end, jint start) const {
@@ -113,8 +111,6 @@ public:
 					reinterpret_cast<const lm::WordIndex*>(begin),
 					reinterpret_cast<const lm::WordIndex*>(begin + start), begin[start],
 					state).prob;
-			if (begin[start] == 0)
-				prob = fake_oov_cost_;
 			++start;
 		}
 		lm::ngram::State state2;
@@ -122,11 +118,13 @@ public:
 			if (i >= end)
 				break;
 			float got = m_.Score(state, *i, state2);
-			prob += *(i++) ? got : fake_oov_cost_;
+      i++;
+			prob += got;
 			if (i >= end)
 				break;
 			got = m_.Score(state2, *i, state);
-			prob += *(i++) ? got : fake_oov_cost_;
+      i++;
+			prob += got;
 		}
 		return prob;
 	}
@@ -148,26 +146,27 @@ public:
 
 private:
 	Model m_;
-	float fake_oov_cost_;
 	std::vector<lm::WordIndex> map_;
 };
 
-VirtualBase *ConstructModel(const char *file_name, float fake_oov_cost) {
+VirtualBase *ConstructModel(const char *file_name) {
 	using namespace lm::ngram;
 	ModelType model_type;
 	if (!RecognizeBinary(file_name, model_type))
 		model_type = HASH_PROBING;
 	switch (model_type) {
-	case HASH_PROBING:
-		return new VirtualImpl<ProbingModel>(file_name, fake_oov_cost);
-	case TRIE_SORTED:
-		return new VirtualImpl<TrieModel>(file_name, fake_oov_cost);
-	case ARRAY_TRIE_SORTED:
-		return new VirtualImpl<ArrayTrieModel>(file_name, fake_oov_cost);
-	case QUANT_TRIE_SORTED:
-		return new VirtualImpl<QuantTrieModel>(file_name, fake_oov_cost);
-	case QUANT_ARRAY_TRIE_SORTED:
-		return new VirtualImpl<QuantArrayTrieModel>(file_name, fake_oov_cost);
+	case PROBING:
+		return new VirtualImpl<ProbingModel>(file_name);
+	case REST_PROBING:
+		return new VirtualImpl<RestProbingModel>(file_name);
+	case TRIE:
+		return new VirtualImpl<TrieModel>(file_name);
+	case ARRAY_TRIE:
+		return new VirtualImpl<ArrayTrieModel>(file_name);
+	case QUANT_TRIE:
+		return new VirtualImpl<QuantTrieModel>(file_name);
+	case QUANT_ARRAY_TRIE:
+		return new VirtualImpl<QuantArrayTrieModel>(file_name);
 	default:
 		UTIL_THROW(
 				lm::FormatLoadException,
@@ -181,13 +180,13 @@ VirtualBase *ConstructModel(const char *file_name, float fake_oov_cost) {
 extern "C" {
 
 JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
-		JNIEnv *env, jclass, jstring file_name, jfloat fake_oov_cost) {
+		JNIEnv *env, jclass, jstring file_name) {
 	const char *str = env->GetStringUTFChars(file_name, 0);
 	if (!str)
 		return 0;
 	jlong ret;
 	try {
-		ret = reinterpret_cast<jlong>(ConstructModel(str, fake_oov_cost));
+		ret = reinterpret_cast<jlong>(ConstructModel(str));
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		abort();

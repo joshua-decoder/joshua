@@ -13,16 +13,25 @@ rm -f joshua-$version && ln -s $JOSHUA joshua-$version
 
 wget -qr joshua-decoder.org
 
+# Save the current version and commit to a file
+echo "release version: $version" > VERSION
+echo "current commit: $(git rev-parse --verify HEAD)" >> VERSION
+
 tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
-    joshua-$version/{README,build.xml,logging.properties} \
+    joshua-$version/{README,VERSION,build.xml,logging.properties} \
     joshua-$version/src \
     joshua-$version/bin \
-    joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
+    joshua-$version/class \
+    joshua-$version/lib/{*jar,eng_sm6.gr,hadoop-0.20.2.tar.gz,README,LICENSES} \
     joshua-$version/scripts \
+    joshua-$version/data \
+    joshua-$version/test \
     joshua-$version/examples \
     joshua-$version/thrax/bin/thrax.jar \
+    joshua-$version/thrax/scripts \
 		joshua-$version/joshua-decoder.org \
     joshua-$version/joshua-decoder
 
 rm -f joshua-$version
+rm -f VERSION

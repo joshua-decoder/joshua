@@ -39,13 +39,13 @@ public class Node<Label> {
    * Numeric integer identifier of this node. Package-private scope so that Lattice can quickly
    * access this variable.
    */
-  final Integer id;
+  private final Integer id;
 
   /**
    * Arcs which begin at this node. Package-private scope so that Lattice can quickly access this
    * variable.
    */
-  final List<Arc<Label>> outgoingArcs;
+  private final List<Arc<Label>> outgoingArcs;
 
 
   // ===============================================================
@@ -73,6 +73,9 @@ public class Node<Label> {
   public int getNumber() {
     return id;
   }
+  public int id() {
+    return id;
+  }
 
 
   /**
@@ -80,7 +83,7 @@ public class Node<Label> {
    * 
    * @return The arcs that begin at this node.
    */
-  public Iterable<Arc<Label>> getOutgoingArcs() {
+  public List<Arc<Label>> getOutgoingArcs() {
     return outgoingArcs;
   }
 
@@ -104,7 +107,7 @@ public class Node<Label> {
           }
 
           public Node<Label> next() {
-            return arcIterator.next().getTail();
+            return arcIterator.next().getHead();
           }
 
           public void remove() {

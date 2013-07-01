@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="joshua/corpus/|joshua/decoder/DecoderThreadTest.java|joshua/decoder/ff/|joshua/decoder/ff/lm/|joshua/lattice/|joshua/util/io/|joshua/zmert/" including="joshua/" kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="lib/asm-3.1.jar"/>
 	<classpathentry kind="lib" path="lib/collections-generic-4.01.jar"/>
@@ -11,9 +12,14 @@
 	<classpathentry kind="lib" path="lib/jung-graph-impl-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/jung-visualization-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/pmd-4.2.5.jar"/>
-	<classpathentry kind="lib" path="lib/testng-5.8-jdk15.jar"/>
-	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="lib" path="lib/testng-6.7-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/testng-6.7-sources.jar"/>
+	<classpathentry kind="lib" path="lib/testng-6.7.jar"/>
+	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-sources.jar"/>
+	<classpathentry kind="lib" path="lib/mockito-all-1.9.5.jar"/>
+	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
+	<classpathentry kind="output" path="class"/>
 </classpath>

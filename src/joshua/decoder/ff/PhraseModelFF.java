@@ -1,79 +1,72 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff;
 
+import java.util.List;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import joshua.corpus.Vocabulary;
+import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 
 /**
+ * This feature handles the list of features that are found with grammar rules in the grammar file.
+ * dense features that may be associated with the rules in a grammar file. The feature names of
+ * these dense rules are a function of the phrase model owner. When the feature is loaded, it
+ * queries the weights for the set of features that are active for this grammar, storing them in an
+ * array.
  * 
- * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
+ * @author Zhifei Li <zhifei.work@gmail.com>
  */
 
+public class PhraseModelFF extends StatelessFF {
 
-/**
- * */
-public final class PhraseModelFF extends DefaultStatelessFF {
+  /* The owner of the grammar. */
+  private int ownerID;
 
-  private static final Logger logger = Logger.getLogger(PhraseModelFF.class.getName());
+  public PhraseModelFF(FeatureVector weights, String owner) {
+    super(weights, "tm_" + owner, "");
 
-  /*
-   * the feature will be activated only when the owner is the same as the rule, we need an owner to
-   * distinguish different feature in different phrase table/source
-   */
-  private int columnIndex; // = -1;//zero-indexed
-
-
-  public PhraseModelFF(final int featureID, final double weight, final int owner,
-      final int columnIndex) {
-    super(weight, owner, featureID);
-    this.columnIndex = columnIndex;
+    // Store the owner.
+    this.ownerID = Vocabulary.id(owner);
   }
 
-  public double estimateLogP(final Rule rule, int sentID) {
-    if (this.owner == rule.getOwner()) {
-      // Assume featScores are cost (i.e., - logP).
-      float[] featScores = rule.getFeatureScores();
+  @Override
+  public float estimateCost(final Rule rule, int sentID) {
+    return computeCost(rule, null, -1, -1, null, sentID);
+  }
 
-      if (this.columnIndex < featScores.length) {
-        return -featScores[this.columnIndex];// negate it
-      } else {
-        if (logger.isLoggable(Level.FINEST))
-          logger.finest("In PhraseModelFF: columnIndex is not right, model columnIndex: "
-              + columnIndex + "; num of features in rul is :" + featScores.length);
-        return 0.0;
+  /**
+   * Computes the cost of applying the feature.
+   */
+  @Override
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
+    float cost = 0.0f;
+
+    if (rule != null && this.ownerID == rule.getOwner()) {
+      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
+        float t = computeFeatures(rule, tailNodes, i, j, sourcePath, sentID).innerProduct(weights);
+        rule.setPrecomputableCost(t);
       }
+      cost = rule.getPrecomputableCost();
+    }
+    return cost;
+  }
+
+  /**
+   * Just chain to computeFeatures(rule), since this feature doesn't use the sourcePath or sentID. *
+   */
+  @Override
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
+    if (rule != null && rule.getOwner() == ownerID) {
+      return rule.getFeatureVector();
     } else {
-      return 0.0;
+      return new FeatureVector();
     }
   }
 
-
-  public int getColumnIndex() {
-    return columnIndex;
+  public String toString() {
+    return name + " " + Vocabulary.word(ownerID);
   }
-
-
-  public void setColumnIndex(int columnIndex) {
-    this.columnIndex = columnIndex;
-  }
-
-
 }

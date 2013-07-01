@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.lattice;
 
 
@@ -21,7 +6,6 @@ package joshua.lattice;
  * 
  * @author Lane Schwartz
  * @since 2008-07-08
- * @version $LastChangedDate$
  * 
  * @param Label Type of label associated with an arc.
  */
@@ -32,25 +16,25 @@ public class Arc<Label> {
    * variable.
    */
   // TODO should be a vector of costs
-  final double cost;
-
-  /**
-   * Node where this arc begins. Package-private scope so that Node and Lattice can quickly access
-   * this variable.
-   */
-  final Node<Label> head;
+  private final double cost;
 
   /**
    * Node where this arc ends. Package-private scope so that Node and Lattice can quickly access
    * this variable.
    */
-  final Node<Label> tail;
+  private final Node<Label> head;
+
+  /**
+   * Node where this arc begins. Package-private scope so that Node and Lattice can quickly access
+   * this variable.
+   */
+  private final Node<Label> tail;
 
   /**
    * Label associated with this arc. Package-private scope so that Node and Lattice can quickly
    * access this variable.
    */
-  final Label label;
+  private final Label label;
 
   /**
    * Creates an arc with the specified head, tail, cost, and label.
@@ -60,9 +44,9 @@ public class Arc<Label> {
    * @param cost The cost of this arc.
    * @param label The label associated with this arc.
    */
-  public Arc(Node<Label> head, Node<Label> tail, double cost, Label label) {
-    this.head = head;
+  public Arc(Node<Label> tail, Node<Label> head, double cost, Label label) {
     this.tail = tail;
+    this.head = head;
     this.cost = cost;
     this.label = label;
   }
@@ -78,21 +62,21 @@ public class Arc<Label> {
   }
 
   /**
-   * Gets the head of this arc (the node where this arc begins).
-   * 
-   * @return The head of this arc.
-   */
-  public Node<Label> getHead() {
-    return head;
-  }
-
-  /**
-   * Gets the tail of this arc (the node where this arc ends).
+   * Gets the tail of this arc (the node where this arc begins).
    * 
    * @return The tail of this arc.
    */
   public Node<Label> getTail() {
     return tail;
+  }
+
+  /**
+   * Gets the head of this arc (the node where this arc ends).
+   * 
+   * @return The head of this arc.
+   */
+  public Node<Label> getHead() {
+    return head;
   }
 
   /**
@@ -110,9 +94,9 @@ public class Arc<Label> {
 
     s.append(label.toString());
     s.append("  :  ");
-    s.append(head.toString());
-    s.append(" ==> ");
     s.append(tail.toString());
+    s.append(" ==> ");
+    s.append(head.toString());
     s.append("  :  ");
     s.append(cost);
 

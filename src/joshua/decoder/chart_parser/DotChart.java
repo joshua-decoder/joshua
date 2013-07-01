@@ -1,25 +1,12 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -40,6 +27,8 @@ import joshua.lattice.Node;
  * is complete, it is entered into the DotChart.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu>
+ * @author Kristy Hollingshead Seitz
  */
 class DotChart {
 
@@ -56,7 +45,6 @@ class DotChart {
     return dotcells[i][j];
   }
 
-
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================
@@ -71,20 +59,20 @@ class DotChart {
    */
   private Grammar pGrammar;
 
-
-  /** Length of input sentence. */
+  /* Length of input sentence. */
   private final int sentLen;
 
-  /** Represents the input sentence being translated. */
+  /* Represents the input sentence being translated. */
   private final Lattice<Integer> input;
 
+  /* If enabled, rule terminals are treated as regular expressions. */
+  private boolean regexpMatching = false;
 
   // ===============================================================
   // Static fields
   // ===============================================================
 
   private static final Logger logger = Logger.getLogger(DotChart.class.getName());
-
 
   // ===============================================================
   // Constructors
@@ -113,6 +101,18 @@ class DotChart {
     seed();
   }
 
+  public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, boolean useRegexpMatching) {
+    this.dotChart = chart;
+    this.pGrammar = grammar;
+    this.input = input;
+    this.sentLen = input.size();
+    this.dotcells = new DotCell[sentLen][sentLen + 1];
+
+    // seeding the dotChart
+    seed();
+
+    this.regexpMatching = useRegexpMatching;
+  }
 
   /**
    * Constructs a new dot chart from a specified input sentence, a translation grammar, and a parse
@@ -137,17 +137,16 @@ class DotChart {
    * this.input = new Lattice<Integer>(input); }
    */
 
-
   // ===============================================================
   // Package-protected methods
   // ===============================================================
 
   /**
-   * add intial dot items: dot-items pointer to the root of the grammar trie.
+   * Add initial dot items: dot-items pointer to the root of the grammar trie.
    */
   void seed() {
     for (int j = 0; j <= sentLen - 1; j++) {
-      if (pGrammar.hasRuleForSpan(j, j, sentLen)) {
+      if (pGrammar.hasRuleForSpan(j, j, input.distance(j, j))) {
         if (null == pGrammar.getTrieRoot()) {
           throw new RuntimeException("trie root is null");
         }
@@ -156,56 +155,75 @@ class DotChart {
     }
   }
 
-
   /**
-   * two kinds of symbols in the foreign side: (1) non-terminal (e.g., X or NP); (2) CN-side
-   * terminal therefore, two ways to extend the dot postion.
+   * This function computes all possible expansions of all rules over the provided span (i,j). By
+   * expansions, we mean the moving of the dot forward (from left to right) over a nonterminal or
+   * terminal symbol on the rule's source side.
+   * 
+   * There are two kinds of expansions:
+   * 
+   * 1. Expansion over a nonterminal symbol. For this kind of expansion, a rule has a dot
+   * immediately prior to a source-side nonterminal. The main Chart is consulted to see whether
+   * there exists a completed nonterminal with the same label. If so, the dot is advanced.
+   * 
+   * Discovering nonterminal expansions is a matter of enumerating all split points k such that i <
+   * k and k < j. The nonterminal symbol must exist in the main Chart over (k,j).
+   * 
+   * 2. Expansion over a terminal symbol. In this case, expansion is a simple matter of determing
+   * whether the input symbol at position j (the end of the span) matches the next symbol in the
+   * rule. This is equivalent to choosing a split point k = j - 1 and looking for terminal symbols
+   * over (k,j). Note that phrases in the input rule are handled one-by-one as we consider longer
+   * spans.
    */
   void expandDotCell(int i, int j) {
-    if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell (" + i + "," + j + ")");
+    if (logger.isLoggable(Level.FINEST))
+      logger.finest("Expanding dot cell (" + i + "," + j + ")");
 
-    // (1) if the dot is just to the left of a non-terminal variable,
-    // looking for theorems or axioms in the Chart that may apply and
-    // extend the dot pos
-    for (int k = i + 1; k < j; k++) { // Varying middle point k.
+    /*
+     * (1) If the dot is just to the left of a non-terminal variable, we look for theorems or axioms
+     * in the Chart that may apply and extend the dot position. We look for existing axioms over all
+     * spans (k,j), i < k < j.
+     */
+    for (int k = i + 1; k < j; k++) {
       extendDotItemsWithProvedItems(i, k, j, false);
     }
 
-    // (2) the dot-item is looking for a CN-side terminal symbol:
-    // so we just need a CN-side terminal symbol to advance the dot in
-    // seeding case: j=i+1, therefore, it will look for l_dot_bins[i][i]
+    /*
+     * (2) If the the dot-item is looking for a source-side terminal symbol, we simply match against
+     * the input sentence and advance the dot.
+     */
     Node<Integer> node = input.getNode(j - 1);
     for (Arc<Integer> arc : node.getOutgoingArcs()) {
 
       int last_word = arc.getLabel();
-      // Tail and Head are backward! FIX names!
-      int arc_len = arc.getTail().getNumber() - arc.getHead().getNumber();
+      int arc_len = arc.getHead().getNumber() - arc.getTail().getNumber();
 
       // int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //
 
       if (null != dotcells[i][j - 1]) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-        for (DotNode dt : dotcells[i][j - 1].getDotNodes()) {
-          if (null == dt.trieNode) {
-            // We'll get one anyways in the else branch
-            // TODO: better debugging.
-            throw new NullPointerException("DotChart.expand_cell(" + i + "," + j + "): "
-                + "Null tnode for DotItem");
-
+        for (DotNode dotNode : dotcells[i][j - 1].getDotNodes()) {
+          if (this.regexpMatching) {
+            ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
+            if (child_tnodes == null || child_tnodes.isEmpty())
+              continue;
+            for (Trie child_tnode : child_tnodes) {
+              if (null != child_tnode) {
+                addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
+                    dotNode.srcPath.extend(arc));
+              }
+            }
           } else {
-            // match the terminal
-            Trie child_tnode = dt.trieNode.match(last_word);
-            if (null != child_tnode) {
-              // we do not have an ant for the terminal
-              addDotItem(child_tnode, i, j - 1 + arc_len, dt.antSuperNodes, null,
-                  dt.srcPath.extend(arc));
+            Trie child_node = dotNode.trieNode.match(last_word);
+            if (null != child_node) {
+              addDotItem(child_node, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
+                  dotNode.srcPath.extend(arc));
             }
           }
-        } // end foreach DotItem
+        }
       }
     }
   }
-
 
   /**
    * note: (i,j) is a non-terminal, this cannot be a cn-side terminal, which have been handled in
@@ -215,7 +233,6 @@ class DotChart {
   void startDotItems(int i, int j) {
     extendDotItemsWithProvedItems(i, i, j, true);
   }
-
 
   // ===============================================================
   // Private methods
@@ -239,25 +256,63 @@ class DotChart {
     }
 
     // complete super-items (items over the same span with different LHSs)
-    List<SuperNode> t_ArrayList =
-        new ArrayList<SuperNode>(this.dotChart.getCell(k, j).getSortedSuperItems().values());
+    List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(this.dotChart.getCell(k, j)
+        .getSortedSuperItems().values());
 
     // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
     for (DotNode dotNode : dotcells[i][k].dotNodes) {
       // see if it matches what the dotitem is looking for
       for (SuperNode superNode : t_ArrayList) {
-        Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
-        if (null != child_tnode) {
-          if (true == startDotItems && !child_tnode.hasExtensions()) {
-            continue; // TODO
+        if (this.regexpMatching) {
+          ArrayList<Trie> child_tnodes = matchAll(dotNode, superNode.lhs);
+          if (child_tnodes.isEmpty())
+            continue;
+          for (Trie child_tnode : child_tnodes) {
+            if (null == child_tnode)
+              continue;
+            if (true == startDotItems && !child_tnode.hasExtensions())
+              continue; // TODO
+            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                .getSourcePath().extendNonTerminal());
           }
-          addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-              .getSourcePath().extendNonTerminal());
+        } else {
+          Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
+          if (child_tnode != null) {
+            if (true == startDotItems && !child_tnode.hasExtensions())
+              continue;
+            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                .getSourcePath().extendNonTerminal());
+          }
         }
       }
     }
   }
 
+  /*
+   * We introduced the ability to have regular expressions in rules. When this is enabled for a
+   * grammar, we first check whether there are any children. If there are, we need to try to match
+   * _every rule_ against the symbol we're querying. This is expensive, which is an argument for
+   * keeping your set of regular expression s small and limited to a separate grammar.
+   */
+  private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
+    ArrayList<Trie> trieList = new ArrayList<Trie>();
+    HashMap<Integer, ? extends Trie> childrenTbl = dotNode.trieNode.getChildren();
+
+    if (childrenTbl != null && wordID >= 0) {
+      // get all the extensions, map to string, check for *, build regexp
+      for (Integer arcID : childrenTbl.keySet()) {
+        if (arcID == wordID) {
+          trieList.add(childrenTbl.get(arcID));
+        } else {
+          String arcWord = Vocabulary.word(arcID);
+          if (Vocabulary.word(wordID).matches(arcWord)) {
+            trieList.add(childrenTbl.get(arcID));
+          }
+        }
+      }
+    }
+    return trieList;
+  }
 
   /**
    * Creates a dot item and adds it into the cell(i,j) of this dot chart.
@@ -292,19 +347,21 @@ class DotChart {
       RuleCollection rules = tnode.getRuleCollection();
       if (rules != null) {
         for (Rule r : rules.getRules()) {
+          // System.out.println("rule: "+r.toString());
           logger.finest(r.toString());
         }
       }
     }
   }
 
-
   // ===============================================================
   // Package-protected classes
   // ===============================================================
 
   /**
-   * Bin is a cell in parsing terminology
+   * A DotCell groups together DotNodes that have been applied over a particular span. A DotNode, in
+   * turn, is a partially-applied grammar rule, represented as a pointer into the grammar trie
+   * structure.
    */
   static class DotCell {
 
@@ -323,10 +380,12 @@ class DotChart {
     }
   }
 
-
   /**
-   * remember the dot position in which a rule has been applied so far, and remember the old
-   * complete items.
+   * A DotNode represents the partial application of a rule. It contains the following fields:
+   * 
+   * - trieNode, a pointer into the grammar trie structure - antSuperNodes, a list of zero or more
+   * nonterminal nodes that have been traversed in the rule - srcPath, which represents a path taken
+   * through the input lattice
    */
   static class DotNode {
 
@@ -349,8 +408,10 @@ class DotChart {
     }
 
     public boolean equals(Object obj) {
-      if (obj == null) return false;
-      if (!this.getClass().equals(obj.getClass())) return false;
+      if (obj == null)
+        return false;
+      if (!this.getClass().equals(obj.getClass()))
+        return false;
       DotNode state = (DotNode) obj;
 
       /*
@@ -361,7 +422,8 @@ class DotChart {
       // if (this.i != state.i || this.j != state.j)
       // return false;
 
-      if (this.trieNode != state.trieNode) return false;
+      if (this.trieNode != state.trieNode)
+        return false;
 
       return true;
     }

@@ -15,12 +15,12 @@
  */
 package joshua.decoder.ff.lm;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.Support;
 
 /**
  * This class provides a default implementation for the Equivalent LM State optimization (namely,
@@ -65,17 +65,17 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
     return false;
   }
 
-  public double sentenceLogProbability(List<Integer> sentence, int order, int startIndex) {
-    if (sentence == null) return 0.0;
-    int sentenceLength = sentence.size();
-    if (sentenceLength <= 0) return 0.0;
+  public float sentenceLogProbability(int[] sentence, int order, int startIndex) {
+    if (sentence == null) return 0.0f;
+    int sentenceLength = sentence.length;
+    if (sentenceLength <= 0) return 0.0f;
 
-    double probability = 0.0;
-    // partial ngrams at the begining
+    float probability = 0.0f;
+    // partial ngrams at the beginning
     for (int j = startIndex; j < order && j <= sentenceLength; j++) {
       // TODO: startIndex dependents on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm,
       // start_index=2. othercase, need to check)
-      int[] ngram = Support.subIntArray(sentence, 0, j);
+      int[] ngram = Arrays.copyOfRange(sentence, 0, j);
       double logProb = ngramLogProbability(ngram, order);
       if (logger.isLoggable(Level.FINE)) {
         String words = Vocabulary.getWords(ngram);
@@ -86,7 +86,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 
     // regular-order ngrams
     for (int i = 0; i <= sentenceLength - order; i++) {
-      int[] ngram = Support.subIntArray(sentence, i, i + order);
+      int[] ngram = Arrays.copyOfRange(sentence, i, i + order);
       double logProb = ngramLogProbability(ngram, order);
       if (logger.isLoggable(Level.FINE)) {
         String words = Vocabulary.getWords(ngram);
@@ -98,26 +98,18 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
     return probability;
   }
 
-
-  /** @deprecated this function is much slower than the int[] version */
-  @Deprecated
-  public double ngramLogProbability(List<Integer> ngram, int order) {
-    return ngramLogProbability(Support.subIntArray(ngram, 0, ngram.size()), order);
-  }
-
-
-  public double ngramLogProbability(int[] ngram) {
+  public float ngramLogProbability(int[] ngram) {
     return this.ngramLogProbability(ngram, this.ngramOrder);
   }
 
-  public abstract double ngramLogProbability(int[] ngram, int order);
+  public abstract float ngramLogProbability(int[] ngram, int order);
 
 
   /**
    * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID token will never exist. However,
    * were it to be called, it should return a probability of 1 (logprob of 0).
    */
-  public double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0; // log(1) == 0;
   }
 
@@ -125,7 +117,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
    * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID token will never exist. However,
    * were it to be called, it should return a probability of 1 (logprob of 0).
    */
-  public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0; // log(1) == 0;
   }
 

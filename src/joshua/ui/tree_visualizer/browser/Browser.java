@@ -15,13 +15,18 @@
  */
 package joshua.ui.tree_visualizer.browser;
 
+import joshua.ui.tree_visualizer.tree.Tree;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
@@ -30,41 +35,28 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 
 public class Browser {
-
-  /**
-   * Usage message.
-   */
-  private static final String USAGE = "USAGE: Browser <source> <reference> <n-best>";
-
-  /**
-   * The index of currentSourceSentence in the translation information.
-   */
-  private static int currentSourceIndex;
-
-  /**
-   * The index of currentCandidateTranslation in the source sentence's translation information.
-   */
-  private static int currentCandidateIndex;
-
-  /**
-   * Holds the translation information contained in the source, reference, and n-best files.
-   */
-  private static TranslationInfoList translations;
 
   /**
    * A list that contains the one best translation of each source sentence.
    */
   private static JList oneBestList;
 
+	private static JTextField searchBox;
+
   /**
    * The current frame that displays a derivation tree.
    */
-  static ArrayList<DerivationTreeFrame> activeFrame;
+  private static List<DerivationTreeFrame> activeFrame;
+
+	private static List<TranslationInfo> translations;
   /**
    * Default width of the chooser frame.
    */
@@ -78,33 +70,62 @@ public class Browser {
   /**
    * List of colors to be used in derivation trees
    */
-  static Color[] dataSetColors = {Color.red, Color.orange, Color.blue, Color.green};
+  static final Color[] dataSetColors = {Color.red, Color.orange, Color.blue, Color.green};
 
   /**
    * @param args the paths to the source, reference, and n-best files
    */
-  public static void main(String[] args) {
-    if (args.length < 3) {
-      System.err.println(USAGE);
-      System.exit(1);
-    }
-    try {
-      String src = args[0];
-      String ref = args[1];
-      translations = new TranslationInfoList();
-      translations.setSourceFile(new File(src));
-      translations.setReferenceFile(new File(ref));
-      for (int i = 2; i < args.length; i++)
-        translations.addNBestFile(new File(args[i]));
-      initializeChooserFrame();
-    } catch (IOException e) {
-      System.err.print("Browser main caught an IOException: ");
-      System.err.println(e.getMessage());
-      System.exit(1);
-    }
+  public static void main(String[] argv) throws IOException {
+		String sourcePath = argv.length > 0 ? argv[0] : null;
+		String referencePath = argv.length > 1 ? argv[1] : null;
+		String [] translationPaths = new String[0];
+		if (argv.length > 2) {
+			translationPaths = Arrays.copyOfRange(argv, 2, argv.length);
+		}
+		translations = new ArrayList<TranslationInfo>();
+		readSourcesFromPath(sourcePath);
+		readReferencesFromPath(referencePath);
+		for (String tp : translationPaths) {
+			readTranslationsFromPath(tp);
+		}
+		initializeChooserFrame();
     return;
   }
 
+	private static void readSourcesFromPath(String path) throws IOException {
+		Scanner scanner = new Scanner(new File(path), "UTF-8");
+		while (scanner.hasNextLine()) {
+			TranslationInfo ti = new TranslationInfo();
+			ti.setSourceSentence("<s> " + scanner.nextLine() + " </s>");
+			translations.add(ti);
+		}
+	}
+
+	private static void readReferencesFromPath(String path) throws IOException {
+		Scanner scanner = new Scanner(new File(path), "UTF-8");
+		for (TranslationInfo ti : translations) {
+			if (scanner.hasNextLine()) {
+				ti.setReference(scanner.nextLine());
+			}
+		}
+	}
+
+	private static void	readTranslationsFromPath(String path) throws IOException {
+		Scanner scanner = new Scanner(new File(path), "UTF-8");
+		String sentenceIndex = null;
+		for (TranslationInfo ti : translations) {
+			while (scanner.hasNextLine()) {
+				final String [] fields = scanner.nextLine().split("\\|\\|\\|");
+				final String index = fields[0];
+				final String tree = fields[1].trim();
+				if (!index.equals(sentenceIndex)) {
+					sentenceIndex = index;
+					ti.translations().add(new Tree(tree));
+					break;
+				}
+			}
+		}
+	}
   /**
    * Initializes the various JComponents in the chooser frame.
    */
@@ -112,6 +133,7 @@ public class Browser {
     JFrame chooserFrame = new JFrame("Joshua Derivation Tree Browser");
     chooserFrame.setLayout(new BorderLayout());
 
+		/*
     JMenuBar mb = new JMenuBar();
     JMenu openMenu = new JMenu("Control");
     JMenuItem src = new JMenuItem("Open source file ...");
@@ -132,7 +154,16 @@ public class Browser {
     openMenu.add(quit);
     mb.add(openMenu);
     chooserFrame.setJMenuBar(mb);
+		*/
 
+		searchBox = new JTextField("search");
+		searchBox.getDocument().addDocumentListener(new SearchListener());
+		searchBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				final int selectedIndex = oneBestList.getSelectedIndex();
+				Browser.search(selectedIndex < 0 ? 0 : selectedIndex + 1);
+			}
+		});
     oneBestList = new JList(new DefaultListModel());
     oneBestList.setFixedCellWidth(200);
     oneBestList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -140,13 +171,13 @@ public class Browser {
 
     oneBestList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        setCurrentSourceIndex(oneBestList.getSelectedIndex());
         for (DerivationTreeFrame frame : activeFrame) {
-          frame.drawGraph();
+          frame.drawGraph(translations.get(oneBestList.getSelectedIndex()));
         }
         return;
       }
     });
+    chooserFrame.getContentPane().add(searchBox, BorderLayout.NORTH);
     chooserFrame.getContentPane().add(new JScrollPane(oneBestList), BorderLayout.CENTER);
 
     refreshLists();
@@ -154,9 +185,9 @@ public class Browser {
     chooserFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     activeFrame = new ArrayList<DerivationTreeFrame>();
-    int numNBestFiles = translations.getNumberOfNBestFiles();
+    int numNBestFiles = translations.get(0).translations().size();
     for (int i = 0; i < numNBestFiles; i++)
-      activeFrame.add(new DerivationTreeFrame(i));
+      activeFrame.add(new DerivationTreeFrame(i, oneBestList));
     chooserFrame.setVisible(true);
     return;
   }
@@ -166,118 +197,47 @@ public class Browser {
    */
   private static void refreshLists() {
     oneBestList.removeAll();
-
     DefaultListModel oneBestListModel = (DefaultListModel) oneBestList.getModel();
-    for (TranslationInfo ti : translations.getAllInfo()) {
-      oneBestListModel.addElement(ti.getReferenceTranslation());
+    for (TranslationInfo ti : translations) {
+      oneBestListModel.addElement(ti.reference());
     }
     return;
   }
 
-  /**
-   * Increments currentSourceIndex, unless it is already at its maximum.
-   */
-  static void incrementCurrentSourceIndex() {
-    if (currentSourceIndex == translations.getAllInfo().size() - 1) return;
-    currentSourceIndex++;
-    oneBestList.setSelectedIndex(currentSourceIndex);
-    return;
-  }
+	private static void search(int fromIndex) {
+		final String query = searchBox.getText();
+		DefaultListModel oneBestListModel =
+			(DefaultListModel) oneBestList.getModel();
+		for (int i = fromIndex; i < oneBestListModel.getSize(); i++) {
+			String reference = (String) oneBestListModel.getElementAt(i);
+			if (reference.indexOf(query) != -1) {
+				// found the query
+				oneBestList.setSelectedIndex(i);
+				oneBestList.ensureIndexIsVisible(i);
+				searchBox.setBackground(Color.white);
+				return;
+			}
+		}
+		searchBox.setBackground(Color.red);
+	}
 
-  /**
-   * Decrements currentSourceIndex, unless it is already at zero.
-   */
-  static void decrementCurrentSourceIndex() {
-    if (currentSourceIndex == 0) return;
-    currentSourceIndex--;
-    oneBestList.setSelectedIndex(currentSourceIndex);
-    return;
-  }
+	private static class SearchListener implements DocumentListener {
 
-  static void setCurrentSourceIndex(int index) {
-    if ((index < 0) || (index > translations.getAllInfo().size() - 1)) return;
-    currentSourceIndex = index;
-    oneBestList.setSelectedIndex(currentSourceIndex);
-  }
+		public void insertUpdate(DocumentEvent e) {
+			final int selectedIndex = oneBestList.getSelectedIndex();
+			Browser.search(selectedIndex < 0 ? 0 : selectedIndex);
+		}
+		public void removeUpdate(DocumentEvent e) {
+			final String query = searchBox.getText();
+			if (query.equals("")) {
+				return;
+			} else {
+				insertUpdate(e);
+			}
+		}
 
-  /**
-   * Increments currentCandidateIndex, unless it is already at its maximum.
-   */
-  static void incrementCurrentCandidateIndex() {
-    if (currentCandidateIndex == translations.getInfo(currentSourceIndex).getAllTranslations()
-        .size() - 1) return;
-    currentCandidateIndex++;
-    return;
-  }
-
-  /**
-   * Decrements currentCandidateIndex unless is is already at zero.
-   */
-  static void decrementCurrentCandidateIndex() {
-    if (currentCandidateIndex == 0) return;
-    currentCandidateIndex--;
-    return;
-  }
-
-  /**
-   * Sets currentCandidateIndex to the specified value.
-   * 
-   * @param index the value to assign to currentCandidateIndex
-   */
-  static void setCurrentCandidateIndex(int index) {
-    if ((index < 0)
-        || (index > translations.getInfo(currentSourceIndex).getAllTranslations().size() - 1))
-      return;
-    currentCandidateIndex = index;
-    return;
-  }
-
-  /**
-   * Returns the source sentence of the translation information currently pointed to by the source
-   * index.
-   * 
-   * @return the current source sentence
-   */
-  static String getCurrentSourceSentence() {
-    return translations.getInfo(currentSourceIndex).getSourceSentence();
-  }
-
-  /**
-   * Returns the reference translation for the translation information currently pointed to by the
-   * source index.
-   * 
-   * @return the current reference translation
-   */
-  static String getCurrentReferenceTranslation() {
-    return translations.getInfo(currentSourceIndex).getReferenceTranslation();
-  }
-
-  /**
-   * Returns the candidate translation currently pointed to by the candidate index.
-   * 
-   * @return the current candidate translation
-   */
-  static ArrayList<String> getCurrentCandidateTranslations() {
-    return translations.getInfo(currentSourceIndex)
-        .getAllTranslationsByIndex(currentCandidateIndex);
-  }
-
-  /**
-   * Returns the one-best translation text currently pointed to by the source index.
-   * 
-   * @return the current one-best translation text
-   */
-  static ArrayList<String> getCurrentOneBests() {
-    return translations.getInfo(currentSourceIndex).getAllOneBest();
-  }
-
-  /**
-   * Returns information about all the translations stored in the source, reference, and n-best
-   * files.
-   * 
-   * @return a TranslationInfoList populated by the current source, reference, and n-best files.
-   */
-  static TranslationInfoList getTranslationInfo() {
-    return translations;
-  }
+		public void changedUpdate(DocumentEvent e) {
+			final String query = searchBox.getText();
+		}
+	}
 }

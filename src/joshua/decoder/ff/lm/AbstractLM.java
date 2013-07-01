@@ -35,17 +35,17 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
   }
 
 
-  public final double sentenceLogProbability(List<Integer> sentence, int order, int startIndex) {
+  public final float sentenceLogProbability(int[] sentence, int order, int startIndex) {
     return super.sentenceLogProbability(sentence, order, startIndex);
   }
 
 
-  public final double ngramLogProbability(int[] ngram) {
+  public final float ngramLogProbability(int[] ngram) {
     return super.ngramLogProbability(ngram);
   }
 
 
-  public final double ngramLogProbability(int[] ngram, int order) {
+  public final float ngramLogProbability(int[] ngram, int order) {
     if (ngram.length > order) {
       throw new RuntimeException("ngram length is greather than the max order");
     }
@@ -59,28 +59,28 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
       throw new RuntimeException("Error: history size is " + historySize);
       // return 0;
     }
-    double probability = ngramLogProbability_helper(ngram, order);
+    float probability = ngramLogProbability_helper(ngram, order);
     if (probability < -JoshuaConfiguration.lm_ceiling_cost) {
       probability = -JoshuaConfiguration.lm_ceiling_cost;
     }
     return probability;
   }
 
-  protected abstract double ngramLogProbability_helper(int[] ngram, int order);
+  protected abstract float ngramLogProbability_helper(int[] ngram, int order);
 
 
   /**
    * @deprecated this function is much slower than the int[] version
    */
   @Deprecated
-  public final double logProbOfBackoffState(List<Integer> ngram, int order,
+  public final float logProbOfBackoffState(List<Integer> ngram, int order,
       int qtyAdditionalBackoffWeight) {
     return logProbabilityOfBackoffState(Support.subIntArray(ngram, 0, ngram.size()), order,
         qtyAdditionalBackoffWeight);
   }
 
 
-  public final double logProbabilityOfBackoffState(int[] ngram, int order,
+  public final float logProbabilityOfBackoffState(int[] ngram, int order,
       int qtyAdditionalBackoffWeight) {
     if (ngram.length > order) {
       throw new RuntimeException("ngram length is greather than the max order");
@@ -91,12 +91,12 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
     if (qtyAdditionalBackoffWeight > 0) {
       return logProbabilityOfBackoffState_helper(ngram, order, qtyAdditionalBackoffWeight);
     } else {
-      return 0.0;
+      return 0;
     }
   }
 
 
-  protected abstract double logProbabilityOfBackoffState_helper(int[] ngram, int order,
+  protected abstract float logProbabilityOfBackoffState_helper(int[] ngram, int order,
       int qtyAdditionalBackoffWeight);
 
 

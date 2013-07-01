@@ -1,0 +1,3 @@
+#!/bin/bash
+
+java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $1 - $2

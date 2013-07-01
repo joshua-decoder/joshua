@@ -4,7 +4,7 @@
 #include "lm/enumerate_vocab.hh"
 #include "lm/lm_exception.hh"
 #include "lm/virtual_interface.hh"
-#include "util/key_value_packing.hh"
+#include "util/pool.hh"
 #include "util/probing_hash_table.hh"
 #include "util/sorted_uniform.hh"
 #include "util/string_piece.hh"
@@ -14,17 +14,18 @@
 #include <vector>
 
 namespace lm {
-class ProbBackoff;
+struct ProbBackoff;
+class EnumerateVocab;
 
 namespace ngram {
-class Config;
-class EnumerateVocab;
+struct Config;
 
 namespace detail {
 uint64_t HashForVocab(const char *str, std::size_t len);
 inline uint64_t HashForVocab(const StringPiece &str) {
   return HashForVocab(str.data(), str.length());
 }
+struct ProbingVocabularyHeader;
 } // namespace detail
 
 class WriteWordsWrapper : public EnumerateVocab {
@@ -35,7 +36,7 @@ class WriteWordsWrapper : public EnumerateVocab {
     
     void Add(WordIndex index, const StringPiece &str);
 
-    void Write(int fd);
+    void Write(int fd, uint64_t start);
 
   private:
     EnumerateVocab *inner_;
@@ -62,10 +63,9 @@ class SortedVocabulary : public base::Vocabulary {
     }
 
     // Size for purposes of file writing
-    static size_t Size(std::size_t entries, const Config &config);
+    static uint64_t Size(uint64_t entries, const Config &config);
 
     // Vocab words are [0, Bound())  Only valid after FinishedLoading/LoadedBinary.  
-    // While this number is correct, ProbingVocabulary::Bound might not be correct in some cases.  
     WordIndex Bound() const { return bound_; }
 
     // Everything else is for populating.  I'm too lazy to hide and friend these, but you'll only get a const reference anyway.
@@ -83,7 +83,7 @@ class SortedVocabulary : public base::Vocabulary {
 
     bool SawUnk() const { return saw_unk_; }
 
-    void LoadedBinary(int fd, EnumerateVocab *to);
+    void LoadedBinary(bool have_words, int fd, EnumerateVocab *to);
 
   private:
     uint64_t *begin_, *end_;
@@ -97,8 +97,30 @@ class SortedVocabulary : public base::Vocabulary {
     EnumerateVocab *enumerate_;
 
     // Actual strings.  Used only when loading from ARPA and enumerate_ != NULL 
-    std::vector<std::string> strings_to_enumerate_;
+    util::Pool string_backing_;
+
+    std::vector<StringPiece> strings_to_enumerate_;
 };
+
+#pragma pack(push)
+#pragma pack(4)
+struct ProbingVocabuaryEntry {
+  uint64_t key;
+  WordIndex value;
+
+  typedef uint64_t Key;
+  uint64_t GetKey() const {
+    return key;
+  }
+
+  static ProbingVocabuaryEntry Make(uint64_t key, WordIndex value) {
+    ProbingVocabuaryEntry ret;
+    ret.key = key;
+    ret.value = value;
+    return ret;
+  }
+};
+#pragma pack(pop)
 
 // Vocabulary storing a map from uint64_t to WordIndex. 
 class ProbingVocabulary : public base::Vocabulary {
@@ -107,16 +129,13 @@ class ProbingVocabulary : public base::Vocabulary {
 
     WordIndex Index(const StringPiece &str) const {
       Lookup::ConstIterator i;
-      return lookup_.Find(detail::HashForVocab(str), i) ? i->GetValue() : 0;
+      return lookup_.Find(detail::HashForVocab(str), i) ? i->value : 0;
     }
 
-    static size_t Size(std::size_t entries, const Config &config);
+    static uint64_t Size(uint64_t entries, const Config &config);
 
     // Vocab words are [0, Bound()).  
-    // WARNING WARNING: returns UINT_MAX when loading binary and not enumerating vocabulary.  
-    // Fixing this bug requires a binary file format change and will be fixed with the next binary file format update.  
-    // Specifically, the binary file format does not currently indicate whether <unk> is in count or not.  
-    WordIndex Bound() const { return available_; }
+    WordIndex Bound() const { return bound_; }
 
     // Everything else is for populating.  I'm too lazy to hide and friend these, but you'll only get a const reference anyway.
     void SetupMemory(void *start, std::size_t allocated, std::size_t entries, const Config &config);
@@ -125,27 +144,30 @@ class ProbingVocabulary : public base::Vocabulary {
 
     WordIndex Insert(const StringPiece &str);
 
-    void FinishedLoading(ProbBackoff *reorder_vocab);
+    template <class Weights> void FinishedLoading(Weights * /*reorder_vocab*/) {
+      InternalFinishedLoading();
+    }
+
+    std::size_t UnkCountChangePadding() const { return 0; }
 
     bool SawUnk() const { return saw_unk_; }
 
-    void LoadedBinary(int fd, EnumerateVocab *to);
+    void LoadedBinary(bool have_words, int fd, EnumerateVocab *to);
 
   private:
-    // std::identity is an SGI extension :-(
-    struct IdentityHash : public std::unary_function<uint64_t, std::size_t> {
-      std::size_t operator()(uint64_t arg) const { return static_cast<std::size_t>(arg); }
-    };
+    void InternalFinishedLoading();
 
-    typedef util::ProbingHashTable<util::ByteAlignedPacking<uint64_t, WordIndex>, IdentityHash> Lookup;
+    typedef util::ProbingHashTable<ProbingVocabuaryEntry, util::IdentityHash> Lookup;
 
     Lookup lookup_;
 
-    WordIndex available_;
+    WordIndex bound_;
 
     bool saw_unk_;
 
     EnumerateVocab *enumerate_;
+
+    detail::ProbingVocabularyHeader *header_;
 };
 
 void MissingUnknown(const Config &config) throw(SpecialWordMissingException);

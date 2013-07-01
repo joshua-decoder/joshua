@@ -17,10 +17,16 @@
 package joshua.decoder.ff.state_maintenance;
 
 /**
+ * Abstract class enforcing explicit implementation of the standard methods.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @author Juri Ganitkevitch, <juri@cs.jhu.edu>
  */
-public interface DPState {
-  String getSignature(boolean forceRecompute);
+public abstract class DPState {
+
+  public abstract String toString();
+
+  public abstract int hashCode();
+
+  public abstract boolean equals(Object other);
 }

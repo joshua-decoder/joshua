@@ -1,1 +1,1 @@
-cat <INPUT> | <JOSHUA>/joshua-decoder -m <MEM> -threads <NUMTHREADS> -c <CONFIG> > <OUTPUT> 2> <LOG>
+cat <INPUT> | <JOSHUA>/bin/joshua-decoder -m <MEM> -threads <NUMTHREADS> -c <CONFIG><JOSHUA_ARGS> > <OUTPUT> 2> <LOG>

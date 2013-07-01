@@ -5,12 +5,15 @@
 #include "lm/binary_format.hh"
 #include "lm/config.hh"
 #include "lm/facade.hh"
-#include "lm/max_order.hh"
 #include "lm/quantize.hh"
 #include "lm/search_hashed.hh"
 #include "lm/search_trie.hh"
+#include "lm/state.hh"
+#include "lm/value.hh"
 #include "lm/vocab.hh"
 #include "lm/weights.hh"
+
+#include "util/murmur_hash.hh"
 
 #include <algorithm>
 #include <vector>
@@ -21,49 +24,6 @@ namespace util { class FilePiece; }
 
 namespace lm {
 namespace ngram {
-
-// This is a POD but if you want memcmp to return the same as operator==, call
-// ZeroRemaining first.    
-class State {
-  public:
-    bool operator==(const State &other) const {
-      if (valid_length_ != other.valid_length_) return false;
-      const WordIndex *end = history_ + valid_length_;
-      for (const WordIndex *first = history_, *second = other.history_;
-          first != end; ++first, ++second) {
-        if (*first != *second) return false;
-      }
-      // If the histories are equal, so are the backoffs.  
-      return true;
-    }
-
-    // Three way comparison function.  
-    int Compare(const State &other) const {
-      if (valid_length_ == other.valid_length_) {
-        return memcmp(history_, other.history_, valid_length_ * sizeof(WordIndex));
-      }
-      return (valid_length_ < other.valid_length_) ? -1 : 1;
-    }
-
-    // Call this before using raw memcmp.  
-    void ZeroRemaining() {
-      for (unsigned char i = valid_length_; i < kMaxOrder - 1; ++i) {
-        history_[i] = 0;
-        backoff_[i] = 0.0;
-      }
-    }
-
-    unsigned char ValidLength() const { return valid_length_; }
-
-    // You shouldn't need to touch anything below this line, but the members are public so FullState will qualify as a POD.  
-    // This order minimizes total size of the struct if WordIndex is 64 bit, float is 32 bit, and alignment of 64 bit integers is 64 bit.  
-    WordIndex history_[kMaxOrder - 1];
-    float backoff_[kMaxOrder - 1];
-    unsigned char valid_length_;
-};
-
-size_t hash_value(const State &state);
-
 namespace detail {
 
 // Should return the same results as SRI.  
@@ -75,11 +35,13 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
     // This is the model type returned by RecognizeBinary.
     static const ModelType kModelType;
 
+    static const unsigned int kVersion = Search::kVersion;
+
     /* Get the size of memory that will be mapped given ngram counts.  This
      * does not include small non-mapped control structures, such as this class
      * itself.  
      */
-    static size_t Size(const std::vector<uint64_t> &counts, const Config &config = Config());
+    static uint64_t Size(const std::vector<uint64_t> &counts, const Config &config = Config());
 
     /* Load the model from a file.  It may be an ARPA or binary file.  Binary
      * files must have the format expected by this class or you'll get an
@@ -87,7 +49,7 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
      * TrieModel.  To classify binary files, call RecognizeBinary in
      * lm/binary_format.hh.  
      */
-    GenericModel(const char *file, const Config &config = Config());
+    explicit GenericModel(const char *file, const Config &config = Config());
 
     /* Score p(new_word | in_state) and incorporate new_word into out_state.
      * Note that in_state and out_state must be different references:
@@ -114,17 +76,42 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
      */
     void GetState(const WordIndex *context_rbegin, const WordIndex *context_rend, State &out_state) const;
 
-  private:
-    friend void LoadLM<>(const char *file, const Config &config, GenericModel<Search, VocabularyT> &to);
+    /* More efficient version of FullScore where a partial n-gram has already
+     * been scored.  
+     * NOTE: THE RETURNED .rest AND .prob ARE RELATIVE TO THE .rest RETURNED BEFORE.  
+     */
+    FullScoreReturn ExtendLeft(
+        // Additional context in reverse order.  This will update add_rend to 
+        const WordIndex *add_rbegin, const WordIndex *add_rend,
+        // Backoff weights to use.  
+        const float *backoff_in,
+        // extend_left returned by a previous query.
+        uint64_t extend_pointer,
+        // Length of n-gram that the pointer corresponds to.  
+        unsigned char extend_length,
+        // Where to write additional backoffs for [extend_length + 1, min(Order() - 1, return.ngram_length)]
+        float *backoff_out,
+        // Amount of additional content that should be considered by the next call.
+        unsigned char &next_use) const;
 
-    static void UpdateConfigFromBinary(int fd, const std::vector<uint64_t> &counts, Config &config) {
-      AdvanceOrThrow(fd, VocabularyT::Size(counts[0], config));
-      Search::UpdateConfigFromBinary(fd, counts, config);
+    /* Return probabilities minus rest costs for an array of pointers.  The
+     * first length should be the length of the n-gram to which pointers_begin
+     * points.  
+     */
+    float UnRest(const uint64_t *pointers_begin, const uint64_t *pointers_end, unsigned char first_length) const {
+      // Compiler should optimize this if away.  
+      return Search::kDifferentRest ? InternalUnRest(pointers_begin, pointers_end, first_length) : 0.0;
     }
 
-    float SlowBackoffLookup(const WordIndex *const context_rbegin, const WordIndex *const context_rend, unsigned char start) const;
+  private:
+    friend void lm::ngram::LoadLM<>(const char *file, const Config &config, GenericModel<Search, VocabularyT> &to);
 
-    FullScoreReturn ScoreExceptBackoff(const WordIndex *context_rbegin, const WordIndex *context_rend, const WordIndex new_word, State &out_state) const;
+    static void UpdateConfigFromBinary(int fd, const std::vector<uint64_t> &counts, Config &config);
+
+    FullScoreReturn ScoreExceptBackoff(const WordIndex *const context_rbegin, const WordIndex *const context_rend, const WordIndex new_word, State &out_state) const;
+
+    // Score bigrams and above.  Do not include backoff.   
+    void ResumeScore(const WordIndex *context_rbegin, const WordIndex *const context_rend, unsigned char starting_order_minus_2, typename Search::Node &node, float *backoff_out, unsigned char &next_use, FullScoreReturn &ret) const;
 
     // Appears after Size in the cc file.
     void SetupMemory(void *start, const std::vector<uint64_t> &counts, const Config &config);
@@ -133,32 +120,43 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
 
     void InitializeFromARPA(const char *file, const Config &config);
 
+    float InternalUnRest(const uint64_t *pointers_begin, const uint64_t *pointers_end, unsigned char first_length) const;
+
     Backing &MutableBacking() { return backing_; }
 
     Backing backing_;
     
     VocabularyT vocab_;
 
-    typedef typename Search::Middle Middle;
-
     Search search_;
 };
 
 } // namespace detail
 
-// These must also be instantiated in the cc file.  
-typedef ::lm::ngram::ProbingVocabulary Vocabulary;
-typedef detail::GenericModel<detail::ProbingHashedSearch, Vocabulary> ProbingModel; // HASH_PROBING
+// Instead of typedef, inherit.  This allows the Model etc to be forward declared.  
+// Oh the joys of C and C++. 
+#define LM_COMMA() ,
+#define LM_NAME_MODEL(name, from)\
+class name : public from {\
+  public:\
+    name(const char *file, const Config &config = Config()) : from(file, config) {}\
+};
+
+LM_NAME_MODEL(ProbingModel, detail::GenericModel<detail::HashedSearch<BackoffValue> LM_COMMA() ProbingVocabulary>);
+LM_NAME_MODEL(RestProbingModel, detail::GenericModel<detail::HashedSearch<RestValue> LM_COMMA() ProbingVocabulary>);
+LM_NAME_MODEL(TrieModel, detail::GenericModel<trie::TrieSearch<DontQuantize LM_COMMA() trie::DontBhiksha> LM_COMMA() SortedVocabulary>);
+LM_NAME_MODEL(ArrayTrieModel, detail::GenericModel<trie::TrieSearch<DontQuantize LM_COMMA() trie::ArrayBhiksha> LM_COMMA() SortedVocabulary>);
+LM_NAME_MODEL(QuantTrieModel, detail::GenericModel<trie::TrieSearch<SeparatelyQuantize LM_COMMA() trie::DontBhiksha> LM_COMMA() SortedVocabulary>);
+LM_NAME_MODEL(QuantArrayTrieModel, detail::GenericModel<trie::TrieSearch<SeparatelyQuantize LM_COMMA() trie::ArrayBhiksha> LM_COMMA() SortedVocabulary>);
+
 // Default implementation.  No real reason for it to be the default.  
+typedef ::lm::ngram::ProbingVocabulary Vocabulary;
 typedef ProbingModel Model;
 
-// Smaller implementation.
-typedef ::lm::ngram::SortedVocabulary SortedVocabulary;
-typedef detail::GenericModel<trie::TrieSearch<DontQuantize, trie::DontBhiksha>, SortedVocabulary> TrieModel; // TRIE_SORTED
-typedef detail::GenericModel<trie::TrieSearch<DontQuantize, trie::ArrayBhiksha>, SortedVocabulary> ArrayTrieModel;
-
-typedef detail::GenericModel<trie::TrieSearch<SeparatelyQuantize, trie::DontBhiksha>, SortedVocabulary> QuantTrieModel; // QUANT_TRIE_SORTED
-typedef detail::GenericModel<trie::TrieSearch<SeparatelyQuantize, trie::ArrayBhiksha>, SortedVocabulary> QuantArrayTrieModel;
+/* Autorecognize the file type, load, and return the virtual base class.  Don't
+ * use the virtual base class if you can avoid it.  Instead, use the above
+ * classes as template arguments to your own virtual feature function.*/
+base::Model *LoadVirtual(const char *file_name, const Config &config = Config(), ModelType if_arpa = PROBING);
 
 } // namespace ngram
 } // namespace lm

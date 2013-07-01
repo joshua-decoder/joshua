@@ -2,8 +2,6 @@ package joshua.decoder.ff.lm.kenlm.jni;
 
 import java.util.List;
 
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Support;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 
 // TODO(Joshua devs): include my state object with your LM state then
@@ -21,7 +19,7 @@ public class KenLM implements NGramLanguageModel {
   // inferred from model file (may be larger than ngramOrder)
   private final int N;
 
-  private final static native long construct(String file_name, float fake_oov);
+  private final static native long construct(String file_name);
 
   private final static native void destroy(long ptr);
 
@@ -36,7 +34,7 @@ public class KenLM implements NGramLanguageModel {
   public KenLM(int order, String file_name) {
     ngramOrder = order;
 
-    pointer = construct(file_name, (float) -JoshuaConfiguration.lm_ceiling_cost);
+    pointer = construct(file_name);
     N = order(pointer);
   }
 
@@ -62,40 +60,28 @@ public class KenLM implements NGramLanguageModel {
     return probString(pointer, words, start - 1);
   }
 
-  /* implement NGramLanguageModel */
-  /**
-   * @deprecated pass int arrays to prob instead.
-   */
-  @Deprecated
-  public double sentenceLogProbability(List<Integer> sentence, int order, int startIndex) {
-    return probString(Support.subIntArray(sentence, 0, sentence.size()), startIndex);
+  @Override
+  public float sentenceLogProbability(int[] sentence, int order, int startIndex) {
+    return probString(sentence, startIndex);
   }
 
-  public double ngramLogProbability(int[] ngram, int order) {
+  public float ngramLogProbability(int[] ngram, int order) {
     if (order != N && order != ngram.length)
       throw new RuntimeException("Lower order not supported.");
     return prob(ngram);
   }
 
-  public double ngramLogProbability(int[] ngram) {
+  public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
-  }
-
-  /**
-   * @deprecated pass int arrays to prob instead.
-   */
-  @Deprecated
-  public double ngramLogProbability(List<Integer> ngram, int order) {
-    return prob(Support.subIntArray(ngram, 0, ngram.size()));
   }
 
   // TODO(Joshua devs): fix the rest of your code to use LM state properly.
   // Then fix this.
-  public double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0;
   }
 
-  public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0;
   }
 

@@ -1,0 +1,38 @@
+tm = thrax pt 1 grammar.test
+tm = thrax glue -1 glue-grammar
+
+#lm config
+lm = berkeleylm 3 false false 100 test.lm
+
+#tm config
+default_non_terminal=X
+goalSymbol=GOAL
+
+#pruning config
+pop-limit = 100
+
+#nbest config
+use_unique_nbest = true 
+include-align-index = false
+top_n = 300
+
+###### model weights
+#lm order weight
+lm 0 1.0
+
+#phrasemodel owner column(0-indexed) weight
+phrasemodel pt 0 1.0
+phrasemodel pt 1 0.5
+phrasemodel pt 2 0.5
+
+phrasemodel glue 0 0.0
+
+#arityphrasepenalty owner start_arity end_arity weight
+#arityphrasepenalty pt 0 0 1.0
+#arityphrasepenalty pt 1 2 -1.0
+
+#wordpenalty weight
+wordpenalty -1.0
+latticecost 1.0
+
+oovpenalty -100

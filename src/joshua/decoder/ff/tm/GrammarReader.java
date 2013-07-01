@@ -25,6 +25,7 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
   protected String fileName;
   protected LineReader reader;
   protected String lookAhead;
+  protected int numRulesRead;
 
   private static final Logger logger = Logger.getLogger(GrammarReader.class.getName());
 
@@ -41,10 +42,12 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
     try {
       this.reader = new LineReader(fileName);
     } catch (IOException e) {
-      throw new RuntimeException("Error opening translation model file: " + fileName
+      throw new RuntimeException("Error opening translation model file: " + fileName + "\n"
           + (null != e.getMessage() ? e.getMessage() : "No details available. Sorry."), e);
     }
 
+    System.err.println(String.format("Reading grammar from file %s...", fileName));
+    numRulesRead = 0;
     advanceReader();
   }
 
@@ -96,17 +99,25 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
   private void advanceReader() {
     try {
       lookAhead = reader.readLine();
+      numRulesRead++;
     } catch (IOException e) {
       logger.severe("Error reading grammar from file: " + fileName);
     }
     if (lookAhead == null && reader != null) {
       this.close();
+      System.err.println("...done.");
     }
   }
 
   public R next() {
     String line = lookAhead;
     advanceReader();
+    
+    if ((numRulesRead) % 80000 == 0) {
+      System.err.println(String.format("%d rules read", numRulesRead));
+    } else if ( (numRulesRead) % 1000 == 0) {
+      System.err.print(".");
+    }
     return parseLine(line);
   }
 
@@ -116,10 +127,6 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
   public abstract String toWords(R rule);
 
   public abstract String toWordsWithoutFeatureScores(R rule);
-
-  public abstract String toTokenIds(R rule);
-
-  public abstract String toTokenIdsWithoutFeatureScores(R rule);
 
   public int cleanNonTerminal(int tokenID) {
     // cleans NT of any markup, e.g., [X,1] may becomes [X], depending

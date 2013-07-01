@@ -2,30 +2,37 @@ Running the Joshua Decoder:
 ---------------------------
 
 If you wish to run the complete machine translation pipeline, Joshua includes a
-black-box implementation.  See the documentation at:
+black-box implementation that enables the entire pipeline to be run by typing
+a single restartable command.  See the documentation for a walkthrough and more
+information about the many options available to the pipeline.
 
-   - web:           http://joshua-decoder.org/4.0/pipeline.html 
-   - local mirror:  ./joshua-decoder.org/4.0/pipeline.html
+   - web:           http://joshua-decoder.org/5.0/pipeline.html 
+   - local mirror:  ./joshua-decoder.org/5.0/pipeline.html
 
 Manually Running the Joshua Decoder:
 ------------------------------------
 
-First, make sure you have compiled the code.  You can do this by typing:
+To run the decoder, first set these environment variables:
 
-    ant jar
-
-The basic decoder invocation is:
-
-    cat SOURCE | JOSHUA -c CONFIG > OUTPUT
-
-Example invocations can be found within the example/ directory.  To run them,
-first setup some environment variables:
-
+    export JAVA_HOME=/path/to/java  # maybe /usr/java/home
     export JOSHUA=/path/to/joshua
+
+You might also find it helpful to set these:
+
     export LC_ALL=en_US.UTF-8
     export LANG=en_US.UTF-8
 
-Then type:
+Then, compile Joshua by typing:
+
+    cd $JOSHUA
+    ant
+
+The basic method for invoking the decoder looks like this:
+
+    cat SOURCE | JOSHUA -c CONFIG > OUTPUT
+
+You can test this using the sample configuration files and inputs can be found 
+in the example/ directory.  For example, type:
 
     cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config
 
@@ -33,7 +40,8 @@ The decoder output will load the language model and translation models defined
 in the configuration file, and will then decode the five sentences in the
 example file.
 
-You can enable multithreaded decoding with the -threads N flag:
+There are a variety of command line options that you can feed to Joshua.
+For example, you can enable multithreaded decoding with the -threads N flag:
 
     cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -threads 5
 
@@ -53,6 +61,15 @@ equivalent:
   {poplimit, pop-limit, pop-limit, popLimit}
 
 and so on.  For an example of parameters, see the Joshua configuration file
-template in $JOSHUA/scripts/training/templates/mert/joshua.config or the online
+template in $JOSHUA/scripts/training/templates/tune/joshua.config or the online
 documentation at joshua-decoder.org/4.0/decoder.html.  There is a wealth of
 information in the online documentation.
+
+After you have successfully run the decoding example above, we recommend that
+you take a look at the Joshua pipeline script, which allows you to do full 
+end-to-end training of a translation model.  It is stored in
+
+    $JOSHUA/examples
+
+ 
+

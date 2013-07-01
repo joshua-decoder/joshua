@@ -2,8 +2,12 @@
 #ifndef UTIL_HAVE__
 #define UTIL_HAVE__
 
-#define HAVE_ZLIB
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef HAVE_ICU
 //#define HAVE_ICU
-//#define HAVE_BOOST
+#endif
 
 #endif // UTIL_HAVE__

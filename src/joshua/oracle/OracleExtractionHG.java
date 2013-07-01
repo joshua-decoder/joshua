@@ -24,8 +24,7 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Support;
-import joshua.decoder.ff.state_maintenance.NgramDPState;
-import joshua.decoder.hypergraph.DiskHyperGraph;
+import joshua.decoder.Decoder;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -133,7 +132,7 @@ public class OracleExtractionHG extends SplitHg {
     boolean do_ngram_clip_nbest = true; // TODO
     if (orc_extract_nbest) {
       System.out.println("oracle extraction from nbest list");
-      kbest_extractor = new KBestExtractor(extract_unique_nbest, false, false, false, false, true);
+      kbest_extractor = new KBestExtractor(Decoder.weights, extract_unique_nbest, false, false);
     }
 
     BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);
@@ -142,9 +141,9 @@ public class OracleExtractionHG extends SplitHg {
     long time_on_reading = 0;
     long time_on_orc_extract = 0;
     BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
-    DiskHyperGraph dhg_read = new DiskHyperGraph(baseline_lm_feat_id, true, null);
+    // DiskHyperGraph dhg_read = new DiskHyperGraph(baseline_lm_feat_id, true, null);
 
-    dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
+    // dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
 
     OracleExtractionHG orc_extractor = new OracleExtractionHG(baseline_lm_feat_id);
     String ref_sent = null;
@@ -156,7 +155,8 @@ public class OracleExtractionHG extends SplitHg {
       sent_id++;
       // if(sent_id>10)break;
 
-      HyperGraph hg = dhg_read.readHyperGraph();
+      // HyperGraph hg = dhg_read.readHyperGraph();
+      HyperGraph hg = null;
       if (hg == null) continue;
       String orc_sent = null;
       double orc_bleu = 0;
@@ -204,7 +204,7 @@ public class OracleExtractionHG extends SplitHg {
     double orc_bleu = -1;
     String orc_sent = null;
     while (true) {
-      String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null, null);// ?????????
+      String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null);// ?????????
       if (hyp_sent == null || next_n > n) break;
       double t_bleu = compute_sentence_bleu(ref_sent, hyp_sent, do_ngram_clip, 4);
       if (t_bleu > orc_bleu) {
@@ -465,15 +465,8 @@ public class OracleExtractionHG extends SplitHg {
     // ####now calculate the BLEU score and state
     int[] left_lm_state = null;
     int[] right_lm_state = null;
-    if (!always_maintain_seperate_lm_state && lm_order >= g_bleu_order) { // do not need to change
-                                                                          // lm state, just use
-                                                                          // orignal lm state
-      NgramDPState state = (NgramDPState) parent_item.getDPState(this.lm_feat_id);
-      left_lm_state = intListToArray(state.getLeftLMStateWords());
-      right_lm_state = intListToArray(state.getRightLMStateWords());
-    } else {
-      left_lm_state = get_left_equiv_state(left_state_sequence, tbl_suffix);
-      right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix);
+		left_lm_state = get_left_equiv_state(left_state_sequence, tbl_suffix);
+		right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix);
 
       // debug
       // System.out.println("lm_order is " + lm_order);
@@ -482,7 +475,7 @@ public class OracleExtractionHG extends SplitHg {
       // compare_two_int_arrays(right_lm_state,
       // (int[])parent_item.tbl_states.get(Symbol.LM_R_STATE_SYM_ID));
       // end
-    }
+
     bleu_score[0] = compute_bleu(total_hyp_len, ref_len, num_ngram_match, g_bleu_order);
     // System.out.println("blue score is " + bleu_score[0]);
     return new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);

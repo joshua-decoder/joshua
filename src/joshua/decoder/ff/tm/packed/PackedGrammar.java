@@ -13,114 +13,62 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
-import joshua.util.io.LineReader;
-import joshua.util.quantization.Quantizer;
-import joshua.util.quantization.QuantizerConfiguration;
+import joshua.util.encoding.EncoderConfiguration;
+import joshua.util.encoding.FloatEncoder;
 
 public class PackedGrammar extends BatchGrammar {
 
   private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
 
-  private int spanLimit = -1;
-
-  private int owner;
-
-  private QuantizerConfiguration quantization;
-  private HashMap<Integer, Integer> featureNameMap;
+  private EncoderConfiguration encoding;
 
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
-  private final float maxId;
-
-  public PackedGrammar(String grammar_directory, int span_limit) throws FileNotFoundException,
-      IOException {
+  public PackedGrammar(String grammar_dir, int span_limit, String owner)
+      throws FileNotFoundException, IOException {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
-    logger.info("Reading vocabulary: " + grammar_directory + File.separator + "vocabulary");
-    Vocabulary.read(grammar_directory + File.separator + "vocabulary");
-    maxId = (float) Vocabulary.size();
+    logger.info("Reading vocabulary: " + grammar_dir + File.separator + "vocabulary");
+    Vocabulary.read(grammar_dir + File.separator + "vocabulary");
 
     // Read the quantizer setup.
-    logger.info("Reading quantization configuration: " + grammar_directory + File.separator
-        + "quantization");
-    quantization = new QuantizerConfiguration();
-    quantization.read(grammar_directory + File.separator + "quantization");
+    logger.info("Reading encoder configuration: " + grammar_dir + File.separator + "encoding");
+    encoding = new EncoderConfiguration();
+    encoding.load(grammar_dir + File.separator + "encoding");
 
     // Set phrase owner.
-    owner = Vocabulary.id(JoshuaConfiguration.phrase_owner);
+    this.owner = Vocabulary.id(owner);
 
-    // Read the dense feature name map.
-    if (JoshuaConfiguration.dense_features)
-      loadFeatureNameMap(grammar_directory + File.separator + "dense_map");
-
-    String[] listing = new File(grammar_directory).list();
+    String[] listing = new File(grammar_dir).list();
     slices = new ArrayList<PackedSlice>();
     for (int i = 0; i < listing.length; i++) {
       if (listing[i].startsWith("slice_") && listing[i].endsWith(".source"))
-        slices
-            .add(new PackedSlice(grammar_directory + File.separator + listing[i].substring(0, 11)));
+        slices.add(new PackedSlice(grammar_dir + File.separator + listing[i].substring(0, 11)));
     }
+
+    long count = 0;
+    for (PackedSlice s : slices)
+      count += s.estimated.length;
     root = new PackedRoot(this);
+
+    logger.info("Loaded " + count + " rules.");
   }
-
-  private void loadFeatureNameMap(String map_file_name) throws IOException {
-    featureNameMap = new HashMap<Integer, Integer>();
-
-    LineReader reader = new LineReader(map_file_name);
-    while (reader.hasNext()) {
-      String line = reader.next().trim();
-      String[] fields = line.split("\\s+");
-      if (fields.length != 2) {
-        logger.severe("Invalid feature map format: " + line);
-        System.exit(0);
-      }
-      int feature_index = Integer.parseInt(fields[0]);
-      int feature_id = Vocabulary.id(fields[1]);
-
-      if (featureNameMap.values().contains(feature_index)) {
-        logger.severe("Duplicate index in feature map: " + feature_index);
-        System.exit(0);
-      }
-      featureNameMap.put(feature_id, feature_index);
-    }
-    reader.close();
-
-    // Run a sanity check.
-    for (int feature_id : featureNameMap.keySet()) {
-      int index = featureNameMap.get(feature_id);
-      if (0 > index || index >= featureNameMap.size()) {
-        logger.severe("Out of scope feature index in map: " + Vocabulary.word(feature_id) + " -> "
-            + index);
-        System.exit(0);
-      }
-    }
-  }
-
-  // @Override
-  // public void sortGrammar(List<FeatureFunction> models) {
-  // for (PackedSlice slice : slices) {
-  // slice.sort(models);
-  // }
-  // }
 
   @Override
   public Trie getTrieRoot() {
@@ -129,7 +77,7 @@ public class PackedGrammar extends BatchGrammar {
 
   @Override
   public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
-    return (spanLimit == -1 || endIndex - startIndex <= spanLimit);
+    return (spanLimit == -1 || pathLength <= spanLimit);
   }
 
   @Override
@@ -140,211 +88,8 @@ public class PackedGrammar extends BatchGrammar {
     return num_rules;
   }
 
-  // TODO: need to decide how online-generated rules are to be treated. Can't
-  // add them to a packed grammar. Probably best to have a hash-based grammar
-  // just for OOVs and other auto-generated rules.
-  public Rule constructOOVRule(int num_feats, int source_word, int target_word,
-      boolean use_max_lm_cost) {
-    return null;
-  }
-
-  public Rule constructLabeledOOVRule(int num_feats, int source_word, int target_word, int lhs,
-      boolean use_max_lm_cost) {
-    return null;
-  }
-
   public Rule constructManualRule(int lhs, int[] src, int[] tgt, float[] scores, int arity) {
     return null;
-  }
-
-  public class PackedTrie implements Trie, RuleCollection {
-
-    private final PackedSlice grammar;
-    private final int position;
-
-    private int[] src;
-    private int arity;
-
-    private PackedTrie(PackedSlice grammar, int position) {
-      this.grammar = grammar;
-      this.position = position;
-      src = new int[0];
-      arity = 0;
-    }
-
-    public PackedTrie(PackedSlice grammar, int position, int[] parent_src, int parent_arity,
-        int symbol) {
-      this.grammar = grammar;
-      this.position = position;
-      src = new int[parent_src.length + 1];
-      System.arraycopy(parent_src, 0, src, 0, parent_src.length);
-      src[src.length - 1] = symbol;
-      arity = parent_arity;
-      if (Vocabulary.nt(symbol)) arity++;
-    }
-
-    public final Trie match(int token_id) {
-      int num_children = grammar.source[position];
-      if (num_children == 0) return null;
-      if (num_children == 1 && token_id == grammar.source[position + 1])
-        return new PackedTrie(grammar, grammar.source[position + 2], src, arity, token_id);
-      int top = 0;
-      int bottom = num_children - 1;
-      while (true) {
-        int candidate = (top + bottom) / 2;
-        int candidate_position = position + 1 + 2 * candidate;
-        int read_token = grammar.source[candidate_position];
-        if (read_token == token_id) {
-          return new PackedTrie(grammar, grammar.source[candidate_position + 1], src, arity,
-              token_id);
-        } else if (top == bottom) {
-          return null;
-        } else if (read_token > token_id) {
-          top = candidate + 1;
-        } else {
-          bottom = candidate - 1;
-        }
-        if (bottom < top) return null;
-      }
-    }
-
-    // public final Trie match(final int token_id) {
-    // final int num_children = grammar.source.get(position);
-    // final int offset = position + 1;
-    //
-    // if (num_children == 0)
-    // return null;
-    // if (num_children == 1 && token_id == grammar.source.get(position + 1))
-    // return new PackedTrie(grammar, grammar.source.get(position + 2),
-    // src, arity, token_id);
-    // int top = 0;
-    // int bottom = num_children - 1;
-    //
-    // int top_token, bottom_token;
-    // int candidate, candidate_position, candidate_token;
-    // while (true) {
-    // top_token = grammar.source.get(offset + 2 * top);
-    // bottom_token = grammar.source.get(offset + 2 * bottom);
-    // candidate = (int) ((bottom_token - token_id) / (float) (top_token - bottom_token)) * (bottom
-    // - top);
-    // candidate_position = offset + 2 * candidate;
-    // candidate_token = grammar.source.get(candidate_position);
-    //
-    // logger.info("[" + top + " - " + candidate + " - " + bottom + "]");
-    // logger.info("{" + top_token + " - " + candidate_token + " - " + bottom_token + "}");
-    //
-    // if (candidate_token == token_id) {
-    // return new PackedTrie(grammar,
-    // grammar.source.get(candidate_position + 1),
-    // src, arity, token_id);
-    // } else if (top == bottom) {
-    // return null;
-    // } else if (candidate_token > token_id) {
-    // top = candidate + 1;
-    // } else {
-    // bottom = candidate - 1;
-    // }
-    // if (bottom < top)
-    // return null;
-    // }
-    // }
-
-    public boolean hasExtensions() {
-      return (grammar.source[position] != 0);
-    }
-
-    public Collection<? extends Trie> getExtensions() {
-      int num_children = grammar.source[position];
-      ArrayList<PackedTrie> tries = new ArrayList<PackedTrie>(num_children);
-
-      for (int i = 0; i < num_children; i++) {
-        int symbol = grammar.source[position + 1 + 2 * i];
-        int address = grammar.source[position + 2 + 2 * i];
-        tries.add(new PackedTrie(grammar, address, src, arity, symbol));
-      }
-
-      return tries;
-    }
-
-    public boolean hasRules() {
-      int num_children = grammar.source[position];
-      return (grammar.source[position + 1 + 2 * num_children] != 0);
-    }
-
-    public RuleCollection getRuleCollection() {
-      return this;
-    }
-
-    public List<Rule> getRules() {
-      int num_children = grammar.source[position];
-      int rule_position = position + 2 * (num_children + 1);
-      int num_rules = grammar.source[rule_position - 1];
-
-      ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
-      for (int i = 0; i < num_rules; i++) {
-        rules.add(new PackedRule(this, rule_position + 3 * i));
-        // rules.add(grammar.assembleRule(rule_position + 3 * i, src, arity));
-      }
-      return rules;
-    }
-
-    @Override
-    public void sortRules(List<FeatureFunction> models) {
-      int num_children = grammar.source[position];
-      int rule_position = position + 2 * (num_children + 1);
-      int num_rules = grammar.source[rule_position - 1];
-
-      Integer[] rules = new Integer[num_rules];
-
-      int target_address;
-      int block_id;
-      for (int i = 0; i < num_rules; i++) {
-        target_address = grammar.source[rule_position + 1 + 3 * i];
-        rules[i] = rule_position + 2 + 3 * i;
-        block_id = grammar.source[rules[i]];
-
-        BilingualRule rule =
-            new BilingualRule(grammar.source[rule_position + 3 * i], src,
-                grammar.getTarget(target_address), grammar.getFeatures(block_id), arity, owner, 0,
-                rule_position + 3 * i);
-        grammar.cache[block_id] = rule.estimateRuleCost(models);
-      }
-
-      Arrays.sort(rules, new Comparator<Integer>() {
-        public int compare(Integer a, Integer b) {
-          float a_cost = grammar.cache[grammar.source[a]];
-          float b_cost = grammar.cache[grammar.source[b]];
-          if (a_cost == b_cost) return 0;
-          return (a_cost > b_cost ? 1 : -1);
-        }
-      });
-
-      int[] sorted = new int[3 * num_rules];
-      int j = 0;
-      for (int i = 0; i < rules.length; i++) {
-        int address = rules[i];
-        sorted[j++] = grammar.source[address - 2];
-        sorted[j++] = grammar.source[address - 1];
-        sorted[j++] = grammar.source[address];
-      }
-      for (int i = 0; i < sorted.length; i++)
-        grammar.source[rule_position + i] = sorted[i];
-    }
-
-    @Override
-    public List<Rule> getSortedRules() {
-      return getRules();
-    }
-
-    @Override
-    public int[] getSourceSide() {
-      return src;
-    }
-
-    @Override
-    public int getArity() {
-      return arity;
-    }
   }
 
   public final class PackedRoot implements Trie {
@@ -364,10 +109,8 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public Trie match(int word_id) {
       PackedSlice ps = lookup.get(word_id);
-      if (ps != null) {
-        PackedTrie trie = new PackedTrie(ps, 0);
-        return trie.match(word_id);
-      }
+      if (ps != null)
+        return ps.root().match(word_id);
       return null;
     }
 
@@ -377,10 +120,19 @@ public class PackedGrammar extends BatchGrammar {
     }
 
     @Override
-    public Collection<? extends Trie> getExtensions() {
-      ArrayList<Trie> tries = new ArrayList<Trie>();
+    public HashMap<Integer, ? extends Trie> getChildren() {
+      HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
       for (int key : lookup.keySet())
+        children.put(key, match(key));
+      return children;
+    }
+
+    @Override
+    public ArrayList<? extends Trie> getExtensions() {
+      ArrayList<Trie> tries = new ArrayList<Trie>();
+      for (int key : lookup.keySet()) {
         tries.add(match(key));
+      }
       return tries;
     }
 
@@ -395,131 +147,6 @@ public class PackedGrammar extends BatchGrammar {
     }
   }
 
-  public final class PackedRule implements Rule {
-
-    PackedTrie parent;
-    int address;
-
-    int[] tgt = null;
-    float[] features = null;
-
-    public PackedRule(PackedTrie parent, int address) {
-      this.parent = parent;
-      this.address = address;
-    }
-
-    @Override
-    public void setRuleID(int id) {}
-
-    @Override
-    public int getRuleID() {
-      // TODO: Doesn't factor in the slice.
-      return address;
-    }
-
-    @Override
-    public void setArity(int arity) {}
-
-    @Override
-    public int getArity() {
-      return parent.getArity();
-    }
-
-    @Override
-    public void setOwner(int ow) {}
-
-    @Override
-    public int getOwner() {
-      return owner;
-    }
-
-    @Override
-    public void setLHS(int lhs) {}
-
-    @Override
-    public int getLHS() {
-      return parent.grammar.source[address];
-    }
-
-    @Override
-    public void setEnglish(int[] eng) {}
-
-    @Override
-    public int[] getEnglish() {
-      if (tgt == null) {
-        tgt = parent.grammar.getTarget(parent.grammar.source[address + 1]);
-      }
-      return tgt;
-    }
-
-    @Override
-    public void setFrench(int[] french) {}
-
-    @Override
-    public int[] getFrench() {
-      return parent.src;
-    }
-
-    @Override
-    public void setFeatureScores(float[] scores) {}
-
-    @Override
-    public float[] getFeatureScores() {
-      if (features == null) {
-        features = parent.grammar.getFeatures(parent.grammar.source[address + 2]);
-      }
-      return features;
-    }
-
-    @Override
-    public void setFeatureCost(int column, float cost) {}
-
-    @Override
-    public float getFeatureCost(int column) {
-      return 0;
-    }
-
-    @Override
-    public float incrementFeatureScore(int column, double score) {
-      return 0;
-    }
-
-    @Override
-    public void setLatticeCost(float cost) {}
-
-    @Override
-    public float getLatticeCost() {
-      return 0;
-    }
-
-    @Override
-    public void setEstCost(float cost) {
-      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
-    }
-
-    @Override
-    public float getEstCost() {
-      return parent.grammar.cache[parent.grammar.source[address + 2]];
-    }
-
-    @Override
-    public float estimateRuleCost(List<FeatureFunction> featureFunctions) {
-      return parent.grammar.cache[parent.grammar.source[address + 2]];
-    }
-
-    @Override
-    @Deprecated
-    public String toString(Map<Integer, String> ntVocab) {
-      return null;
-    }
-
-    @Override
-    @Deprecated
-    public String toStringWithoutFeatScores() {
-      return null;
-    }
-  }
-
   public final class PackedSlice {
     private final String name;
 
@@ -529,10 +156,14 @@ public class PackedGrammar extends BatchGrammar {
     private final int[] targetLookup;
 
     private MappedByteBuffer features;
-    int featureSize;
+    private int featureSize;
     private int[] featureLookup;
+    private RandomAccessFile featureFile;
 
-    private float[] cache;
+    private float[] estimated;
+    private float[] precomputable;
+
+    private HashMap<Integer, PackedTrie> tries;
 
     public PackedSlice(String prefix) throws IOException {
       name = prefix;
@@ -543,105 +174,65 @@ public class PackedGrammar extends BatchGrammar {
       File feature_file = new File(prefix + ".features");
 
       // Get the channels etc.
-      FileChannel source_channel = new FileInputStream(source_file).getChannel();
+      FileInputStream source_fis = new FileInputStream(source_file);
+      FileChannel source_channel = source_fis.getChannel();
       int source_size = (int) source_channel.size();
 
-      FileChannel target_channel = new FileInputStream(target_file).getChannel();
+      FileInputStream target_fis = new FileInputStream(target_file);
+      FileChannel target_channel = target_fis.getChannel();
       int target_size = (int) target_channel.size();
 
-      FileChannel feature_channel = new RandomAccessFile(feature_file, "r").getChannel();
+      featureFile = new RandomAccessFile(feature_file, "r");
+      FileChannel feature_channel = featureFile.getChannel();
       int feature_size = (int) feature_channel.size();
 
       IntBuffer source_buffer = source_channel.map(MapMode.READ_ONLY, 0, source_size).asIntBuffer();
       source = new int[source_size / 4];
       source_buffer.get(source);
+      source_fis.close();
 
       IntBuffer target_buffer = target_channel.map(MapMode.READ_ONLY, 0, target_size).asIntBuffer();
       target = new int[target_size / 4];
       target_buffer.get(target);
+      target_fis.close();
 
       features = feature_channel.map(MapMode.READ_ONLY, 0, feature_size);
       features.load();
 
       int num_blocks = features.getInt(0);
       featureLookup = new int[num_blocks];
-      cache = new float[num_blocks];
+      estimated = new float[num_blocks];
+      precomputable = new float[num_blocks];
       featureSize = features.getInt(4);
-      for (int i = 0; i < num_blocks; i++)
-        featureLookup[i] = features.getInt(8 + 4 * i);
+      int header_pos = 8;
+      for (int i = 0; i < num_blocks; i++) {
+        featureLookup[i] = features.getInt(header_pos);
+        estimated[i] = Float.NEGATIVE_INFINITY;
+        precomputable[i] = Float.NEGATIVE_INFINITY;
+        header_pos += 4;
+      }
 
-      DataInputStream target_lookup_stream =
-          new DataInputStream(new BufferedInputStream(new FileInputStream(target_lookup_file)));
+      DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
+          new FileInputStream(target_lookup_file)));
       targetLookup = new int[target_lookup_stream.readInt()];
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
+      target_lookup_stream.close();
+      
+      tries = new HashMap<Integer, PackedTrie>();
     }
 
-    final int[] makeArray(List<Integer> list) {
-      int[] array = new int[list.size()];
-      int i = 0;
-      for (int l : list) {
-        array[i++] = l;
+    
+    @SuppressWarnings("unused")
+    private final Object guardian = new Object() {
+      @Override
+      // Finalizer object to ensure feature file handle get closed upon slice's dismissal.
+      protected void finalize() throws Throwable {
+        featureFile.close();
       }
-      return array;
-    }
+    };
 
-    void sort(List<FeatureFunction> models) {
-      Stack<Integer> positions = new Stack<Integer>();
-      Stack<Integer> src_path = new Stack<Integer>();
-      int arity = 0;
-
-      int current = 0;
-      while (current < source.length) {
-        sortRules(models, current, makeArray(src_path), arity);
-        int num_children = source[current];
-
-        // TODO: finish sort implementation.
-      }
-    }
-
-    public void sortRules(List<FeatureFunction> models, int position, int[] src, int arity) {
-      int num_children = source[position];
-      int rule_position = position + 2 * (num_children + 1);
-      int num_rules = source[rule_position - 1];
-
-      Integer[] rules = new Integer[num_rules];
-
-      int target_address;
-      int block_id;
-      for (int i = 0; i < num_rules; i++) {
-        target_address = source[rule_position + 1 + 3 * i];
-        rules[i] = rule_position + 2 + 3 * i;
-        block_id = source[rules[i]];
-
-        BilingualRule rule =
-            new BilingualRule(source[rule_position + 3 * i], src, getTarget(target_address),
-                getFeatures(block_id), arity, owner, 0, rule_position + 3 * i);
-        cache[block_id] = rule.estimateRuleCost(models);
-      }
-
-      Arrays.sort(rules, new Comparator<Integer>() {
-        public int compare(Integer a, Integer b) {
-          float a_cost = cache[source[a]];
-          float b_cost = cache[source[b]];
-          if (a_cost == b_cost) return 0;
-          return (a_cost > b_cost ? 1 : -1);
-        }
-      });
-
-      int[] sorted = new int[3 * num_rules];
-      int j = 0;
-      for (int i = 0; i < rules.length; i++) {
-        int address = rules[i];
-        sorted[j++] = source[address - 2];
-        sorted[j++] = source[address - 1];
-        sorted[j++] = source[address];
-      }
-      for (int i = 0; i < sorted.length; i++)
-        source[rule_position + i] = sorted[i];
-    }
-
-    final int[] getTarget(int pointer) {
+    private final int[] getTarget(int pointer) {
       // Figure out level.
       int tgt_length = 1;
       while (tgt_length < (targetLookup.length + 1) && targetLookup[tgt_length] <= pointer)
@@ -651,43 +242,398 @@ public class PackedGrammar extends BatchGrammar {
       int parent;
       do {
         parent = target[pointer];
-        if (parent != -1) tgt[index++] = target[pointer + 1];
+        if (parent != -1)
+          tgt[index++] = target[pointer + 1];
         pointer = parent;
       } while (pointer != -1);
       return tgt;
     }
 
-    final float[] getFeatures(int block_id, float[] feature_vector) {
-      int feature_position = featureLookup[block_id];
-      int num_features = features.getInt(feature_position);
-      feature_position += 4;
-      for (int i = 0; i < num_features; i++) {
-        int feature_id = features.getInt(feature_position);
-        Quantizer quantizer = quantization.get(feature_id);
-        feature_vector[featureNameMap.get(feature_id)] = quantizer.read(features, feature_position);
-        feature_position += 4 + quantizer.size();
+    private synchronized PackedTrie getTrie(final int node_address) {
+      PackedTrie t = tries.get(node_address);
+      if (t == null) {
+        t = new PackedTrie(node_address);
+        tries.put(node_address, t);
       }
-      return feature_vector;
+      return t;
     }
 
-    final float[] getFeatures(int block_id) {
-      float[] feature_vector = new float[JoshuaConfiguration.num_phrasal_features];
-      return getFeatures(block_id, feature_vector);
+    private synchronized PackedTrie getTrie(int node_address, int[] parent_src, int parent_arity,
+        int symbol) {
+      PackedTrie t = tries.get(node_address);
+      if (t == null) {
+        t = new PackedTrie(node_address, parent_src, parent_arity, symbol);
+        tries.put(node_address, t);
+      }
+      return t;
     }
 
-    final Rule assembleRule(int address, int[] src, int arity) {
-      int lhs = source[address];
-      int tgt_address = source[address + 1];
-      int data_block = source[address + 2];
-      BilingualRule rule =
-          new BilingualRule(lhs, src, getTarget(tgt_address), getFeatures(data_block), arity,
-              owner, 0, address);
-      if (cache[data_block] != Float.NEGATIVE_INFINITY) rule.setEstCost(cache[data_block]);
-      return rule;
+    /**
+     * NEW VERSION
+     * 
+     * Returns a string version of the features associated with a rule (represented as a block ID).
+     * These features are in the form "feature1=value feature2=value...". By default, unlabeled
+     * features are named using the pattern
+     * 
+     * tm_OWNER_INDEX
+     * 
+     * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
+     * of the feature found in the grammar.
+     * 
+     * @param block_id
+     * @return
+     */
+
+    private final String getFeatures(int block_id) {
+      int feature_position = featureLookup[block_id];
+
+      // The number of non-zero features stored with the rule.
+      int num_features = encoding.readId(features, feature_position);
+
+      feature_position += EncoderConfiguration.ID_SIZE;
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < num_features; i++) {
+        int feature_id = encoding.readId(features, feature_position);
+
+        FloatEncoder encoder = encoding.encoder(feature_id);
+        if (encoding.isLabeled()) {
+          String name = Vocabulary.word(encoding.outerId(feature_id));
+          sb.append(String.format(" tm_%s_%s=%.5f", Vocabulary.word(owner), name,
+              encoder.read(features, feature_position)));
+        } else {
+          int index = encoding.outerId(feature_id);
+          sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
+              encoder.read(features, feature_position)));
+        }
+        feature_position += EncoderConfiguration.ID_SIZE + encoder.size();
+      }
+      return sb.toString().trim();
+    }
+
+    private final PackedTrie root() {
+      return getTrie(0);
     }
 
     public String toString() {
       return name;
     }
+
+    /**
+     * A trie node within the grammar slice. Identified by its position within the source array,
+     * and, as a supplement, the source string leading from the trie root to the node.
+     * 
+     * @author jg
+     * 
+     */
+    public class PackedTrie implements Trie, RuleCollection {
+
+      private final int position;
+
+      private boolean sorted = false;
+
+      private int[] src;
+      private int arity;
+
+      private PackedTrie(int position) {
+        this.position = position;
+        src = new int[0];
+        arity = 0;
+      }
+
+      private PackedTrie(int position, int[] parent_src, int parent_arity, int symbol) {
+        this.position = position;
+        src = new int[parent_src.length + 1];
+        System.arraycopy(parent_src, 0, src, 0, parent_src.length);
+        src[src.length - 1] = symbol;
+        arity = parent_arity;
+        if (Vocabulary.nt(symbol))
+          arity++;
+      }
+
+      @Override
+      public final Trie match(int token_id) {
+        int num_children = source[position];
+        if (num_children == 0)
+          return null;
+        if (num_children == 1 && token_id == source[position + 1])
+          return getTrie(source[position + 2], src, arity, token_id);
+        int top = 0;
+        int bottom = num_children - 1;
+        while (true) {
+          int candidate = (top + bottom) / 2;
+          int candidate_position = position + 1 + 2 * candidate;
+          int read_token = source[candidate_position];
+          if (read_token == token_id) {
+            return getTrie(source[candidate_position + 1], src, arity, token_id);
+          } else if (top == bottom) {
+            return null;
+          } else if (read_token > token_id) {
+            top = candidate + 1;
+          } else {
+            bottom = candidate - 1;
+          }
+          if (bottom < top)
+            return null;
+        }
+      }
+
+      @Override
+      public HashMap<Integer, ? extends Trie> getChildren() {
+        HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
+        int num_children = source[position];
+        for (int i = 0; i < num_children; i++) {
+          int symbol = source[position + 1 + 2 * i];
+          int address = source[position + 2 + 2 * i];
+          children.put(symbol, getTrie(address, src, arity, symbol));
+        }
+        return children;
+      }
+
+      public boolean hasExtensions() {
+        return (source[position] != 0);
+      }
+
+      public ArrayList<? extends Trie> getExtensions() {
+        int num_children = source[position];
+        ArrayList<PackedTrie> tries = new ArrayList<PackedTrie>(num_children);
+
+        for (int i = 0; i < num_children; i++) {
+          int symbol = source[position + 1 + 2 * i];
+          int address = source[position + 2 + 2 * i];
+          tries.add(getTrie(address, src, arity, symbol));
+        }
+
+        return tries;
+      }
+
+      public boolean hasRules() {
+        int num_children = source[position];
+        return (source[position + 1 + 2 * num_children] != 0);
+      }
+
+      public RuleCollection getRuleCollection() {
+        return this;
+      }
+
+      public List<Rule> getRules() {
+        int num_children = source[position];
+        int rule_position = position + 2 * (num_children + 1);
+        int num_rules = source[rule_position - 1];
+
+        ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
+        for (int i = 0; i < num_rules; i++) {
+          rules.add(new PackedRule(rule_position + 3 * i));
+        }
+        return rules;
+      }
+
+      /**
+       * We determine if the Trie is sorted by checking if the estimated cost of the first rule in
+       * the trie has been set.
+       */
+      @Override
+      public boolean isSorted() {
+        return sorted;
+      }
+
+      private synchronized void sortRules(List<FeatureFunction> models) {
+        int num_children = source[position];
+        int rule_position = position + 2 * (num_children + 1);
+        int num_rules = source[rule_position - 1];
+        if (num_rules == 0) {
+          this.sorted = true;
+          return;
+        }
+        Integer[] rules = new Integer[num_rules];
+
+        int target_address;
+        int block_id;
+        for (int i = 0; i < num_rules; ++i) {
+          target_address = source[rule_position + 1 + 3 * i];
+          rules[i] = rule_position + 2 + 3 * i;
+          block_id = source[rules[i]];
+
+          BilingualRule rule = new BilingualRule(source[rule_position + 3 * i], src,
+              getTarget(target_address), getFeatures(block_id), arity, owner);
+          estimated[block_id] = rule.estimateRuleCost(models);
+          precomputable[block_id] = rule.getPrecomputableCost();
+        }
+
+        Arrays.sort(rules, new Comparator<Integer>() {
+          public int compare(Integer a, Integer b) {
+            float a_cost = estimated[source[a]];
+            float b_cost = estimated[source[b]];
+            if (a_cost == b_cost)
+              return 0;
+            return (a_cost > b_cost ? 1 : -1);
+          }
+        });
+
+        int[] sorted = new int[3 * num_rules];
+        int j = 0;
+        for (int i = 0; i < rules.length; i++) {
+          int address = rules[i];
+          sorted[j++] = source[address - 2];
+          sorted[j++] = source[address - 1];
+          sorted[j++] = source[address];
+        }
+        for (int i = 0; i < sorted.length; i++)
+          source[rule_position + i] = sorted[i];
+        this.sorted = true;
+      }
+
+      @Override
+      public List<Rule> getSortedRules(List<FeatureFunction> featureFunctions) {
+        if (!isSorted())
+          sortRules(featureFunctions);
+        return getRules();
+      }
+
+      @Override
+      public int[] getSourceSide() {
+        return src;
+      }
+
+      @Override
+      public int getArity() {
+        return arity;
+      }
+
+      public final class PackedRule implements Rule {
+        private final int address;
+
+        private int[] tgt = null;
+        private FeatureVector features = null;
+
+        public PackedRule(int address) {
+          this.address = address;
+        }
+
+        @Override
+        public void setArity(int arity) {
+        }
+
+        @Override
+        public int getArity() {
+          return PackedTrie.this.getArity();
+        }
+
+        @Override
+        public void setOwner(int ow) {
+        }
+
+        @Override
+        public int getOwner() {
+          return owner;
+        }
+
+        @Override
+        public void setLHS(int lhs) {
+        }
+
+        @Override
+        public int getLHS() {
+          return source[address];
+        }
+
+        @Override
+        public void setEnglish(int[] eng) {
+        }
+
+        @Override
+        public int[] getEnglish() {
+          if (tgt == null) {
+            tgt = getTarget(source[address + 1]);
+          }
+          return tgt;
+        }
+        
+        @Override
+        public String getEnglishWords() {
+          ArrayList<String> foreignNTs = new ArrayList<String>();
+          for (int i = 0; i < this.getFrench().length; i++)
+            if (this.getFrench()[i] < 0) foreignNTs.add(Vocabulary.word(this.getFrench()[i]));
+
+          StringBuilder sb = new StringBuilder();
+          for (int i = 0; i < this.getEnglish().length; i++) {
+            if (this.getEnglish()[i] >= 0)
+              sb.append(Vocabulary.word(this.getEnglish()[i]) + " ");
+            else
+              sb.append(foreignNTs.get(Math.abs(this.getEnglish()[i]) - 1) + "," + Math.abs(this.getEnglish()[i]) + " ");
+          }
+
+          return sb.toString().trim();
+        }
+
+        @Override
+        public void setFrench(int[] french) {
+        }
+
+        @Override
+        public int[] getFrench() {
+          return src;
+        }
+
+        @Override
+        public String getFrenchWords() {
+          return Vocabulary.getWords(getFrench());
+        }
+        
+        @Override
+        public FeatureVector getFeatureVector() {
+          if (features == null) {
+            features = new FeatureVector(getFeatures(source[address + 2]), "");
+            features.times(-1);
+          }
+
+          return features;
+        }
+
+        @Override
+        public void setEstimatedCost(float cost) {
+          estimated[source[address + 2]] = cost;
+        }
+
+        @Override
+        public float getEstimatedCost() {
+          return estimated[source[address + 2]];
+        }
+
+        @Override
+        public void setPrecomputableCost(float cost) {
+          precomputable[source[address + 2]] = cost;
+        }
+
+        @Override
+        public float getPrecomputableCost() {
+          return precomputable[source[address + 2]];
+        }
+
+        @Override
+        public float estimateRuleCost(List<FeatureFunction> models) {
+          return estimated[source[address + 2]];
+        }
+
+        @Override
+        public String toString() {
+          StringBuffer sb = new StringBuffer();
+          sb.append(Vocabulary.word(this.getLHS()));
+          sb.append(" ||| ");
+          sb.append(Vocabulary.getWords(this.getFrench()));
+          sb.append(" ||| ");
+          sb.append(Vocabulary.getWords(getEnglish()));
+          sb.append(" |||");
+          sb.append(" " + getFeatureVector());
+          sb.append(String.format(" ||| %.3f", getEstimatedCost()));
+          return sb.toString();
+        }
+      }
+    }
+  }
+
+  @Override
+  public boolean isRegexpGrammar() {
+    // TODO Auto-generated method stub
+    return false;
   }
 }

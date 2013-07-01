@@ -1,18 +1,24 @@
 package joshua.decoder.ff.tm.format;
 
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
+/**
+ * This class implements reading files in the format defined by David Chiang for Hiero. 
+ * 
+ * @author Unknown
+ * @author Matt Post <post@cs.jhu.edu>
+ */
+
 public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
   private static final Logger logger = Logger.getLogger(HieroFormatReader.class.getName());
 
   static {
-    fieldDelimiter = "\\s\\|{3}\\s";
+    fieldDelimiter = "\\s+\\|{3}\\s+";
     nonTerminalRegEx = "^\\[[^\\s]+\\,[0-9]*\\]$";
     nonTerminalCleanRegEx = ",[0-9\\s]+";
     // nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
@@ -59,45 +65,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
       }
     }
 
-    // feature scores
-    String[] scores = fields[3].split("\\s+");
-    float[] feature_scores = new float[scores.length];
+    String sparse_features = fields[3];
 
-    int i = 0;
-    for (String score : scores) {
-      feature_scores[i++] = Float.parseFloat(score);
-    }
-
-    return new BilingualRule(lhs, french, english, feature_scores, arity);
-  }
-
-
-  @Override
-  public String toTokenIds(BilingualRule rule) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(rule.getLHS());
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getFrench()));
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getEnglish()));
-    sb.append(" |||");
-
-    float[] feature_scores = rule.getFeatureScores();
-    for (int i = 0; i < feature_scores.length; i++) {
-      sb.append(String.format(" %.4f", feature_scores[i]));
-    }
-    return sb.toString();
-  }
-
-  @Override
-  public String toTokenIdsWithoutFeatureScores(BilingualRule rule) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(rule.getLHS());
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getFrench()));
-    sb.append(" ||| ");
-    sb.append(Arrays.toString(rule.getEnglish()));
-    return sb.toString();
+    return new BilingualRule(lhs, french, english, sparse_features, arity);
   }
 
   @Override
@@ -109,11 +79,8 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(rule.getEnglish()));
     sb.append(" |||");
+    sb.append(" " + rule.computeFeatures());
 
-    float[] feature_scores = rule.getFeatureScores();
-    for (int i = 0; i < feature_scores.length; i++) {
-      sb.append(String.format(" %.4f", feature_scores[i]));
-    }
     return sb.toString();
   }
 

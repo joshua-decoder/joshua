@@ -1,0 +1,10 @@
+This test tests the use of regular expressions in the grammar.  This is an experimental feature with
+an inefficient implementation in the decoder, but there are a number of things that could be done to
+make it more efficient if the technique proves useful.
+
+To enable it, you set the Joshua parameter
+
+  regexp-grammar = OWNER
+
+where OWNER is the owner of one or more grammars whose rules might be interpreted as regular
+expressions.

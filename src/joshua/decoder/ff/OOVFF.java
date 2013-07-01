@@ -1,42 +1,60 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.tm.AbstractGrammar;
+import java.util.List;
+
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
+import joshua.corpus.Vocabulary;
+import joshua.decoder.chart_parser.SourcePath;
 
 /**
+ * This feature is fired when an out-of-vocabulary word (with respect to the translation model) is
+ * entered into the chart. OOVs work in the following manner: for each word in the input that is OOV
+ * with respect to the translation model, we create a rule that pushes that word through
+ * untranslated (the suffix "_OOV" can optionally be appended according to the runtime parameter
+ * "mark-oovs") . These rules are all stored in a grammar whose owner is "oov". The OOV feature
+ * function template then fires the "OOVPenalty" feature whenever it is asked to score an OOV rule.
  * 
- * @author Matt Post <post@jhu.edu>
- * @version $LastChangedDate$
+ * @author Matt Post <post@cs.jhu.edu>
  */
-public final class OOVFF extends DefaultStatelessFF {
+public class OOVFF extends StatelessFF {
+  private float weight = 0.0f;
+  private int ownerID = -1;
 
-  public OOVFF(int featureID, double weight, int owner) {
-    super(weight, owner, featureID); // TODO: owner
+  public OOVFF(FeatureVector weights) {
+    super(weights, "OOVPenalty");
+
+    if (!weights.containsKey(name))
+      System.err.println("* WARNING: No weight for OOVPenalty found.");
+    else
+      weight = weights.get(name);
+
+    ownerID = Vocabulary.id("oov");
   }
 
   /**
-   * Each additional word gets a penalty. The more number of words, the more negative. So, to
-   * encourage longer sentence, we should have a negative weight on the feature
+   * OOV rules cover exactly one word, and such rules belong to a grammar whose owner is "oov". Each
+   * OOV fires the OOVPenalty feature with a value of 1, so the cost is simply the weight, which was
+   * cached when the feature was created.
    */
-  public double estimateLogP(final Rule rule, int sentID) {
-    if (rule.getRuleID() == AbstractGrammar.OOV_RULE_ID)
-      return 1.0;
-    else
-      return 0.0;
+  @Override
+  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID) {
+    if (rule != null && this.ownerID == rule.getOwner())
+      return weight;
+
+    return 0.0f;
+  }
+
+  /**
+   * If the supplied rule is an OOV rule, we fire the OOVPenalty feature with a value of 1.
+   */
+  @Override
+  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID) {
+    if (rule != null && this.ownerID == rule.getOwner())
+      return new FeatureVector(name, 1.0f);
+
+    return new FeatureVector();
   }
 }
