@@ -1,6 +1,7 @@
 package joshua.decoder.ff.lm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -138,11 +139,36 @@ public class LanguageModelFF extends StatefulFF {
 
   /**
    * This function computes all the complete n-grams found in the rule, as well as the incomplete
-   * n-grams on the left-hand side. * into its left side.
+   * n-grams on the left-hand side.
    */
   @Override
   public float estimateCost(Rule rule, int sentID) {
-    return weight * estimateRuleLogProb(rule.getEnglish());
+
+    float estimate = 0.0f;
+    boolean considerIncompleteNgrams = true;
+
+    int[] enWords = rule.getEnglish();
+
+    List<Integer> words = new ArrayList<Integer>();
+    boolean skipStart = (enWords[0] == START_SYM_ID);
+
+    /*
+     * Move through the words, accumulating language model costs each time we have an n-gram (n >=
+     * 2), and resetting the series of words when we hit a nonterminal.
+     */
+    for (int c = 0; c < enWords.length; c++) {
+      int currentWord = enWords[c];
+      if (Vocabulary.nt(currentWord)) {
+        estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
+        words.clear();
+        skipStart = false;
+      } else {
+        words.add(currentWord);
+      }
+    }
+    estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
+
+    return weight * estimate;
   }
 
   /**
@@ -151,7 +177,41 @@ public class LanguageModelFF extends StatefulFF {
    */
   @Override
   public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
-    return weight * estimateStateLogProb((NgramDPState) currentState, false, false);
+    /* TODO: This does not work when addStart == true or addEnd == true */
+    boolean addStart = false;
+    boolean addEnd = false;
+
+    NgramDPState state = (NgramDPState) currentState;
+
+    float estimate = 0.0f;
+    int[] leftContext = state.getLeftLMStateWords();
+
+    if (null != leftContext) {
+      List<Integer> words = new ArrayList<Integer>();
+      if (addStart == true)
+        words.add(START_SYM_ID);
+      for (int w : leftContext)
+        words.add(w);
+
+      boolean considerIncompleteNgrams = true;
+      boolean skipStart = true;
+      if (words.get(0) != START_SYM_ID) {
+        skipStart = false;
+      }
+      estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
+    }
+
+    if (addEnd == true) {
+      int[] rightContext = state.getRightLMStateWords();
+      List<Integer> list = new ArrayList<Integer>(rightContext.length);
+      for (int w : rightContext)
+        list.add(w);
+      list.add(STOP_SYM_ID);
+      float tem = scoreChunkLogP(list, false, false);
+      estimate += tem;
+    }
+
+    return weight * estimate;
   }
 
   /**
@@ -186,7 +246,7 @@ public class LanguageModelFF extends StatefulFF {
           // Always calculate logP for <bo>: additional backoff weight
           if (currentNgram.size() == this.ngramOrder) {
             // Compute the current word probability, and remove it.s
-            float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+            float prob = this.lmGrammar.ngramLogProbability(Support.toArray(currentNgram),
                 this.ngramOrder);
             // System.err.println(String.format("NGRAM(%s) = %.5f",
             // Vocabulary.getWords(currentNgram), prob));
@@ -206,7 +266,7 @@ public class LanguageModelFF extends StatefulFF {
         currentNgram.add(curID);
         if (currentNgram.size() == this.ngramOrder) {
           // compute the current word probablity, and remove it
-          float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+          float prob = this.lmGrammar.ngramLogProbability(Support.toArray(currentNgram),
               this.ngramOrder);
           transitionLogP += prob;
           // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
@@ -242,7 +302,7 @@ public class LanguageModelFF extends StatefulFF {
       currentNgram.add(t);
 
       if (currentNgram.size() >= 2) { // start from bigram
-        float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+        float prob = this.lmGrammar.ngramLogProbability(Support.toArray(currentNgram),
             currentNgram.size());
         // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
         // prob));
@@ -263,7 +323,7 @@ public class LanguageModelFF extends StatefulFF {
         currentNgram.add(rightContext[i]);
 
       currentNgram.add(STOP_SYM_ID);
-      float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+      float prob = this.lmGrammar.ngramLogProbability(Support.toArray(currentNgram),
           currentNgram.size());
       res += prob;
       // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
@@ -272,74 +332,15 @@ public class LanguageModelFF extends StatefulFF {
     return res;
   }
 
-  /*
-   * This function computes a language model estimate of a rule. This can be done by computing the
-   * probability of all incomplete n-grams found in the rule, for n > 2.
-   */
-  private float estimateRuleLogProb(int[] enWords) {
-    float estimate = 0.0f;
-    boolean considerIncompleteNgrams = true;
-    List<Integer> words = new ArrayList<Integer>();
-    boolean skipStart = (enWords[0] == START_SYM_ID);
-
-    /*
-     * Move through the words, accumulating language model costs each time we have an n-gram (n >=
-     * 2), and resetting the series of words when we hit a nonterminal.
-     */
-    for (int c = 0; c < enWords.length; c++) {
-      int currentWord = enWords[c];
-      if (Vocabulary.nt(currentWord)) {
-        estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
-        words.clear();
-        skipStart = false;
-      } else {
-        words.add(currentWord);
-      }
-    }
-    estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
-    return estimate;
-  }
-
   /**
-   * TODO: This does not work when addStart == true or addEnd == true
-   **/
-  private float estimateStateLogProb(NgramDPState state, boolean addStart, boolean addEnd) {
-
-    float res = 0.0f;
-    int[] leftContext = state.getLeftLMStateWords();
-
-    if (null != leftContext) {
-      List<Integer> words = new ArrayList<Integer>();
-      if (addStart == true)
-        words.add(START_SYM_ID);
-      for (int w : leftContext)
-        words.add(w);
-
-      boolean considerIncompleteNgrams = true;
-      boolean skipStart = true;
-      if (words.get(0) != START_SYM_ID) {
-        skipStart = false;
-      }
-      res += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
-    }
-
-    if (addEnd == true) {
-      int[] rightContext = state.getRightLMStateWords();
-      List<Integer> list = new ArrayList<Integer>(rightContext.length);
-      for (int w : rightContext)
-        list.add(w);
-      list.add(STOP_SYM_ID);
-      float tem = scoreChunkLogP(list, false, false);
-      res += tem;
-    }
-    return res;
-  }
-
-  /**
+   * This function is basically a wrapper for NGramLanguageModel::sentenceLogProbability(). It
+   * computes the probability of a phrase ("chunk"), using lower-order n-grams for the first n-1
+   * words.
+   * 
    * @param words
    * @param considerIncompleteNgrams
    * @param skipStart
-   * @return
+   * @return the phrase log probability
    */
   private float scoreChunkLogP(List<Integer> words, boolean considerIncompleteNgrams,
       boolean skipStart) {
@@ -358,13 +359,5 @@ public class LanguageModelFF extends StatefulFF {
       return (float) this.lmGrammar.sentenceLogProbability(
           Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
     }
-  }
-
-  private final int[] toArray(List<Integer> input) {
-    int[] output = new int[input.size()];
-    int i = 0;
-    for (int v : input)
-      output[i++] = v;
-    return output;
   }
 }
