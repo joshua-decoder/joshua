@@ -18,7 +18,7 @@ public class KenLMState extends DPState {
     return state;
   }
 
-  public long setState(long state) {
+  public void setState(long state) {
     this.state = state;
   }
 

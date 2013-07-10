@@ -1,7 +1,5 @@
 package joshua.decoder.ff.lm.kenlm.jni;
 
-import java.util.List;
-
 import joshua.decoder.ff.lm.NGramLanguageModel;
 
 // TODO(Joshua devs): include my state object with your LM state then
@@ -73,23 +71,5 @@ public class KenLM implements NGramLanguageModel {
 
   public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
-  }
-
-  // TODO(Joshua devs): fix the rest of your code to use LM state properly.
-  // Then fix this.
-  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0;
-  }
-
-  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0;
-  }
-
-  public int[] leftEquivalentState(int[] originalState, int order, double[] cost) {
-    return originalState;
-  }
-
-  public int[] rightEquivalentState(int[] originalState, int order) {
-    return originalState;
   }
 }
