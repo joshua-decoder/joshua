@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.lm;
 
 import java.util.List;
@@ -26,7 +11,6 @@ import joshua.decoder.Support;
  * may be defined.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public abstract class AbstractLM extends DefaultNGramLanguageModel {
 
@@ -34,17 +18,17 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
     super(order);
   }
 
-
+  @Override
   public final float sentenceLogProbability(int[] sentence, int order, int startIndex) {
     return super.sentenceLogProbability(sentence, order, startIndex);
   }
 
-
+  @Override
   public final float ngramLogProbability(int[] ngram) {
     return super.ngramLogProbability(ngram);
   }
 
-
+  @Override
   public final float ngramLogProbability(int[] ngram, int order) {
     if (ngram.length > order) {
       throw new RuntimeException("ngram length is greather than the max order");
@@ -72,6 +56,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
   /**
    * @deprecated this function is much slower than the int[] version
    */
+  @Override
   @Deprecated
   public final float logProbOfBackoffState(List<Integer> ngram, int order,
       int qtyAdditionalBackoffWeight) {
@@ -79,7 +64,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
         qtyAdditionalBackoffWeight);
   }
 
-
+  @Override
   public final float logProbabilityOfBackoffState(int[] ngram, int order,
       int qtyAdditionalBackoffWeight) {
     if (ngram.length > order) {
