@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1451,6 +1452,7 @@ public class MertCore {
       try {
         ArrayList<String> cmd = new ArrayList<String>();
         cmd.add(decoderCommandFileName);
+
         if (passIterationToDecoder)
           cmd.add(Integer.toString(iteration));
 

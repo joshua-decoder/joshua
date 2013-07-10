@@ -1764,6 +1764,7 @@ public class PROCore {
       try {
         ArrayList<String> cmd = new ArrayList<String>();
         cmd.add(decoderCommandFileName);
+
         if (passIterationToDecoder)
           cmd.add(Integer.toString(iteration));
 

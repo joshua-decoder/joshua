@@ -60,8 +60,6 @@
     <exec executable="make">
       <arg value="-j" />
       <arg value="4" />
-      <arg value="-e" />
-      <arg value="libdir=${env.JOSHUA}/${lib}" />
       <arg value="-C" />
       <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
     </exec>
@@ -204,9 +202,9 @@
       <arg value="clean" />
     </exec>
     <exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
-      <arg value="clean.sh" />
+      <arg value="clean" />
     </exec>
-    <delete dir="class/" />
+    <delete file="${lib}/libken.so" />
     <delete file="tree_visualizer/tree_visualizer.jar" />
     <delete dir="doc/html" />
     <delete dir="doc/latex" />
@@ -221,13 +219,13 @@
     </delete>
   </target>
 
-	<target name="clean-thrax">
-		<delete verbose="true" quiet="true">
-			<fileset dir="${thraxlib}">
-				<include name="**/*.class"/>
-			</fileset>
-		</delete>
-	</target>
+  <target name="clean-thrax">
+      <delete verbose="true" quiet="true">
+      <fileset dir="${thraxlib}">
+        <include name="**/*.class"/>
+      </fileset>
+    </delete>
+  </target>
 
   <!-- EXPERIMENTAL: Delete *all* generated files -->
   <target name="distclean" depends="clean">

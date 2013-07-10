@@ -31,6 +31,7 @@ src/joshua/decoder/ff/lm/kenlm/build_binary
 src/joshua/decoder/ff/lm/kenlm/libken.dylib
 src/joshua/decoder/ff/lm/kenlm/ngram_query
 src/joshua/decoder/ff/lm/kenlm/query
+src/joshua/decoder/ff/lm/kenlm/lmplz
 examples/example2/example2.1best
 examples/example2/example2.1best.sgm
 examples/example2/example2.config.kenlm
