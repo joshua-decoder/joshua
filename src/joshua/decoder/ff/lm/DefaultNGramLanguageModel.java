@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 
 /**
  * This class provides a default implementation for the Equivalent LM State optimization (namely,
@@ -90,25 +91,27 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
     return this.ngramLogProbability(ngram, this.ngramOrder);
   }
 
+  protected abstract float ngramLogProbability_helper(int[] ngram, int order);
+  
   @Override
-  public abstract float ngramLogProbability(int[] ngram, int order);
+  public float ngramLogProbability(int[] ngram, int order) {
+    if (ngram.length > order) {
+      throw new RuntimeException("ngram length is greather than the max order");
+    }
+    // if (ngram.length==1 && "we".equals(Vocabulary.getWord(ngram[0]))) {
+    // System.err.println("Something weird is about to happen");
+    // }
 
-
-  /**
-   * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID token will never exist. However,
-   * were it to be called, it should return a probability of 1 (logprob of 0).
-   */
-  @Override
-  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0; // log(1) == 0;
-  }
-
-  /**
-   * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID token will never exist. However,
-   * were it to be called, it should return a probability of 1 (logprob of 0).
-   */
-  @Override
-  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0; // log(1) == 0;
+    int historySize = ngram.length - 1;
+    if (historySize >= order || historySize < 0) {
+      // BUG: use logger or exception. Don't zero default
+      throw new RuntimeException("Error: history size is " + historySize);
+      // return 0;
+    }
+    float probability = ngramLogProbability_helper(ngram, order);
+    if (probability < -JoshuaConfiguration.lm_ceiling_cost) {
+      probability = -JoshuaConfiguration.lm_ceiling_cost;
+    }
+    return probability; 
   }
 }
