@@ -37,15 +37,6 @@ public class LanguageModelFF extends StatefulFF {
   private final int START_SYM_ID;
   private final int STOP_SYM_ID;
 
-  /*
-   * These must be static (for now) for LMGrammar, but they shouldn't be! in case of multiple LM
-   * features
-   */
-  static String BACKOFF_LEFT_LM_STATE_SYM = "<lzfbo>";
-  static public int BACKOFF_LEFT_LM_STATE_SYM_ID;// used for equivalent state
-  static String NULL_RIGHT_LM_STATE_SYM = "<lzfrnull>";
-  static public int NULL_RIGHT_LM_STATE_SYM_ID;// used for equivalent state
-
   private final boolean addStartAndEndSymbol = false;
 
   /**
@@ -86,9 +77,6 @@ public class LanguageModelFF extends StatefulFF {
     this.ngramOrder = lm.getOrder();
     this.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
     this.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
-
-    LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = Vocabulary.id(BACKOFF_LEFT_LM_STATE_SYM);
-    LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);
 
     if (!weights.containsKey(name))
       System.err.println("* WARNING: no weight found for LanguageModelFF '" + name + "'");
@@ -196,17 +184,7 @@ public class LanguageModelFF extends StatefulFF {
           currentNgram.add(t);
 
           // Always calculate logP for <bo>: additional backoff weight
-          if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {
-            // Number of non-state words.
-            int numAdditionalBackoffWeight = currentNgram.size() - (i + 1);
-            // Compute additional backoff weight.
-            transitionLogP += this.lmGrammar.logProbOfBackoffState(currentNgram,
-                currentNgram.size(), numAdditionalBackoffWeight);
-
-            if (currentNgram.size() == this.ngramOrder) {
-              currentNgram.removeFirst();
-            }
-          } else if (currentNgram.size() == this.ngramOrder) {
+          if (currentNgram.size() == this.ngramOrder) {
             // Compute the current word probability, and remove it.s
             float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
                 this.ngramOrder);
@@ -215,7 +193,6 @@ public class LanguageModelFF extends StatefulFF {
             transitionLogP += prob;
             currentNgram.removeFirst();
           }
-
         }
 
         // Right context.
@@ -264,26 +241,15 @@ public class LanguageModelFF extends StatefulFF {
       int t = leftContext[i];
       currentNgram.add(t);
 
-      if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {// calculate logP for <bo>: additional backoff weight
-        int additionalBackoffWeight = currentNgram.size() - (i + 1);
-        // compute additional backoff weight
-        // TOTO: may not work with the case that add_start_and_end_symbol=false
-        res += this.lmGrammar.logProbOfBackoffState(currentNgram, currentNgram.size(),
-            additionalBackoffWeight);
-
-      } else { // partial ngram
-        // compute the current word probablity
-        if (currentNgram.size() >= 2) { // start from bigram
-          float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
-              currentNgram.size());
-          // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
-          // prob));
-          res += prob;
-        }
+      if (currentNgram.size() >= 2) { // start from bigram
+        float prob = this.lmGrammar.ngramLogProbability(this.toArray(currentNgram),
+            currentNgram.size());
+        // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
+        // prob));
+        res += prob;
       }
-      if (currentNgram.size() == this.ngramOrder) {
+      if (currentNgram.size() == this.ngramOrder)
         currentNgram.removeFirst();
-      }
     }
 
     // ================ right context

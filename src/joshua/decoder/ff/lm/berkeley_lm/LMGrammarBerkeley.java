@@ -154,6 +154,11 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     return probability;
   }
 
+  @Override
+  public float ngramLogProbability_helper(int[] ngram, int order) {
+    return ngramLogProbability_helper(ngram, false);
+  }
+  
   protected float ngramLogProbability_helper(int[] ngram, boolean log) {
 
     int[] mappedNgram = arrayScratch.get();
@@ -180,24 +185,9 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     logHandler = handler;
   }
 
+  @Override
   public float ngramLogProbability(int[] ngram) {
     return ngramLogProbability_helper(ngram,true);
-  }
-
-  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0;
-  }
-
-  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0;
-  }
-
-  public int[] leftEquivalentState(int[] originalState, int order, double[] cost) {
-    return originalState;
-  }
-
-  public int[] rightEquivalentState(int[] originalState, int order) {
-    return originalState;
   }
 
   @Override

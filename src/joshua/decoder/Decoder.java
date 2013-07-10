@@ -23,7 +23,6 @@ import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
-import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
@@ -565,10 +564,7 @@ public class Decoder {
 
       } else {
         logger.warning("WARNING: using built-in language model; you probably didn't intend this");
-        logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
-
-        this.languageModels.add(new LMGrammarJAVA(lm_order, lm_file, left_equiv_state,
-            right_equiv_state));
+        logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'none'");
       }
     }
 

@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.lm.bloomfilter_lm;
 
 import java.io.Externalizable;
@@ -33,7 +18,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.lm.AbstractLM;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.util.Regex;
 
 /**
@@ -41,7 +26,7 @@ import joshua.util.Regex;
  * as its main data structure. A Bloom filter is a lossy data structure that can be used to test for
  * set membership.
  */
-public class BloomFilterLanguageModel extends AbstractLM implements Externalizable {
+public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implements Externalizable {
   /**
    * An initial value used for hashing n-grams so that they can be stored in a bloom filter.
    */
@@ -558,13 +543,6 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
     }
     out.writeDouble(quantizationBase);
     bf.writeExternal(out);
-  }
-
-  @Override
-  protected float logProbabilityOfBackoffState_helper(int[] ngram, int order,
-      int qtyAdditionalBackoffWeight) {
-    throw new UnsupportedOperationException(
-        "probabilityOfBackoffState_helper undefined for bloom filter LM");
   }
 
   /**
