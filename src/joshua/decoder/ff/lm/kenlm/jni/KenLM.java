@@ -32,7 +32,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   private final static native float prob(long ptr, int words[]);
 
   private final static native float probWithState(long ptr, int words[]);
-  
+
   private final static native float probString(long ptr, int words[], int start);
 
   public KenLM(int order, String file_name) {
@@ -77,22 +77,32 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
   }
-  
+
+  /**
+   * This takes a list of words + state objects (longs). It should be easy to implement using the
+   * interface in kenlm/lm/left.hh . Then it has to return the new state object wrapped up with the
+   * prob. That's it!
+   * 
+   * TODO: do this
+   * 
+   * @param words
+   * @return
+   */
   public StateProbPair prob(long[] words) {
-    
-    
+
     return new StateProbPair(null, 0.0f);
   }
-  
+
   public class StateProbPair {
     public KenLMState state = null;
     public float prob = 0.0f;
+
     public StateProbPair(KenLMState state, float prob) {
       this.state = state;
       this.prob = prob;
     }
   }
-  
+
   @Override
   public int compareTo(KenLM other) {
     if (this == other)
