@@ -38,10 +38,16 @@ public abstract class StatelessFF extends FeatureFunction {
     return 0.0f;
   }
 
+  /**
+   * Implementations of this should return null, since no state is contributed.
+   */
   @Override
   public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath sourcePath, int sentID, Accumulator acc);
 
+  /**
+   * Implementations of this should return null, since no state is contributed.
+   */
   @Override
   public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
       Accumulator acc) {

@@ -9,16 +9,11 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
 /**
- * Stateful features contribute dynamic programming state, so they cannot in general be precomputed.
- * State is maintained and computed separately in Joshua, so each stateful feature function needs to
- * be passed in its state. This allows sharing state objects across features (e.g., for separate
- * language models).
- * 
- * The state objects should be initialized in JoshuaDecoder and passed in when the feature is
- * computed.
- * 
- * TODO: Features should really know about their own state. Sharing would not be needed if a single
- * LMFeatureFunction were responsible for loading all LMs.
+ * Stateful features contribute dynamic programming state. Unlike earlier versions of Joshua, the
+ * stateful feature itself is responsible for computing and return its updated state. Each
+ * state-computing feature function is assigned a global index, which is used to index the list of
+ * state-contributing objects in each HGNode. State can no longer be shared among different feature
+ * functions.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevich <juri@cs.jhu.edu>
@@ -28,6 +23,7 @@ public abstract class StatefulFF extends FeatureFunction {
   /* Every stateful FF takes a unique index value and increments this. */
   static int GLOBAL_STATE_INDEX = 0;
 
+  /* This records the state index for each instantiated stateful feature function. */
   protected int stateIndex = 0;
 
   public StatefulFF(FeatureVector weights, String name) {
@@ -39,10 +35,9 @@ public abstract class StatefulFF extends FeatureFunction {
 
   public StatefulFF(FeatureVector weights, String name, String args) {
     super(weights, name, args);
-    
+
     System.err.println("Stateful object with state index " + GLOBAL_STATE_INDEX);
     stateIndex = GLOBAL_STATE_INDEX++;
-    
   }
 
   public final boolean isStateful() {
@@ -54,9 +49,8 @@ public abstract class StatefulFF extends FeatureFunction {
   }
 
   /**
-   * Computes the features and their values induced by applying this rule. This is used for the
-   * k-best extraction code, and should also be called from ComputeCost(). Makes use of the
-   * FeatureVector class, but note this contains feature values and not weights.
+   * Function computing the features that this function fires when a rule is applied. Must return
+   * its updated DPState. The accumulator is used to record every feature that fires.
    */
   public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath sourcePath, int sentID, Accumulator acc);
