@@ -78,55 +78,26 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     return prob(ngram);
   }
   
+  public StateProbPair prob(long[] words) {
+    
+    
+    return new StateProbPair(null, 0.0f);
+  }
+  
+  public class StateProbPair {
+    public KenLMState state = null;
+    public float prob = 0.0f;
+    public StateProbPair(KenLMState state, float prob) {
+      this.state = state;
+      this.prob = prob;
+    }
+  }
+  
   @Override
   public int compareTo(KenLM other) {
     if (this == other)
       return 0;
     else
       return -1;
-  }
-
-  public KenLMState computeFinalState(HGNode tailNode, int i, int j, SourcePath srcPath) {
-    return null;
-  }
-
-  public KenLMState computeState(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath path) {
-    // TODO: convert rule and tailNode contexts to a long[], call JNI 
-
-    KenLMState newState = new KenLMState();
-    float score = 0.0f;
-
-    int[] target = rule.getEnglish();
-
-    int[] left = new int[ngramOrder - 1];
-    int lcount = 0;
-
-    // TODO: start up a KenLM prob-computing object
-
-    for (int c = 0; c < target.length && lcount < left.length; ++c) {
-      int curID = target[c];
-
-      if (Vocabulary.idx(curID)) {
-        /* Nonterminal. Get the state from the tail node, retrieve the long that stores the KenLM
-         * state pointer, and pass it to KenLM. 
-         */
-        int index = -(curID + 1);
-        KenLMState tailState = (KenLMState) tailNodes.get(index).getDPState(0);
-        long tailStatePtr = tailState.getState();
-
-        // TODO: pass it to KenLM
-
-      } else {
-        /* Word. Pass it directly to the KenLM object
-         */
-
-        // TODO: pass it to KenLM
-      }
-
-      // TODO: Finish up. Return the KenLM state that is computed, and store the probability of the
-      // rule application.
-    }
-
-    return newState;
   }
 }
