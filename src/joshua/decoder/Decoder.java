@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Logger;
@@ -20,6 +19,7 @@ import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
@@ -545,7 +545,12 @@ public class Decoder {
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
+      
+      if (lm instanceof KenLM) {
+        this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM)lm));
+      } else {
+        this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
+      }
 
       logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", i, languageModels.get(i)
           .getOrder(), weights.get(String.format("lm_%d", i))));
