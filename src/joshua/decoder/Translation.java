@@ -3,11 +3,9 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;

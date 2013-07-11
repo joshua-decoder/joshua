@@ -15,7 +15,6 @@ import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.SourceDependentFF;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -73,7 +72,6 @@ public class Chart {
   private Cell[][] cells; // note that in some cell, it might be null
   private int sourceLength;
   private List<FeatureFunction> featureFunctions;
-  private List<StateComputer> stateComputers;
   private Grammar[] grammars;
   private DotChart[] dotcharts; // each grammar should have a dotchart associated with it
   private Cell goalBin;
@@ -109,11 +107,10 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions,
-      List<StateComputer> stateComputers, Grammar[] grammars, String goalSymbol) {
+      Grammar[] grammars, String goalSymbol) {
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
-    this.stateComputers = stateComputers;
 
     this.sentence = sentence;
     this.parseTree = null;
@@ -151,9 +148,9 @@ public class Chart {
     if (JoshuaConfiguration.pop_limit > 0)
       combiner = null;
     else if (JoshuaConfiguration.useBeamAndThresholdPrune)
-      combiner = new CubePruneCombiner(this.featureFunctions, this.stateComputers);
+      combiner = new CubePruneCombiner(this.featureFunctions);
     else
-      combiner = new ExhaustiveCombiner(this.featureFunctions, this.stateComputers);
+      combiner = new ExhaustiveCombiner(this.featureFunctions);
 
     // Begin to do initialization work
 
@@ -328,8 +325,8 @@ public class Chart {
           if (arity == 0) {
             for (Rule rule : sortedAndFilteredRules) {
               ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null,
-                  i, j, sourcePath, stateComputers, this.segmentID);
-              if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates().values()))
+                  i, j, sourcePath, this.segmentID);
+              if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
                 cells[i][j].addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
             }
           } else {
@@ -344,7 +341,7 @@ public class Chart {
             }
 
             ComputeNodeResult result = new ComputeNodeResult(featureFunctions, bestRule,
-                currentAntNodes, i, j, sourcePath, this.stateComputers, this.segmentID);
+                currentAntNodes, i, j, sourcePath, this.segmentID);
 
             int[] ranks = new int[1 + superNodes.size()];
             for (int r = 0; r < ranks.length; r++)
@@ -409,7 +406,7 @@ public class Chart {
           }
 
           CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
-              currentRule, currentAntNodes, i, j, sourcePath, stateComputers, this.segmentID),
+              currentRule, currentAntNodes, i, j, sourcePath, this.segmentID),
               newRanks, currentRule, currentAntNodes);
           nextState.setDotNode(dotNode);
 
@@ -588,7 +585,7 @@ public class Chart {
 
           for (Rule rule : rules) { // for each unary rules
             ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule,
-                antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
+                antecedents, i, j, new SourcePath(), this.segmentID);
             HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents,
                 new SourcePath(), true);
 
@@ -618,7 +615,7 @@ public class Chart {
     // srcPath));
 
     this.cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
-        j, srcPath, stateComputers, segmentID), rule, i, j, null, srcPath, false);
+        j, srcPath, segmentID), rule, i, j, null, srcPath, false);
   }
 
   private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity,

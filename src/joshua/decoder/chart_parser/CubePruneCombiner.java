@@ -11,19 +11,15 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 public class CubePruneCombiner implements Combiner {
 
   private List<FeatureFunction> featureFunctions;
-  private List<StateComputer> stateComputers;
 
-  public CubePruneCombiner(List<FeatureFunction> featureFunctions,
-      List<StateComputer> stateComputers) {
+  public CubePruneCombiner(List<FeatureFunction> featureFunctions) {
     this.featureFunctions = featureFunctions;
-    this.stateComputers = stateComputers;
   }
 
   // BUG:???????????????????? CubePrune will depend on relativeThresholdPruning, but cell.beamPruner
@@ -40,7 +36,7 @@ public class CubePruneCombiner implements Combiner {
 	 */
   public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
     cell.addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath,
-        stateComputers, chart.segmentID), rule, i, j, null, srcPath, false);
+        chart.segmentID), rule, i, j, null, srcPath, false);
   }
 
   /** Add complete Items in Chart pruning inside this function */
@@ -71,7 +67,7 @@ public class CubePruneCombiner implements Combiner {
       currentAntNodes.add(si.nodes.get(0));
     }
     ComputeNodeResult result = new ComputeNodeResult(featureFunctions, currentRule,
-        currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID);
+        currentAntNodes, i, j, srcPath, chart.segmentID);
 
     int[] ranks = new int[1 + superNodes.size()]; // rule, ant items
     for (int d = 0; d < ranks.length; d++) {
@@ -129,7 +125,7 @@ public class CubePruneCombiner implements Combiner {
         }
 
         CubePruneState tState = new CubePruneState(new ComputeNodeResult(featureFunctions,
-            currentRule, currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID),
+            currentRule, currentAntNodes, i, j, srcPath, chart.segmentID),
             newRanks, currentRule, currentAntNodes);
 
         // already visited this state
@@ -185,7 +181,7 @@ public class CubePruneCombiner implements Combiner {
      * @return
      */
     Collection<DPState> getDPStates() {
-      return this.computeNodeResult.getDPStates().values();
+      return this.computeNodeResult.getDPStates();
     }
 
     public String toString() {

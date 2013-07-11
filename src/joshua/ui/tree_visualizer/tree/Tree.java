@@ -1,7 +1,6 @@
 package joshua.ui.tree_visualizer.tree;
 
 import java.util.Stack;
-import java.util.EmptyStackException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.List;

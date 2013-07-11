@@ -4,10 +4,8 @@ import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.HyperEdge;
 
 /**
  * This class defines is the entry point for Joshua's dense+sparse feature implementation. It
@@ -21,7 +19,7 @@ import joshua.decoder.hypergraph.HyperEdge;
  * features that are fired in different circumstances and then return the inner product of those
  * features with the weight vector. Feature functions can also produce estimates of their future
  * cost; these values are not used in computing the score, but are only used for pruning. The
- * individual features produced by each template should have globally unique names; a good 
+ * individual features produced by each template should have globally unique names; a good
  * convention is to prefix each feature with the name of the template that produced it.
  * 
  * @author Matt Post <post@cs.jhu.edu>
@@ -68,6 +66,21 @@ public abstract class FeatureFunction {
   }
 
   /**
+   * The result of applying a rule is a new state.
+   * 
+   * @param rule
+   * @param tailNodes
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @param acc
+   * @return
+   */
+  public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID, Accumulator acc);
+
+  /**
    * This function computes a *weighted* cost of this feature. Stateless features have access to
    * only stateless variables.
    * 
@@ -79,8 +92,13 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return the *weighted* cost of the feature.
    */
-  public abstract float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID);
+  public final float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID) {
+
+    ScoreAccumulator score = new ScoreAccumulator();
+    compute(rule, tailNodes, i, j, sourcePath, sentID, score);
+    return score.getScore();
+  }
 
   /**
    * Returns the *unweighted* cost of the features delta computed at this position. Note that this
@@ -96,8 +114,13 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return an *unweighted* feature delta
    */
-  public abstract FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID);
+  public final FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID) {
+
+    FeatureAccumulator features = new FeatureAccumulator();
+    compute(rule, tailNodes, i, j, sourcePath, sentID, features);
+    return features.getFeatures();
+  }
 
   /**
    * This function is called for the final transition. For example, the LanguageModel feature
@@ -111,8 +134,13 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return a *weighted* feature cost
    */
-  public abstract float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID);
+  public final float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath,
+      int sentID) {
+    
+    ScoreAccumulator score = new ScoreAccumulator();
+    computeFinal(tailNode, i, j, sourcePath, sentID, score);
+    return score.getScore();
+  }
 
   /**
    * Returns the *unweighted* feature delta for the final transition (e.g., for the language model
@@ -125,10 +153,16 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return
    */
-  public abstract FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j,
-      SourcePath sourcePath, int sentID);
+  public final FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath,
+      int sentID) {
 
-  public abstract StateComputer getStateComputer();
+    FeatureAccumulator features = new FeatureAccumulator();
+    computeFinal(tailNode, i, j, sourcePath, sentID, features);
+    return features.getFeatures();
+  }
+
+  public abstract DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
+      Accumulator acc);
 
   /**
    * This function is called when initializing translation grammars (for pruning purpose, and to get
@@ -154,14 +188,49 @@ public abstract class FeatureFunction {
    */
   public abstract float estimateFutureCost(Rule rule, DPState state, int sentID);
 
-
   /**
    * This function could be implemented to process the feature-line arguments in a generic way, if
    * so desired.
-   *
+   * 
    * TODO: implement this.
    */
   private void processArgs(String argString) {
     return;
+  }
+
+  public interface Accumulator {
+    public void add(String name, float value);
+  }
+
+  public class ScoreAccumulator implements Accumulator {
+    private float score;
+
+    public ScoreAccumulator() {
+      this.score = 0.0f;
+    }
+
+    public void add(String name, float value) {
+      score += value * weights.get(name);
+    }
+
+    public float getScore() {
+      return score;
+    }
+  }
+
+  public class FeatureAccumulator implements Accumulator {
+    private FeatureVector features;
+
+    public FeatureAccumulator() {
+      this.features = new FeatureVector();
+    }
+
+    public void add(String name, float value) {
+      features.put(name, features.get(name) + value);
+    }
+
+    public FeatureVector getFeatures() {
+      return features;
+    }
   }
 }

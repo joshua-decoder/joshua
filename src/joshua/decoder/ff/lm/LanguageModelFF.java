@@ -1,9 +1,10 @@
 package joshua.decoder.ff.lm;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -13,7 +14,6 @@ import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -35,8 +35,8 @@ public class LanguageModelFF extends StatefulFF {
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(LanguageModelFF.class.getName());
 
-  private final int START_SYM_ID;
-  private final int STOP_SYM_ID;
+  public static int START_SYM_ID;
+  public static int STOP_SYM_ID;
 
   private final boolean addStartAndEndSymbol = false;
 
@@ -71,9 +71,8 @@ public class LanguageModelFF extends StatefulFF {
   /**
    * stateID is any integer exept -1
    **/
-  public LanguageModelFF(FeatureVector weights, String featureName, NGramLanguageModel lm,
-      StateComputer state) {
-    super(weights, featureName, state);
+  public LanguageModelFF(FeatureVector weights, String featureName, NGramLanguageModel lm) {
+    super(weights, featureName);
     this.lmGrammar = lm;
     this.ngramOrder = lm.getOrder();
     this.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
@@ -86,55 +85,25 @@ public class LanguageModelFF extends StatefulFF {
   }
 
   /**
-   * Computes the cost of the transition, which is the inner product of the feature value computed
-   * along this edge times the feature weight.
-   * 
-   * @return the transition cost
-   */
-  @Override
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath srcPath,
-      int sentID) {
-    return weight * computeTransition(rule.getEnglish(), tailNodes);
-  }
-
-  /**
    * Computes the features incurred along this edge. Note that these features are unweighted costs
    * of the feature; they are the feature cost, not the model cost, or the inner product of them.
    */
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID) {
-    FeatureVector transitionFeatures = null;
+  @Override
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+
+    NgramDPState newState = null;
     if (rule != null)
-      transitionFeatures = new FeatureVector(name, computeTransition(rule.getEnglish(), tailNodes));
-    else
-      transitionFeatures = new FeatureVector();
+      newState = computeTransition(rule.getEnglish(), tailNodes, acc);
 
-    return transitionFeatures;
+    return newState;
   }
 
-  /**
-   * Returns the feature accumulated over the final, top-level, rule-less transition.
-   * 
-   * @param tailNode
-   * @param i
-   * @param j
-   * @param sourcePath
-   * @param sentID
-   * @return
-   */
-  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    return new FeatureVector(name, computeFinalTransition((NgramDPState) tailNode.getDPState(this
-        .getStateComputer())));
-  }
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
+      Accumulator acc) {
 
-  /**
-   * The final cost of an edge differs from compute the regular cost because we add in the cost of
-   * all incomplete bigrams on the lefthand side.
-   */
-  public float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
-    return weight
-        * computeFinalTransition((NgramDPState) tailNode.getDPState(this.getStateComputer()));
+    NgramDPState newState = computeFinalTransition((NgramDPState)tailNode.getDPState(stateIndex), acc);
+    return newState;
   }
 
   /**
@@ -222,10 +191,13 @@ public class LanguageModelFF extends StatefulFF {
    * nonterminals. In all of these situations, the corresponding boundary words of the node in the
    * hypergraph represented by the nonterminal must be retrieved.
    */
-  private float computeTransition(int[] enWords, List<HGNode> tailNodes) {
+  private NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
 
     LinkedList<Integer> currentNgram = new LinkedList<Integer>();
     float transitionLogP = 0.0f;
+
+    LinkedList<Integer> left = new LinkedList<Integer>();
+    LinkedList<Integer> right = new LinkedList<Integer>();
 
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
@@ -233,15 +205,23 @@ public class LanguageModelFF extends StatefulFF {
       if (Vocabulary.nt(curID)) {
         int index = -(curID + 1);
 
-        NgramDPState state = (NgramDPState) tailNodes.get(index)
-            .getDPState(this.getStateComputer());
+        NgramDPState state = (NgramDPState) tailNodes.get(index).getDPState(stateIndex);
         int[] leftContext = state.getLeftLMStateWords();
         int[] rightContext = state.getRightLMStateWords();
-
+        
         // Left context.
         for (int i = 0; i < leftContext.length; i++) {
           int t = leftContext[i];
           currentNgram.add(t);
+
+          // Compute context
+          if (left.size() < ngramOrder - 1)
+            left.add(t);
+          if (right.size() <= ngramOrder - 1) {
+            right.add(t);
+            if (right.size() > ngramOrder - 1)
+              right.remove(0);
+          }
 
           // Always calculate logP for <bo>: additional backoff weight
           if (currentNgram.size() == this.ngramOrder) {
@@ -269,13 +249,22 @@ public class LanguageModelFF extends StatefulFF {
           float prob = this.lmGrammar.ngramLogProbability(Support.toArray(currentNgram),
               this.ngramOrder);
           transitionLogP += prob;
-          // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
-          // prob));
           currentNgram.remove(0);
+        }
+
+        // Compute context
+        if (left.size() < ngramOrder - 1)
+          left.add(curID);
+        if (right.size() <= ngramOrder - 1) {
+          right.add(curID);
+          if (right.size() > ngramOrder - 1)
+            right.remove(0);
         }
       }
     }
-    return transitionLogP;
+
+    acc.add(name, transitionLogP);
+    return new NgramDPState(Support.toArray(left), Support.toArray(right));
   }
 
   /**
@@ -286,12 +275,15 @@ public class LanguageModelFF extends StatefulFF {
    * @param state the dynamic programming state
    * @return the final transition probability (including incomplete n-grams)
    */
-  private float computeFinalTransition(NgramDPState state) {
+  private NgramDPState computeFinalTransition(NgramDPState state, Accumulator acc) {
 
     float res = 0.0f;
     LinkedList<Integer> currentNgram = new LinkedList<Integer>();
     int[] leftContext = state.getLeftLMStateWords();
     int[] rightContext = state.getRightLMStateWords();
+
+    LinkedList<Integer> leftWords = new LinkedList<Integer>();
+    LinkedList<Integer> rightWords = new LinkedList<Integer>();
 
     // ================ left context
     if (addStartAndEndSymbol)
@@ -326,10 +318,28 @@ public class LanguageModelFF extends StatefulFF {
       float prob = this.lmGrammar.ngramLogProbability(Support.toArray(currentNgram),
           currentNgram.size());
       res += prob;
-      // System.err.println(String.format("NGRAM(%s) = %.5f", Vocabulary.getWords(currentNgram),
-      // prob));
     }
-    return res;
+    acc.add(name, res);
+
+    leftWords.add(START_SYM_ID);
+    rightWords.add(START_SYM_ID);
+    for (int i = 0; i < leftContext.length; i++) {
+      leftWords.add(leftContext[i]);
+      rightWords.add(leftContext[i]);
+    }
+    for (int i = 0; i < rightContext.length; i++) {
+      leftWords.add(rightContext[i]);
+      rightWords.add(rightContext[i]);
+    }
+    leftWords.add(STOP_SYM_ID);
+    rightWords.add(STOP_SYM_ID);
+
+    while (leftWords.size() > ngramOrder - 1)
+      leftWords.pop();
+    while (rightWords.size() > ngramOrder - 1)
+      rightWords.remove(0);
+
+    return new NgramDPState(Support.toArray(leftWords), Support.toArray(rightWords));
   }
 
   /**
@@ -359,5 +369,53 @@ public class LanguageModelFF extends StatefulFF {
       return (float) this.lmGrammar.sentenceLogProbability(
           Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
     }
+  }
+
+  public NgramDPState computeFinalState(HGNode tailNode, int i, int j, SourcePath srcPath) {
+    // No state is required.
+    return null;
+  }
+
+  public NgramDPState computeState(Rule rule, List<HGNode> tail_nodes, int span_start,
+      int span_end, SourcePath src_path) {
+    int[] tgt = rule.getEnglish();
+
+    int[] left = new int[ngramOrder - 1];
+    int lcount = 0;
+
+    for (int c = 0; c < tgt.length && lcount < left.length; ++c) {
+      int curID = tgt[c];
+      if (Vocabulary.idx(curID)) {
+        int index = -(curID + 1);
+        if (logger.isLoggable(Level.FINEST))
+          logger.finest("Looking up state at: " + index);
+        NgramDPState tail_state = (NgramDPState) tail_nodes.get(index).getDPState(stateIndex);
+        int[] leftContext = tail_state.getLeftLMStateWords();
+        for (int i = 0; i < leftContext.length && lcount < left.length; i++)
+          left[lcount++] = leftContext[i];
+      } else {
+        left[lcount++] = curID;
+      }
+    }
+
+    int[] right = new int[ngramOrder - 1];
+    int rcount = right.length - 1;
+
+    for (int c = tgt.length - 1; c >= 0 && rcount >= 0; --c) {
+      int curID = tgt[c];
+      if (Vocabulary.idx(curID)) {
+        int index = -(curID + 1);
+        if (logger.isLoggable(Level.FINEST))
+          logger.finest("Looking up state at: " + index);
+        NgramDPState tail_state = (NgramDPState) tail_nodes.get(index).getDPState(stateIndex);
+        int[] rightContext = tail_state.getRightLMStateWords();
+        for (int i = rightContext.length - 1; i >= 0 && rcount >= 0; --i)
+          right[rcount--] = rightContext[i];
+      } else {
+        right[rcount--] = curID;
+      }
+    }
+    return new NgramDPState(Arrays.copyOfRange(left, 0, lcount), Arrays.copyOfRange(right,
+        rcount + 1, right.length));
   }
 }

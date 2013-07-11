@@ -2,8 +2,6 @@ package joshua.decoder.ff.tm;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 

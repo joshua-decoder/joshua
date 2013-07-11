@@ -1,9 +1,8 @@
 package joshua.decoder.ff;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.chart_parser.SourcePath;
@@ -24,9 +23,6 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
   private final int minArity;
   private final int maxArity;
 
-  // Cache the weight from the weight vector;
-  private float weight;
-
   public ArityPhrasePenaltyFF(final FeatureVector weights, String argString) {
     super(weights, "ArityPenalty", argString);
 
@@ -41,8 +37,6 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
 
     if (!weights.containsKey(name))
       System.err.println("WARNING: no weight found for feature '" + name + "'");
-
-    this.weight = weights.get(name);
   }
 
   /**
@@ -56,14 +50,10 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
     return 0;
   }
 
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    return weight * isEligible(rule);
-  }
-
-  @Override
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID) {
-    return new FeatureVector(name, isEligible(rule));
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+    acc.add(name, isEligible(rule));
+    
+    return null;
   }
 }

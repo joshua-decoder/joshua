@@ -4,6 +4,7 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -36,34 +37,19 @@ public class PhraseModelFF extends StatelessFF {
   }
 
   /**
-   * Computes the cost of applying the feature.
-   */
-  @Override
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    float cost = 0.0f;
-
-    if (rule != null && this.ownerID == rule.getOwner()) {
-      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-        float t = computeFeatures(rule, tailNodes, i, j, sourcePath, sentID).innerProduct(weights);
-        rule.setPrecomputableCost(t);
-      }
-      cost = rule.getPrecomputableCost();
-    }
-    return cost;
-  }
-
-  /**
    * Just chain to computeFeatures(rule), since this feature doesn't use the sourcePath or sentID. *
    */
   @Override
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+
     if (rule != null && rule.getOwner() == ownerID) {
-      return rule.getFeatureVector();
-    } else {
-      return new FeatureVector();
+      FeatureVector features = rule.getFeatureVector();
+      for (String key: features.keySet())
+        acc.add(key, features.get(key));
     }
+    
+    return null;
   }
 
   public String toString() {

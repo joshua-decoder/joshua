@@ -1,9 +1,5 @@
 package joshua.decoder.ff.lm;
 
-// BUG: At best we should use List, but we use int[] everywhere to
-// represent phrases therefore these additional methods are excessive.
-import java.util.List;
-
 /**
  * An interface for new language models to implement. An object of this type is passed to
  * LanguageModelFF, which will handle all the dynamic programming and state maintinence.

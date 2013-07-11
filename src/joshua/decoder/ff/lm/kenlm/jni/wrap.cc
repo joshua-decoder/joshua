@@ -95,8 +95,54 @@ public:
         ignored).prob;
   }
 
+  float ProbWithState(jint * const begin, jint * const end, jlong context) const {
+    MapArray(map_, begin, end);
+
+    std::reverse(begin, end - 1);
+    lm::ngram::State newState;
+    return m_.FullScore(
+      reinterpret_cast<const lm::ngram::ChartState>(context),
+        *(end - 1),
+        reinterpret_cast<const lm::ngram::ChartState>(context)).prob;
+  }
+
   float ProbString(jint * const begin, jint * const end, jint start) const {
     MapArray(map_, begin, end);
+
+    float prob;
+    lm::ngram::State state;
+    if (start == 0) {
+      prob = 0;
+      state = m_.NullContextState();
+    } else {
+      std::reverse(begin, begin + start);
+      prob = m_.FullScoreForgotState(
+          reinterpret_cast<const lm::WordIndex*>(begin),
+          reinterpret_cast<const lm::WordIndex*>(begin + start),
+          begin[start], state).prob;
+      ++start;
+    }
+    lm::ngram::State state2;
+    for (const jint *i = begin + start;;) {
+      if (i >= end)
+        break;
+      float got = m_.Score(state, *i, state2);
+      i++;
+      prob += got;
+      if (i >= end)
+        break;
+      got = m_.Score(state2, *i, state);
+      i++;
+      prob += got;
+    }
+    return prob;
+  }
+
+  float ProbStringWithState(jlong * const begin, jlong * const end, jint start) const {
+    MapArray(map_, begin, end);
+
+    // TODO: implement this using the interface in left.hh
+    // TODO: how to return multiple values (new context + prob)? 
 
     float prob;
     lm::ngram::State state;
@@ -177,6 +223,18 @@ VirtualBase *ConstructModel(const char *file_name) {
 
 extern "C" {
 
+JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_rulescore(
+  JNIEnv *env, jclass) {
+  jlong ret;
+  try {
+    reinterpret_cast<jlong>(ConstructRuleScore(jclass, ret));
+  } catch (std::exception &e) {
+    std::cerr << e.what() << std::endl;
+    abort();
+  }
+  return ret;
+}
+  
 JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
     JNIEnv *env, jclass, jstring file_name) {
   const char *str = env->GetStringUTFChars(file_name, 0);
@@ -217,6 +275,19 @@ JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_registerWor
   }
   env->ReleaseStringUTFChars(word, str);
   return ret;
+}
+
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probWithState(
+    JNIEnv *env, jclass, jlong pointer, jintArray arr) {
+  jint length = env->GetArrayLength(arr);
+  if (length <= 0)
+    return 0.0;
+  // GCC only.
+  jint values[length];
+  env->GetIntArrayRegion(arr, 0, length, values);
+
+  return reinterpret_cast<const VirtualBase*>(pointer)->ProbWithState(values,
+      values + length);
 }
 
 JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_prob(

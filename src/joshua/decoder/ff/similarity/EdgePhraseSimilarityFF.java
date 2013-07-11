@@ -14,7 +14,6 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.SourceDependentFF;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -39,17 +38,12 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   private final int MAX_PHRASE_LENGTH = 4;
   private final int GAP = 0;
 
-  // This feature template defines only a single feature, so we cache the weight.
-  private float weight;
-
-  public EdgePhraseSimilarityFF(FeatureVector weights, StateComputer state, String host, int port)
+  public EdgePhraseSimilarityFF(FeatureVector weights, String host, int port)
       throws NumberFormatException, UnknownHostException, IOException {
-    super(weights, "EdgePhraseSimilarity", state);
+    super(weights, "EdgePhraseSimilarity");
 
     this.host = host;
     this.port = port;
-
-    this.weight = weights.get(name);
 
     initializeConnection();
   }
@@ -62,26 +56,33 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     serverReply = new BufferedReader(new InputStreamReader(socket.getInputStream()));
   }
 
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
-    SourcePath sourcePath, int sentID) {
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
 
-    float value = computeCost(rule, tailNodes, spanStart, spanEnd, sourcePath, sentID);
-    return new FeatureVector(name, value);
+    float value = computeScore(rule, tailNodes);
+    acc.add(name, value);
+
+    // TODO 07/2013: EdgePhraseSimilarity needs to know its order rather than inferring it from tail
+    // nodes.
+    return new NgramDPState(new int[1], new int[1]);
+  }
+  
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath path, int sentID, Accumulator acc) {
+    return null;
   }
 
-
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
-    SourcePath sourcePath, int sentID) {
+  public float computeScore(Rule rule, List<HGNode> tailNodes) {
     float similarity = 0.0f;
     int count = 0;
-    if (tailNodes == null || tailNodes.isEmpty()) return 0;
+    if (tailNodes == null || tailNodes.isEmpty())
+      return 0;
 
     // System.err.println("RULE [" + spanStart + ", " + spanEnd + "]: " + rule.toString());
 
     int[] target = ((BilingualRule) rule).getEnglish();
     int lm_state_size = 0;
     for (HGNode node : tailNodes) {
-      NgramDPState state = (NgramDPState) node.getDPState(stateComputer);
+      NgramDPState state = (NgramDPState) node.getDPState(stateIndex);
       lm_state_size += state.getLeftLMStateWords().length + state.getRightLMStateWords().length;
     }
 
@@ -102,7 +103,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
           indices[num_anchors] = node.i;
           anchors[num_anchors++] = idx;
         }
-        NgramDPState state = (NgramDPState) node.getDPState(stateComputer);
+        NgramDPState state = (NgramDPState) node.getDPState(stateIndex);
         // System.err.print("LEFT:  ");
         // for (int w : state.getLeftLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
         // System.err.println();
@@ -138,8 +139,10 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
 
     int g = 0;
     for (int a = 0; a < num_anchors; a++) {
-      if (a > 0 && anchors[a - 1] == anchors[a]) continue;
-      if (anchors[a] > gaps[g + 1]) g++;
+      if (a > 0 && anchors[a - 1] == anchors[a])
+        continue;
+      if (anchors[a] > gaps[g + 1])
+        g++;
       int left = Math.max(gaps[g], anchors[a] - MAX_PHRASE_LENGTH + 1);
       int right = Math.min(gaps[g + 1] - 1, anchors[a] + MAX_PHRASE_LENGTH - 1);
 
@@ -153,23 +156,10 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
         batch.add(target_phrase);
       }
     }
-    return weight * getSimilarity(batch);
+    return getSimilarity(batch);
   }
 
-  /**
-   * Costs accumulated along the final edge (where no rule is applied).
-   */
-  @Override
-  public float computeFinalCost(HGNode antNode, int i, int j, SourcePath sourcePath, int sentID) {
-    return 0.0f;
-  }
-
-  /**
-   * Features across the final, rule-less edge.
-   */
-  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID) {
-    return new FeatureVector(name, computeFinalCost(tailNode, i, j, sourcePath, sentID));
-  }
+  
   
   public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
     return 0.0f;
@@ -185,7 +175,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
 
   public EdgePhraseSimilarityFF clone() {
     try {
-      return new EdgePhraseSimilarityFF(this.weights, this.stateComputer, host, port);
+      return new EdgePhraseSimilarityFF(this.weights, host, port);
     } catch (Exception e) {
       e.printStackTrace();
       return null;
@@ -199,10 +189,10 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
 
   private final int[] getSourcePhrase(int anchor) {
     int idx;
-    int length =
-        Math.min(anchor, MAX_PHRASE_LENGTH - 1)
-            + Math.min(source.length - anchor, MAX_PHRASE_LENGTH - 1);
-    if (length <= 0) return null;
+    int length = Math.min(anchor, MAX_PHRASE_LENGTH - 1)
+        + Math.min(source.length - anchor, MAX_PHRASE_LENGTH - 1);
+    if (length <= 0)
+      return null;
     int[] phrase = new int[length];
     idx = 0;
     for (int p = Math.max(0, anchor - MAX_PHRASE_LENGTH + 1); p < Math.min(source.length, anchor
