@@ -113,8 +113,7 @@ public class ComputeNodeResult {
 
     float cost = 0;
     for (FeatureFunction ff : featureFunctions) {
-      if (ff instanceof StatefulFF)
-        cost += ((StatefulFF) ff).computeFinalCost(tailNodes.get(0), i, j, sourcePath, sentID);
+      cost += ff.computeFinalCost(tailNodes.get(0), i, j, sourcePath, sentID);
     }
     return cost;
   }
