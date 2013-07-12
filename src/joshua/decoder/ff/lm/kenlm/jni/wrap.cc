@@ -100,19 +100,25 @@ public:
   }
 
   float ProbRule(jlong * const begin, jlong * const end, lm::ngram::ChartState& state) const {
+    if (begin == end) return 0.0;
     lm::ngram::RuleScore<Model> ruleScore(m_, state);
 
-    for (jlong* i = begin; i != end; i++) {
+    if (*begin < 0) {
+      ruleScore.BeginNonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-*begin));
+    } else {
+      const lm::WordIndex word = map_[*begin];
+      if (word == m_.GetVocabulary().BeginSentence()) {
+        ruleScore.BeginSentence();
+      } else {
+        ruleScore.Terminal(word);
+      }
+    }
+    for (jlong* i = begin + 1; i != end; i++) {
       long word = *i;
-
       if (word < 0)
-        if (i == begin)
-          ruleScore.BeginNonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-word));
-        else
-          ruleScore.NonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-word));
+        ruleScore.NonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-word));
       else
-        if (i != begin || map_[word] != m_.GetVocabulary().Index("<s>"))
-          ruleScore.Terminal(map_[word]);
+        ruleScore.Terminal(map_[word]);
     }
     return ruleScore.Finish();
   }
