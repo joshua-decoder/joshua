@@ -38,7 +38,7 @@ template<> struct StaticCheck<true> {
 typedef StaticCheck<sizeof(jint) == sizeof(lm::WordIndex)>::StaticAssertionPassed FloatSize;
 
 // Vocab ids above what the vocabulary knows about are unknown and should
-// be mapped to that.
+// be mapped to that. 
 void MapArray(const std::vector<lm::WordIndex>& map, jint *begin, jint *end) {
   for (jint *i = begin; i < end; ++i) {
     *i = map[*i];
@@ -100,15 +100,13 @@ public:
   }
 
   float ProbRule(jlong * const begin, jlong * const end, lm::ngram::ChartState& state) const {
-//    MapArray(map_, begin, end);
-
     lm::ngram::RuleScore<Model> ruleScore(m_, state);
     for (jlong* i = begin; i != end; i++) {
       long word = *i;
       if (word < 0)
         ruleScore.NonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-word));
       else
-        ruleScore.Terminal(word);
+        ruleScore.Terminal(map_[word]);
     }
     return ruleScore.Finish();
   }
