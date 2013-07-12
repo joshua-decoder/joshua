@@ -27,7 +27,7 @@ public class KenLMState extends DPState {
 
   @Override
   public int hashCode() {
-    return (int) getState();
+    return (int) ((getState() >> 32) ^ getState());
   }
 
   @Override
