@@ -134,8 +134,6 @@ public class HGNode implements Prunable<HGNode> {
     public int hashCode() {
       if (hash == 0) {
         hash = 31 * lhs;
-        // BUG: This is unsafe, because no guarantees of order are made between state types.
-        // Iterate over all the node's states, hashing.
         if (null != dpStates && dpStates.size() > 0)
           for (DPState dps : dpStates)
             hash = hash * 19 + dps.hashCode();
@@ -162,6 +160,10 @@ public class HGNode implements Prunable<HGNode> {
         return true;
       }
       return false;
+    }
+    
+    public String toString() {
+      return String.format("%d",hashCode());
     }
 
     public HGNode node() {

@@ -57,12 +57,6 @@ public class ComputeNodeResult {
       }
     }
 
-    /*
-     * For each type of state (usually just the ngram state), we need to compute the new state that
-     * is created when applying the rule to the tail nodes at the current span. This new state is
-     * stored in a hash indexed by the state computer, so that the stateful feature functions can
-     * find them.
-     */
     List<DPState> allDPStates = new ArrayList<DPState>();
 
     // The transition cost is the new cost incurred by applying this rule
@@ -70,9 +64,6 @@ public class ComputeNodeResult {
 
     // The future cost estimate is a heuristic estimate of the outside cost of this edge.
     float futureCostEstimate = 0.0f;
-
-//    StringBuffer sb = new StringBuffer("ComputeNodeResult:");
-//    FeatureVector features = new FeatureVector();
     
     /*
      * We now iterate over all the feature functions, computing their cost and their expected future
@@ -82,8 +73,7 @@ public class ComputeNodeResult {
       FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator(); 
       DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentID, acc);
       transitionCost += acc.getScore();
-//      features.add(feature.computeFeatures(rule,tailNodes,i,j,sourcePath,sentID));
-//      sb.append(String.format(" %s: %.3f", feature.getClass().getSimpleName(), feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID)));
+
       if (feature.isStateful()) {
         futureCostEstimate += feature.estimateFutureCost(rule, newState, sentID);
         allDPStates.add(((StatefulFF)feature).getStateIndex(), newState);

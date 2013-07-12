@@ -9,7 +9,6 @@ package joshua.decoder.ff.state_maintenance;
 public class KenLMState extends DPState {
 
   private long state = 0;
-  private float prob = 0.0f;
 
   public KenLMState() {
   }
@@ -28,7 +27,7 @@ public class KenLMState extends DPState {
 
   @Override
   public int hashCode() {
-    return (int) getState();
+    return (int) ((getState() >> 32) ^ getState());
   }
 
   @Override
