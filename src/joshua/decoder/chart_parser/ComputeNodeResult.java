@@ -1,13 +1,12 @@
 package joshua.decoder.chart_parser;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -32,7 +31,7 @@ public class ComputeNodeResult {
   private float pruningCostEstimate;
 
   // The StateComputer objects themselves serve as keys.
-  private TreeMap<StateComputer, DPState> dpStates;
+  List<DPState> dpStates;
 
   /**
    * Computes the new state(s) that are produced when applying the given rule to the list of tail
@@ -40,8 +39,7 @@ public class ComputeNodeResult {
    * cost, and a score that includes a future cost estimate).
    */
   public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
-      List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      List<StateComputer> stateComputers, int sentID) {
+      List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID) {
 
     // The total Viterbi cost of this edge. This is the Viterbi cost of the tail nodes, plus
     // whatever costs we incur applying this rule to create a new hyperedge.
@@ -65,13 +63,7 @@ public class ComputeNodeResult {
      * stored in a hash indexed by the state computer, so that the stateful feature functions can
      * find them.
      */
-    TreeMap<StateComputer, DPState> allDPStates = new TreeMap<StateComputer, DPState>();
-    if (stateComputers != null) {
-      for (StateComputer stateComputer : stateComputers) {
-        DPState dpState = stateComputer.computeState(rule, tailNodes, i, j, sourcePath);
-        allDPStates.put(stateComputer, dpState);
-      }
-    }
+    List<DPState> allDPStates = new ArrayList<DPState>();
 
     // The transition cost is the new cost incurred by applying this rule
     float transitionCost = 0.0f;
@@ -87,13 +79,17 @@ public class ComputeNodeResult {
      * cost.
      */
     for (FeatureFunction feature : featureFunctions) {
-      transitionCost += feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID);
+      FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator(); 
+      DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentID, acc);
+      transitionCost += acc.getScore();
 //      features.add(feature.computeFeatures(rule,tailNodes,i,j,sourcePath,sentID));
 //      sb.append(String.format(" %s: %.3f", feature.getClass().getSimpleName(), feature.computeCost(rule, tailNodes, i, j, sourcePath, sentID)));
-      if (feature.getStateComputer() != null) {
-        futureCostEstimate += feature.estimateFutureCost(rule, allDPStates.get(feature.getStateComputer()), sentID);
+      if (feature.isStateful()) {
+        futureCostEstimate += feature.estimateFutureCost(rule, newState, sentID);
+        allDPStates.add(((StatefulFF)feature).getStateIndex(), newState);
       }
     }
+  
     //transitionCost -= rule.getEstimatedCost();
     
     viterbiCost += transitionCost;
@@ -103,9 +99,9 @@ public class ComputeNodeResult {
     float pruningEstimate = viterbiCost + futureCostEstimate;
 
     // Set the final results.
-    this.pruningCostEstimate = pruningEstimate; // old expectedTotalLogP
-    this.viterbiCost = viterbiCost; // old finalizedTotalLogP
-    this.transitionCost = transitionCost; // old transitionTotalLogP
+    this.pruningCostEstimate = pruningEstimate;
+    this.viterbiCost = viterbiCost;
+    this.transitionCost = transitionCost;
     this.dpStates = allDPStates;
   }
 
@@ -117,8 +113,7 @@ public class ComputeNodeResult {
 
     float cost = 0;
     for (FeatureFunction ff : featureFunctions) {
-      if (ff instanceof StatefulFF)
-        cost += ((StatefulFF) ff).computeFinalCost(tailNodes.get(0), i, j, sourcePath, sentID);
+      cost += ff.computeFinalCost(tailNodes.get(0), i, j, sourcePath, sentID);
     }
     return cost;
   }
@@ -174,7 +169,7 @@ public class ComputeNodeResult {
     return this.transitionCost;
   }
 
-  TreeMap<StateComputer, DPState> getDPStates() {
+  List<DPState> getDPStates() {
     return this.dpStates;
   }
 

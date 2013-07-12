@@ -6,14 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -160,7 +158,7 @@ class Cell {
 
     // System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
 
-    TreeMap<StateComputer, DPState> dpStates = result.getDPStates();
+    List<DPState> dpStates = result.getDPStates();
     double pruningEstimate = result.getPruningEstimate();
     double transitionLogP = result.getTransitionCost();
     double finalizedTotalLogP = result.getViterbiCost();

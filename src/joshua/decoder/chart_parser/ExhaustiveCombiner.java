@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -15,12 +14,9 @@ import joshua.decoder.hypergraph.HGNode;
 public class ExhaustiveCombiner implements Combiner {
 
   private List<FeatureFunction> featureFunctions;
-  private List<StateComputer> stateComputers;
 
-  public ExhaustiveCombiner(List<FeatureFunction> featureFunctions,
-      List<StateComputer> stateComputers) {
+  public ExhaustiveCombiner(List<FeatureFunction> featureFunctions) {
     this.featureFunctions = featureFunctions;
-    this.stateComputers = stateComputers;
   }
 
 
@@ -49,7 +45,7 @@ public class ExhaustiveCombiner implements Combiner {
           List<HGNode> antNodes = new ArrayList<HGNode>();
           antNodes.add(antNode);
           cell.addHyperEdgeInCell(new ComputeNodeResult(featureFunctions, rule, antNodes, i, j,
-              srcPath, stateComputers, chart.segmentID), rule, i, j, antNodes, srcPath, false);
+              srcPath, chart.segmentID), rule, i, j, antNodes, srcPath, false);
         }
 
       } else if (arity == 2) {
@@ -61,7 +57,7 @@ public class ExhaustiveCombiner implements Combiner {
             antNodes.add(antNode1);
             antNodes.add(antNode2);
             cell.addHyperEdgeInCell(new ComputeNodeResult(featureFunctions, rule, antNodes, i, j,
-                srcPath, stateComputers, chart.segmentID), rule, i, j, antNodes, srcPath, false);
+                srcPath, chart.segmentID), rule, i, j, antNodes, srcPath, false);
           }
         }
       } else {
@@ -84,7 +80,7 @@ public class ExhaustiveCombiner implements Combiner {
 
   public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
     cell.addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath,
-        stateComputers, chart.segmentID), rule, i, j, null, srcPath, false);
+        chart.segmentID), rule, i, j, null, srcPath, false);
   }
 
 }

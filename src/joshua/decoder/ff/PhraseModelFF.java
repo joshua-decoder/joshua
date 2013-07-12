@@ -4,6 +4,7 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -26,6 +27,20 @@ public class PhraseModelFF extends StatelessFF {
   public PhraseModelFF(FeatureVector weights, String owner) {
     super(weights, "tm_" + owner, "");
 
+    /*
+     * This is an efficiency hack; we cache the full dot product of the weights with the dense
+     * features, storing them as a value under the name "tm_OWNER". There won't be a weight for
+     * that, so we add a weight to the weights vector. This weight will never be output because when
+     * the k-best list is retrieved and the actual feature values asked for, the accumulator will
+     * fetch the fine-grained dense features.
+     */
+    if (weights.containsKey(name)) {
+      System.err.println(String.format(
+          "* FATAL: Your weights file contains an entry for '%s', shouldn't", name));
+      System.exit(1);
+    }
+    weights.put(name, 1.0f);
+
     // Store the owner.
     this.ownerID = Vocabulary.id(owner);
   }
@@ -36,34 +51,32 @@ public class PhraseModelFF extends StatelessFF {
   }
 
   /**
-   * Computes the cost of applying the feature.
-   */
-  @Override
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    float cost = 0.0f;
-
-    if (rule != null && this.ownerID == rule.getOwner()) {
-      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-        float t = computeFeatures(rule, tailNodes, i, j, sourcePath, sentID).innerProduct(weights);
-        rule.setPrecomputableCost(t);
-      }
-      cost = rule.getPrecomputableCost();
-    }
-    return cost;
-  }
-
-  /**
    * Just chain to computeFeatures(rule), since this feature doesn't use the sourcePath or sentID. *
    */
   @Override
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+
     if (rule != null && rule.getOwner() == ownerID) {
-      return rule.getFeatureVector();
-    } else {
-      return new FeatureVector();
+      /*
+       * Here, we peak at the Accumulator object. If it's asking for scores, then we don't bother to
+       * add each feature, but rather compute the inner product and add *that*. This is totally
+       * cheating; the Accumulator is supposed to be a generic object. But without this cheat
+       */
+      if (acc instanceof ScoreAccumulator) {
+        if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
+          float score = rule.getFeatureVector().innerProduct(weights);
+          rule.setPrecomputableCost(score);
+        }
+        acc.add(name, rule.getPrecomputableCost());
+      } else {
+        FeatureVector features = rule.getFeatureVector();
+        for (String key : features.keySet())
+          acc.add(key, features.get(key));
+      }
     }
+
+    return null;
   }
 
   public String toString() {

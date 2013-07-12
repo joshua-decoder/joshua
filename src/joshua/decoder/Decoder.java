@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Logger;
@@ -20,13 +19,12 @@ import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
-import joshua.decoder.ff.state_maintenance.NgramStateComputer;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
@@ -70,8 +68,6 @@ public class Decoder {
   private final List<GrammarFactory> grammarFactories;
   private ArrayList<FeatureFunction> featureFunctions;
   private ArrayList<NGramLanguageModel> languageModels;
-
-  private List<StateComputer> stateComputers;
 
   /* The feature weights. */
   public static FeatureVector weights;
@@ -477,9 +473,6 @@ public class Decoder {
       logger.info(String.format("Grammar loading took: %d seconds.",
           (System.currentTimeMillis() - pre_load_time) / 1000));
 
-      // Initialize features that contribute to state (currently only n-grams).
-      this.initializeStateComputers();
-
       // Initialize the LM.
       initializeLanguageModels();
 
@@ -504,7 +497,7 @@ public class Decoder {
       /* Create the threads */
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
         this.threadPool.put(new DecoderThread(this.grammarFactories, this.weights,
-            this.featureFunctions, this.stateComputers));
+            this.featureFunctions));
       }
 
     } catch (IOException e) {
@@ -519,9 +512,6 @@ public class Decoder {
 
   private void initializeLanguageModels() throws IOException {
 
-    // Indexed by order.
-    HashMap<Integer, NgramStateComputer> ngramStateComputers = new HashMap<Integer, NgramStateComputer>();
-
     this.languageModels = new ArrayList<NGramLanguageModel>();
 
     // lm = kenlm 5 0 0 100 file
@@ -530,24 +520,9 @@ public class Decoder {
       String tokens[] = lmLine.split("\\s+");
       String lm_type = tokens[0];
       int lm_order = Integer.parseInt(tokens[1]);
-      boolean left_equiv_state = Boolean.parseBoolean(tokens[2]);
-      boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
       String lm_file = tokens[5];
 
-      if (!ngramStateComputers.containsKey(lm_order)) {
-        // Create a new state computer.
-        NgramStateComputer ngramState = new NgramStateComputer(lm_order);
-        // Record that we've created it.
-        stateComputers.add(ngramState);
-        ngramStateComputers.put(lm_order, ngramState);
-      }
-
       if (lm_type.equals("kenlm")) {
-        if (left_equiv_state || right_equiv_state) {
-          throw new IllegalArgumentException(
-              "KenLM supports state.  Joshua should get around to using it.");
-        }
-
         KenLM lm = new KenLM(lm_order, lm_file);
         this.languageModels.add(lm);
         Vocabulary.registerLanguageModel(lm);
@@ -570,8 +545,12 @@ public class Decoder {
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm,
-          ngramStateComputers.get(lm.getOrder())));
+      
+      if (lm instanceof KenLM) {
+        this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM)lm));
+      } else {
+        this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
+      }
 
       logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", i, languageModels.get(i)
           .getOrder(), weights.get(String.format("lm_%d", i))));
@@ -633,10 +612,6 @@ public class Decoder {
         .getRuntime().freeMemory()) / 1000000.0)));
   }
 
-  private void initializeStateComputers() {
-    stateComputers = new ArrayList<StateComputer>();
-  }
-
   /*
    * This function reads the weights for the model. For backwards compatibility, weights may be
    * listed in the Joshua configuration file, but the preferred method is to list the weights in a
@@ -660,6 +635,8 @@ public class Decoder {
       LineReader lineReader = new LineReader(fileName);
 
       for (String line : lineReader) {
+        line = line.replaceAll("\\s+", " ");
+        
         if (line.equals("") || line.startsWith("#") || line.startsWith("//")
             || line.indexOf(' ') == -1)
           continue;
@@ -735,20 +712,8 @@ public class Decoder {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
 
-        // Find the language model with the largest state.
-        int maxOrder = 0;
-        NgramStateComputer ngramStateComputer = null;
-        for (StateComputer stateComputer : this.stateComputers) {
-          if (stateComputer instanceof NgramStateComputer)
-            if (((NgramStateComputer) stateComputer).getOrder() > maxOrder) {
-              maxOrder = ((NgramStateComputer) stateComputer).getOrder();
-              ngramStateComputer = (NgramStateComputer) stateComputer;
-            }
-        }
-
         try {
-          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host,
-              port));
+          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, host, port));
 
         } catch (Exception e) {
           e.printStackTrace();

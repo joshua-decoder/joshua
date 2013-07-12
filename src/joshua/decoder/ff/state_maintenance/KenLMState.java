@@ -1,7 +1,7 @@
 package joshua.decoder.ff.state_maintenance;
 
 /**
- * Maintains a state pointer used by KenLM to implement left-state minimization.
+ * Maintains a state pointer used by KenLM to implement left-state minimization. 
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevitch <juri@cs.jhu.edu>
@@ -9,9 +9,13 @@ package joshua.decoder.ff.state_maintenance;
 public class KenLMState extends DPState {
 
   private long state = 0;
+  private float prob = 0.0f;
 
-  public KenLMState(long state) {
-    this.state = state;
+  public KenLMState() {
+  }
+
+  public KenLMState(long stateId) {
+    this.state = stateId;
   }
 
   public long getState() {
@@ -24,7 +28,7 @@ public class KenLMState extends DPState {
 
   @Override
   public int hashCode() {
-    return (int)getState();
+    return (int) getState();
   }
 
   @Override
@@ -34,6 +38,6 @@ public class KenLMState extends DPState {
 
   @Override
   public String toString() {
-    return String.format("[KenLMState %ld]", getState());
+    return String.format("[KenLMState 0x%d]", getState());
   }
 }

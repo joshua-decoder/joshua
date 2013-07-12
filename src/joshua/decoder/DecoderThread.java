@@ -9,7 +9,6 @@ import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.ForestWalker;
@@ -38,7 +37,6 @@ public class DecoderThread extends Thread {
    */
   private final List<GrammarFactory> grammarFactories;
   private final List<FeatureFunction> featureFunctions;
-  private final List<StateComputer> stateComputers;
 
   private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
 
@@ -46,11 +44,10 @@ public class DecoderThread extends Thread {
   // Constructor
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-      List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers)
-      throws IOException {
+      List<FeatureFunction> featureFunctions) 
+    throws IOException {
 
     this.grammarFactories = grammarFactories;
-    this.stateComputers = stateComputers;
 
     this.featureFunctions = new ArrayList<FeatureFunction>();
     for (FeatureFunction ff : featureFunctions) {
@@ -98,7 +95,7 @@ public class DecoderThread extends Thread {
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 
     /* Seeding: the chart only sees the grammars, not the factories */
-    Chart chart = new Chart(sentence, this.featureFunctions, this.stateComputers, grammars,
+    Chart chart = new Chart(sentence, this.featureFunctions, grammars,
         JoshuaConfiguration.goal_symbol);
 
     /* Parsing */
@@ -134,7 +131,7 @@ public class DecoderThread extends Thread {
     /* Step 2. Create a new chart and parse with the instantiated grammar. */
     Grammar[] newGrammarArray = new Grammar[] { newGrammar };
     Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
-    chart = new Chart(targetSentence, featureFunctions, stateComputers, newGrammarArray, "GOAL");
+    chart = new Chart(targetSentence, featureFunctions, newGrammarArray, "GOAL");
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     String goalSymbolString = Vocabulary.word(goalSymbol);
     logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(),

@@ -14,6 +14,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.io.DeNormalize;
 
@@ -562,6 +563,10 @@ public class KBestExtractor {
         sb.append(String.format("%d-%d", parentNode.i, parentNode.j));
         sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> "
             + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglishWords());
+        sb.append(" |||");
+        for (DPState state: parentNode.getDPStates()) {
+          sb.append(" " + state);
+        }
         sb.append(" ||| " + transitionFeatures);
         sb.append(" ||| " + -weights.innerProduct(transitionFeatures));
         sb.append("\n");
