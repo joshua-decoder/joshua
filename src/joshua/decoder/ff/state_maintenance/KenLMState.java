@@ -9,7 +9,6 @@ package joshua.decoder.ff.state_maintenance;
 public class KenLMState extends DPState {
 
   private long state = 0;
-  private float prob = 0.0f;
 
   public KenLMState() {
   }
