@@ -28,6 +28,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   private final static native long construct(String file_name);
 
   private final static native void destroy(long ptr);
+  
+  private final static native void deleteState(long ptr);
 
   private final static native int order(long ptr);
 
@@ -72,8 +74,6 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
    * interface in kenlm/lm/left.hh . Then it has to return the new state object wrapped up with the
    * prob. That's it!
    * 
-   * TODO: do this
-   * 
    * @param words
    * @return
    */
@@ -89,7 +89,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
     return pair;
   }
-
+  
   /**
    * Inner class used to hold the results returned from KenLM with left-state minimization. Note
    * that inner classes have to be static to be accessible from the JNI!
@@ -101,6 +101,11 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     public StateProbPair(long state, float prob) {
       this.state = new KenLMState(state);
       this.prob = prob;
+    }
+
+    protected void finalize() throws Throwable {
+      if (state.getState() > 0)
+        KenLM.deleteState(state.getState());
     }
   }
 
