@@ -1,13 +1,17 @@
 package joshua.decoder.ff.lm.kenlm.jni;
 
-import java.util.List;
-
-import joshua.corpus.Vocabulary;
-import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.state_maintenance.KenLMState;
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.hypergraph.HGNode;
+
+/**
+ * JNI wrapper for KenLM. This version of KenLM supports two use cases, implemented by the separate
+ * feature functions KenLMFF and LanguageModelFF. KenLMFF uses the RuleScore() interface in
+ * lm/left.hh, returning a state pointer representing the KenLM state, while LangaugeModelFF handles
+ * state by itself and just passes in the ngrams for scoring.
+ * 
+ * @author Kenneth Heafield
+ * @author Matt Post <post@cs.jhu.edu
+ */
 
 public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
@@ -31,7 +35,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native float prob(long ptr, int words[]);
 
-  private final static native float probWithState(long ptr, int words[]);
+  private final static native StateProbPair probRule(long ptr, long words[]);
 
   private final static native float probString(long ptr, int words[], int start);
 
@@ -63,21 +67,6 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     return probString(pointer, words, start - 1);
   }
 
-  @Override
-  public float sentenceLogProbability(int[] sentence, int order, int startIndex) {
-    return probString(sentence, startIndex);
-  }
-
-  public float ngramLogProbability(int[] ngram, int order) {
-    if (order != N && order != ngram.length)
-      throw new RuntimeException("Lower order not supported.");
-    return prob(ngram);
-  }
-
-  public float ngramLogProbability(int[] ngram) {
-    return prob(ngram);
-  }
-
   /**
    * This takes a list of words + state objects (longs). It should be easy to implement using the
    * interface in kenlm/lm/left.hh . Then it has to return the new state object wrapped up with the
@@ -90,15 +79,27 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
    */
   public StateProbPair prob(long[] words) {
 
-    return new StateProbPair(null, 0.0f);
+    StateProbPair pair = null;
+    try {
+      pair = probRule(pointer, words);
+    } catch (NoSuchMethodError e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
+
+    return pair;
   }
 
-  public class StateProbPair {
+  /**
+   * Inner class used to hold the results returned from KenLM with left-state minimization. Note
+   * that inner classes have to be static to be accessible from the JNI!
+   */
+  public static class StateProbPair {
     public KenLMState state = null;
     public float prob = 0.0f;
 
-    public StateProbPair(KenLMState state, float prob) {
-      this.state = state;
+    public StateProbPair(long state, float prob) {
+      this.state = new KenLMState(state);
       this.prob = prob;
     }
   }
@@ -109,5 +110,25 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
       return 0;
     else
       return -1;
+  }
+
+  /**
+   * These functions are used if KenLM is invoked under LanguageModelFF instead of KenLMFF.
+   */
+  @Override
+  public float sentenceLogProbability(int[] sentence, int order, int startIndex) {
+    return probString(sentence, startIndex);
+  }
+
+  @Override
+  public float ngramLogProbability(int[] ngram, int order) {
+    if (order != N && order != ngram.length)
+      throw new RuntimeException("Lower order not supported.");
+    return prob(ngram);
+  }
+    
+  @Override
+  public float ngramLogProbability(int[] ngram) {
+    return prob(ngram);
   }
 }

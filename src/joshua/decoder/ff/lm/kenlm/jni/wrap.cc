@@ -1,5 +1,7 @@
 #include "lm/enumerate_vocab.hh"
 #include "lm/model.hh"
+#include "lm/left.hh"
+#include "lm/state.hh"
 #include "util/murmur_hash.hh"
 
 #include <iostream>
@@ -59,6 +61,8 @@ public:
 
   virtual float Prob(jint *begin, jint *end) const = 0;
 
+  virtual float ProbRule(jlong *begin, jlong *end, lm::ngram::ChartState& state) const = 0;
+
   virtual float ProbString(jint * const begin, jint * const end,
       jint start) const = 0;
 
@@ -95,54 +99,22 @@ public:
         ignored).prob;
   }
 
-  float ProbWithState(jint * const begin, jint * const end, jlong context) const {
-    MapArray(map_, begin, end);
+  float ProbRule(jlong * const begin, jlong * const end, lm::ngram::ChartState& state) const {
+//    MapArray(map_, begin, end);
 
-    std::reverse(begin, end - 1);
-    lm::ngram::State newState;
-    return m_.FullScore(
-      reinterpret_cast<const lm::ngram::ChartState>(context),
-        *(end - 1),
-        reinterpret_cast<const lm::ngram::ChartState>(context)).prob;
+    lm::ngram::RuleScore<Model> ruleScore(m_, state);
+    for (jlong* i = begin; i != end; i++) {
+      long word = *i;
+      if (word < 0)
+        ruleScore.NonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-word));
+      else
+        ruleScore.Terminal(word);
+    }
+    return ruleScore.Finish();
   }
 
   float ProbString(jint * const begin, jint * const end, jint start) const {
     MapArray(map_, begin, end);
-
-    float prob;
-    lm::ngram::State state;
-    if (start == 0) {
-      prob = 0;
-      state = m_.NullContextState();
-    } else {
-      std::reverse(begin, begin + start);
-      prob = m_.FullScoreForgotState(
-          reinterpret_cast<const lm::WordIndex*>(begin),
-          reinterpret_cast<const lm::WordIndex*>(begin + start),
-          begin[start], state).prob;
-      ++start;
-    }
-    lm::ngram::State state2;
-    for (const jint *i = begin + start;;) {
-      if (i >= end)
-        break;
-      float got = m_.Score(state, *i, state2);
-      i++;
-      prob += got;
-      if (i >= end)
-        break;
-      got = m_.Score(state2, *i, state);
-      i++;
-      prob += got;
-    }
-    return prob;
-  }
-
-  float ProbStringWithState(jlong * const begin, jlong * const end, jint start) const {
-    MapArray(map_, begin, end);
-
-    // TODO: implement this using the interface in left.hh
-    // TODO: how to return multiple values (new context + prob)? 
 
     float prob;
     lm::ngram::State state;
@@ -223,18 +195,6 @@ VirtualBase *ConstructModel(const char *file_name) {
 
 extern "C" {
 
-JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_rulescore(
-  JNIEnv *env, jclass) {
-  jlong ret;
-  try {
-    reinterpret_cast<jlong>(ConstructRuleScore(jclass, ret));
-  } catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
-    abort();
-  }
-  return ret;
-}
-  
 JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
     JNIEnv *env, jclass, jstring file_name) {
   const char *str = env->GetStringUTFChars(file_name, 0);
@@ -277,19 +237,6 @@ JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_registerWor
   return ret;
 }
 
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probWithState(
-    JNIEnv *env, jclass, jlong pointer, jintArray arr) {
-  jint length = env->GetArrayLength(arr);
-  if (length <= 0)
-    return 0.0;
-  // GCC only.
-  jint values[length];
-  env->GetIntArrayRegion(arr, 0, length, values);
-
-  return reinterpret_cast<const VirtualBase*>(pointer)->ProbWithState(values,
-      values + length);
-}
-
 JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_prob(
     JNIEnv *env, jclass, jlong pointer, jintArray arr) {
   jint length = env->GetArrayLength(arr);
@@ -314,6 +261,31 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
 
   return reinterpret_cast<const VirtualBase*>(pointer)->ProbString(values,
       values + length, start);
+}
+
+JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
+  JNIEnv *env, jclass, jlong pointer, jlongArray arr) {
+  jint length = env->GetArrayLength(arr);
+  // GCC only.
+  jlong values[length];
+  env->GetLongArrayRegion(arr, 0, length, values);
+
+  lm::ngram::ChartState * outState = new lm::ngram::ChartState();
+  float prob = reinterpret_cast<const VirtualBase*>(pointer)->ProbRule(values,
+    values + length, *outState);
+
+  // Get a class reference for the type pair we want to return (long, float). 
+  jclass cls = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
+  if (NULL == cls) return NULL;
+
+  // Get the Method ID of the constructor which takes an int
+  jmethodID midInit = env->GetMethodID(cls, "<init>", "(JF)V");
+  if (NULL == midInit) return NULL;
+
+  // Call back constructor to allocate a new instance, with an int argument
+  jobject newObj = env->NewObject(cls, midInit, (long)outState, prob);
+
+  return newObj;
 }
 
 } // extern
