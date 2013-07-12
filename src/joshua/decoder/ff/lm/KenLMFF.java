@@ -73,20 +73,20 @@ public class KenLMFF extends LanguageModelFF {
    * left-hand ngrams, as well as including the start- and end-of-sentence markers (if they were
    * requested when the object was created).
    * 
-   * KenLM already includes the prefix probabilites (of shorter n-grams on the left-hand side), so
+   * KenLM already includes the prefix probabilities (of shorter n-grams on the left-hand side), so
    * there's nothing that needs to be done.
    */
   @Override
   public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
       Accumulator acc) {
 
-    KenLMState state = (KenLMState) tailNode.getDPState(getStateIndex());
+//    KenLMState state = (KenLMState) tailNode.getDPState(getStateIndex());
 
     // This is unnecessary
     //acc.add(name, 0.0f);
 
     // The state is the same since no rule was applied
-    return state;
+    return new KenLMState();
   }
 
   /**
