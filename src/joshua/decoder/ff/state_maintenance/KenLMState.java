@@ -9,34 +9,36 @@ package joshua.decoder.ff.state_maintenance;
 public class KenLMState extends DPState {
 
   private long state = 0;
+  private long hash = 0;
 
   public KenLMState() {
   }
 
-  public KenLMState(long stateId) {
+  public KenLMState(long stateId, long hash) {
     this.state = stateId;
+    this.hash = hash;
   }
 
   public long getState() {
     return state;
   }
 
-  public void setState(long state) {
-    this.state = state;
+  public long getHash() {
+    return hash;
   }
 
   @Override
   public int hashCode() {
-    return (int) ((getState() >> 32) ^ getState());
+    return (int) ((getHash() >> 32) ^ getHash());
   }
 
   @Override
   public boolean equals(Object other) {
-    return (other instanceof KenLMState && this.getState() == ((KenLMState) other).getState());
+    return (other instanceof KenLMState && this.getHash() == ((KenLMState) other).getHash());
   }
 
   @Override
   public String toString() {
-    return String.format("[KenLMState 0x%d]", getState());
+    return String.format("[KenLMState %d/%d]", getState(), getHash());
   }
 }

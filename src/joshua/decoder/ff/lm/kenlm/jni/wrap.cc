@@ -285,20 +285,24 @@ JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
   jlong values[length];
   env->GetLongArrayRegion(arr, 0, length, values);
 
+  // Compute the probability
   lm::ngram::ChartState * outState = new lm::ngram::ChartState();
   float prob = reinterpret_cast<const VirtualBase*>(pointer)->ProbRule(values,
     values + length, *outState);
+
+  // Get the hash value
+  uint64_t hashValue = lm::ngram::hash_value(*outState);
 
   // Get a class reference for the type pair we want to return (long, float). 
   jclass cls = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
   if (NULL == cls) return NULL;
 
   // Get the Method ID of the constructor which takes an int
-  jmethodID midInit = env->GetMethodID(cls, "<init>", "(JF)V");
+  jmethodID midInit = env->GetMethodID(cls, "<init>", "(JJF)V");
   if (NULL == midInit) return NULL;
 
   // Call back constructor to allocate a new instance, with an int argument
-  jobject newObj = env->NewObject(cls, midInit, (long)outState, prob);
+  jobject newObj = env->NewObject(cls, midInit, (long)outState, (long)hashValue, prob);
 
   return newObj;
 }

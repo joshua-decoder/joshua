@@ -98,8 +98,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     public KenLMState state = null;
     public float prob = 0.0f;
 
-    public StateProbPair(long state, float prob) {
-      this.state = new KenLMState(state);
+    public StateProbPair(long state, long hash, float prob) {
+      this.state = new KenLMState(state, hash);
       this.prob = prob;
     }
 
