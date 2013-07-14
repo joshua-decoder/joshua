@@ -22,9 +22,6 @@ public class CubePruneCombiner implements Combiner {
     this.featureFunctions = featureFunctions;
   }
 
-  // BUG:???????????????????? CubePrune will depend on relativeThresholdPruning, but cell.beamPruner
-  // can be null ????????????????
-
   public void addAxioms(Chart chart, Cell cell, int i, int j, List<Rule> rules, SourcePath srcPath) {
     for (Rule rule : rules) {
       addAxiom(chart, cell, i, j, rule, srcPath);
@@ -56,7 +53,7 @@ public class CubePruneCombiner implements Combiner {
     // in the paper, combinationHeap is called cand[v]
     PriorityQueue<CubePruneState> combinationHeap = new PriorityQueue<CubePruneState>();
 
-    // rememeber which state has been explored
+    // remember which state has been explored
     HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
 
     // ===== seed the heap with best node
@@ -82,11 +79,9 @@ public class CubePruneCombiner implements Combiner {
     // ====== extend the heap
     Rule oldRule = null;
     HGNode oldItem = null;
-    int tem_c = 0;
     while (combinationHeap.size() > 0) {
 
       // ========== decide if the top in the heap should be pruned
-      tem_c++;
       CubePruneState curState = combinationHeap.poll();
       currentRule = curState.rule;
       currentAntNodes = new ArrayList<HGNode>(curState.antNodes); // critical to create a new list
@@ -169,8 +164,7 @@ public class CubePruneCombiner implements Combiner {
       this.computeNodeResult = state;
       this.ranks = ranks;
       this.rule = rule;
-      // create a new vector is critical, because
-      // currentAntecedents will change later
+      // create a new vector is critical, because currentAntecedents will change later
       this.antNodes = new ArrayList<HGNode>(antecedents);
       this.dotNode = null;
     }
