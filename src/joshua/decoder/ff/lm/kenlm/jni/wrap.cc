@@ -228,7 +228,7 @@ JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
 
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_deleteState(
     JNIEnv *env, jclass, jlong pointer) {
-  //  delete reinterpret_cast<lm::ngram::ChartState*>(pointer);
+  delete reinterpret_cast<lm::ngram::ChartState*>(pointer);
 }
 
 JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_order(

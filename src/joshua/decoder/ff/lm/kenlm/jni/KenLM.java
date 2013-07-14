@@ -104,8 +104,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     }
 
     protected void finalize() throws Throwable {
-      if (state.getState() > 0)
-        KenLM.deleteState(state.getState());
+      // if (state.getState() > 0)
+      //   KenLM.deleteState(state.getState());
     }
   }
 
