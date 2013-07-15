@@ -1121,7 +1121,7 @@ if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/encoding",
@@ -1343,7 +1343,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
-                    "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/encoding",
@@ -1561,7 +1561,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
   $cachepipe->cmd("pack-test",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                   $TEST_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/encoding",

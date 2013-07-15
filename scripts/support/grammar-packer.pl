@@ -37,7 +37,7 @@ my $output_dir = shift || "grammar.packed";
 
 # Sort the grammar.
 my $sorted_grammar = "grammar.sorted.gz";
-if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} | gzip -9n > $sorted_grammar")) {
+if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
   print STDERR "* FATAL: Couldn't sort the grammar (not enough memory? short on tmp space?)\n";
   exit 2;
 }
