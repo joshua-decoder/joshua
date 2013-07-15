@@ -75,6 +75,10 @@ public class LanguageModelFF extends StatefulFF {
 
     this.weight = weights.get(name);
   }
+  
+  public NGramLanguageModel getLM() {
+    return this.languageModel;
+  }
 
   /**
    * Computes the features incurred along this edge. Note that these features are unweighted costs

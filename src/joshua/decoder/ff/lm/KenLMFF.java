@@ -1,18 +1,14 @@
 package joshua.decoder.ff.lm;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.Support;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.FeatureFunction.Accumulator;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM.StateProbPair;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.KenLMState;
-import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -59,7 +55,7 @@ public class KenLMFF extends LanguageModelFF {
     }
 
     // Get the probability of applying the rule and the new state
-    StateProbPair pair = ((KenLM) languageModel).prob(words);
+    StateProbPair pair = ((KenLM) languageModel).prob(words, sentID);
 
     // Record the prob
     acc.add(name, pair.prob);

@@ -9,6 +9,8 @@ import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
+import joshua.decoder.ff.lm.KenLMFF;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.ForestWalker;
@@ -44,8 +46,7 @@ public class DecoderThread extends Thread {
   // Constructor
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-      List<FeatureFunction> featureFunctions) 
-    throws IOException {
+      List<FeatureFunction> featureFunctions) throws IOException {
 
     this.grammarFactories = grammarFactories;
 
@@ -75,7 +76,8 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    logger.info(String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(), sentence.source()));
+    logger.info(String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(),
+        sentence.source()));
 
     if (sentence.target() != null)
       logger.info("Constraining to target sentence '" + sentence.target() + "'");
@@ -113,10 +115,23 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
+    /*
+     * KenLM hack. If using KenLMFF, we need to tell KenLM to delete the pool used to create chart
+     * objects for this sentence.
+     */
+    for (FeatureFunction feature: featureFunctions)
+      if (feature instanceof KenLMFF) {
+        ((KenLM)((KenLMFF)feature).getLM()).destroyPool(sentence.id());
+        break;
+      }
+
+    /* Return the translation unless we're doing synchronous parsing. */
     if (!JoshuaConfiguration.parse || hypergraph == null) {
       return new Translation(sentence, hypergraph, featureFunctions);
     }
 
+    /*****************************************************************************************/
+    
     /*
      * Synchronous parsing.
      * 

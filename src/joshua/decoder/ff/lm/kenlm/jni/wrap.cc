@@ -3,6 +3,7 @@
 #include "lm/left.hh"
 #include "lm/state.hh"
 #include "util/murmur_hash.hh"
+#include "util/pool.hh"
 
 #include <iostream>
 
@@ -205,6 +206,8 @@ VirtualBase *ConstructModel(const char *file_name) {
 
 extern "C" {
 
+  __gnu_cxx::hash_map<int, util::Pool *> poolMap_;
+
 JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
     JNIEnv *env, jclass, jstring file_name) {
   const char *str = env->GetStringUTFChars(file_name, 0);
@@ -224,6 +227,15 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
     JNIEnv *env, jclass, jlong pointer) {
   delete reinterpret_cast<VirtualBase*>(pointer);
+}
+
+JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroyPool(
+    JNIEnv *env, jclass, jlong pointer, jint sentId) {
+  if (poolMap_.find(sentId) != poolMap_.end()) {
+    util::Pool * pool = poolMap_[sentId];
+    poolMap_.erase(sentId);
+    delete pool;
+  }
 }
 
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_deleteState(
@@ -279,14 +291,18 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
 }
 
 JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
-  JNIEnv *env, jclass, jlong pointer, jlongArray arr) {
+  JNIEnv *env, jclass, jlong pointer, jlongArray arr, jint sentId) {
   jint length = env->GetArrayLength(arr);
   // GCC only.
   jlong values[length];
   env->GetLongArrayRegion(arr, 0, length, values);
 
+  // Make sure we have a pool
+  if (poolMap_.find(sentId) != poolMap_.end())
+    poolMap_[sentId] = new util::Pool();
+
   // Compute the probability
-  lm::ngram::ChartState * outState = new lm::ngram::ChartState();
+  lm::ngram::ChartState * outState = (lm::ngram::ChartState *)poolMap_[sentId]->Allocate(sizeof(lm::ngram::ChartState));
   float prob = reinterpret_cast<const VirtualBase*>(pointer)->ProbRule(values,
     values + length, *outState);
 
