@@ -30,8 +30,6 @@ public class JoshuaConfiguration {
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
   public static float lm_ceiling_cost = 100;
-  public static boolean use_left_equivalent_state = false;
-  public static boolean use_right_equivalent_state = false;
   public static int lm_order = 3;
 
   public static String lm_file = null;
@@ -275,16 +273,6 @@ public class JoshuaConfiguration {
             lm_ceiling_cost = Float.parseFloat(fds[1]);
             logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 
-          } else if (parameter.equals(normalize_key("use_left_equivalent_state"))) {
-            use_left_equivalent_state = Boolean.valueOf(fds[1]);
-            logger
-                .finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
-
-          } else if (parameter.equals(normalize_key("use_right_equivalent_state"))) {
-            use_right_equivalent_state = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_right_equivalent_state: %s",
-                use_right_equivalent_state));
-
           } else if (parameter.equals(normalize_key("order"))) {
             lm_order = Integer.parseInt(fds[1]);
             logger.finest(String.format("g_lm_order: %s", lm_order));
@@ -482,8 +470,7 @@ public class JoshuaConfiguration {
     // parameters. These combined lines are later processed in
     // JoshuaDecoder as part of the multiple LM support
     if (lms.size() == 0 && lm_file != null) {
-      String line = String.format("%s %d %b %b %.2f %s", lm_type, lm_order,
-          use_left_equivalent_state, use_right_equivalent_state, lm_ceiling_cost, lm_file);
+      String line = String.format("%s %d false false %.2f %s", lm_type, lm_order, lm_ceiling_cost, lm_file);
       lms.add(line);
     }
 

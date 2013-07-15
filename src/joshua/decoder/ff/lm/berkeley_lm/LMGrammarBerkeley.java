@@ -194,6 +194,8 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     return ngramLogProbability(ngram);
   }
 
-
-
+  @Override
+  public boolean isMinimizing() {
+    return false;
+  }
 }

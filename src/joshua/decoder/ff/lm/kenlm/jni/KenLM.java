@@ -24,6 +24,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   private final int ngramOrder;
   // inferred from model file (may be larger than ngramOrder)
   private final int N;
+  // whether left-state minimization was requested
+  private boolean minimizing;
 
   private final static native long construct(String file_name);
 
@@ -41,8 +43,9 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native void destroyPool(long modelPtr, int sentId);
 
-  public KenLM(int order, String file_name) {
+  public KenLM(int order, String file_name, boolean minimizing) {
     ngramOrder = order;
+    this.minimizing = minimizing;
 
     pointer = construct(file_name);
     N = order(pointer);
@@ -137,5 +140,10 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   @Override
   public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
+  }
+  
+  @Override
+  public boolean isMinimizing() {
+    return minimizing;
   }
 }
