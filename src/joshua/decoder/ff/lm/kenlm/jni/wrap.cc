@@ -298,7 +298,7 @@ JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
   env->GetLongArrayRegion(arr, 0, length, values);
 
   // Make sure we have a pool
-  if (poolMap_.find(sentId) != poolMap_.end())
+  if (poolMap_.find(sentId) == poolMap_.end())
     poolMap_[sentId] = new util::Pool();
 
   // Compute the probability
