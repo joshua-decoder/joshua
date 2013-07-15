@@ -29,8 +29,6 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native void destroy(long ptr);
 
-  private final static native void deleteState(long ptr);
-
   private final static native int order(long ptr);
 
   private final static native boolean registerWord(long ptr, String word, int id);
