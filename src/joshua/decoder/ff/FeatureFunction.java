@@ -93,7 +93,6 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return the *weighted* cost of the feature.
    */
-  @Deprecated
   public final float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath sourcePath, int sentID) {
 
@@ -119,7 +118,6 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return an *unweighted* feature delta
    */
-  @Deprecated
   public final FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath sourcePath, int sentID) {
 
@@ -140,7 +138,6 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return a *weighted* feature cost
    */
-  @Deprecated
   public final float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath,
       int sentID) {
 
@@ -160,7 +157,6 @@ public abstract class FeatureFunction {
    * @param sentID
    * @return
    */
-  @Deprecated
   public final FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j,
       SourcePath sourcePath, int sentID) {
 
