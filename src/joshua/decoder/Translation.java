@@ -6,6 +6,8 @@ import java.io.StringWriter;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.lm.KenLMFF;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
@@ -74,6 +76,18 @@ public class Translation {
     } catch (IOException e) {
       e.printStackTrace();
       System.exit(1);
+    }
+    
+
+    /*
+     * KenLM hack. If using KenLMFF, we need to tell KenLM to delete the pool used to create chart
+     * objects for this sentence.
+     */
+    for (FeatureFunction feature: featureFunctions) {
+      if (feature instanceof KenLMFF) {
+        ((KenLM)((KenLMFF)feature).getLM()).destroyPool(getSourceSentence().id());
+        break;
+      }
     }
     
     this.output = sw.toString();

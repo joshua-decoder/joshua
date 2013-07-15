@@ -115,16 +115,6 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
-    /*
-     * KenLM hack. If using KenLMFF, we need to tell KenLM to delete the pool used to create chart
-     * objects for this sentence.
-     */
-    for (FeatureFunction feature: featureFunctions)
-      if (feature instanceof KenLMFF) {
-        ((KenLM)((KenLMFF)feature).getLM()).destroyPool(sentence.id());
-        break;
-      }
-
     /* Return the translation unless we're doing synchronous parsing. */
     if (!JoshuaConfiguration.parse || hypergraph == null) {
       return new Translation(sentence, hypergraph, featureFunctions);
