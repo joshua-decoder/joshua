@@ -229,9 +229,12 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
   try {
     ret = ConstructModel(str);
 
-    jclass chart_pair = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
-    UTIL_THROW_IF(!chart_pair, util::Exception, "Failed to find joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
     // Get a class reference for the type pair that char
+    jclass local_chart_pair = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
+    UTIL_THROW_IF(!local_chart_pair, util::Exception, "Failed to find joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
+    jclass chart_pair = (jclass)env->NewGlobalRef(local_chart_pair);
+    env->DeleteLocalRef(local_chart_pair);
+
     // Get the Method ID of the constructor which takes an int
     jmethodID chart_pair_init = env->GetMethodID(chart_pair, "<init>", "(JJF)V");
     UTIL_THROW_IF(!chart_pair_init, util::Exception, "Failed to find init method");
