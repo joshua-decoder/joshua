@@ -149,7 +149,7 @@
   </target>
 
   <!-- Create a JAR file -->
-  <target name="jar" depends="java,thrax,set-joshua-home">
+  <target name="jar" depends="java,set-joshua-home">
     <jar destfile="${build}/joshua.jar" index="true">
       <fileset dir="${build}">
         <include name="**/*.class" />
