@@ -250,7 +250,9 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
 
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
     JNIEnv *env, jclass, jlong pointer) {
-  delete reinterpret_cast<VirtualBase*>(pointer);
+  VirtualBase *base = reinterpret_cast<VirtualBase*>(pointer);
+  env->DeleteGlobalRef(base->ChartPair());
+  delete base;
 }
 
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroyPool(
