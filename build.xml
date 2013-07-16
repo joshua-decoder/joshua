@@ -177,7 +177,7 @@
   </target>
 
   <!-- Create a versioned release -->
-  <target name="release" depends="set-joshua-version, devel-clean, init">
+  <target name="release" depends="set-joshua-version, devel-clean, init, thrax">
     <exec executable="./scripts/support/make-release.sh">
       <arg value="${env.JOSHUA_VERSION}" />
     </exec>
