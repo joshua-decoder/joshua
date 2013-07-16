@@ -71,11 +71,22 @@ public:
 
   virtual bool RegisterWord(const StringPiece& word, const int joshua_id) = 0;
 
+  void RememberReturnMethod(jclass chart_pair, jmethodID chart_pair_init) {
+    chart_pair_ = chart_pair;
+    chart_pair_init_ = chart_pair_init;
+  }
+
+  jclass ChartPair() const { return chart_pair_; }
+  jmethodID ChartPairInit() const { return chart_pair_init_; }
+
 protected:
   VirtualBase() {
   }
 
 private:
+  // Hack: these are remembered so we can avoid looking them up every time.
+  jclass chart_pair_;
+  jmethodID chart_pair_init_;
 };
 
 template<class Model> class VirtualImpl: public VirtualBase {
@@ -213,15 +224,25 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
   const char *str = env->GetStringUTFChars(file_name, 0);
   if (!str)
     return 0;
-  jlong ret;
+
+  VirtualBase *ret;
   try {
-    ret = reinterpret_cast<jlong>(ConstructModel(str));
+    ret = ConstructModel(str);
+
+    jclass chart_pair = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
+    UTIL_THROW_IF(!chart_pair, util::Exception, "Failed to find joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
+    // Get a class reference for the type pair that char
+    // Get the Method ID of the constructor which takes an int
+    jmethodID chart_pair_init = env->GetMethodID(chart_pair, "<init>", "(JJF)V");
+    UTIL_THROW_IF(!chart_pair_init, util::Exception, "Failed to find init method");
+
+    ret->RememberReturnMethod(chart_pair, chart_pair_init);
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
     abort();
   }
   env->ReleaseStringUTFChars(file_name, str);
-  return ret;
+  return reinterpret_cast<jlong>(ret);
 }
 
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
@@ -297,25 +318,15 @@ JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
     poolMap_[sentId] = new util::Pool();
 
   // Compute the probability
-  lm::ngram::ChartState * outState = (lm::ngram::ChartState *)poolMap_[sentId]->Allocate(sizeof(lm::ngram::ChartState));
-  float prob = reinterpret_cast<const VirtualBase*>(pointer)->ProbRule(values,
-    values + length, *outState);
+  lm::ngram::ChartState *outState = (lm::ngram::ChartState *)poolMap_[sentId]->Allocate(sizeof(lm::ngram::ChartState));
+  const VirtualBase *base = reinterpret_cast<const VirtualBase*>(pointer);
+  float prob = base->ProbRule(values, values + length, *outState);
 
   // Get the hash value
   uint64_t hashValue = lm::ngram::hash_value(*outState);
 
-  // Get a class reference for the type pair we want to return (long, float). 
-  jclass cls = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
-  if (NULL == cls) return NULL;
-
-  // Get the Method ID of the constructor which takes an int
-  jmethodID midInit = env->GetMethodID(cls, "<init>", "(JJF)V");
-  if (NULL == midInit) return NULL;
-
   // Call back constructor to allocate a new instance, with an int argument
-  jobject newObj = env->NewObject(cls, midInit, (long)outState, (long)hashValue, prob);
-
-  return newObj;
+  return env->NewObject(base->ChartPair(), base->ChartPairInit(), (long)outState, (long)hashValue, prob);
 }
 
 } // extern
