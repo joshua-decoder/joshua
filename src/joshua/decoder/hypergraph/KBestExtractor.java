@@ -35,17 +35,16 @@ import joshua.decoder.io.DeNormalize;
  */
 public class KBestExtractor {
 
-  /** Logger for this class. */
-  private static final Logger logger = Logger.getLogger(KBestExtractor.class.getName());
-
   private final HashMap<HGNode, VirtualNode> virtualNodesTbl = new HashMap<HGNode, VirtualNode>();
 
   static String rootSym = "ROOT";
   static int rootID;// TODO: bug
 
-  private enum Side { SOURCE, TARGET };
+  private enum Side {
+    SOURCE, TARGET
+  };
 
-  // configuratoin option
+  // configuration option
   private boolean extractUniqueNbest = true;
   private boolean includeAlign = false;
   private Side defaultSide = Side.TARGET;
@@ -66,7 +65,7 @@ public class KBestExtractor {
 
   /**
    * k starts from 1.
-   *
+   * 
    * You may need to reset_state() before you call this function for the first time.
    */
   public String getKthHyp(HGNode node, int k, int sentID, List<FeatureFunction> models) {
@@ -74,21 +73,25 @@ public class KBestExtractor {
     this.sentID = sentID;
     VirtualNode virtualNode = addVirtualNode(node);
 
+    String outputString = null;
+
     // Determine the k-best hypotheses at each HGNode
     DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
-    if (derivationState == null) {
-      return null;
-    } else {
-
+    if (derivationState != null) {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
 
-      String hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
-      String outputString = JoshuaConfiguration.outputFormat
-          .replace("%s", hypothesis)
+      /* Don't extract the features (expensive) if they're not requested */
+      String hypothesis = null;
+      if (JoshuaConfiguration.outputFormat.contains("%f")
+          || JoshuaConfiguration.outputFormat.contains("%d"))
+        hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
+      else
+        hypothesis = derivationState.getHypothesis(this, false, null, models, Side.TARGET);
+
+      outputString = JoshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
-          .replace("%i", Integer.toString(sentID))
-          .replace("%f", features.toString())
+          .replace("%i", Integer.toString(sentID)).replace("%f", features.toString())
           .replace("%c", String.format("%.3f", -derivationState.cost));
 
       if (JoshuaConfiguration.outputFormat.contains("%t")) {
@@ -103,11 +106,11 @@ public class KBestExtractor {
       /* %d causes a derivation with rules one per line to be output */
       if (JoshuaConfiguration.outputFormat.contains("%d")) {
         outputString = outputString.replace("%d",
-          derivationState.getDerivation(this, new FeatureVector(), models, 0));
+            derivationState.getDerivation(this, new FeatureVector(), models, 0));
       }
-
-      return outputString;
     }
+
+    return outputString;
   }
 
   // =========================== end kbestHypergraph
@@ -496,6 +499,8 @@ public class KBestExtractor {
      * TODO: This should not be using strings!
      * 
      * @return
+     * 
+     *         TODO: this shouldn't be string-based.
      */
     private String getSignature() {
       StringBuffer res = new StringBuffer();
@@ -543,8 +548,8 @@ public class KBestExtractor {
             kbestExtractor, features, models, indent + 2));
 
         sb.append(Vocabulary.word(rootID)).append(
-          " ||| " + transitionFeatures + " ||| " + features + " ||| "
-            + -weights.innerProduct(features));
+            " ||| " + transitionFeatures + " ||| " + features + " ||| "
+                + -weights.innerProduct(features));
         sb.append("\n");
         sb.append(childString);
 
@@ -564,7 +569,7 @@ public class KBestExtractor {
         sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> "
             + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglishWords());
         sb.append(" |||");
-        for (DPState state: parentNode.getDPStates()) {
+        for (DPState state : parentNode.getDPStates()) {
           sb.append(" " + state);
         }
         sb.append(" ||| " + transitionFeatures);
