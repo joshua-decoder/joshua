@@ -86,10 +86,8 @@ public class ComputeNodeResult {
 
 //    System.err.println(sb.toString() + " ||| " + viterbiCost + " ||| " + features);
     
-    float pruningEstimate = viterbiCost + futureCostEstimate;
-
     // Set the final results.
-    this.pruningCostEstimate = pruningEstimate;
+    this.pruningCostEstimate = viterbiCost + futureCostEstimate;
     this.viterbiCost = viterbiCost;
     this.transitionCost = transitionCost;
     this.dpStates = allDPStates;
@@ -135,25 +133,12 @@ public class ComputeNodeResult {
     return featureDelta;
   }
 
-  // For backward compatibility.
-  public float getExpectedTotalLogP() {
-    return getPruningEstimate();
-  }
-
   public float getPruningEstimate() {
     return this.pruningCostEstimate;
   }
 
-  float getFinalizedTotalLogP() {
-    return getViterbiCost();
-  }
-
   float getViterbiCost() {
     return this.viterbiCost;
-  }
-
-  float getTransitionTotalLogP() {
-    return getTransitionCost();
   }
 
   float getTransitionCost() {

@@ -45,8 +45,8 @@ public class HGNode implements Prunable<HGNode> {
   // Constructors
   // ===============================================================
 
-  public HGNode(int i, int j, int lhs, List<DPState> dpStates,
-      HyperEdge hyperEdge, double pruningEstimate) {
+  public HGNode(int i, int j, int lhs, List<DPState> dpStates, HyperEdge hyperEdge,
+      double pruningEstimate) {
     this.lhs = lhs;
     this.i = i;
     this.j = j;
@@ -161,9 +161,9 @@ public class HGNode implements Prunable<HGNode> {
       }
       return false;
     }
-    
+
     public String toString() {
-      return String.format("%d",hashCode());
+      return String.format("%d", hashCode());
     }
 
     public HGNode node() {

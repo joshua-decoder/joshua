@@ -90,7 +90,7 @@ public class CubePruneCombiner implements Combiner {
           srcPath, false); // pre-pruning inside this function
 
       // if the best state is pruned, then all the remaining states should be pruned away
-      if (curState.computeNodeResult.getExpectedTotalLogP() < cell.beamPruner.getCutoffLogP()
+      if (curState.computeNodeResult.getPruningEstimate() < cell.beamPruner.getCutoffLogP()
           - JoshuaConfiguration.fuzz1) {
         // n_prepruned += heap_cands.size();
         chart.nPreprunedFuzz1 += combinationHeap.size();
@@ -131,7 +131,7 @@ public class CubePruneCombiner implements Combiner {
         visitedStates.add(tState);
 
         // prune
-        if (result.getExpectedTotalLogP() > cell.beamPruner.getCutoffLogP()
+        if (result.getPruningEstimate() > cell.beamPruner.getCutoffLogP()
             - JoshuaConfiguration.fuzz2) {
           combinationHeap.add(tState);
         } else {
@@ -222,11 +222,11 @@ public class CubePruneCombiner implements Combiner {
      * order (high-prob first).
      */
     public int compareTo(CubePruneState another) {
-      if (this.computeNodeResult.getExpectedTotalLogP() < another.computeNodeResult
-          .getExpectedTotalLogP()) {
+      if (this.computeNodeResult.getPruningEstimate() < another.computeNodeResult
+          .getPruningEstimate()) {
         return 1;
-      } else if (this.computeNodeResult.getExpectedTotalLogP() == another.computeNodeResult
-          .getExpectedTotalLogP()) {
+      } else if (this.computeNodeResult.getPruningEstimate() == another.computeNodeResult
+          .getPruningEstimate()) {
         return 0;
       } else {
         return -1;
