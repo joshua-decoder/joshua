@@ -55,10 +55,6 @@ public class Chart {
    * how many items have been pruned away because its cost is greater than the cutoff in calling
    * chart.add_deduction_in_chart()
    */
-  int nPreprunedEdges = 0;
-  int nPreprunedFuzz1 = 0;
-  int nPreprunedFuzz2 = 0;
-  int nPrunedItems = 0;
   int nMerged = 0;
   int nAdded = 0;
   int nDotitemAdded = 0; // note: there is no pruning in dot-item
@@ -105,8 +101,8 @@ public class Chart {
    * course, we get passed the grammars too so we could move all of that into here.
    */
 
-  public Chart(Sentence sentence, List<FeatureFunction> featureFunctions,
-      Grammar[] grammars, String goalSymbol) {
+  public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
+      String goalSymbol) {
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
@@ -255,16 +251,15 @@ public class Chart {
           + Vocabulary.STOP_SYM);
 
     /*
-     * We want to implement proper cube-pruning at the span level, with pruning controlled with
-     * the specification of a single parameter, a pop-limit on the number of items. This pruning
-     * would be across all DotCharts (that is, across all grammars) and across all items in the
-     * span, regardless of other state (such as language model state or the lefthand side).
+     * We want to implement proper cube-pruning at the span level, with pruning controlled with the
+     * specification of a single parameter, a pop-limit on the number of items. This pruning would
+     * be across all DotCharts (that is, across all grammars) and across all items in the span,
+     * regardless of other state (such as language model state or the lefthand side).
      * 
      * The existing implementation prunes in a much less straightforward fashion. Each Dotnode
-     * within each span is examined, and applicable rules compete amongst each other. The number
-     * of them that is kept is not absolute, but is determined by some combination of the maximum
-     * heap size and the score differences. The score differences occur across items in the whole
-     * span.
+     * within each span is examined, and applicable rules compete amongst each other. The number of
+     * them that is kept is not absolute, but is determined by some combination of the maximum heap
+     * size and the score differences. The score differences occur across items in the whole span.
      */
 
     /* STEP 1: create the heap, and seed it with all of the candidate states */
@@ -306,8 +301,8 @@ public class Chart {
         // are added to the chart with no pruning
         if (arity == 0) {
           for (Rule rule : sortedAndFilteredRules) {
-            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null,
-                i, j, sourcePath, this.segmentID);
+            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
+                j, sourcePath, this.segmentID);
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
               cells[i][j].addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
           }
@@ -340,7 +335,7 @@ public class Chart {
 
     int popLimit = JoshuaConfiguration.pop_limit;
     int popCount = 0;
-    while (candidates.size() > 0 && ( (++popCount <= popLimit) || popLimit == 0)) {
+    while (candidates.size() > 0 && ((++popCount <= popLimit) || popLimit == 0)) {
       CubePruneState state = candidates.poll();
 
       DotNode dotNode = state.getDotNode();
@@ -389,8 +384,8 @@ public class Chart {
         }
 
         CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
-            currentRule, currentAntNodes, i, j, sourcePath, this.segmentID),
-            newRanks, currentRule, currentAntNodes);
+            currentRule, currentAntNodes, i, j, sourcePath, this.segmentID), newRanks, currentRule,
+            currentAntNodes);
         nextState.setDotNode(dotNode);
 
         if (visitedStates.contains(nextState)) // explored before
@@ -423,29 +418,30 @@ public class Chart {
           logger.finest(String.format("Processing span (%d, %d)", i, j));
 
         /* Skips spans for which no path exists (possible in lattices). */
-        if (inputLattice.distance(i, j) == Double.POSITIVE_INFINITY) {
+        if (inputLattice.distance(i, j) == Float.POSITIVE_INFINITY) {
           continue;
         }
 
-        // (1)=== expand the cell in dotchart
+        /*
+         * 1. Expand the dot through all rules. This is a matter of (a) look for rules over (i,j-1)
+         * that need the terminal at (j-1,j) and looking at all split points k to expand
+         * nonterminals.
+         */
         logger.finest("Expanding cell");
         for (int k = 0; k < this.grammars.length; k++) {
           /**
-           * each dotChart can act individually (without consulting other dotCharts) because it
+           * Each dotChart can act individually (without consulting other dotCharts) because it
            * either consumes the source input or the complete nonTerminals, which are both
-           * grammar-independent
+           * grammar-independent.
            **/
           this.dotcharts[k].expandDotCell(i, j);
         }
 
-        // (2)=== populate COMPLETE rules into Chart: the regular CKY part
+        /* 2. The regular CKY part: add completed items onto the chart via cube pruning. */
         logger.finest("Adding complete items into chart");
-
         completeSpan(i, j);
 
-        // (3)=== process unary rules (e.g., S->X, NP->NN), just add these items
-        // in chart, assume
-        // acyclic
+        /* 3. Process unary rules. */
         logger.finest("Adding unary items into chart");
         addUnaryNodes(this.grammars, i, j);
 
@@ -459,11 +455,10 @@ public class Chart {
           }
         }
 
-        // (5)=== sort the nodes in the cell
-        /**
-         * Cube-pruning requires the nodes being sorted, when prunning for later/wider cell.
-         * Cuebe-pruning will see superNode, which contains a list of nodes. getSortedNodes() will
-         * make the nodes in the superNode get sorted
+        /*
+         * 5. Sort the nodes in the cell.
+         * 
+         * Sort the nodes in this span, to make them usable for future applications of cube pruning.
          */
         if (null != this.cells[i][j]) {
           this.cells[i][j].getSortedNodes();
@@ -497,14 +492,8 @@ public class Chart {
   // ===============================================================
 
   private void logStatistics(Level level) {
-    logger
-        .log(
-            level,
-            String
-                .format(
-                    "ADDED: %d; MERGED: %d; PRUNED: %d; PRE-PRUNED: %d, FUZZ1: %d, FUZZ2: %d; DOT-ITEMS ADDED: %d",
-                    this.nAdded, this.nMerged, this.nPrunedItems, this.nPreprunedEdges,
-                    this.nPreprunedFuzz1, this.nPreprunedFuzz2, this.nDotitemAdded));
+    logger.log(level, String.format("ADDED: %d; MERGED: %d; DOT-ITEMS ADDED: %d", this.nAdded,
+        this.nMerged, this.nDotitemAdded));
   }
 
   /**

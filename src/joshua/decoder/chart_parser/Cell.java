@@ -197,7 +197,7 @@ class Cell {
     ensureSorted();
     return this.sortedNodes;
   }
-
+  
   Map<Integer, SuperNode> getSortedSuperItems() {
     ensureSorted();
     return this.superNodesTbl;
