@@ -15,14 +15,14 @@ import joshua.decoder.ff.tm.Rule;
 public class CubePruneState implements Comparable<CubePruneState> {
   int[] ranks;
   ComputeNodeResult computeNodeResult;
-  Rule rule;
   List<HGNode> antNodes;
+  List<Rule> rules;
   private DotNode dotNode;
 
-  public CubePruneState(ComputeNodeResult state, int[] ranks, Rule rule, List<HGNode> antecedents) {
+  public CubePruneState(ComputeNodeResult state, int[] ranks, List<Rule> rules, List<HGNode> antecedents) {
     this.computeNodeResult = state;
     this.ranks = ranks;
-    this.rule = rule;
+    this.rules = rules;
     // create a new vector is critical, because currentAntecedents will change later
     this.antNodes = new ArrayList<HGNode>(antecedents);
     this.dotNode = null;
@@ -36,10 +36,14 @@ public class CubePruneState implements Comparable<CubePruneState> {
   List<DPState> getDPStates() {
     return this.computeNodeResult.getDPStates();
   }
+  
+  Rule getRule() {
+    return this.rules.get(this.ranks[0]-1);
+  }
 
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("STATE ||| rule=" + rule + " inside cost = " + computeNodeResult.getViterbiCost()
+    sb.append("STATE ||| rule=" + getRule() + " inside cost = " + computeNodeResult.getViterbiCost()
         + " estimate = " + computeNodeResult.getPruningEstimate());
     return sb.toString();
   }

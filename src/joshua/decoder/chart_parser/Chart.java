@@ -288,11 +288,12 @@ public class Chart {
          * TODO: This causes the whole list of rules to be copied, which is unnecessary when there
          * are not actually any constraints in play.
          */
-        List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j,
-            ruleCollection.getSortedRules(this.featureFunctions));
+        // List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j,
+        // ruleCollection.getSortedRules(this.featureFunctions));
+        List<Rule> rules = ruleCollection.getSortedRules(this.featureFunctions);
         SourcePath sourcePath = dotNode.getSourcePath();
 
-        if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0)
+        if (null == rules || rules.size() <= 0)
           continue;
 
         int arity = ruleCollection.getArity();
@@ -300,7 +301,7 @@ public class Chart {
         // Rules that have no nonterminals in them so far
         // are added to the chart with no pruning
         if (arity == 0) {
-          for (Rule rule : sortedAndFilteredRules) {
+          for (Rule rule : rules) {
             ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
                 j, sourcePath, this.segmentID);
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
@@ -308,7 +309,7 @@ public class Chart {
           }
         } else {
 
-          Rule bestRule = sortedAndFilteredRules.get(0);
+          Rule bestRule = rules.get(0);
 
           List<HGNode> currentAntNodes = new ArrayList<HGNode>();
           List<SuperNode> superNodes = dotNode.getAntSuperNodes();
@@ -324,7 +325,7 @@ public class Chart {
           for (int r = 0; r < ranks.length; r++)
             ranks[r] = 1;
 
-          CubePruneState bestState = new CubePruneState(result, ranks, bestRule, currentAntNodes);
+          CubePruneState bestState = new CubePruneState(result, ranks, rules, currentAntNodes);
 
           bestState.setDotNode(dotNode);
           candidates.add(bestState);
@@ -339,53 +340,50 @@ public class Chart {
       CubePruneState state = candidates.poll();
 
       DotNode dotNode = state.getDotNode();
-      Rule currentRule = state.rule;
+      List<Rule> rules = state.rules;
       SourcePath sourcePath = dotNode.getSourcePath();
       List<SuperNode> superNodes = dotNode.getAntSuperNodes();
-      List<Rule> rules = manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules()
-          .getSortedRules(this.featureFunctions));
 
-      List<HGNode> currentAntNodes = new ArrayList<HGNode>(state.antNodes);
+      // manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules()
+      // .getSortedRules(this.featureFunctions));
 
       // Add the hypothesis to the chart. This can only happen if (a) we're not doing constrained
       // decoding or (b) we are and the state is legal.
-      if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates()))
-        cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.rule, i, j, state.antNodes,
-            sourcePath, true);
+      if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates())) {
+        cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
+            state.antNodes, sourcePath, true);
+      }
 
-      // Expand the hypothesis. This is done regardless of whether the state was added to the
-      // chart or not.
+      /*
+       * Expand the hypothesis. This is done regardless of whether the state was added to the chart
+       * or not.
+       * 
+       * k = 0 means we extend the rule being used; k > 0 means we extend one of the tail nodes.
+       */
       for (int k = 0; k < state.ranks.length; k++) {
 
         // get new_ranks, which is the same as the old
         // ranks, with the current index extended
         int[] newRanks = new int[state.ranks.length];
-        for (int d = 0; d < state.ranks.length; d++)
-          newRanks[d] = state.ranks[d];
-
-        newRanks[k] = state.ranks[k] + 1;
+        System.arraycopy(state.ranks, 0, newRanks, 0, state.ranks.length);
+        newRanks[k]++;
 
         // can't extend
         if ((k == 0 && newRanks[k] > rules.size())
             || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size()))
           continue;
 
-        // k = 0 means we extend the rule being used
-        // k > 0 means we extend one of the nodes
+        // currentAntNodes.set(k - 1, superNodes.get(k - 1).nodes.get(newRanks[k] - 1));
 
-        Rule oldRule = null;
-        HGNode oldItem = null;
-        if (k == 0) { // slide rule
-          oldRule = currentRule;
-          currentRule = rules.get(newRanks[k] - 1);
-        } else { // slide ant
-          oldItem = currentAntNodes.get(k - 1); // conside k == 0 is rule
-          currentAntNodes.set(k - 1, superNodes.get(k - 1).nodes.get(newRanks[k] - 1));
-        }
+        Rule nextRule = rules.get(newRanks[0] - 1);
+        // HGNode[] nextAntNodes = new HGNode[state.antNodes.size()];
+        List<HGNode> nextAntNodes = new ArrayList<HGNode>();
+        for (int x = 0; x < state.ranks.length - 1; x++)
+          nextAntNodes.add(superNodes.get(x).nodes.get(newRanks[x + 1] - 1));
 
         CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
-            currentRule, currentAntNodes, i, j, sourcePath, this.segmentID), newRanks, currentRule,
-            currentAntNodes);
+            nextRule, nextAntNodes, i, j, sourcePath, this.segmentID), newRanks, rules,
+            nextAntNodes);
         nextState.setDotNode(dotNode);
 
         if (visitedStates.contains(nextState)) // explored before
@@ -393,13 +391,6 @@ public class Chart {
 
         visitedStates.add(nextState);
         candidates.add(nextState);
-
-        // recover
-        if (k == 0)
-          currentRule = oldRule;
-        else
-          currentAntNodes.set(k - 1, oldItem);
-
       }
     }
   }
