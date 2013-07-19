@@ -344,49 +344,46 @@ public class Chart {
       SourcePath sourcePath = dotNode.getSourcePath();
       List<SuperNode> superNodes = dotNode.getAntSuperNodes();
 
-      // manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules()
-      // .getSortedRules(this.featureFunctions));
-
-      // Add the hypothesis to the chart. This can only happen if (a) we're not doing constrained
-      // decoding or (b) we are and the state is legal.
+      /*
+       * Add the hypothesis to the chart. This can only happen if (a) we're not doing constrained
+       * decoding or (b) we are and the state is legal.
+       */
       if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates())) {
         cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
             state.antNodes, sourcePath, true);
       }
 
       /*
-       * Expand the hypothesis. This is done regardless of whether the state was added to the chart
-       * or not.
-       * 
-       * k = 0 means we extend the rule being used; k > 0 means we extend one of the tail nodes.
+       * Expand the hypothesis by walking down a step along each dimension of the cube, in turn. k =
+       * 0 means we extend the rule being used; k > 0 expands the corresponding tail node.
        */
       for (int k = 0; k < state.ranks.length; k++) {
 
-        // get new_ranks, which is the same as the old
-        // ranks, with the current index extended
+        /* Copy the current ranks, then extend the one we're looking at. */
         int[] newRanks = new int[state.ranks.length];
         System.arraycopy(state.ranks, 0, newRanks, 0, state.ranks.length);
         newRanks[k]++;
 
-        // can't extend
+        /* We might have reached the end of something (list of rules or tail nodes) */
         if ((k == 0 && newRanks[k] > rules.size())
             || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size()))
           continue;
 
-        // currentAntNodes.set(k - 1, superNodes.get(k - 1).nodes.get(newRanks[k] - 1));
-
+        /* Use the updated ranks to assign the next rule and tail node. */
         Rule nextRule = rules.get(newRanks[0] - 1);
         // HGNode[] nextAntNodes = new HGNode[state.antNodes.size()];
         List<HGNode> nextAntNodes = new ArrayList<HGNode>();
         for (int x = 0; x < state.ranks.length - 1; x++)
           nextAntNodes.add(superNodes.get(x).nodes.get(newRanks[x + 1] - 1));
 
+        /* Create the next state. */
         CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
             nextRule, nextAntNodes, i, j, sourcePath, this.segmentID), newRanks, rules,
             nextAntNodes);
         nextState.setDotNode(dotNode);
 
-        if (visitedStates.contains(nextState)) // explored before
+        /* Skip states that have been explored before. */
+        if (visitedStates.contains(nextState))
           continue;
 
         visitedStates.add(nextState);
