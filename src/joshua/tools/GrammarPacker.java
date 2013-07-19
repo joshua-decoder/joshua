@@ -47,7 +47,7 @@ public class GrammarPacker {
   private EncoderConfiguration encoderConfig;
 
   static {
-    SLICE_SIZE = 5000000;
+    SLICE_SIZE = 1000000;
     DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
     DATA_SIZE_ESTIMATE = 20;
   }
