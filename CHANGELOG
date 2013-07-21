@@ -10,6 +10,18 @@ The main features of this release are described in
 This paper does not describe the incorporation of left-state minimization via KenLM, which
 provides important gains.
 
+5.0rc5 (21 July 2013)
+------
+
+- Rewrote cube pruning for clarity and cruft-removal, searches better
+
+- JNI bugfixes
+
+- Build file bugfix
+
+- Feature functions not re-run when feature functions not requested for output
+
+
 5.0rc4
 ------
 
