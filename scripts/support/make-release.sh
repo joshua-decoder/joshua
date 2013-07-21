@@ -30,8 +30,7 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/examples \
     joshua-$version/thrax/bin/thrax.jar \
     joshua-$version/thrax/scripts \
-		joshua-$version/joshua-decoder.org \
-    joshua-$version/joshua-decoder
+    joshua-$version/joshua-decoder.org
 
 rm -f joshua-$version
 rm -f VERSION
