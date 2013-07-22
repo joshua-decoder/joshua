@@ -1035,6 +1035,15 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
                     $TRAIN{target},
 										$lmfile);
   } else {
+    # Make sure it exists (doesn't build for OS X)
+    if (! -e "$JOSHUA/bin/lmplz") {
+      print "* FATAL: $JOSHUA/bin/lmplz (for building LMs) does not exist.\n";
+      print "  If you are on OS X, you need to use either SRILM (recommended) or BerkeleyLM,\n";
+      print "  triggered with '--lm-gen srilm' or '--lm-gen berkeleylm'. If you are on Linux,\n";
+      print "  you should run \"ant -f \$JOSHUA/build.xml kenlm\".\n";
+      exit 1;
+    }
+
     $cachepipe->cmd("kenlm",
                     "cat $TRAIN{target} | $JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR --verbose_header | gzip -9n > lm.gz",
                     $TRAIN{target},
