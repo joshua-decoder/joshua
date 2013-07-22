@@ -1157,7 +1157,7 @@ my (@configstrings, @weightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER false false 100 $lmfile";
+  my $configstring = "lm = $LM_TYPE $LM_ORDER true false 100 $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
