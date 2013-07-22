@@ -3,7 +3,7 @@ package joshua.decoder.ff.lm.kenlm.jni;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.state_maintenance.KenLMState;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * JNI wrapper for KenLM. This version of KenLM supports two use cases, implemented by the separate
@@ -24,7 +24,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   private final long pointer;
 
   // maps from sentence numbers to KenLM-side pools used to allocate state
-  private final HashMap<Integer, Long> poolMap = new HashMap<Integer, Long>();
+  private final ConcurrentHashMap<Integer, Long> poolMap = new ConcurrentHashMap<Integer, Long>();
 
   // this is read from the config file, used to set maximum order
   private final int ngramOrder;
@@ -47,9 +47,9 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native float probString(long ptr, int words[], int start);
 
-  private final static native synchronized long createPool();
+  private final static native long createPool();
 
-  private final static native synchronized void destroyPool(long poolPtr);
+  private final static native void destroyPool(long poolPtr);
 
   public KenLM(int order, String file_name, boolean minimizing) {
     ngramOrder = order;
@@ -89,6 +89,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   public void destroyPool(int sentId) {
     if (poolMap.containsKey(sentId))
       destroyPool(poolMap.get(sentId));
+    poolMap.remove(sentId);
   }
 
   /**
