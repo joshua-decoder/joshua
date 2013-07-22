@@ -9,8 +9,6 @@ import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
-import joshua.decoder.ff.lm.KenLMFF;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.ForestWalker;

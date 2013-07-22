@@ -23,7 +23,6 @@ public class Optimizer {
     sentNum = _sentNum; // total number of training sentences
     output = _output; // (not used for now)
     trainMode = _trainMode;
-    nbestFormat = _nbestFormat;
 
     if (trainMode.equals("1") || trainMode.equals("2") || trainMode.equals("4")) {
       initialLambda = _initialTotalLambda; // initial weights array
@@ -50,7 +49,6 @@ public class Optimizer {
       copyLambda = _initialTotalLambda;
     }
 
-    finalScore = _finalScore; // (not used for now)
     feat_hash = _feat_hash; // feature hash table
     stats_hash = _stats_hash; // suff. stats hash table
 
@@ -244,7 +242,7 @@ public class Optimizer {
     HashMap<Integer, String> candMap = new HashMap<Integer, String>();
 
     int candId = 0;
-    for (Iterator it = candSet.iterator(); it.hasNext();) {
+    for (Iterator<String> it = candSet.iterator(); it.hasNext();) {
       cands[candId] = it.next().toString();
       candMap.put(candId, cands[candId]); // map an integer to each candidate
       candId++;
@@ -532,7 +530,6 @@ public class Optimizer {
   private double[] initialLambda; // the Lambdas should correspond to those trainable features
   private double[] finalLambda; // the Lambdas should correspond to those trainable features
   private double[] copyLambda; // only used in mode 3
-  private double finalScore;
   private double[] normalizationOptions;
   private HashMap<String, String>[] feat_hash;
   private HashMap<String, String>[] stats_hash;
@@ -549,7 +546,6 @@ public class Optimizer {
   private int Xi; // choose top Xi candidates from sampled set(say 50)
   private double metricDiff; // metric difference threshold(to select the qualified candidates)
   private String classifierAlg; // optimization algorithm
-  private String nbestFormat;
   private String[] classifierParam;
 
   private final static double NegInf = (-1.0 / 0.0);

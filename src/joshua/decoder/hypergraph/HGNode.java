@@ -17,7 +17,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
  */
 
 // TODO: handle the case that the Hypergraph only maintains the one-best tree
-@SuppressWarnings("rawtypes")
+
 public class HGNode implements Prunable<HGNode> {
 
   public int i, j;

@@ -67,8 +67,8 @@ public class LanguageModelFF extends StatefulFF {
     super(weights, featureName);
     this.languageModel = lm;
     this.ngramOrder = lm.getOrder();
-    this.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
-    this.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
+    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
+    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
 
     if (!weights.containsKey(name))
       System.err.println("* WARNING: no weight found for LanguageModelFF '" + name + "'");

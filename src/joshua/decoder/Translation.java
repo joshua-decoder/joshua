@@ -22,8 +22,6 @@ import joshua.decoder.segment_file.Sentence;
 
 public class Translation {
   private Sentence source;
-  private String translation = null;
-  private double score;
 
   /**
    * This stores the output of the translation so we don't have to hold onto the hypergraph while we

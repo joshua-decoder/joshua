@@ -496,7 +496,7 @@ public class Decoder {
 
       /* Create the threads */
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
-        this.threadPool.put(new DecoderThread(this.grammarFactories, this.weights,
+        this.threadPool.put(new DecoderThread(this.grammarFactories, Decoder.weights,
             this.featureFunctions));
       }
 

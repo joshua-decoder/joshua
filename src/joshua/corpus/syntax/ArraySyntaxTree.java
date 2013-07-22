@@ -31,7 +31,6 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
   private boolean useBackwardLattice = true;
 
   private static final int MAX_CONCATENATIONS = 3;
-  private static final int MAX_CCG_SPAN = 5;
   private static final int MAX_LABELS = 100;
 
   public ArraySyntaxTree() {

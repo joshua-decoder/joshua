@@ -1,6 +1,5 @@
 package joshua.decoder.hypergraph;
 
-import java.util.List;
 import java.util.Stack;
 
 // example: (ROOT ([S] ([X] ([X] scientists completed ([X] for ([X] ([X] chromosome) related to ([X]
@@ -21,7 +20,6 @@ public class StringToTreeConverter {
 
       if (curChar == ')' && inputStr.charAt(i - 1) != ' ') {// end of a rule
         StringBuffer ruleString = new StringBuffer();
-        List<HGNode> antNodes = null;
 
         while (stack.empty() == false) {
           String cur = stack.pop();

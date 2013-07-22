@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
 
@@ -15,9 +14,6 @@ import joshua.decoder.ff.FeatureFunction;
  * @author Zhifei Li
  */
 public class BasicRuleCollection implements RuleCollection {
-
-  /** Logger for this class. */
-  private static final Logger logger = Logger.getLogger(BasicRuleCollection.class.getName());
 
   /**
    * Indicates whether the rules in this collection have been sorted based on the latest feature

@@ -96,7 +96,6 @@ public class ComputeNodeResult {
   /**
    * This is called from Cell.java when making the final transition to the goal state.
    */
-  @SuppressWarnings("deprecation")
   public static float computeFinalCost(List<FeatureFunction> featureFunctions,
       List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID) {
 
