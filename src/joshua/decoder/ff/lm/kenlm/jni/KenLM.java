@@ -3,6 +3,8 @@ package joshua.decoder.ff.lm.kenlm.jni;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.state_maintenance.KenLMState;
 
+import java.util.HashMap;
+
 /**
  * JNI wrapper for KenLM. This version of KenLM supports two use cases, implemented by the separate
  * feature functions KenLMFF and LanguageModelFF. KenLMFF uses the RuleScore() interface in
@@ -10,7 +12,7 @@ import joshua.decoder.ff.state_maintenance.KenLMState;
  * state by itself and just passes in the ngrams for scoring.
  * 
  * @author Kenneth Heafield
- * @author Matt Post <post@cs.jhu.edu
+ * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
@@ -20,6 +22,10 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   }
 
   private final long pointer;
+
+  // maps from sentence numbers to KenLM-side pools used to allocate state
+  private final HashMap<Integer, Long> poolMap = new HashMap<Integer, Long>();
+
   // this is read from the config file, used to set maximum order
   private final int ngramOrder;
   // inferred from model file (may be larger than ngramOrder)
@@ -37,11 +43,13 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native float prob(long ptr, int words[]);
 
-  private final static native StateProbPair probRule(long ptr, long words[], int sentId);
+  private final static native StateProbPair probRule(long ptr, long pool, long words[], int sentId);
 
   private final static native float probString(long ptr, int words[], int start);
 
-  private final static native void destroyPool(long modelPtr, int sentId);
+  private final static native synchronized long createPool();
+
+  private final static native synchronized void destroyPool(long poolPtr);
 
   public KenLM(int order, String file_name, boolean minimizing) {
     ngramOrder = order;
@@ -72,26 +80,36 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     return probString(pointer, words, start - 1);
   }
 
+  /**
+   * Destroys the pool created to allocate state for this sentence. Called from the
+   * {@link joshua.decoder.Translation} class after outputting the sentence or k-best list.
+   * 
+   * @param sentId
+   */
   public void destroyPool(int sentId) {
-    destroyPool(pointer, sentId);
+    if (poolMap.containsKey(sentId))
+      destroyPool(poolMap.get(sentId));
   }
 
   /**
    * This function is the bridge to the interface in kenlm/lm/left.hh, which has KenLM score the
    * whole rule. It takes a list of words and states retrieved from tail nodes (nonterminals in the
    * rule). Nonterminals have a negative value so KenLM can distinguish them. The sentence number is
-   * needed so KenLM knows which memory pool to use. When finished, it returns the updated KenLM state and the 
-   * LM probability incurred along this rule.
-   *
+   * needed so KenLM knows which memory pool to use. When finished, it returns the updated KenLM
+   * state and the LM probability incurred along this rule.
+   * 
    * @param words
    * @param sentId
    * @return
    */
   public StateProbPair prob(long[] words, int sentId) {
 
+    if (!poolMap.containsKey(sentId))
+      poolMap.put(sentId, createPool());
+
     StateProbPair pair = null;
     try {
-      pair = probRule(pointer, words, sentId);
+      pair = probRule(pointer, poolMap.get(sentId), words, sentId);
     } catch (NoSuchMethodError e) {
       e.printStackTrace();
       System.exit(1);
@@ -141,7 +159,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
   }
-  
+
   @Override
   public boolean isMinimizing() {
     return minimizing;

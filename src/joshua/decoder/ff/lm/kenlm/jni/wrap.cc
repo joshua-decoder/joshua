@@ -217,8 +217,6 @@ VirtualBase *ConstructModel(const char *file_name) {
 
 extern "C" {
 
-  __gnu_cxx::hash_map<int, util::Pool *> poolMap_;
-
 JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
     JNIEnv *env, jclass, jstring file_name) {
   const char *str = env->GetStringUTFChars(file_name, 0);
@@ -255,13 +253,16 @@ JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
   delete base;
 }
 
+JNIEXPORT long JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_createPool(
+    JNIEnv *env, jclass) {
+  return reinterpret_cast<long>(new util::Pool());
+}
+
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroyPool(
-    JNIEnv *env, jclass, jlong pointer, jint sentId) {
-  if (poolMap_.find(sentId) != poolMap_.end()) {
-    util::Pool * pool = poolMap_[sentId];
-    poolMap_.erase(sentId);
-    delete pool;
-  }
+    JNIEnv *env, jclass, jlong pointer) {
+  util::Pool * pool = reinterpret_cast<util::Pool*>(pointer);
+  pool->FreeAll();
+  delete pool;
 }
 
 JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_order(
@@ -312,18 +313,16 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
 }
 
 JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
-  JNIEnv *env, jclass, jlong pointer, jlongArray arr, jint sentId) {
+  JNIEnv *env, jclass, jlong pointer, jlong poolPtr, jlongArray arr, jint sentId) {
   jint length = env->GetArrayLength(arr);
   // GCC only.
   jlong values[length];
   env->GetLongArrayRegion(arr, 0, length, values);
 
-  // Make sure we have a pool
-  if (poolMap_.find(sentId) == poolMap_.end())
-    poolMap_[sentId] = new util::Pool();
+  util::Pool* pool = reinterpret_cast<util::Pool*>(poolPtr);
 
   // Compute the probability
-  lm::ngram::ChartState *outState = (lm::ngram::ChartState *)poolMap_[sentId]->Allocate(sizeof(lm::ngram::ChartState));
+  lm::ngram::ChartState *outState = (lm::ngram::ChartState *)pool->Allocate(sizeof(lm::ngram::ChartState));
   const VirtualBase *base = reinterpret_cast<const VirtualBase*>(pointer);
   float prob = base->ProbRule(values, values + length, *outState);
 
