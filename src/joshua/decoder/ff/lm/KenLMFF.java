@@ -1,6 +1,7 @@
 package joshua.decoder.ff.lm;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
@@ -19,6 +20,9 @@ import joshua.decoder.hypergraph.HGNode;
  * @author Juri Ganitkevitch <juri@cs.jhu.edu>
  */
 public class KenLMFF extends LanguageModelFF {
+
+  // maps from sentence numbers to KenLM-side pools used to allocate state
+  private static final ConcurrentHashMap<Integer, Long> poolMap = new ConcurrentHashMap<Integer, Long>();
 
   public KenLMFF(FeatureVector weights, String featureName, KenLM lm) {
     super(weights, featureName, lm);
@@ -54,14 +58,30 @@ public class KenLMFF extends LanguageModelFF {
       }
     }
 
+    if (!poolMap.containsKey(sentID))
+      poolMap.put(sentID, KenLM.createPool());
+
     // Get the probability of applying the rule and the new state
-    StateProbPair pair = ((KenLM) languageModel).prob(words, sentID);
+    StateProbPair pair = ((KenLM) languageModel).probRule(words, poolMap.get(sentID));
 
     // Record the prob
     acc.add(name, pair.prob);
 
     // Return the state
     return pair.state;
+  }
+
+  /**
+   * Destroys the pool created to allocate state for this sentence. Called from the
+   * {@link joshua.decoder.Translation} class after outputting the sentence or k-best list. Hosting
+   * this map here in KenLMFF statically allows pools to be shared across KenLM instances.
+   * 
+   * @param sentId
+   */
+  public void destroyPool(int sentId) {
+    if (poolMap.containsKey(sentId))
+      KenLM.destroyPool(poolMap.get(sentId));
+    poolMap.remove(sentId);
   }
 
   /**
@@ -76,10 +96,10 @@ public class KenLMFF extends LanguageModelFF {
   public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
       Accumulator acc) {
 
-//    KenLMState state = (KenLMState) tailNode.getDPState(getStateIndex());
+    // KenLMState state = (KenLMState) tailNode.getDPState(getStateIndex());
 
     // This is unnecessary
-    //acc.add(name, 0.0f);
+    // acc.add(name, 0.0f);
 
     // The state is the same since no rule was applied
     return new KenLMState();

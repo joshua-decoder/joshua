@@ -83,7 +83,7 @@ public class Translation {
      */
     for (FeatureFunction feature: featureFunctions) {
       if (feature instanceof KenLMFF) {
-        ((KenLM)((KenLMFF)feature).getLM()).destroyPool(getSourceSentence().id());
+        ((KenLMFF)feature).destroyPool(getSourceSentence().id());
         break;
       }
     }

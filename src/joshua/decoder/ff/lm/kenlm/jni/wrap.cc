@@ -59,6 +59,7 @@ struct Chart {
 
   ~Chart() {
     delete poolHash;
+    pool->FreeAll();
     delete pool;
   }
 
@@ -349,19 +350,18 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
 }
 
 JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
-  JNIEnv *env, jclass, jlong pointer, jlong chartPtr, jlongArray arr, jint sentId) {
+  JNIEnv *env, jclass, jlong pointer, jlong chartPtr, jlongArray arr) {
   jint length = env->GetArrayLength(arr);
   // GCC only.
   jlong values[length];
   env->GetLongArrayRegion(arr, 0, length, values);
-
-  Chart* chart = reinterpret_cast<Chart*>(chartPtr);
 
   // Compute the probability
   lm::ngram::ChartState outState;
   const VirtualBase *base = reinterpret_cast<const VirtualBase*>(pointer);
   float prob = base->ProbRule(values, values + length, outState);
 
+  Chart* chart = reinterpret_cast<Chart*>(chartPtr);
   lm::ngram::ChartState* outStatePtr = chart->put(outState);
 
   // Call back constructor to allocate a new instance, with an int argument
