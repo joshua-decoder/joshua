@@ -48,8 +48,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   private final static native float probString(long ptr, int words[], int start);
 
   private final static native long createPool();
-
-  private final static native void destroyPool(long poolPtr);
+  private final static native void destroyPool(long pointer);
 
   public KenLM(int order, String file_name, boolean minimizing) {
     ngramOrder = order;
@@ -127,8 +126,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     public KenLMState state = null;
     public float prob = 0.0f;
 
-    public StateProbPair(long state, long hash, float prob) {
-      this.state = new KenLMState(state, hash);
+    public StateProbPair(long state, float prob) {
+      this.state = new KenLMState(state);
       this.prob = prob;
     }
   }

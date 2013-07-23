@@ -38,6 +38,43 @@ template<> struct StaticCheck<true> {
 
 typedef StaticCheck<sizeof(jint) == sizeof(lm::WordIndex)>::StaticAssertionPassed FloatSize;
 
+typedef __gnu_cxx::hash_map<uint64_t, lm::ngram::ChartState*> PoolHash;
+
+/**
+ * A Chart bundles together a hash_map that maps ChartState signatures to a single object
+ * instantiated using a pool. This allows duplicate states to avoid allocating separate
+ * state objects at multiple places throughout a sentence, and also allows state to be
+ * shared across KenLMs for the same sentence.
+ */
+struct Chart {
+  // A cache for allocated chart objects
+  PoolHash* poolHash;
+  // Pool used to allocate new ones
+  util::Pool* pool;
+
+  Chart() {
+    poolHash = new PoolHash();
+    pool = new util::Pool();
+  }
+
+  ~Chart() {
+    delete poolHash;
+    delete pool;
+  }
+
+  lm::ngram::ChartState* put(const lm::ngram::ChartState& state) {
+    uint64_t hashValue = lm::ngram::hash_value(state);
+  
+    if (poolHash->find(hashValue) == poolHash->end()) {
+      lm::ngram::ChartState* pointer = (lm::ngram::ChartState *)pool->Allocate(sizeof(lm::ngram::ChartState));
+      *pointer = state;
+      (*poolHash)[hashValue] = pointer;
+    }
+
+    return (*poolHash)[hashValue];
+  }
+};
+
 // Vocab ids above what the vocabulary knows about are unknown and should
 // be mapped to that. 
 void MapArray(const std::vector<lm::WordIndex>& map, jint *begin, jint *end) {
@@ -234,7 +271,7 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
     env->DeleteLocalRef(local_chart_pair);
 
     // Get the Method ID of the constructor which takes an int
-    jmethodID chart_pair_init = env->GetMethodID(chart_pair, "<init>", "(JJF)V");
+    jmethodID chart_pair_init = env->GetMethodID(chart_pair, "<init>", "(JF)V");
     UTIL_THROW_IF(!chart_pair_init, util::Exception, "Failed to find init method");
 
     ret->RememberReturnMethod(chart_pair, chart_pair_init);
@@ -255,14 +292,13 @@ JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
 
 JNIEXPORT long JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_createPool(
     JNIEnv *env, jclass) {
-  return reinterpret_cast<long>(new util::Pool());
+  return reinterpret_cast<long>(new Chart());
 }
 
 JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroyPool(
     JNIEnv *env, jclass, jlong pointer) {
-  util::Pool * pool = reinterpret_cast<util::Pool*>(pointer);
-  pool->FreeAll();
-  delete pool;
+  Chart* chart = reinterpret_cast<Chart*>(pointer);
+  delete chart;
 }
 
 JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_order(
@@ -313,24 +349,23 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
 }
 
 JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
-  JNIEnv *env, jclass, jlong pointer, jlong poolPtr, jlongArray arr, jint sentId) {
+  JNIEnv *env, jclass, jlong pointer, jlong chartPtr, jlongArray arr, jint sentId) {
   jint length = env->GetArrayLength(arr);
   // GCC only.
   jlong values[length];
   env->GetLongArrayRegion(arr, 0, length, values);
 
-  util::Pool* pool = reinterpret_cast<util::Pool*>(poolPtr);
+  Chart* chart = reinterpret_cast<Chart*>(chartPtr);
 
   // Compute the probability
-  lm::ngram::ChartState *outState = (lm::ngram::ChartState *)pool->Allocate(sizeof(lm::ngram::ChartState));
+  lm::ngram::ChartState outState;
   const VirtualBase *base = reinterpret_cast<const VirtualBase*>(pointer);
-  float prob = base->ProbRule(values, values + length, *outState);
+  float prob = base->ProbRule(values, values + length, outState);
 
-  // Get the hash value
-  uint64_t hashValue = lm::ngram::hash_value(*outState);
+  lm::ngram::ChartState* outStatePtr = chart->put(outState);
 
   // Call back constructor to allocate a new instance, with an int argument
-  return env->NewObject(base->ChartPair(), base->ChartPairInit(), (long)outState, (long)hashValue, prob);
+  return env->NewObject(base->ChartPair(), base->ChartPairInit(), (long)outStatePtr, prob);
 }
 
 } // extern
