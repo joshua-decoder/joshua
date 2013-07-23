@@ -14,6 +14,7 @@ diff -u output.scores output.scores.gold > diff
 
 if [ $? -eq 0 ]; then
   echo PASSED
+  rm -rf output.scores diff output.filter log.filter
   exit 0
 else
   echo FAILED
