@@ -4,8 +4,6 @@ tm = thrax glue -1 glue-grammar
 #lm config
 lm = berkeleylm 3 false false 100 test.lm
 
-output-format = %i ||| %s
-
 #tm config
 default_non_terminal=X
 goalSymbol=GOAL
@@ -17,6 +15,8 @@ pop-limit = 100
 use_unique_nbest = true 
 include-align-index = false
 top-n = 5
+
+mark-oovs = false
 
 ###### model weights
 #lm order weight
