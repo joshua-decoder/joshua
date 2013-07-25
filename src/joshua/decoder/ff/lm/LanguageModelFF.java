@@ -193,7 +193,6 @@ public class LanguageModelFF extends StatefulFF {
     float transitionLogP = 0.0f;
 
     int[] left_context = null;
-    boolean first = false;
 
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
