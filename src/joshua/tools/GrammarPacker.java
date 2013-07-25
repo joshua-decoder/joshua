@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -46,6 +47,8 @@ public class GrammarPacker {
   private FeatureTypeAnalyzer types;
   private EncoderConfiguration encoderConfig;
 
+  private String dump;
+
   static {
     SLICE_SIZE = 1000000;
     DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
@@ -53,10 +56,11 @@ public class GrammarPacker {
   }
 
   public GrammarPacker(String grammar_filename, String config_filename, String output_filename,
-      String alignments_filename) throws IOException {
+      String alignments_filename, String featuredump_filename) throws IOException {
     this.labeled = true;
     this.grammar = grammar_filename;
     this.output = output_filename;
+    this.dump = featuredump_filename;
 
     // TODO: Always open encoder config? This is debatable.
     this.types = new FeatureTypeAnalyzer(true);
@@ -124,6 +128,12 @@ public class GrammarPacker {
     explore(grammar_reader);
 
     logger.info("Exploration pass complete. Freezing vocabulary and finalizing encoders.");
+    if (dump != null) {
+      PrintWriter dump_writer = new PrintWriter(dump);
+      dump_writer.println(types.toString());
+      dump_writer.close();
+    }
+
     types.inferTypes(this.labeled);
     logger.info("Type inference complete.");
 
@@ -494,6 +504,7 @@ public class GrammarPacker {
     String config_filename = null;
     String output_prefix = null;
     String alignments_filename = null;
+    String featuredump_filename = null;
 
     if (args.length < 1 || args[0].equals("-h")) {
       System.err.println("Usage: " + GrammarPacker.class.toString());
@@ -501,6 +512,7 @@ public class GrammarPacker {
       System.err.println("    -p packed_name      prefix for *.packed output directory");
       System.err.println("   [-c config_file      packing configuration file]");
       System.err.println("   [-a alignment_file   alignment_file]");
+      System.err.println("   [-d dump_file        dump feature stats]");
       System.err.println();
       System.exit(-1);
     }
@@ -514,6 +526,8 @@ public class GrammarPacker {
         config_filename = args[++i];
       } else if ("-a".equals(args[i]) && (i < args.length - 1)) {
         alignments_filename = args[++i];
+      } else if ("-d".equals(args[i]) && (i < args.length - 1)) {
+        featuredump_filename = args[++i];
       }
     }
     if (grammar_filename == null) {
@@ -550,7 +564,7 @@ public class GrammarPacker {
     }
 
     GrammarPacker packer = new GrammarPacker(grammar_filename, config_filename, output_filename,
-        alignments_filename);
+        alignments_filename, featuredump_filename);
     packer.pack();
   }
 

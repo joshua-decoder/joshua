@@ -178,8 +178,8 @@ public class Chart {
         int[] targetWords = { targetWord };
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
-          Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber(),
-              node.getNumber() + 1);
+          Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber() - 1,
+              node.getNumber());
           for (int label : labels) {
             BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0);
             oovRules.add(oovRule);
@@ -187,12 +187,12 @@ public class Chart {
             oovRule.estimateRuleCost(featureFunctions);
           }
 
-        } else {
-          BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
-          oovRules.add(oovRule);
-          oovGrammar.addRule(oovRule);
-          oovRule.estimateRuleCost(featureFunctions);
         }
+        // Always add default OOV rule, as parse labels might not match with glue grammar.
+        BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
+        oovRules.add(oovRule);
+        oovGrammar.addRule(oovRule);
+        oovRule.estimateRuleCost(featureFunctions);
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()
             .getNumber())) {

@@ -1,6 +1,7 @@
 package joshua.decoder.ff.lm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -75,7 +76,7 @@ public class LanguageModelFF extends StatefulFF {
 
     this.weight = weights.get(name);
   }
-  
+
   public NGramLanguageModel getLM() {
     return this.languageModel;
   }
@@ -97,9 +98,7 @@ public class LanguageModelFF extends StatefulFF {
 
   public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
       Accumulator acc) {
-
-    NgramDPState newState = computeFinalTransition((NgramDPState)tailNode.getDPState(stateIndex), acc);
-    return newState;
+    return computeFinalTransition((NgramDPState) tailNode.getDPState(stateIndex), acc);
   }
 
   /**
@@ -173,11 +172,11 @@ public class LanguageModelFF extends StatefulFF {
    */
   private NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
 
-    LinkedList<Integer> currentNgram = new LinkedList<Integer>();
+    int[] current = new int[this.ngramOrder];
+    int[] shadow = new int[this.ngramOrder];
+    int ccount = 0;
     float transitionLogP = 0.0f;
-
-    LinkedList<Integer> left = new LinkedList<Integer>();
-    LinkedList<Integer> right = new LinkedList<Integer>();
+    int[] left_context = null;
 
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
@@ -186,60 +185,55 @@ public class LanguageModelFF extends StatefulFF {
         int index = -(curID + 1);
 
         NgramDPState state = (NgramDPState) tailNodes.get(index).getDPState(stateIndex);
-        int[] leftContext = state.getLeftLMStateWords();
-        int[] rightContext = state.getRightLMStateWords();
-        
+        int[] left = state.getLeftLMStateWords();
+        int[] right = state.getRightLMStateWords();
+
         // Left context.
-        for (int i = 0; i < leftContext.length; i++) {
-          int t = leftContext[i];
-          currentNgram.add(t);
+        for (int i = 0; i < left.length; i++) {
+          current[ccount++] = left[i];
 
-          // Compute context
-          if (left.size() < ngramOrder - 1)
-            left.add(t);
+          if (left_context == null && ccount == this.ngramOrder - 1)
+            left_context = Arrays.copyOf(current, ccount);
 
-          if (currentNgram.size() == this.ngramOrder) {
-            // Compute the current word probability, and remove it.s
-            float prob = this.languageModel.ngramLogProbability(Support.toArray(currentNgram),
-                this.ngramOrder);
-            // System.err.println(String.format("NGRAM(%s) = %.5f",
-            // Vocabulary.getWords(currentNgram), prob));
+          if (ccount == this.ngramOrder) {
+            // Compute the current word probability, and remove it.
+            float prob = this.languageModel.ngramLogProbability(current, this.ngramOrder);
             transitionLogP += prob;
-            currentNgram.removeFirst();
+            System.arraycopy(current, 1, shadow, 0, this.ngramOrder - 1);
+            int[] tmp = current;
+            current = shadow;
+            shadow = tmp;
+            --ccount;
           }
         }
-
-        // Right context.
-        int tSize = currentNgram.size();
-        for (int i = 0; i < rightContext.length; i++) {
-          // replace context
-          currentNgram.set(tSize - rightContext.length + i, rightContext[i]);
-
-          right.add(rightContext[i]);
-          if (right.size() > ngramOrder - 1)
-            right.remove(0);
-        }
+        System.arraycopy(right, 0, current, ccount - right.length, right.length);
       } else { // terminal words
-        currentNgram.add(curID);
-        if (currentNgram.size() == this.ngramOrder) {
-          // compute the current word probablity, and remove it
-          float prob = this.languageModel.ngramLogProbability(Support.toArray(currentNgram),
-              this.ngramOrder);
-          transitionLogP += prob;
-          currentNgram.remove(0);
-        }
+        current[ccount++] = curID;
 
-        // Compute context
-        if (left.size() < ngramOrder - 1)
-          left.add(curID);
-        right.add(curID);
-        if (right.size() > ngramOrder - 1)
-          right.remove(0);
+        if (left_context == null && ccount == this.ngramOrder - 1)
+          left_context = Arrays.copyOf(current, ccount);
+
+        if (ccount == this.ngramOrder) {
+          // Compute the current word probability, and remove it.s
+          float prob = this.languageModel.ngramLogProbability(current, this.ngramOrder);
+          transitionLogP += prob;
+          System.arraycopy(current, 1, shadow, 0, this.ngramOrder - 1);
+          int[] tmp = current;
+          current = shadow;
+          shadow = tmp;
+          --ccount;
+        }
       }
     }
-
     acc.add(name, transitionLogP);
-    return new NgramDPState(Support.toArray(left), Support.toArray(right));
+
+    if (left_context != null) {
+      return new NgramDPState(left_context, Arrays.copyOfRange(current, ccount - this.ngramOrder
+          + 1, ccount));
+    } else {
+      int[] context = Arrays.copyOf(current, ccount);
+      return new NgramDPState(context, context);
+    }
   }
 
   /**
@@ -301,7 +295,7 @@ public class LanguageModelFF extends StatefulFF {
         startIndex = 1;
       }
       score = this.languageModel.sentenceLogProbability(
-        Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
+          Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
     }
 
     return score;
