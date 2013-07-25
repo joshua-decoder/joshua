@@ -110,7 +110,7 @@
 
   <target name="thrax" depends="set-joshua-home">
     <subant buildpath="thrax">
-      <property name="env.HADOOP" value="${env.JOSHUA}/${lib}" />
+      <property name="env.HADOOP" value="${lib}" />
       <property name="env.HADOOP_VERSION" value="0.20.203.0" />
       <property name="env.AWS_SDK" value="${env.JOSHUA}" />
       <property name="env.AWS_VERSION" value="1.1.3" />
@@ -149,7 +149,7 @@
   </target>
 
   <!-- Create a JAR file -->
-  <target name="jar" depends="java,thrax,set-joshua-home">
+  <target name="jar" depends="java,set-joshua-home">
     <jar destfile="${build}/joshua.jar" index="true">
       <fileset dir="${build}">
         <include name="**/*.class" />
@@ -177,7 +177,7 @@
   </target>
 
   <!-- Create a versioned release -->
-  <target name="release" depends="devel-clean, set-joshua-version, init">
+  <target name="release" depends="set-joshua-version, devel-clean, init, thrax">
     <exec executable="./scripts/support/make-release.sh">
       <arg value="${env.JOSHUA_VERSION}" />
     </exec>

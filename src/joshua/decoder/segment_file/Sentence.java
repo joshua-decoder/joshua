@@ -117,19 +117,19 @@ public class Sentence {
       if (isOOV) {
         String word = Vocabulary.word(label);
         int[][] chart = new int[word.length()][word.length()];
-        
+
         for (int width = 1; width <= word.length(); width++) {
           for (int i = 0; i <= word.length() - width; i++) {
             int j = i + width;
             
-//            chart[i][j]  
+            // TODO: finish this
+            chart[i][j] = 1;  
           }
         }
         
       }
       
-      Node<Integer> head = arc.getHead();
-
+      // Node<Integer> head = arc.getHead();
     }
   }
 

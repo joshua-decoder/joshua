@@ -5,11 +5,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -30,8 +28,6 @@ class Cell {
   // Private instance fields
   // ===============================================================
   private Chart chart = null;
-
-  public BeamPruner<HGNode> beamPruner = null;
 
   private int goalSymID;
 
@@ -58,12 +54,6 @@ class Cell {
   public Cell(Chart chart, int goalSymID) {
     this.chart = chart;
     this.goalSymID = goalSymID;
-
-    if (JoshuaConfiguration.useBeamAndThresholdPrune) {
-      PriorityQueue<HGNode> nodesHeap = new PriorityQueue<HGNode>(1, HGNode.logPComparator);
-      beamPruner = new BeamPruner<HGNode>(nodesHeap, JoshuaConfiguration.relative_threshold,
-          JoshuaConfiguration.max_n_items);
-    }
   }
 
   public Cell(Chart chart, int goal_sym_id, int constraint_symbol_id) {
@@ -129,12 +119,6 @@ class Cell {
   }
 
   /**
-   * in order to add a hyperedge into the chart, we need to (1) do the combination, and compute the
-   * logP (if pass the cube-prunning filter) (2) run through the beam and threshold pruning, which
-   * itself has two steps.
-   * */
-
-  /**
    * a note about pruning: when a hyperedge gets created, it first needs to pass through
    * shouldPruneEdge filter. Then, if it does not trigger a new node (i.e. will be merged to an old
    * node), then does not trigger pruningNodes. If it does trigger a new node (either because its
@@ -163,56 +147,47 @@ class Cell {
     double transitionLogP = result.getTransitionCost();
     double finalizedTotalLogP = result.getViterbiCost();
 
-    if (noPrune == false && beamPruner != null
-        && beamPruner.relativeThresholdPrune(pruningEstimate)) {// the hyperedge should be pruned
-      this.chart.nPreprunedEdges++;
-      newNode = null;
-    } else {
+    /**
+     * Here, the edge has passed pre-pruning. The edge will be added to the chart in one of three
+     * ways:
+     * 
+     * 1. If there is no existing node, a new one gets created and the edge is its only incoming
+     * hyperedge.
+     * 
+     * 2. If there is an existing node, the edge will be added to its list of incoming hyperedges,
+     * possibly taking place as the best incoming hyperedge for that node.
+     */
+
+    HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
+    newNode = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
+
+    /**
+     * each node has a list of hyperedges, need to check whether the node is already exist, if
+     * yes, just add the hyperedges, this may change the best logP of the node
+     * */
+    HGNode oldNode = this.nodesSigTbl.get(newNode.signature());
+    if (null != oldNode) { // have an item with same states, combine items
+      this.chart.nMerged++;
+
       /**
-       * Here, the edge has passed pre-pruning. The edge will be added to the chart in one of three
-       * ways:
-       * 
-       * 1. If there is no existing node, a new one gets created and the edge is its only incoming
-       * hyperedge.
-       * 
-       * 2. If there is an existing node, the edge will be added to its list of incoming hyperedges,
-       * possibly taking place as the best incoming hyperedge for that node.
-       */
+       * the position of oldItem in this.heapItems may change, basically, we should remove the
+       * oldItem, and re-insert it (linear time), this is too expense)
+       **/
+      if (newNode.getPruneLogP() > oldNode.getPruneLogP()) { // merge old to new: semiring plus
 
-      HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
-      newNode = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
-
-      /**
-       * each node has a list of hyperedges, need to check whether the node is already exist, if
-       * yes, just add the hyperedges, this may change the best logP of the node
-       * */
-      HGNode oldNode = this.nodesSigTbl.get(newNode.signature());
-      if (null != oldNode) { // have an item with same states, combine items
-        this.chart.nMerged++;
-
-        /**
-         * the position of oldItem in this.heapItems may change, basically, we should remove the
-         * oldItem, and re-insert it (linear time), this is too expense)
-         **/
-        if (newNode.getPruneLogP() > oldNode.getPruneLogP()) { // merge old to new: semiring plus
-
-          if (beamPruner != null) {
-            oldNode.setDead();// this.heapItems.remove(oldItem);
-            beamPruner.incrementDeadObjs();
-          }
-          newNode.addHyperedgesInNode(oldNode.hyperedges);
-          // This will update the HashMap, so that the oldNode is destroyed.
-          addNewNode(newNode, noPrune);
-        } else {// merge new to old, does not trigger pruningItems
-          oldNode.addHyperedgesInNode(newNode.hyperedges);
-        }
-
-      } else { // first time item
-        this.chart.nAdded++; // however, this item may not be used in the future due to pruning in
-                             // the hyper-graph
+        newNode.addHyperedgesInNode(oldNode.hyperedges);
+        // This will update the HashMap, so that the oldNode is destroyed.
         addNewNode(newNode, noPrune);
+      } else {// merge new to old, does not trigger pruningItems
+        oldNode.addHyperedgesInNode(newNode.hyperedges);
       }
+
+    } else { // first time item
+      this.chart.nAdded++; // however, this item may not be used in the future due to pruning in
+      // the hyper-graph
+      addNewNode(newNode, noPrune);
     }
+
     return newNode;
   }
 
@@ -220,7 +195,7 @@ class Cell {
     ensureSorted();
     return this.sortedNodes;
   }
-
+  
   Map<Integer, SuperNode> getSortedSuperItems() {
     ensureSorted();
     return this.superNodesTbl;
@@ -238,17 +213,6 @@ class Cell {
   private void addNewNode(HGNode node, boolean noPrune) {
     this.nodesSigTbl.put(node.signature(), node); // add/replace the item
     this.sortedNodes = null; // reset the list
-
-    if (beamPruner != null) {
-      if (noPrune == false) {
-        List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
-        this.chart.nPrunedItems += prunedNodes.size();
-        for (HGNode prunedNode : prunedNodes)
-          nodesSigTbl.remove(prunedNode.signature());
-      } else {
-        beamPruner.addOneObjInHeapWithoutPrune(node);
-      }
-    }
 
     // since this.sortedItems == null, this is not necessary because we will always call
     // ensure_sorted to reconstruct the this.tableSuperItems

@@ -21,10 +21,6 @@ public class KenLMState extends DPState {
     return state;
   }
 
-  public void setState(long state) {
-    this.state = state;
-  }
-
   @Override
   public int hashCode() {
     return (int) ((getState() >> 32) ^ getState());
@@ -37,6 +33,6 @@ public class KenLMState extends DPState {
 
   @Override
   public String toString() {
-    return String.format("[KenLMState 0x%d]", getState());
+    return String.format("[KenLMState %d]", getState());
   }
 }

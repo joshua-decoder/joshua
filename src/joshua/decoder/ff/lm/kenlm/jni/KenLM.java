@@ -10,7 +10,7 @@ import joshua.decoder.ff.state_maintenance.KenLMState;
  * state by itself and just passes in the ngrams for scoring.
  * 
  * @author Kenneth Heafield
- * @author Matt Post <post@cs.jhu.edu
+ * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
@@ -20,16 +20,17 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   }
 
   private final long pointer;
+
   // this is read from the config file, used to set maximum order
   private final int ngramOrder;
   // inferred from model file (may be larger than ngramOrder)
   private final int N;
+  // whether left-state minimization was requested
+  private boolean minimizing;
 
   private final static native long construct(String file_name);
 
   private final static native void destroy(long ptr);
-  
-  private final static native void deleteState(long ptr);
 
   private final static native int order(long ptr);
 
@@ -37,12 +38,16 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native float prob(long ptr, int words[]);
 
-  private final static native StateProbPair probRule(long ptr, long words[]);
+  private final static native StateProbPair probRule(long ptr, long pool, long words[]);
 
   private final static native float probString(long ptr, int words[], int start);
 
-  public KenLM(int order, String file_name) {
+  public final static native long createPool();
+  public final static native void destroyPool(long pointer);
+
+  public KenLM(int order, String file_name, boolean minimizing) {
     ngramOrder = order;
+    this.minimizing = minimizing;
 
     pointer = construct(file_name);
     N = order(pointer);
@@ -70,18 +75,22 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   }
 
   /**
-   * This takes a list of words + state objects (longs). It should be easy to implement using the
-   * interface in kenlm/lm/left.hh . Then it has to return the new state object wrapped up with the
-   * prob. That's it!
+   * This function is the bridge to the interface in kenlm/lm/left.hh, which has KenLM score the
+   * whole rule. It takes a list of words and states retrieved from tail nodes (nonterminals in the
+   * rule). Nonterminals have a negative value so KenLM can distinguish them. The sentence number is
+   * needed so KenLM knows which memory pool to use. When finished, it returns the updated KenLM
+   * state and the LM probability incurred along this rule.
    * 
    * @param words
+   * @param sentId
    * @return
    */
-  public StateProbPair prob(long[] words) {
+  public StateProbPair probRule(long[] words, long poolPointer) {
+
 
     StateProbPair pair = null;
     try {
-      pair = probRule(pointer, words);
+      pair = probRule(pointer, poolPointer, words);
     } catch (NoSuchMethodError e) {
       e.printStackTrace();
       System.exit(1);
@@ -89,7 +98,7 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
     return pair;
   }
-  
+
   /**
    * Inner class used to hold the results returned from KenLM with left-state minimization. Note
    * that inner classes have to be static to be accessible from the JNI!
@@ -101,11 +110,6 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     public StateProbPair(long state, float prob) {
       this.state = new KenLMState(state);
       this.prob = prob;
-    }
-
-    protected void finalize() throws Throwable {
-      if (state.getState() > 0)
-        KenLM.deleteState(state.getState());
     }
   }
 
@@ -131,9 +135,14 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
       throw new RuntimeException("Lower order not supported.");
     return prob(ngram);
   }
-    
+
   @Override
   public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
+  }
+
+  @Override
+  public boolean isMinimizing() {
+    return minimizing;
   }
 }

@@ -72,8 +72,6 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   }
 
   public float computeScore(Rule rule, List<HGNode> tailNodes) {
-    float similarity = 0.0f;
-    int count = 0;
     if (tailNodes == null || tailNodes.isEmpty())
       return 0;
 

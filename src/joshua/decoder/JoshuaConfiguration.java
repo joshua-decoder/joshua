@@ -30,8 +30,6 @@ public class JoshuaConfiguration {
   // old format specifying attributes of a single language model separately
   public static String lm_type = "kenlm";
   public static float lm_ceiling_cost = 100;
-  public static boolean use_left_equivalent_state = false;
-  public static boolean use_right_equivalent_state = false;
   public static int lm_order = 3;
 
   public static String lm_file = null;
@@ -83,20 +81,8 @@ public class JoshuaConfiguration {
   /* Sentence-level filtering. */
   public static boolean filter_grammar = false;
 
-  // pruning config
-
-  // Cube pruning is always on, with a span-level pop limit of 100.
-  // Beam and threshold pruning can be enabled, which also changes
-  // the nature of cube pruning so that the pop limit is no longer
-  // used. If both are turned off, exhaustive pruning takes effect.
+  /* The cube pruning pop limit. Set to 0 for exhaustive pruning. */
   public static int pop_limit = 100;
-  public static boolean useCubePrune = true;
-  public static boolean useBeamAndThresholdPrune = false;
-  public static double fuzz1 = 0.1;
-  public static double fuzz2 = 0.1;
-  public static int max_n_items = 30;
-  public static double relative_threshold = 10.0;
-  public static int max_n_rules = 50;
 
   /* Maximum sentence length */
   public static int maxlen = 200;
@@ -275,16 +261,6 @@ public class JoshuaConfiguration {
             lm_ceiling_cost = Float.parseFloat(fds[1]);
             logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 
-          } else if (parameter.equals(normalize_key("use_left_equivalent_state"))) {
-            use_left_equivalent_state = Boolean.valueOf(fds[1]);
-            logger
-                .finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
-
-          } else if (parameter.equals(normalize_key("use_right_equivalent_state"))) {
-            use_right_equivalent_state = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("use_right_equivalent_state: %s",
-                use_right_equivalent_state));
-
           } else if (parameter.equals(normalize_key("order"))) {
             lm_order = Integer.parseInt(fds[1]);
             logger.finest(String.format("g_lm_order: %s", lm_order));
@@ -333,26 +309,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("use_pos_labels"))) {
             use_pos_labels = Boolean.parseBoolean(fds[1]);
 
-          } else if (parameter.equals(normalize_key("fuzz1"))) {
-            fuzz1 = Double.parseDouble(fds[1]);
-            logger.finest(String.format("fuzz1: %s", fuzz1));
-
-          } else if (parameter.equals(normalize_key("fuzz2"))) {
-            fuzz2 = Double.parseDouble(fds[1]);
-            logger.finest(String.format("fuzz2: %s", fuzz2));
-
-          } else if (parameter.equals(normalize_key("max_n_items"))) {
-            max_n_items = Integer.parseInt(fds[1]);
-            logger.finest(String.format("max_n_items: %s", max_n_items));
-
-          } else if (parameter.equals(normalize_key("relative_threshold"))) {
-            relative_threshold = Double.parseDouble(fds[1]);
-            logger.finest(String.format("relative_threshold: %s", relative_threshold));
-
-          } else if (parameter.equals(normalize_key("max_n_rules"))) {
-            max_n_rules = Integer.parseInt(fds[1]);
-            logger.finest(String.format("max_n_rules: %s", max_n_rules));
-
           } else if (parameter.equals(normalize_key("use_unique_nbest"))) {
             use_unique_nbest = Boolean.valueOf(fds[1]);
             logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
@@ -393,18 +349,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("pop-limit"))) {
             pop_limit = Integer.valueOf(fds[1]);
             logger.finest(String.format("pop-limit: %s", pop_limit));
-
-          } else if (parameter.equals(normalize_key("useCubePrune"))) {
-            useCubePrune = Boolean.valueOf(fds[1]);
-            if (useCubePrune == false)
-              logger.warning("useCubePrune=false");
-            logger.finest(String.format("useCubePrune: %s", useCubePrune));
-
-          } else if (parameter.equals(normalize_key("useBeamAndThresholdPrune"))) {
-            useBeamAndThresholdPrune = Boolean.valueOf(fds[1]);
-            if (useBeamAndThresholdPrune == false)
-              logger.warning("useBeamAndThresholdPrune=false");
-            logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));
 
           } else if (parameter.equals(normalize_key("useGoogleLinearCorpusGain"))) {
             useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
@@ -453,6 +397,8 @@ public class JoshuaConfiguration {
                 || parameter.equals(normalize_key("add-combined-cost"))
                 || parameter.equals(normalize_key("use-tree-nbest"))
                 || parameter.equals(normalize_key("use-kenlm"))
+                || parameter.equals(normalize_key("useCubePrune"))
+                || parameter.equals(normalize_key("useBeamAndThresholdPrune"))
                 || parameter.equals(normalize_key("regexp-grammar"))) {  
               logger.warning(String.format("WARNING: ignoring deprecated parameter '%s'", fds[0]));
 
@@ -482,8 +428,7 @@ public class JoshuaConfiguration {
     // parameters. These combined lines are later processed in
     // JoshuaDecoder as part of the multiple LM support
     if (lms.size() == 0 && lm_file != null) {
-      String line = String.format("%s %d %b %b %.2f %s", lm_type, lm_order,
-          use_left_equivalent_state, use_right_equivalent_state, lm_ceiling_cost, lm_file);
+      String line = String.format("%s %d false false %.2f %s", lm_type, lm_order, lm_ceiling_cost, lm_file);
       lms.add(line);
     }
 
@@ -524,11 +469,6 @@ public class JoshuaConfiguration {
    * Checks for invalid variable configurations
    */
   public static void sanityCheck() {
-    if (pop_limit > 0 && useBeamAndThresholdPrune) {
-      System.err
-          .println("* FATAL: 'pop-limit' >= 0 is incompatible with 'useBeamAndThresholdPrune'");
-      System.exit(0);
-    }
   }
 
   /**

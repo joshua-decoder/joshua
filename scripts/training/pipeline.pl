@@ -1035,6 +1035,15 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
                     $TRAIN{target},
 										$lmfile);
   } else {
+    # Make sure it exists (doesn't build for OS X)
+    if (! -e "$JOSHUA/bin/lmplz") {
+      print "* FATAL: $JOSHUA/bin/lmplz (for building LMs) does not exist.\n";
+      print "  If you are on OS X, you need to use either SRILM (recommended) or BerkeleyLM,\n";
+      print "  triggered with '--lm-gen srilm' or '--lm-gen berkeleylm'. If you are on Linux,\n";
+      print "  you should run \"ant -f \$JOSHUA/build.xml kenlm\".\n";
+      exit 1;
+    }
+
     $cachepipe->cmd("kenlm",
                     "cat $TRAIN{target} | $JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR --verbose_header | gzip -9n > lm.gz",
                     $TRAIN{target},
@@ -1121,7 +1130,7 @@ if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/encoding",
@@ -1157,7 +1166,7 @@ my (@configstrings, @weightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER false false 100 $lmfile";
+  my $configstring = "lm = $LM_TYPE $LM_ORDER true false 100 $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
@@ -1343,7 +1352,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
-                    "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/encoding",
@@ -1561,7 +1570,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
   $cachepipe->cmd("pack-test",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                   $TEST_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/encoding",

@@ -2,9 +2,7 @@ package joshua.decoder.ff.lm;
 
 /**
  * An interface for new language models to implement. An object of this type is passed to
- * LanguageModelFF, which will handle all the dynamic programming and state maintinence.
- * 
- * All the function here should return LogP, not the cost.
+ * LanguageModelFF, which will handle all the dynamic programming and state maintenance.
  * 
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -35,16 +33,34 @@ public interface NGramLanguageModel {
    */
   boolean registerWord(String token, int id);
 
-
   /**
    * @param sentence the sentence to be scored
    * @param order the order of N-grams for the LM
    * @param startIndex the index of first event-word we want to get its probability; if we want to
-   *        get the prob for the whole sentence, then startIndex should be 1
+   *          get the prob for the whole sentence, then startIndex should be 1
    * @return the LogP of the whole sentence
    */
   float sentenceLogProbability(int[] sentence, int order, int startIndex);
 
+  /**
+   * Compute the probability of a single word given its context.
+   * 
+   * @param ngram
+   * @param order
+   * @return
+   */
   float ngramLogProbability(int[] ngram, int order);
+
   float ngramLogProbability(int[] ngram);
+
+  /**
+   * Returns true if the language model supports left-state minimization.
+   * 
+   * Currently this is only supported by KenLMFF (and not its parent implementating this interface,
+   * LanguageModelFF).
+   * 
+   * @return
+   */
+
+  boolean isMinimizing();
 }

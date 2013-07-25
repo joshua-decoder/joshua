@@ -68,13 +68,17 @@ public class LanguageModelFF extends StatefulFF {
     super(weights, featureName);
     this.languageModel = lm;
     this.ngramOrder = lm.getOrder();
-    this.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
-    this.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
+    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
+    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
 
     if (!weights.containsKey(name))
       System.err.println("* WARNING: no weight found for LanguageModelFF '" + name + "'");
 
     this.weight = weights.get(name);
+  }
+  
+  public NGramLanguageModel getLM() {
+    return this.languageModel;
   }
 
   /**
@@ -140,10 +144,6 @@ public class LanguageModelFF extends StatefulFF {
    */
   @Override
   public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
-    /* TODO: This does not work when addStart == true or addEnd == true */
-    boolean addStart = false;
-    boolean addEnd = false;
-
     NgramDPState state = (NgramDPState) currentState;
 
     float estimate = 0.0f;
@@ -151,8 +151,6 @@ public class LanguageModelFF extends StatefulFF {
 
     if (null != leftContext) {
       List<Integer> words = new ArrayList<Integer>();
-      if (addStart == true)
-        words.add(START_SYM_ID);
       for (int w : leftContext)
         words.add(w);
 
@@ -162,16 +160,6 @@ public class LanguageModelFF extends StatefulFF {
         skipStart = false;
       }
       estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
-    }
-
-    if (addEnd == true) {
-      int[] rightContext = state.getRightLMStateWords();
-      List<Integer> list = new ArrayList<Integer>(rightContext.length);
-      for (int w : rightContext)
-        list.add(w);
-      list.add(STOP_SYM_ID);
-      float tem = scoreChunkLogP(list, false, false);
-      estimate += tem;
     }
 
     return weight * estimate;
@@ -297,9 +285,9 @@ public class LanguageModelFF extends StatefulFF {
    */
   private float scoreChunkLogP(List<Integer> words, boolean considerIncompleteNgrams,
       boolean skipStart) {
-    if (words.size() <= 0) {
-      return 0.0f;
-    } else {
+
+    float score = 0.0f;
+    if (words.size() > 0) {
       int startIndex;
       if (!considerIncompleteNgrams) {
         startIndex = this.ngramOrder;
@@ -308,9 +296,10 @@ public class LanguageModelFF extends StatefulFF {
       } else {
         startIndex = 1;
       }
-      // System.err.println("Estimate: " + Vocabulary.getWords(words));
-      return (float) this.languageModel.sentenceLogProbability(
-          Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
+      score = this.languageModel.sentenceLogProbability(
+        Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
     }
+
+    return score;
   }
 }

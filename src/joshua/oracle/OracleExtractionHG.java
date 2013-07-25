@@ -97,6 +97,7 @@ public class OracleExtractionHG extends SplitHg {
   /*
    * for 919 sent, time_on_reading: 148797 time_on_orc_extract: 580286
    */
+  @SuppressWarnings({ "deprecation", "unused" })
   public static void main(String[] args) throws IOException {
 
     /*
@@ -114,8 +115,8 @@ public class OracleExtractionHG extends SplitHg {
       }
       System.exit(1);
     }
-    String f_hypergraphs = args[0].trim();
-    String f_rule_tbl = args[1].trim();
+//    String f_hypergraphs = args[0].trim();
+//    String f_rule_tbl = args[1].trim();
     String f_ref_files = args[2].trim();
     String f_orc_out = args[3].trim();
     int lm_order = Integer.parseInt(args[4].trim());
@@ -157,14 +158,15 @@ public class OracleExtractionHG extends SplitHg {
 
       // HyperGraph hg = dhg_read.readHyperGraph();
       HyperGraph hg = null;
-      if (hg == null) continue;
-      String orc_sent = null;
-      double orc_bleu = 0;
+      if (hg == null)
+        continue;
 
       // System.out.println("read disk hyp: " + (System.currentTimeMillis()-start_time));
       time_on_reading += System.currentTimeMillis() - start_time;
       start_time = System.currentTimeMillis();
 
+      String orc_sent = null;
+      double orc_bleu = 0;
       if (orc_extract_nbest) {
         Object[] res =
             orc_extractor.oracle_extract_nbest(kbest_extractor, hg, topN, do_ngram_clip_nbest,
@@ -192,7 +194,6 @@ public class OracleExtractionHG extends SplitHg {
     System.out.println("time_on_orc_extract: " + time_on_orc_extract);
     System.out.println("total running time: " + (System.currentTimeMillis() - start_time0));
   }
-
 
 
   // find the oracle hypothesis in the nbest list

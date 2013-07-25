@@ -44,8 +44,7 @@ public class DecoderThread extends Thread {
   // Constructor
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-      List<FeatureFunction> featureFunctions) 
-    throws IOException {
+      List<FeatureFunction> featureFunctions) throws IOException {
 
     this.grammarFactories = grammarFactories;
 
@@ -75,7 +74,8 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    logger.info(String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(), sentence.source()));
+    logger.info(String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(),
+        sentence.source()));
 
     if (sentence.target() != null)
       logger.info("Constraining to target sentence '" + sentence.target() + "'");
@@ -113,10 +113,13 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
+    /* Return the translation unless we're doing synchronous parsing. */
     if (!JoshuaConfiguration.parse || hypergraph == null) {
       return new Translation(sentence, hypergraph, featureFunctions);
     }
 
+    /*****************************************************************************************/
+    
     /*
      * Synchronous parsing.
      * 

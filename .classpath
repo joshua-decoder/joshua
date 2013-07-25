@@ -20,6 +20,5 @@
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-javadoc.jar"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-sources.jar"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5.jar"/>
-	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
 	<classpathentry kind="output" path="class"/>
 </classpath>

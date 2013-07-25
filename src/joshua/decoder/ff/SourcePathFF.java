@@ -19,18 +19,8 @@ public final class SourcePathFF extends StatelessFF {
   /*
    * This is a single-value feature template, so we cache the weight here.
    */
-  private float weight;
-
   public SourcePathFF(FeatureVector weights) {
     super(weights, "SourcePath", ""); // this sets name
-
-    // Find the weight for this feature in the weights hash and cache it.
-    if (weights.containsKey(name)) {
-      weight = weights.get(name);
-    } else {
-      System.err.println("* WARNING: no weight for feature '" + name + "'");
-      weight = 0.0f;
-    }
   }
   
   @Override

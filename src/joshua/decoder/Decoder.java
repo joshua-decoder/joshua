@@ -496,7 +496,7 @@ public class Decoder {
 
       /* Create the threads */
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
-        this.threadPool.put(new DecoderThread(this.grammarFactories, this.weights,
+        this.threadPool.put(new DecoderThread(this.grammarFactories, Decoder.weights,
             this.featureFunctions));
       }
 
@@ -520,10 +520,11 @@ public class Decoder {
       String tokens[] = lmLine.split("\\s+");
       String lm_type = tokens[0];
       int lm_order = Integer.parseInt(tokens[1]);
+      boolean minimizing = Boolean.parseBoolean(tokens[2]);
       String lm_file = tokens[5];
 
       if (lm_type.equals("kenlm")) {
-        KenLM lm = new KenLM(lm_order, lm_file);
+        KenLM lm = new KenLM(lm_order, lm_file, minimizing);
         this.languageModels.add(lm);
         Vocabulary.registerLanguageModel(lm);
         Vocabulary.id(JoshuaConfiguration.default_non_terminal);
@@ -546,7 +547,7 @@ public class Decoder {
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
       
-      if (lm instanceof KenLM) {
+      if (lm instanceof KenLM && lm.isMinimizing()) {
         this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM)lm));
       } else {
         this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));

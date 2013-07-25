@@ -75,8 +75,7 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     // determine whether the file is in its binary format
     boolean fileIsBinary = true;
     try {
-      ObjectInputStream in =
-          new ObjectInputStream(new BufferedInputStream(new FileInputStream(new File(lm_file))));
+      new ObjectInputStream(new BufferedInputStream(new FileInputStream(new File(lm_file))));
     } catch (StreamCorruptedException e) {
       fileIsBinary = false;
     } catch (IOException e) {
@@ -194,6 +193,8 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     return ngramLogProbability(ngram);
   }
 
-
-
+  @Override
+  public boolean isMinimizing() {
+    return false;
+  }
 }

@@ -6,7 +6,6 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.HyperEdge;
 
 /**
  * Stateful features contribute dynamic programming state. Unlike earlier versions of Joshua, the

@@ -1,4 +1,48 @@
-== 4.01 ==
+5.0 (July 31, 2013)
+===================
+
+The main features of this release are described in
+
+  "Joshua 5.0: Sparser, Better, Faster, Server"
+  Matt Post, Juri Ganitkevitch, Luke Orland, Jonny Weese, Yuan Cao, and Chris Callison-Burch. 
+  ACL Workshop on Statistical Machine Translation. August, 2013.
+
+This paper does not describe the incorporation of left-state minimization via KenLM, which
+provides important gains.
+
+5.0rc5 (21 July 2013)
+------
+
+- Rewrote cube pruning for clarity and cruft-removal, searches better
+
+- JNI bugfixes
+
+- Build file bugfix
+
+- Feature functions not re-run when feature functions not requested for output
+
+
+5.0rc4
+------
+
+- Added left-state minimization support in KenLM
+
+- Refactored the feature function interface
+
+- Various bugfixes in the pipeline and elsewhere
+
+5.0rc3
+------
+
+
+
+5.0rc2
+------
+
+
+
+4.01
+------
 
 - Bugfixes:
 
@@ -13,7 +57,8 @@
 - Updated berkeleyLM to version 1.1 (r463) with built-in thread-safe caching.
 
 
-== 4.0 (July 2, 2012) ===========================================
+4.0 (July 2, 2012) 
+==================
 
 The main features of this release are described in 
 

@@ -127,7 +127,7 @@ public class Node<Label> {
    * @param weight Weight of the new outgoing arc.
    * @param label Label of the new outgoing arc.
    */
-  public void addArc(Node<Label> destination, double weight, Label label) {
+  public void addArc(Node<Label> destination, float weight, Label label) {
     outgoingArcs.add(new Arc<Label>(this, destination, weight, label));
   }
 

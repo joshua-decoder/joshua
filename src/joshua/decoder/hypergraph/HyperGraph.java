@@ -6,7 +6,7 @@ import java.io.FileWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 import java.util.logging.Logger;
@@ -55,23 +55,23 @@ public class HyperGraph {
       e.printStackTrace();
     }
 
-    HashMap<HGNode,HGNode> allNodes = new HashMap<HGNode,HGNode>();
+    HashSet<HGNode> allNodes = new HashSet<HGNode>();
     Stack<HGNode> nodesToVisit = new Stack<HGNode>();
     nodesToVisit.push(this.goalNode);
     while (! nodesToVisit.empty()) {
       HGNode node = nodesToVisit.pop();
-      allNodes.put(node,node);
+      allNodes.add(node);
       if (node.getHyperEdges() != null)
         for (HyperEdge edge: node.getHyperEdges())
           if (edge.getTailNodes() != null)
             for (HGNode tailNode: edge.getTailNodes()) {
-              if (! allNodes.containsKey(tailNode))
+              if (! allNodes.contains(tailNode))
                 nodesToVisit.push(tailNode);
             }
     }
 
     ArrayList<HGNode> list = new ArrayList<HGNode>();
-    for (HGNode node: allNodes.keySet())
+    for (HGNode node: allNodes)
       list.add(node);
 
     Collections.sort(list, HGNode.spanComparator);
