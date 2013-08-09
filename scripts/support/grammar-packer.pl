@@ -34,6 +34,11 @@ sub usage {
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 
+if (! -e $grammar) {
+  print "* FATAL: Can't find grammar '$grammar'\n";
+  exit 1;
+}
+
 # Sort the grammar.
 my $sorted_grammar = "grammar.sorted.gz";
 if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
