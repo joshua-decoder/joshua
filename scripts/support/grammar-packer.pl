@@ -19,16 +19,15 @@ use Getopt::Std;
 
 my %opts = (
   m => '4g',    # amount of memory to give the packer
-  c => '',       # use alternate packer config
   T => '/state/partition1',
 );
-getopts("m:c:T:", \%opts);
+getopts("m:T:", \%opts);
 
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
 
 sub usage {
-  print "Usage: grammar-packer.pl [-m MEM] [-c packer-config] input-grammar [output-dir=grammar.packed\n";
+  print "Usage: grammar-packer.pl [-m MEM] [-T /path/to/tmp] input-grammar [output-dir=grammar.packed]\n";
   exit 1;
 }
 
