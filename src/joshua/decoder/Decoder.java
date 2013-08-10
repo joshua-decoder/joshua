@@ -635,7 +635,7 @@ public class Decoder {
       LineReader lineReader = new LineReader(fileName);
 
       for (String line : lineReader) {
-        line = line.replaceAll("\\s+", " ");
+        line = line.replaceAll("\\s+", " ").toLowerCase();
         
         if (line.equals("") || line.startsWith("#") || line.startsWith("//")
             || line.indexOf(' ') == -1)

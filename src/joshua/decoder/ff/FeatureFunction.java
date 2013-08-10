@@ -53,12 +53,12 @@ public abstract class FeatureFunction {
 
   public FeatureFunction(FeatureVector weights, String name) {
     this.weights = weights;
-    this.name = name;
+    this.name = name.toLowerCase();
   }
 
   public FeatureFunction(FeatureVector weights, String name, String args) {
     this.weights = weights;
-    this.name = name;
+    this.name = name.toLowerCase();
     this.argString = args;
 
     processArgs(this.argString);
