@@ -1,25 +1,8 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.hypergraph;
 
 import java.util.HashMap;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.JoshuaConfiguration;
-
 
 /**
  * during the pruning process, many Item/Deductions may not be explored at all due to the early-stop
@@ -41,7 +24,6 @@ public class HyperGraphPruning extends TrivialInsideOutside {
   double THRESHOLD_GLUE = 10;// if the merit is worse than the best_log_prob by this number, then
                              // prune
 
-
   int numSurvivedEdges = 0;
   int numSurvivedNodes = 0;
 
@@ -52,7 +34,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
     fixThresholdPruning = fixThreshold;
     THRESHOLD_GENERAL = thresholdGeneral;
     THRESHOLD_GLUE = thresholdGlue;
-    glueGrammarOwner = Vocabulary.id(JoshuaConfiguration.glue_owner);// TODO
+    glueGrammarOwner = Vocabulary.id("glue");// TODO
   }
 
   public void clearState() {

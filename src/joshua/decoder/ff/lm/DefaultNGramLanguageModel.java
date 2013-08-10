@@ -23,10 +23,17 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
   private static final Logger logger = Logger.getLogger(DefaultNGramLanguageModel.class.getName());
 
   protected final int ngramOrder;
+  
+  protected float ceiling_cost = -100;
 
   // ===============================================================
   // Constructors
   // ===============================================================
+  public DefaultNGramLanguageModel(int order, float ceiling_cost) {
+    this.ngramOrder = order;
+    this.ceiling_cost = ceiling_cost;
+  }
+
   public DefaultNGramLanguageModel(int order) {
     this.ngramOrder = order;
   }
@@ -108,8 +115,8 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
       // return 0;
     }
     float probability = ngramLogProbability_helper(ngram, order);
-    if (probability < -JoshuaConfiguration.lm_ceiling_cost) {
-      probability = -JoshuaConfiguration.lm_ceiling_cost;
+    if (probability < ceiling_cost) {
+      probability = ceiling_cost;
     }
     return probability; 
   }

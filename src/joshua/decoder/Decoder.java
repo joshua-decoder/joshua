@@ -602,9 +602,8 @@ public class Decoder {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       // TODO: this should initialize the grammar dynamically so that the goal symbol and default
       // non terminal match
-      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(
-          JoshuaConfiguration.glue_format, System.getenv().get("JOSHUA") + "/data/"
-              + "glue-grammar", JoshuaConfiguration.glue_owner,
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", 
+          String.format("%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
           JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
