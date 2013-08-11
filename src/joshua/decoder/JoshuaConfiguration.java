@@ -12,7 +12,7 @@ import joshua.util.io.LineReader;
 
 /**
  * Configuration file for Joshua decoder.
- * <p>
+ * 
  * When adding new features to Joshua, any new configurable parameters should be added to this
  * class.
  * 
@@ -76,17 +76,11 @@ public class JoshuaConfiguration {
    * translations). The string can include arbitrary text and also variables. The following
    * variables are available:
    * 
-   * <pre>
-   *   %i the 0-index sentence number 
-   *   %s the translated sentence
-   *   %S the translated sentence with some basic capitalization and denormalization 
-   *   %t the synchronous derivation 
-   *   %f the list of feature values (as name=value pairs) 
-   *   %c the model cost 
-   *   %w the weight vector 
-   *   %a the alignments between source and target words (currently unimplemented) 
-   *   %d a verbose, many-line version of the derivation
-   * </pre>
+   * <pre> %i the 0-index sentence number %s the translated sentence %S the translated sentence with
+   * some basic capitalization and denormalization %t the synchronous derivation %f the list of
+   * feature values (as name=value pairs) %c the model cost %w the weight vector %a the alignments
+   * between source and target words (currently unimplemented) %d a verbose, many-line version of
+   * the derivation </pre>
    */
   public static String outputFormat = "%i ||| %s ||| %f ||| %c";
 
@@ -119,6 +113,9 @@ public class JoshuaConfiguration {
 
   /* A list of the feature functions. */
   public static ArrayList<String> features = new ArrayList<String>();
+  
+  /* A list of weights found in the main config file (instead of in a separate weights file) */
+  public static ArrayList<String> weights = new ArrayList<String>();
 
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
   public static int server_port = 0;
@@ -340,11 +337,12 @@ public class JoshuaConfiguration {
           logger.info(String.format("    %s = '%s'", normalize_key(fds[0]), fds[1]));
 
         } else {
-          // Feature function. These are processed a bit later
-          // in JoshuaDecoder initialization, so we just set
-          // them aside for now.
+          /*
+           * Lines that don't have an equals sign and are not blank lines, empty lines, or comments,
+           * are feature values, which can be present in this file 
+           */
 
-          features.add(line);
+          weights.add(line);
         }
       }
     } finally {

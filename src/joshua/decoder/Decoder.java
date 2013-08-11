@@ -392,80 +392,19 @@ public class Decoder {
        * separate line that initializes the feature function. Here, we look for the old-style, and
        * (1) add the weight for it and (2) trigger the feature with a new-style line.
        */
-      for (int i = 0; i < JoshuaConfiguration.features.size(); i++) {
-        String featureLine = JoshuaConfiguration.features.get(i);
+      for (int i = 0; i < JoshuaConfiguration.weights.size(); i++) {
+        String pair[] = JoshuaConfiguration.weights.get(i).split("\\s+");
 
-        // System.err.println("PROCESSING FEATURE(" + featureLine + ")");
-
-        // Check if this is an old-style feature.
-        if (!featureLine.startsWith("feature_function")) {
-          String fields[] = featureLine.split("\\s+");
-          String type = fields[0].toLowerCase();
-
-          if (type.equals("tm")) {
-            String name = "tm_" + fields[1] + "_" + fields[2];
-            float weight = Float.parseFloat(fields[3]);
-
-            weights.put(name, weight);
-
-            // No feature_function lines are created for LMs
-            JoshuaConfiguration.features.remove(i);
-            i--;
-          } else if (type.equals("lm")) {
-            String name = "";
-            float weight = 0.0f;
-            if (fields.length == 3) {
-              name = "lm_" + fields[1];
-              weight = Float.parseFloat(fields[2]);
-            } else {
-              name = "lm_0";
-              weight = Float.parseFloat(fields[1]);
-            }
-
-            weights.put(name, weight);
-
-            // No feature_function lines are created for LMs
-            JoshuaConfiguration.features.remove(i);
-            i--;
-          } else if (type.equals("latticecost")) {
-            String name = "SourcePath";
-            float weight = Float.parseFloat(fields[1]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, "feature_function = " + name);
-          } else if (type.equals("arityphrasepenalty")) {
-            String name = "ArityPenalty";
-            String owner = fields[1];
-            int min = Integer.parseInt(fields[2]);
-            int max = Integer.parseInt(fields[3]);
-            float weight = Float.parseFloat(fields[4]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i,
-                String.format("feature_function = %s %s %d %d", name, owner, min, max));
-          } else if (type.equals("wordpenalty")) {
-            String name = "WordPenalty";
-            float weight = Float.parseFloat(fields[1]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-          } else if (type.equals("oovpenalty")) {
-            String name = "OOVPenalty";
-            float weight = Float.parseFloat(fields[1]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-          } else if (type.equals("edge-sim")) {
-            String name = "EdgePhraseSimilarity";
-            String host = fields[1];
-            int port = Integer.parseInt(fields[2]);
-            float weight = Float.parseFloat(fields[3]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i,
-                String.format("feature_function = %s %s %d", name, host, port));
-          }
+        /* Sanity check for old-style unsupported feature invocations. */
+        if (pair.length != 2) {
+          System.err.println("FATAL: Invalid feature weight line found in config file.");
+          System.err.println(String.format("The line was '%s'", JoshuaConfiguration.weights.get(i)));
+          System.err.println("You might be using an old version of the config file that is no longer supported");
+          System.err.println("Check joshua-decoder.org or email joshua_support@googlegroups.com for help");
+          System.exit(17);
         }
+        
+        weights.put(pair[0], Float.parseFloat(pair[1]));
       }
 
       // Initialize and load grammars.
