@@ -53,12 +53,12 @@ public abstract class FeatureFunction {
 
   public FeatureFunction(FeatureVector weights, String name) {
     this.weights = weights;
-    this.name = name.toLowerCase();
+    this.name = name;
   }
 
   public FeatureFunction(FeatureVector weights, String name, String args) {
     this.weights = weights;
-    this.name = name.toLowerCase();
+    this.name = name;
     this.argString = args;
 
     processArgs(this.argString);
@@ -234,7 +234,7 @@ public abstract class FeatureFunction {
     }
 
     public void add(String name, float value) {
-      score += value * weights.get(name);
+      score += value * weights.get(name.toLowerCase());
     }
 
     public float getScore() {
