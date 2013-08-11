@@ -52,10 +52,8 @@ my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -p $ou
 print STDERR "Packing with $cmd\n";
 my $retval = system($cmd);
 
-unlink($sorted_grammar);
-
 if ($retval == 0) {
-
+  unlink($sorted_grammar);
 } else {
   print STDERR "* FATAL: Couldn't pack the grammar.\n";
   exit 1;
