@@ -514,7 +514,13 @@ public class Decoder {
 
         GrammarFactory grammar = null;
         if (format.equals("packed") || new File(file).isDirectory()) {
-          grammar = new PackedGrammar(file, span_limit, owner);
+          try {
+            grammar = new PackedGrammar(file, span_limit, owner);
+          } catch (FileNotFoundException e) {
+            System.err.println(String.format("Couldn't load packed grammar from '%s'", file));
+            System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
+            System.exit(2);
+          }
 
         } else if (format.equals("thrax") || format.equals("regexp")) {
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
