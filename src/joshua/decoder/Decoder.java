@@ -379,19 +379,12 @@ public class Decoder {
 
       long pre_load_time = System.currentTimeMillis();
 
-      // Load the weights.
+      /*
+       * Weights can be listed in a separate file (denoted by parameter "weights-file") or directly
+       * in the Joshua config file. Config file values take precedent.
+       */
       Decoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
       
-      this.featureFunctions = new ArrayList<FeatureFunction>();
-
-      /*
-       * Backwards compatibility. Before initializing the grammars, the language models, or the
-       * other feature functions, we need to take a pass through features and their weights
-       * initialized in the old style, which was accomplished for many of the features simply by
-       * setting a weight. The new style puts all the weights in the weights file above, and has a
-       * separate line that initializes the feature function. Here, we look for the old-style, and
-       * (1) add the weight for it and (2) trigger the feature with a new-style line.
-       */
       for (int i = 0; i < JoshuaConfiguration.weights.size(); i++) {
         String pair[] = JoshuaConfiguration.weights.get(i).split("\\s+");
 
@@ -404,8 +397,11 @@ public class Decoder {
           System.exit(17);
         }
         
-        weights.put(pair[0], Float.parseFloat(pair[1]));
+        weights.put(pair[0].toLowerCase(), Float.parseFloat(pair[1]));
       }
+
+      // Do this before loading the grammars and the LM.
+      this.featureFunctions = new ArrayList<FeatureFunction>();
 
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
@@ -429,11 +425,11 @@ public class Decoder {
             batchGrammar.sortGrammar(this.featureFunctions);
           }
         }
-        logger.info(String.format("Grammar sorting took: %d seconds.",
+        logger.info(String.format("Grammar sorting took %d seconds.",
             (System.currentTimeMillis() - pre_sort_time) / 1000));
       }        
 
-      /* Create the threads */
+      // Create the threads
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
         this.threadPool.put(new DecoderThread(this.grammarFactories, Decoder.weights,
             this.featureFunctions));
@@ -558,17 +554,10 @@ public class Decoder {
   }
 
   /*
-   * This function reads the weights for the model. For backwards compatibility, weights may be
-   * listed in the Joshua configuration file, but the preferred method is to list the weights in a
-   * separate file, specified by the Joshua parameter "weights-file".
+   * This function reads the weights for the model. Feature names and their weights are listed one
+   * per line in the following format:
    * 
-   * Feature names and their weights are listed one per line in the following format
-   * 
-   * FEATURE NAME WEIGHT
-   * 
-   * Fields are space delimited. The first k-1 fields are concatenated with underscores to form the
-   * feature name (putting them there explicitly is preferred, but the concatenation is in place for
-   * backwards compatibility
+   * FEATURE_NAME WEIGHT
    */
   private FeatureVector readWeights(String fileName) {
     FeatureVector weights = new FeatureVector();
@@ -580,14 +569,15 @@ public class Decoder {
       LineReader lineReader = new LineReader(fileName);
 
       for (String line : lineReader) {
-        line = line.replaceAll("\\s+", " ").toLowerCase();
+        line = line.replaceAll("\\s+", " ");
         
         if (line.equals("") || line.startsWith("#") || line.startsWith("//")
             || line.indexOf(' ') == -1)
           continue;
 
-        String feature = line.substring(0, line.lastIndexOf(' ')).replaceAll(" ", "_");
-        Float value = Float.parseFloat(line.substring(line.lastIndexOf(' ')));
+        String tokens[] = line.split("\\s+");
+        String feature = tokens[0].toLowerCase();
+        Float value = Float.parseFloat(tokens[1]);
 
         weights.put(feature, value);
       }
@@ -606,15 +596,17 @@ public class Decoder {
   }
 
   /**
-   * This function supports two means of activating features. (1) The old format turns on a feature
-   * when it finds a line of the form "FEATURE OPTIONS WEIGHTS" (lines with an = sign, which signify
-   * configuration options). (2) The new format requires lines that are of the form
-   * "feature_function = FEATURE OPTIONS", and expects to find the weights loaded separately in the
-   * weights file.
+   * Feature functions are instantiated with a line of the form 
+   *
+   * <pre>
+   *   feature_function = FEATURE OPTIONS
+   * </pre>
+   * 
+   * Weights for features are listed separately.
    * 
    */
   private void initializeFeatureFunctions() {
-
+    
     for (String featureLine : JoshuaConfiguration.features) {
 
       // Get rid of the leading crap.
