@@ -250,7 +250,7 @@ public abstract class FeatureFunction {
     }
 
     public void add(String name, float value) {
-      features.put(name.toLowerCase(), features.get(name.toLowerCase()) + value);
+      features.put(name, features.get(name) + value);
     }
 
     public FeatureVector getFeatures() {
