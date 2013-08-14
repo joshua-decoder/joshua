@@ -92,7 +92,6 @@ my $JOSHUA_CONFIG_ORIG   = "$TUNECONFDIR/joshua.config";
 my %TUNEFILES = (
   'decoder_command' => "$TUNECONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
-  'weights'         => "$TUNECONFDIR/weights",
   'mert.config'     => "$TUNECONFDIR/mert.config",
   'pro.config'      => "$TUNECONFDIR/pro.config",
   'params.txt'      => "$TUNECONFDIR/params.txt",
@@ -1162,7 +1161,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 # For each language model, we need to create an entry in the Joshua
 # config file and in ZMERT's params.txt file.  We use %lm_strings to
 # build the corresponding string substitutions
-my (@configstrings, @weightstrings, @lmparamstrings);
+my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
@@ -1170,14 +1169,14 @@ for my $i (0..$#LMFILES) {
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
-  push (@weightstrings, $weightstring);
+  push (@lmweightstrings, $weightstring);
 
   my $lmparamstring = "lm_$i        |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
   push (@lmparamstrings, $lmparamstring);
 }
 
 my $lmlines   = join($/, @configstrings);
-my $lmweights = join($/, @weightstrings);
+my $lmweights = join($/, @lmweightstrings);
 my $lmparams  = join($/, @lmparamstrings);
 
 my (@tmparamstrings, @tmweightstrings);
@@ -1232,8 +1231,6 @@ for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
 
-  my $weights_file = get_absolute_path("$tunedir/weights",$RUNDIR);
-
   foreach my $key (keys %TUNEFILES) {
 		my $file = $TUNEFILES{$key};
 		open FROM, $file or die "can't find file '$file'";
@@ -1248,7 +1245,6 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
-      s/<WEIGHTS_FILE>/$weights_file/g;
       s/<FEATURE_FUNCTIONS>/$feature_functions/g;
 			s/<LATTICEWEIGHT>/$latticeweight/g;
 			s/<LATTICEPARAM>/$latticeparam/g;
@@ -1285,20 +1281,20 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		$cachepipe->cmd("mert-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
-										"$tunedir/weights.ZMERT.final",
+										"$tunedir/joshua.config.ZMERT.final",
 										"$tunedir/decoder_command",
 										"$tunedir/mert.config",
 										"$tunedir/params.txt");
-		system("ln -sf weights.ZMERT.final $tunedir/weights.final");
+		system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
-										"$tunedir/weights.PRO.final",
+										"$tunedir/joshua.config.PRO.final",
 										"$tunedir/decoder_command",
 										"$tunedir/pro.config",
 										"$tunedir/params.txt");
-		system("ln -sf weights.PRO.final $tunedir/weights.final");
+		system("ln -sf joshua.config.PRO.final $tunedir/joshua.config.final");
   } elsif ($TUNER eq "mira") {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
@@ -1309,7 +1305,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
                     "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
-                    "$tunedir/weights.final");
+                    "$tunedir/joshua.config.final");
   }
 
   # Go to the next tuning run if tuning is the last step.
@@ -1430,14 +1426,9 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
-									"$tunedir/joshua.config",
+                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs true -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
+									"$tunedir/joshua.config.final",
 									"$testrun/joshua.config");
-
-  $cachepipe->cmd("test-joshua-weights-from-tune-$run",
-									"cp $tunedir/weights.final $testrun/weights",
-									"$tunedir/weights.final",
-									"$testrun/weights");
 
   $cachepipe->cmd("test-decode-$run",
 									"$testrun/decoder_command",
@@ -1592,15 +1583,9 @@ print TO "cat $TEST{source} | \$JOSHUA/bin/joshua-decoder -m $JOSHUA_MEM -thread
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
-my $weights_file = dirname($TUNEFILES{'joshua.config'}) . "/weights";
-$cachepipe->cmd("test-$NAME-copy-weights",
-                "cp $weights_file $testrun/weights",
-                $weights_file,
-                "$testrun/weights");
-
 # copy over the config file
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 
