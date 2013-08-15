@@ -77,10 +77,12 @@ public class JoshuaConfiguration {
    * variables are available:
    * 
    * <pre> 
-   *   %i the 0-index sentence number 
+   *   %i the 0-indexed sentence number 
+   *   %e the source string
    *   %s the translated sentence 
    *   %S the translated sentence with some basic capitalization and denormalization 
-   *   %t the synchronous derivation %f the list of feature values (as name=value pairs) 
+   *   %t the synchronous derivation
+   *   %f the list of feature values (as name=value pairs) 
    *   %c the model cost 
    *   %w the weight vector 
    *   %a the alignments between source and target words (currently unimplemented) 
@@ -198,11 +200,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);
 
-          } else if (parameter.equals(normalize_key("dump-hypergraph"))) {
-            hypergraphFilePattern = fds[1].trim();
-            logger
-                .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
-
           } else if (parameter.equals(normalize_key("parse"))) {
             parse = Boolean.parseBoolean(fds[1]);
             logger.finest(String.format("parse: %s", parse));
@@ -212,12 +209,12 @@ public class JoshuaConfiguration {
             logger
                 .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
-          } else if (parameter.equals(normalize_key("default_non_terminal"))) {
+          } else if (parameter.equals(normalize_key("default-non-terminal"))) {
             default_non_terminal = "[" + fds[1].trim() + "]";
             // default_non_terminal = fds[1].trim();
             logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 
-          } else if (parameter.equals(normalize_key("goalSymbol"))) {
+          } else if (parameter.equals(normalize_key("goal-symbol"))) {
             goal_symbol = fds[1].trim();
 
             // If the goal symbol was not enclosed in square brackets, then add them
