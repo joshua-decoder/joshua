@@ -1432,7 +1432,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   $cachepipe->cmd("test-decode-$run",
 									"$testrun/decoder_command",
-									"$testrun/decoder_command",
+                  $TEST{source},
 									"$DATA_DIRS{test}/grammar.glue",
 									$TEST_GRAMMAR_FILE,
 									"$testrun/test.output.nbest");
@@ -1592,7 +1592,7 @@ $cachepipe->cmd("test-$NAME-copy-config",
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
 								"$testrun/decoder_command",
-								"$testrun/decoder_command",
+                $TEST{source},
 								$TEST_GRAMMAR,
 								$GLUE_GRAMMAR_FILE,
 								"$testrun/test.output.nbest");
