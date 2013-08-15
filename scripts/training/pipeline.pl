@@ -1389,7 +1389,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # If we're decoding a lattice, also output the source side path we chose
   my $joshua_args = $JOSHUA_ARGS;
   if ($DOING_LATTICES) {
-    $joshua_args .= " -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
+    $joshua_args .= " -maxlen 0 -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
   }
 
   foreach my $key (qw(decoder_command)) {
