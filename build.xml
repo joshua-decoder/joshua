@@ -372,7 +372,7 @@
     <property name="ivy.default.ivy.user.dir" value="${env.JOSHUA}/lib" />
     <ivy:configure file="${env.JOSHUA}/lib/ivysettings.xml" />
     <ivy:resolve file="${env.JOSHUA}/lib/ivy.xml" />
-    <ivy:retrieve />
+    <ivy:retrieve type="jar" />
   </target>
 
 </project>
