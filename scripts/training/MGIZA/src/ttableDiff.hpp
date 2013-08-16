@@ -31,6 +31,11 @@
 #include "types.h"
 
 using namespace std;
+#ifdef WIN32
+		typedef hash_map<wordPairIds, COUNT, hashpair> wordpair_hash;
+#else
+		typedef hash_map<wordPairIds, COUNT, hashpair, equal_to<wordPairIds> > wordpair_hash;
+#endif
 /*!
 This class is meant to create a difference file in order to make
 GIZA paralell.
@@ -42,7 +47,7 @@ private:
 		INT32 noFrenchWords;   // total number of unique target words
 		/*!
 		Store only the counting*/	
-		hash_map<wordPairIds, COUNT, hashpair, equal_to<wordPairIds> > ef;
+		wordpair_hash ef;
 
 public:
 		INT32 SaveToFile(const char* filename){
@@ -50,7 +55,7 @@ public:
 			if(!ofs.is_open()){
 				return -1;
 			}else{
-				typename hash_map<wordPairIds, COUNT, hashpair, equal_to<wordPairIds> >::iterator it;
+				wordpair_hash::iterator it;
 				for( it = ef.begin() ; it != ef.end(); it++){
 					ofs << it->first.first << " " << it->first.second << " "
 						<< it->second << std::endl;
@@ -85,7 +90,7 @@ public:
 	
 		COUNT * GetPtr(WordIndex e, WordIndex f){
 			// look up this pair and return its position
-			typename hash_map<wordPairIds, COUNT, hashpair, equal_to<wordPairIds> >::iterator i = ef.find(wordPairIds(e, f)); 
+			wordpair_hash::iterator i = ef.find(wordPairIds(e, f)); 
 			if(i != ef.end())  // if it exists, return a pointer to it.
 				return(&((*i).second));
 			else return(0) ; // else return NULL pointer
@@ -100,8 +105,7 @@ public:
 		}
 	
 		INT32 AugmentTTable(tmodel<COUNT,PROB>& ttable){
-			typename hash_map<wordPairIds, COUNT, hashpair, 
-				equal_to<wordPairIds> >::iterator it;
+			wordpair_hash::iterator it;
 			for( it = ef.begin() ; it != ef.end(); it++){
 				ttable.incCount(it->first.first,it->first.second,it->second);
 			}
