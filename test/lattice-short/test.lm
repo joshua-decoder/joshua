@@ -7,7 +7,7 @@ ngram 3=25
 \1-grams:
 -0.6811531	</s>
 -99	<s>	-1.444227
--0.9510576	a	-1.212613
+-0.9510576	A	-1.212613
 -2.273277	control	-0.1995491
 -2.273277	day	-0.1995491
 -1.982712	green	-0.3496768
@@ -28,7 +28,7 @@ ngram 3=25
 -1.446277	yellow	-0.7813725
 
 \2-grams:
--1.146128	<s> a
+-1.146128	<s> A
 -1.623249	<s> green
 -1.623249	<s> mine
 -1.623249	<s> money
@@ -39,18 +39,18 @@ ngram 3=25
 -1.021189	<s> the	0.3575113
 -0.4191293	<s> there	0
 -1.146128	<s> this
--1.361728	a green
--0.6627578	a house	-0.154902
--0.8846066	a mouse	0.2218488
--0.4586379	a small	-0.771571
--0.6627578	a yellow	-0.2730013
+-1.361728	A green
+-0.6627578	A house	-0.154902
+-0.8846066	A mouse	0.2218488
+-0.4586379	A small	-0.771571
+-0.6627578	A yellow	-0.2730013
 -0.30103	control </s>
 -0.30103	day </s>
 -0.4771213	green </s>
 -0.4771213	green mouse
 -0.1180993	house </s>
 -0.7201593	house is	-0.6755285
--0.2071255	is a	0.1144242
+-0.2071255	is A	0.1144242
 -1.462398	is mine
 -1.161368	is money	0.1249388
 -1.462398	is none
@@ -62,7 +62,7 @@ ngram 3=25
 -1	mouse is
 -0.30103	none </s>
 -0.60206	none is
--0.60206	of a
+-0.60206	of A
 -0.60206	of control
 -0.60206	of the
 -0.4771213	one </s>
@@ -84,30 +84,30 @@ ngram 3=25
 -0.60206	yellow small
 
 \3-grams:
--1.271663	is a house
--0.9542425	is a mouse
--0.3521825	is a small
--0.5563025	is a yellow
--0.07918125	a house </s>
+-1.271663	is A house
+-0.9542425	is A mouse
+-0.3521825	is A small
+-0.5563025	is A yellow
+-0.07918125	A house </s>
 -0.3222193	small house </s>
 -0.6184504	the house is
 -0.4935117	yellow house </s>
 -0.09691001	house is small
--0.39794	that is a
--0.05799195	there is a
+-0.39794	that is A
+-0.05799195	there is A
 -0.1760913	is money </s>
--0.1760913	a mouse </s>
+-0.1760913	A mouse </s>
 -0.4935117	small mouse </s>
 -0.1760913	yellow mouse </s>
 -0.4935117	<s> out of
--0.3521825	a small house
--0.6532125	a small mouse
--0.6532125	a small yellow
+-0.3521825	A small house
+-0.6532125	A small mouse
+-0.6532125	A small yellow
 -0.3222193	is small </s>
 -0.07918125	<s> that is
 -0.6184504	<s> the house
 -0.02632894	<s> there is
--0.39794	a yellow house
--0.39794	a yellow small
+-0.39794	A yellow house
+-0.39794	A yellow small
 
 \end\

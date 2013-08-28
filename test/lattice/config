@@ -16,23 +16,23 @@ use_unique_nbest = true
 include-align-index = false
 top_n = 300
 
+feature-function = OOVPenalty
+feature-function = WordPenalty
+feature-function = SourcePath
+
 ###### model weights
 #lm order weight
-lm 0 1.0
+lm_0 1.0
 
 #phrasemodel owner column(0-indexed) weight
-phrasemodel pt 0 1.0
-phrasemodel pt 1 0.5
-phrasemodel pt 2 0.5
+tm_pt_0 1.0
+tm_pt_1 0.5
+tm_pt_2 0.5
 
-phrasemodel glue 0 0.0
-
-#arityphrasepenalty owner start_arity end_arity weight
-#arityphrasepenalty pt 0 0 1.0
-#arityphrasepenalty pt 1 2 -1.0
+tm_glue_0 0.0
 
 #wordpenalty weight
 wordpenalty -1.0
-latticecost 1.0
+sourcepath 1.0
 
 oovpenalty -100

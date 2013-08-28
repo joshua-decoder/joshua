@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.corpus.Vocabulary;
@@ -18,7 +19,6 @@ import joshua.decoder.chart_parser.SourcePath;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class OOVFF extends StatelessFF {
-  private float weight = 0.0f;
   private int ownerID = -1;
 
   public OOVFF(FeatureVector weights) {
@@ -26,8 +26,6 @@ public class OOVFF extends StatelessFF {
 
     if (!weights.containsKey(name))
       System.err.println("* WARNING: No weight for OOVPenalty found.");
-    else
-      weight = weights.get(name);
 
     ownerID = Vocabulary.id("oov");
   }
@@ -38,23 +36,12 @@ public class OOVFF extends StatelessFF {
    * cached when the feature was created.
    */
   @Override
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+    
     if (rule != null && this.ownerID == rule.getOwner())
-      return weight;
+      acc.add(name, 1.0f);
 
-    return 0.0f;
-  }
-
-  /**
-   * If the supplied rule is an OOV rule, we fire the OOVPenalty feature with a value of 1.
-   */
-  @Override
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID) {
-    if (rule != null && this.ownerID == rule.getOwner())
-      return new FeatureVector(name, 1.0f);
-
-    return new FeatureVector();
+    return null;
   }
 }

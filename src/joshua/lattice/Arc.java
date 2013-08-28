@@ -16,7 +16,7 @@ public class Arc<Label> {
    * variable.
    */
   // TODO should be a vector of costs
-  private final double cost;
+  private final float cost;
 
   /**
    * Node where this arc ends. Package-private scope so that Node and Lattice can quickly access
@@ -44,7 +44,7 @@ public class Arc<Label> {
    * @param cost The cost of this arc.
    * @param label The label associated with this arc.
    */
-  public Arc(Node<Label> tail, Node<Label> head, double cost, Label label) {
+  public Arc(Node<Label> tail, Node<Label> head, float cost, Label label) {
     this.tail = tail;
     this.head = head;
     this.cost = cost;
@@ -57,7 +57,7 @@ public class Arc<Label> {
    * @return The cost of this arc.
    */
   // TODO should support indexing for multiple costs associated with each arc
-  public double getCost() {
+  public float getCost() {
     return cost;
   }
 

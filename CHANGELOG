@@ -1,19 +1,42 @@
-== 4.01 ==
+5.0 (August 16, 2013)
+===================
 
-- Bugfixes:
+The main features of this release are described in
 
-   - If the training data were split into 10 or more pieces, the alignments were combined
-     in the wrong order (due to a lexicographic instead of numeric sort on a file glob).
+  "Joshua 5.0: Sparser, Better, Faster, Server"
+  Matt Post, Juri Ganitkevitch, Luke Orland, Jonny Weese, Yuan Cao, and Chris Callison-Burch. 
+  ACL Workshop on Statistical Machine Translation. August, 2013.
+  www.statmt.org/wmt13/pdf/WMT26.pdf
 
-   - Removed "thrax" dependency from "all" target
+- Sparse feature implementation
 
-   - Fixed bug in MERT and PRO that waited for all the decoder STDOUT before moving on
-     to STDERR.  With large enough dev sets, this could hang indefinitely.
+  Joshua now uses sparse features natively, with support for (hundreds of) thousands of
+  features and large-scale discriminative tuning via PRO (included) or kbMIRA (via Moses).
 
-- Updated berkeleyLM to version 1.1 (r463) with built-in thread-safe caching.
+- Significant performance improvements
+
+  Joshua is up to 6 times faster than the previous release. It scales to many threads
+  easily, and the packed grammar and amortized sorting virtually remove model loading times.
+
+- Added left-state LM minimization support (via KenLM)
+
+  Tests show that Joshua has parity with Moses in terms of speed and search.
+
+- Thrax 2.0
+
+  Thrax 2.0 is significantly faster, uses less disk space, and has been tested on corpora
+  of one hundred million sentence pairs.
+
+- Server
+
+  Joshua now includes a multithreaded TCP/IP server with round-robin scheduling among
+  connections.
+
+- Many, may bugfixes
 
 
-== 4.0 (July 2, 2012) ===========================================
+4.0 (July 2, 2012) 
+==================
 
 The main features of this release are described in 
 

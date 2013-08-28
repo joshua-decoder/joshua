@@ -3,6 +3,7 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
@@ -18,29 +19,15 @@ public final class SourcePathFF extends StatelessFF {
   /*
    * This is a single-value feature template, so we cache the weight here.
    */
-  private float weight;
-
   public SourcePathFF(FeatureVector weights) {
     super(weights, "SourcePath", ""); // this sets name
-
-    // Find the weight for this feature in the weights hash and cache it.
-    if (weights.containsKey(name)) {
-      weight = weights.get(name);
-    } else {
-      System.err.println("* WARNING: no weight for feature '" + name + "'");
-      weight = 0.0f;
-    }
   }
   
   @Override
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    return new FeatureVector(name, sourcePath.getPathCost());
-  }
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
 
-  @Override
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    return weight * sourcePath.getPathCost();
+    acc.add(name,  sourcePath.getPathCost());
+    return null;
   }
 }

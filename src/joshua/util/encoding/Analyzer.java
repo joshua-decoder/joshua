@@ -167,6 +167,13 @@ public class Analyzer {
     return PrimitiveFloatEncoder.FLOAT;
   }
 
+  public String toString(String label) {
+    StringBuilder sb = new StringBuilder();
+    for (float val : histogram.keySet())
+      sb.append(label + "\t" + String.format("%.5f", val) + "\t" + histogram.get(val) + "\n");
+    return sb.toString();
+  }
+  
   public static void main(String[] args) throws IOException {
     LineReader reader = new LineReader(args[0]);
     ArrayList<Float> s = new ArrayList<Float>();

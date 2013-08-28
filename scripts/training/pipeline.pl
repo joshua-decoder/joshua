@@ -32,6 +32,11 @@ use File::Temp qw[:mktemp];
 use CachePipe;
 # use Thread::Pool;
 
+# Hadoop uses a stupid hacker trick to change directories, but (per Lane Schwartz) if CDPATH
+# contains ".", it triggers the printing of the directory, which kills the stupid hacker trick.
+# Thus we undefine CDPATH to ensure this doesn't happen.
+delete $ENV{CDPATH};
+
 my $HADOOP = $ENV{HADOOP};
 my $MOSES = $ENV{MOSES};
 delete $ENV{GREP_OPTIONS};
@@ -87,7 +92,6 @@ my $JOSHUA_CONFIG_ORIG   = "$TUNECONFDIR/joshua.config";
 my %TUNEFILES = (
   'decoder_command' => "$TUNECONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
-  'weights'         => "$TUNECONFDIR/weights",
   'mert.config'     => "$TUNECONFDIR/mert.config",
   'pro.config'      => "$TUNECONFDIR/pro.config",
   'params.txt'      => "$TUNECONFDIR/params.txt",
@@ -163,7 +167,7 @@ my $DO_PREPARE_CORPORA = 1;
 my $OPTIMIZER_RUNS = 1;
 
 # what to use to create language models ("berkeleylm" or "srilm")
-my $LM_GEN = "berkeleylm";
+my $LM_GEN = "kenlm";
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -185,6 +189,9 @@ my $MIRA_ITERATIONS = 8;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
+
+# Allows the user to set a temp dir for various tasks
+my $TMPDIR = "/tmp";
 
 my $retval = GetOptions(
   "readme=s"    => \$README,
@@ -245,6 +252,7 @@ my $retval = GetOptions(
   "hadoop=s"          => \$HADOOP,
   "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
+  "tmp=s"             => \$TMPDIR,
 );
 
 if (! $retval) {
@@ -446,8 +454,8 @@ if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
   exit 1;
 }
 
-if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm") {
-  print "* FATAL: lm generating code (--lm-gen) must be one of 'berkeleylm' (default) or 'srilm'\n";
+if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm" and $LM_GEN ne "kenlm") {
+  print "* FATAL: lm generating code (--lm-gen) must be one of 'kenlm' (default), 'berkeleylm', or 'srilm'\n";
   exit 1;
 }
 
@@ -1018,11 +1026,27 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 		my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 		$cachepipe->cmd("srilm",
 										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target} -lm lm.gz",
+                    $TRAIN{target},
 										$lmfile);
-  } else {
+  } elsif ($LM_GEN eq "berkeleylm") {
 		$cachepipe->cmd("berkeleylm",
 										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
+                    $TRAIN{target},
 										$lmfile);
+  } else {
+    # Make sure it exists (doesn't build for OS X)
+    if (! -e "$JOSHUA/bin/lmplz") {
+      print "* FATAL: $JOSHUA/bin/lmplz (for building LMs) does not exist.\n";
+      print "  If you are on OS X, you need to use either SRILM (recommended) or BerkeleyLM,\n";
+      print "  triggered with '--lm-gen srilm' or '--lm-gen berkeleylm'. If you are on Linux,\n";
+      print "  you should run \"ant -f \$JOSHUA/build.xml kenlm\".\n";
+      exit 1;
+    }
+
+    $cachepipe->cmd("kenlm",
+                    "cat $TRAIN{target} | $JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR --verbose_header | gzip -9n > lm.gz",
+                    $TRAIN{target},
+                    $lmfile);
   }
 
   if ((! $MERGE_LMS) && ($LM_TYPE eq "kenlm" || $LM_TYPE eq "berkeleylm")) {
@@ -1105,7 +1129,7 @@ if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TUNE_GRAMMAR $packed_dir",
                   $TUNE_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/encoding",
@@ -1137,22 +1161,22 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 # For each language model, we need to create an entry in the Joshua
 # config file and in ZMERT's params.txt file.  We use %lm_strings to
 # build the corresponding string substitutions
-my (@configstrings, @weightstrings, @lmparamstrings);
+my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER false false 100 $lmfile";
+  my $configstring = "lm = $LM_TYPE $LM_ORDER true false 100 $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
-  push (@weightstrings, $weightstring);
+  push (@lmweightstrings, $weightstring);
 
   my $lmparamstring = "lm_$i        |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
   push (@lmparamstrings, $lmparamstring);
 }
 
 my $lmlines   = join($/, @configstrings);
-my $lmweights = join($/, @weightstrings);
+my $lmweights = join($/, @lmweightstrings);
 my $lmparams  = join($/, @lmparamstrings);
 
 my (@tmparamstrings, @tmweightstrings);
@@ -1207,8 +1231,6 @@ for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
 
-  my $weights_file = get_absolute_path("$tunedir/weights",$RUNDIR);
-
   foreach my $key (keys %TUNEFILES) {
 		my $file = $TUNEFILES{$key};
 		open FROM, $file or die "can't find file '$file'";
@@ -1223,7 +1245,6 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
-      s/<WEIGHTS_FILE>/$weights_file/g;
       s/<FEATURE_FUNCTIONS>/$feature_functions/g;
 			s/<LATTICEWEIGHT>/$latticeweight/g;
 			s/<LATTICEPARAM>/$latticeparam/g;
@@ -1260,20 +1281,20 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		$cachepipe->cmd("mert-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
-										"$tunedir/weights.ZMERT.final",
+										"$tunedir/joshua.config.ZMERT.final",
 										"$tunedir/decoder_command",
 										"$tunedir/mert.config",
 										"$tunedir/params.txt");
-		system("ln -sf weights.ZMERT.final $tunedir/weights.final");
+		system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
 										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
-										"$tunedir/weights.PRO.final",
+										"$tunedir/joshua.config.PRO.final",
 										"$tunedir/decoder_command",
 										"$tunedir/pro.config",
 										"$tunedir/params.txt");
-		system("ln -sf weights.PRO.final $tunedir/weights.final");
+		system("ln -sf joshua.config.PRO.final $tunedir/joshua.config.final");
   } elsif ($TUNER eq "mira") {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
@@ -1284,7 +1305,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
                     "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
-                    "$tunedir/weights.final");
+                    "$tunedir/joshua.config.final");
   }
 
   # Go to the next tuning run if tuning is the last step.
@@ -1327,7 +1348,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
-                    "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/encoding",
@@ -1368,7 +1389,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # If we're decoding a lattice, also output the source side path we chose
   my $joshua_args = $JOSHUA_ARGS;
   if ($DOING_LATTICES) {
-    $joshua_args .= " -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
+    $joshua_args .= " -maxlen 0 -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
   }
 
   foreach my $key (qw(decoder_command)) {
@@ -1405,18 +1426,13 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
-									"$tunedir/joshua.config",
+                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs true -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
+									"$tunedir/joshua.config.final",
 									"$testrun/joshua.config");
-
-  $cachepipe->cmd("test-joshua-weights-from-tune-$run",
-									"cp $tunedir/weights.final $testrun/weights",
-									"$tunedir/weights.final",
-									"$testrun/weights");
 
   $cachepipe->cmd("test-decode-$run",
 									"$testrun/decoder_command",
-									"$testrun/decoder_command",
+                  $TEST{source},
 									"$DATA_DIRS{test}/grammar.glue",
 									$TEST_GRAMMAR_FILE,
 									"$testrun/test.output.nbest");
@@ -1545,7 +1561,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
   $cachepipe->cmd("pack-test",
-                  "$SCRIPTDIR/support/grammar-packer.pl -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                  "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
                   $TEST_GRAMMAR,
                   "$packed_dir/vocabulary",
                   "$packed_dir/encoding",
@@ -1567,22 +1583,16 @@ print TO "cat $TEST{source} | \$JOSHUA/bin/joshua-decoder -m $JOSHUA_MEM -thread
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
-my $weights_file = dirname($TUNEFILES{'joshua.config'}) . "/weights";
-$cachepipe->cmd("test-$NAME-copy-weights",
-                "cp $weights_file $testrun/weights",
-                $weights_file,
-                "$testrun/weights");
-
 # copy over the config file
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -weights-file $testrun/weights -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
 								"$testrun/decoder_command",
-								"$testrun/decoder_command",
+                $TEST{source},
 								$TEST_GRAMMAR,
 								$GLUE_GRAMMAR_FILE,
 								"$testrun/test.output.nbest");

@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Logger;
@@ -20,14 +19,12 @@ import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
-import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
-import joshua.decoder.ff.state_maintenance.NgramStateComputer;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
@@ -71,8 +68,6 @@ public class Decoder {
   private final List<GrammarFactory> grammarFactories;
   private ArrayList<FeatureFunction> featureFunctions;
   private ArrayList<NGramLanguageModel> languageModels;
-
-  private List<StateComputer> stateComputers;
 
   /* The feature weights. */
   public static FeatureVector weights;
@@ -384,102 +379,34 @@ public class Decoder {
 
       long pre_load_time = System.currentTimeMillis();
 
-      // Load the weights.
+      /*
+       * Weights can be listed in a separate file (denoted by parameter "weights-file") or directly
+       * in the Joshua config file. Config file values take precedent.
+       */
       Decoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
       
-      this.featureFunctions = new ArrayList<FeatureFunction>();
+      for (int i = 0; i < JoshuaConfiguration.weights.size(); i++) {
+        String pair[] = JoshuaConfiguration.weights.get(i).split("\\s+");
 
-      /*
-       * Backwards compatibility. Before initializing the grammars, the language models, or the
-       * other feature functions, we need to take a pass through features and their weights
-       * initialized in the old style, which was accomplished for many of the features simply by
-       * setting a weight. The new style puts all the weights in the weights file above, and has a
-       * separate line that initializes the feature function. Here, we look for the old-style, and
-       * (1) add the weight for it and (2) trigger the feature with a new-style line.
-       */
-      for (int i = 0; i < JoshuaConfiguration.features.size(); i++) {
-        String featureLine = JoshuaConfiguration.features.get(i);
-
-        // System.err.println("PROCESSING FEATURE(" + featureLine + ")");
-
-        // Check if this is an old-style feature.
-        if (!featureLine.startsWith("feature_function")) {
-          String fields[] = featureLine.split("\\s+");
-          String type = fields[0].toLowerCase();
-
-          if (type.equals("tm")) {
-            String name = "tm_" + fields[1] + "_" + fields[2];
-            float weight = Float.parseFloat(fields[3]);
-
-            weights.put(name, weight);
-
-            // No feature_function lines are created for LMs
-            JoshuaConfiguration.features.remove(i);
-            i--;
-          } else if (type.equals("lm")) {
-            String name = "";
-            float weight = 0.0f;
-            if (fields.length == 3) {
-              name = "lm_" + fields[1];
-              weight = Float.parseFloat(fields[2]);
-            } else {
-              name = "lm_0";
-              weight = Float.parseFloat(fields[1]);
-            }
-
-            weights.put(name, weight);
-
-            // No feature_function lines are created for LMs
-            JoshuaConfiguration.features.remove(i);
-            i--;
-          } else if (type.equals("latticecost")) {
-            String name = "SourcePath";
-            float weight = Float.parseFloat(fields[1]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, "feature_function = " + name);
-          } else if (type.equals("arityphrasepenalty")) {
-            String name = "ArityPenalty";
-            String owner = fields[1];
-            int min = Integer.parseInt(fields[2]);
-            int max = Integer.parseInt(fields[3]);
-            float weight = Float.parseFloat(fields[4]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i,
-                String.format("feature_function = %s %s %d %d", name, owner, min, max));
-          } else if (type.equals("wordpenalty")) {
-            String name = "WordPenalty";
-            float weight = Float.parseFloat(fields[1]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-          } else if (type.equals("oovpenalty")) {
-            String name = "OOVPenalty";
-            float weight = Float.parseFloat(fields[1]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i, String.format("feature_function = %s", name));
-          } else if (type.equals("edge-sim")) {
-            String name = "EdgePhraseSimilarity";
-            String host = fields[1];
-            int port = Integer.parseInt(fields[2]);
-            float weight = Float.parseFloat(fields[3]);
-
-            weights.put(name, weight);
-            JoshuaConfiguration.features.set(i,
-                String.format("feature_function = %s %s %d", name, host, port));
-          }
+        /* Sanity check for old-style unsupported feature invocations. */
+        if (pair.length != 2) {
+          System.err.println("FATAL: Invalid feature weight line found in config file.");
+          System.err.println(String.format("The line was '%s'", JoshuaConfiguration.weights.get(i)));
+          System.err.println("You might be using an old version of the config file that is no longer supported");
+          System.err.println("Check joshua-decoder.org or email joshua_support@googlegroups.com for help");
+          System.exit(17);
         }
+        
+        weights.put(pair[0].toLowerCase(), Float.parseFloat(pair[1]));
       }
+
+      // Do this before loading the grammars and the LM.
+      this.featureFunctions = new ArrayList<FeatureFunction>();
 
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
       logger.info(String.format("Grammar loading took: %d seconds.",
           (System.currentTimeMillis() - pre_load_time) / 1000));
-
-      // Initialize features that contribute to state (currently only n-grams).
-      this.initializeStateComputers();
 
       // Initialize the LM.
       initializeLanguageModels();
@@ -498,14 +425,14 @@ public class Decoder {
             batchGrammar.sortGrammar(this.featureFunctions);
           }
         }
-        logger.info(String.format("Grammar sorting took: %d seconds.",
+        logger.info(String.format("Grammar sorting took %d seconds.",
             (System.currentTimeMillis() - pre_sort_time) / 1000));
       }        
 
-      /* Create the threads */
+      // Create the threads
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
-        this.threadPool.put(new DecoderThread(this.grammarFactories, this.weights,
-            this.featureFunctions, this.stateComputers));
+        this.threadPool.put(new DecoderThread(this.grammarFactories, Decoder.weights,
+            this.featureFunctions));
       }
 
     } catch (IOException e) {
@@ -520,9 +447,6 @@ public class Decoder {
 
   private void initializeLanguageModels() throws IOException {
 
-    // Indexed by order.
-    HashMap<Integer, NgramStateComputer> ngramStateComputers = new HashMap<Integer, NgramStateComputer>();
-
     this.languageModels = new ArrayList<NGramLanguageModel>();
 
     // lm = kenlm 5 0 0 100 file
@@ -531,25 +455,11 @@ public class Decoder {
       String tokens[] = lmLine.split("\\s+");
       String lm_type = tokens[0];
       int lm_order = Integer.parseInt(tokens[1]);
-      boolean left_equiv_state = Boolean.parseBoolean(tokens[2]);
-      boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
+      boolean minimizing = Boolean.parseBoolean(tokens[2]);
       String lm_file = tokens[5];
 
-      if (!ngramStateComputers.containsKey(lm_order)) {
-        // Create a new state computer.
-        NgramStateComputer ngramState = new NgramStateComputer(lm_order);
-        // Record that we've created it.
-        stateComputers.add(ngramState);
-        ngramStateComputers.put(lm_order, ngramState);
-      }
-
       if (lm_type.equals("kenlm")) {
-        if (left_equiv_state || right_equiv_state) {
-          throw new IllegalArgumentException(
-              "KenLM supports state.  Joshua should get around to using it.");
-        }
-
-        KenLM lm = new KenLM(lm_order, lm_file);
+        KenLM lm = new KenLM(lm_order, lm_file, minimizing);
         this.languageModels.add(lm);
         Vocabulary.registerLanguageModel(lm);
         Vocabulary.id(JoshuaConfiguration.default_non_terminal);
@@ -565,17 +475,18 @@ public class Decoder {
 
       } else {
         logger.warning("WARNING: using built-in language model; you probably didn't intend this");
-        logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
-
-        this.languageModels.add(new LMGrammarJAVA(lm_order, lm_file, left_equiv_state,
-            right_equiv_state));
+        logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'none'");
       }
     }
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm,
-          ngramStateComputers.get(lm.getOrder())));
+      
+      if (lm instanceof KenLM && lm.isMinimizing()) {
+        this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM)lm));
+      } else {
+        this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
+      }
 
       logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", i, languageModels.get(i)
           .getOrder(), weights.get(String.format("lm_%d", i))));
@@ -599,7 +510,13 @@ public class Decoder {
 
         GrammarFactory grammar = null;
         if (format.equals("packed") || new File(file).isDirectory()) {
-          grammar = new PackedGrammar(file, span_limit, owner);
+          try {
+            grammar = new PackedGrammar(file, span_limit, owner);
+          } catch (FileNotFoundException e) {
+            System.err.println(String.format("Couldn't load packed grammar from '%s'", file));
+            System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
+            System.exit(2);
+          }
 
         } else if (format.equals("thrax") || format.equals("regexp")) {
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
@@ -626,9 +543,8 @@ public class Decoder {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       // TODO: this should initialize the grammar dynamically so that the goal symbol and default
       // non terminal match
-      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar(
-          JoshuaConfiguration.glue_format, System.getenv().get("JOSHUA") + "/data/"
-              + "glue-grammar", JoshuaConfiguration.glue_owner,
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", 
+          String.format("%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
           JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
@@ -637,22 +553,11 @@ public class Decoder {
         .getRuntime().freeMemory()) / 1000000.0)));
   }
 
-  private void initializeStateComputers() {
-    stateComputers = new ArrayList<StateComputer>();
-  }
-
   /*
-   * This function reads the weights for the model. For backwards compatibility, weights may be
-   * listed in the Joshua configuration file, but the preferred method is to list the weights in a
-   * separate file, specified by the Joshua parameter "weights-file".
+   * This function reads the weights for the model. Feature names and their weights are listed one
+   * per line in the following format:
    * 
-   * Feature names and their weights are listed one per line in the following format
-   * 
-   * FEATURE NAME WEIGHT
-   * 
-   * Fields are space delimited. The first k-1 fields are concatenated with underscores to form the
-   * feature name (putting them there explicitly is preferred, but the concatenation is in place for
-   * backwards compatibility
+   * FEATURE_NAME WEIGHT
    */
   private FeatureVector readWeights(String fileName) {
     FeatureVector weights = new FeatureVector();
@@ -664,12 +569,15 @@ public class Decoder {
       LineReader lineReader = new LineReader(fileName);
 
       for (String line : lineReader) {
+        line = line.replaceAll("\\s+", " ");
+        
         if (line.equals("") || line.startsWith("#") || line.startsWith("//")
             || line.indexOf(' ') == -1)
           continue;
 
-        String feature = line.substring(0, line.lastIndexOf(' ')).replaceAll(" ", "_");
-        Float value = Float.parseFloat(line.substring(line.lastIndexOf(' ')));
+        String tokens[] = line.split("\\s+");
+        String feature = tokens[0].toLowerCase();
+        Float value = Float.parseFloat(tokens[1]);
 
         weights.put(feature, value);
       }
@@ -688,15 +596,17 @@ public class Decoder {
   }
 
   /**
-   * This function supports two means of activating features. (1) The old format turns on a feature
-   * when it finds a line of the form "FEATURE OPTIONS WEIGHTS" (lines with an = sign, which signify
-   * configuration options). (2) The new format requires lines that are of the form
-   * "feature_function = FEATURE OPTIONS", and expects to find the weights loaded separately in the
-   * weights file.
+   * Feature functions are instantiated with a line of the form 
+   *
+   * <pre>
+   *   feature_function = FEATURE OPTIONS
+   * </pre>
+   * 
+   * Weights for features are listed separately.
    * 
    */
   private void initializeFeatureFunctions() {
-
+    
     for (String featureLine : JoshuaConfiguration.features) {
 
       // Get rid of the leading crap.
@@ -739,20 +649,8 @@ public class Decoder {
         String host = fields[1].trim();
         int port = Integer.parseInt(fields[2].trim());
 
-        // Find the language model with the largest state.
-        int maxOrder = 0;
-        NgramStateComputer ngramStateComputer = null;
-        for (StateComputer stateComputer : this.stateComputers) {
-          if (stateComputer instanceof NgramStateComputer)
-            if (((NgramStateComputer) stateComputer).getOrder() > maxOrder) {
-              maxOrder = ((NgramStateComputer) stateComputer).getOrder();
-              ngramStateComputer = (NgramStateComputer) stateComputer;
-            }
-        }
-
         try {
-          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, ngramStateComputer, host,
-              port));
+          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, host, port));
 
         } catch (Exception e) {
           e.printStackTrace();

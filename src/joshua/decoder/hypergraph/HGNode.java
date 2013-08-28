@@ -3,13 +3,11 @@ package joshua.decoder.hypergraph;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.logging.Level;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.Prunable;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 
 /**
  * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing.
@@ -19,7 +17,7 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
  */
 
 // TODO: handle the case that the Hypergraph only maintains the one-best tree
-@SuppressWarnings("rawtypes")
+
 public class HGNode implements Prunable<HGNode> {
 
   public int i, j;
@@ -35,7 +33,7 @@ public class HGNode implements Prunable<HGNode> {
 
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
-  TreeMap<StateComputer, DPState> dpStates;
+  List<DPState> dpStates;
 
   private Signature signature = null;
 
@@ -47,8 +45,8 @@ public class HGNode implements Prunable<HGNode> {
   // Constructors
   // ===============================================================
 
-  public HGNode(int i, int j, int lhs, TreeMap<StateComputer, DPState> dpStates,
-      HyperEdge hyperEdge, double pruningEstimate) {
+  public HGNode(int i, int j, int lhs, List<DPState> dpStates, HyperEdge hyperEdge,
+      double pruningEstimate) {
     this.lhs = lhs;
     this.i = i;
     this.j = j;
@@ -59,7 +57,7 @@ public class HGNode implements Prunable<HGNode> {
 
   // used by disk hg
   public HGNode(int i, int j, int lhs, List<HyperEdge> hyperedges, HyperEdge bestHyperedge,
-      TreeMap<StateComputer, DPState> states) {
+      List<DPState> states) {
     this.i = i;
     this.j = j;
     this.lhs = lhs;
@@ -104,15 +102,15 @@ public class HGNode implements Prunable<HGNode> {
     }
   }
 
-  public TreeMap<StateComputer, DPState> getDPStates() {
+  public List<DPState> getDPStates() {
     return dpStates;
   }
 
-  public DPState getDPState(StateComputer state) {
+  public DPState getDPState(int i) {
     if (null == this.dpStates) {
       return null;
     } else {
-      return this.dpStates.get(state);
+      return this.dpStates.get(i);
     }
   }
 
@@ -136,10 +134,8 @@ public class HGNode implements Prunable<HGNode> {
     public int hashCode() {
       if (hash == 0) {
         hash = 31 * lhs;
-        // BUG: This is unsafe, because no guarantees of order are made between state types.
-        // Iterate over all the node's states, hashing.
         if (null != dpStates && dpStates.size() > 0)
-          for (DPState dps : dpStates.values())
+          for (DPState dps : dpStates)
             hash = hash * 19 + dps.hashCode();
       }
       return hash;
@@ -157,13 +153,17 @@ public class HGNode implements Prunable<HGNode> {
           return false;
         if (dpStates.size() != that.dpStates.size())
           return false;
-        for (StateComputer sc : dpStates.keySet()) {
-          if (!dpStates.get(sc).equals(that.dpStates.get(sc)))
+        for (int i = 0; i < dpStates.size(); i++) {
+          if (!dpStates.get(i).equals(that.dpStates.get(i)))
             return false;
         }
         return true;
       }
       return false;
+    }
+
+    public String toString() {
+      return String.format("%d", hashCode());
     }
 
     public HGNode node() {
@@ -262,7 +262,7 @@ public class HGNode implements Prunable<HGNode> {
     sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j,
         bestHyperedge.bestDerivationLogP));
     if (dpStates != null)
-      for (DPState state : dpStates.values())
+      for (DPState state : dpStates)
         sb.append(" <" + state + ">");
 
     // if (this.hyperedges != null) {

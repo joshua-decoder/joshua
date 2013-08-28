@@ -329,8 +329,7 @@ public class PROCore {
             BufferedReader discFeatFile =
                 new BufferedReader(new InputStreamReader(discFileInputStream, "utf8"));
 
-            String line2;
-            while ((line2 = discFeatFile.readLine()) != null)
+            while ((discFeatFile.readLine()) != null)
               numSparseParams++;
           }
         }
@@ -581,8 +580,6 @@ public class PROCore {
     println("Initial lambda[]: " + lambdaToString(lambda), 1);
     println("", 1);
 
-    double FINAL_score = evalMetric.worstPossibleScore();
-
     // int[] lastUsedIndex = new int[numSentences];
     int[] maxIndex = new int[numSentences];
     // used to grow featVal_array dynamically
@@ -615,7 +612,6 @@ public class PROCore {
       // retA[2]: should this be the last iteration?
       double[] A = run_single_iteration(iteration, minIts, maxIts, prevIts, earlyStop, maxIndex);
       if (A != null) {
-        FINAL_score = A[0];
         earlyStop = (int) A[1];
         if (A[2] == 1) break;
       } else {
@@ -792,7 +788,7 @@ public class PROCore {
 
       int[] candCount = new int[numSentences];
       int[] lastUsedIndex = new int[numSentences];
-      @SuppressWarnings("unchecked")
+
       ConcurrentHashMap<Integer, int[]>[] suffStats_array = new ConcurrentHashMap[numSentences];
       for (int i = 0; i < numSentences; ++i) {
         candCount[i] = 0;
@@ -1316,8 +1312,6 @@ public class PROCore {
             line_mergedKnown = inFile_statsMergedKnown.readLine();
           }
 
-          int d = -1;
-
           int[] stats = new int[suffStatsCount];
 
           for (int n = 0; n <= sizeOfNBest; ++n) {
@@ -1327,7 +1321,6 @@ public class PROCore {
             if (sents_str.equals("||||||")) {
               n = sizeOfNBest + 1;
             } else if (!existingCandStats.containsKey(sents_str)) {
-              ++d;
 
               if (!statsCurrIt_exists) {
                 stats_str = inFile_statsCurrIt_unknown.readLine();
@@ -1764,6 +1757,7 @@ public class PROCore {
       try {
         ArrayList<String> cmd = new ArrayList<String>();
         cmd.add(decoderCommandFileName);
+
         if (passIterationToDecoder)
           cmd.add(Integer.toString(iteration));
 

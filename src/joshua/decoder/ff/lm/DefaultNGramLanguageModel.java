@@ -1,26 +1,11 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder.ff.lm;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 
 /**
  * This class provides a default implementation for the Equivalent LM State optimization (namely,
@@ -31,7 +16,6 @@ import joshua.corpus.Vocabulary;
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
- * @version $LastChangedDate$
  */
 public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 
@@ -39,10 +23,17 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
   private static final Logger logger = Logger.getLogger(DefaultNGramLanguageModel.class.getName());
 
   protected final int ngramOrder;
+  
+  protected float ceiling_cost = -100;
 
   // ===============================================================
   // Constructors
   // ===============================================================
+  public DefaultNGramLanguageModel(int order, float ceiling_cost) {
+    this.ngramOrder = order;
+    this.ceiling_cost = ceiling_cost;
+  }
+
   public DefaultNGramLanguageModel(int order) {
     this.ngramOrder = order;
   }
@@ -51,6 +42,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
   // ===============================================================
   // Attributes
   // ===============================================================
+  @Override
   public final int getOrder() {
     return this.ngramOrder;
   }
@@ -60,11 +52,13 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
   // NGramLanguageModel Methods
   // ===============================================================
 
+  @Override
   public boolean registerWord(String token, int id) {
     // No private LM ID mapping, do nothing
     return false;
   }
 
+  @Override
   public float sentenceLogProbability(int[] sentence, int order, int startIndex) {
     if (sentence == null) return 0.0f;
     int sentenceLength = sentence.length;
@@ -98,36 +92,32 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
     return probability;
   }
 
+  @Override
   public float ngramLogProbability(int[] ngram) {
     return this.ngramLogProbability(ngram, this.ngramOrder);
   }
 
-  public abstract float ngramLogProbability(int[] ngram, int order);
+  protected abstract float ngramLogProbability_helper(int[] ngram, int order);
+  
+  @Override
+  public float ngramLogProbability(int[] ngram, int order) {
+    if (ngram.length > order) {
+      throw new RuntimeException("ngram length is greather than the max order");
+    }
+    // if (ngram.length==1 && "we".equals(Vocabulary.getWord(ngram[0]))) {
+    // System.err.println("Something weird is about to happen");
+    // }
 
-
-  /**
-   * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID token will never exist. However,
-   * were it to be called, it should return a probability of 1 (logprob of 0).
-   */
-  public float logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0; // log(1) == 0;
-  }
-
-  /**
-   * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID token will never exist. However,
-   * were it to be called, it should return a probability of 1 (logprob of 0).
-   */
-  public float logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-    return 0; // log(1) == 0;
-  }
-
-
-  public int[] leftEquivalentState(int[] originalState, int order, double[] cost) {
-    return originalState;
-  }
-
-
-  public int[] rightEquivalentState(int[] originalState, int order) {
-    return originalState;
+    int historySize = ngram.length - 1;
+    if (historySize >= order || historySize < 0) {
+      // BUG: use logger or exception. Don't zero default
+      throw new RuntimeException("Error: history size is " + historySize);
+      // return 0;
+    }
+    float probability = ngramLogProbability_helper(ngram, order);
+    if (probability < ceiling_cost) {
+      probability = ceiling_cost;
+    }
+    return probability; 
   }
 }

@@ -122,7 +122,6 @@ public class IntermediateOptimizer implements Runnable {
     // TreeMap<Double,TreeMap> thresholdsAll = new TreeMap<Double,TreeMap>();
     thresholdsAll.clear();
 
-    int ipCount = 0;
     for (int i = 0; i < numSentences; ++i) {
       // find threshold points contributed by ith sentence
 
@@ -269,7 +268,6 @@ public class IntermediateOptimizer implements Runnable {
         }
 
         // print("ip=" + f4.format(nearestIntersectionPoint) + " ",4);
-        ++ipCount;
 
         if (nearestIntersectionPoint > minThValue[c] && nearestIntersectionPoint < maxThValue[c]) {
 
@@ -537,7 +535,6 @@ public class IntermediateOptimizer implements Runnable {
 
   private void set_suffStats_array(TreeSet<Integer>[] indicesOfInterest) {
     int candsOfInterestCount = 0;
-    int candsOfInterestCount_all = 0;
     for (int i = 0; i < numSentences; ++i) {
       candsOfInterestCount += indicesOfInterest[i].size();
       // candsOfInterestCount_all += indicesOfInterest_all[i].size(); ****/

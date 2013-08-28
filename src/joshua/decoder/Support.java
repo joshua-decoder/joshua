@@ -7,7 +7,6 @@ import java.util.List;
  */
 public class Support {
 
-
   public static double findMin(double a, double b) {
     return (a <= b) ? a : b;
   }
@@ -16,19 +15,10 @@ public class Support {
     return (a > b) ? a : b;
   }
 
-
-  /**
-   * @param start inclusive
-   * @param end exclusive
-   */
-  public static int[] sub_int_array(int[] in, int start, int end) {
-    int[] res = new int[end - start];
-    for (int i = start; i < end; i++) {
-      res[i - start] = in[i];
-    }
-    return res;
+  
+  public static int[] toArray(List<Integer> in) {
+    return subIntArray(in, 0, in.size());
   }
-
 
   /**
    * @param start inclusive
@@ -42,13 +32,11 @@ public class Support {
     return res;
   }
 
-
   public static long current_time() {
     return 0;
     // return System.currentTimeMillis();
     // return System.nanoTime();
   }
-
 
   // Only used in LMGrammarJAVA
   public static long getMemoryUse() {

@@ -3,11 +3,11 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.SourceDependentFF;
+import joshua.decoder.ff.lm.KenLMFF;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
@@ -22,8 +22,6 @@ import joshua.decoder.segment_file.Sentence;
 
 public class Translation {
   private Sentence source;
-  private String translation = null;
-  private double score;
 
   /**
    * This stores the output of the translation so we don't have to hold onto the hypergraph while we
@@ -76,6 +74,18 @@ public class Translation {
     } catch (IOException e) {
       e.printStackTrace();
       System.exit(1);
+    }
+    
+
+    /*
+     * KenLM hack. If using KenLMFF, we need to tell KenLM to delete the pool used to create chart
+     * objects for this sentence.
+     */
+    for (FeatureFunction feature: featureFunctions) {
+      if (feature instanceof KenLMFF) {
+        ((KenLMFF)feature).destroyPool(getSourceSentence().id());
+        break;
+      }
     }
     
     this.output = sw.toString();

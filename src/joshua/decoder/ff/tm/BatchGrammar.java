@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import joshua.decoder.segment_file.Sentence;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.corpus.Vocabulary;
 
 /**
  * This class provides an abstract factory with provisions for sentence-level filtering. If

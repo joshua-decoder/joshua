@@ -6,14 +6,12 @@ import java.io.FileWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
-import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 
 /**
  * this class implement (1) HyperGraph-related data structures (Item and Hyper-edges)
@@ -57,23 +55,23 @@ public class HyperGraph {
       e.printStackTrace();
     }
 
-    HashMap<HGNode,HGNode> allNodes = new HashMap<HGNode,HGNode>();
+    HashSet<HGNode> allNodes = new HashSet<HGNode>();
     Stack<HGNode> nodesToVisit = new Stack<HGNode>();
     nodesToVisit.push(this.goalNode);
     while (! nodesToVisit.empty()) {
       HGNode node = nodesToVisit.pop();
-      allNodes.put(node,node);
+      allNodes.add(node);
       if (node.getHyperEdges() != null)
         for (HyperEdge edge: node.getHyperEdges())
           if (edge.getTailNodes() != null)
             for (HGNode tailNode: edge.getTailNodes()) {
-              if (! allNodes.containsKey(tailNode))
+              if (! allNodes.contains(tailNode))
                 nodesToVisit.push(tailNode);
             }
     }
 
     ArrayList<HGNode> list = new ArrayList<HGNode>();
-    for (HGNode node: allNodes.keySet())
+    for (HGNode node: allNodes)
       list.add(node);
 
     Collections.sort(list, HGNode.spanComparator);
@@ -119,7 +117,7 @@ public class HyperGraph {
     int goalI = hg1.goalNode.i;
     int goalJ = hg1.goalNode.j;
     int goalLHS = hg1.goalNode.lhs;
-    TreeMap<StateComputer, DPState> goalDPStates = null;
+    List<DPState> goalDPStates = null;
     double goalEstTotalLogP = -1;
     HGNode newGoalNode = new HGNode(goalI, goalJ, goalLHS, goalDPStates, null, goalEstTotalLogP);;
 

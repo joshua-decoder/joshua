@@ -31,7 +31,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   /**
    * Costs of the best path between each pair of nodes in the lattice.
    */
-  private final double[][] costs;
+  private final float[][] costs;
   
   /**
    * List of all nodes in the lattice. Nodes are assumed to be in topological order.
@@ -178,7 +178,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       while (arcMatcher.matches()) {
         numArcs++;
         String arcLabel = arcMatcher.group(1);
-        double arcWeight = Double.valueOf(arcMatcher.group(2));
+        float arcWeight = Float.valueOf(arcMatcher.group(2));
         int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
 
         Node<Integer> destinationNode;
@@ -264,7 +264,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
       while (arcMatcher.matches()) {
         String arcLabel = arcMatcher.group(1);
-        double arcWeight = Double.valueOf(arcMatcher.group(2));
+        float arcWeight = Float.valueOf(arcMatcher.group(2));
         int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
 
         Node<String> destinationNode;
@@ -302,7 +302,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param to ID of the ending node.
    * @return The cost of the shortest path between the two nodes.
    */
-  public double getShortestPath(int from, int to) {
+  public float getShortestPath(int from, int to) {
 //    System.err.println(String.format("DISTANCE(%d,%d) = %f", from, to, costs[from][to]));
     return costs[from][to];
   }
@@ -352,16 +352,16 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param nodes A list of nodes which must be in topological order.
    * @return The all-pairs shortest path for all pairs of nodes.
    */
-  private double[][] calculateAllPairsShortestPath(List<Node<Value>> nodes) {
+  private float[][] calculateAllPairsShortestPath(List<Node<Value>> nodes) {
 
     int size = nodes.size();
-    double[][] costs = new double[size][size];
+    float[][] costs = new float[size][size];
 
     // Initialize pairwise costs. Costs from a node to itself are 0, and are infinite between
     // different nodes.
     for (int from = 0; from < size; from++) {
       for (int to = 0; to < size; to++) {
-        costs[from][to] = (from == to) ? 0.0 : Double.POSITIVE_INFINITY;
+        costs[from][to] = (from == to) ? 0.0f : Float.POSITIVE_INFINITY;
       }
     }
 
@@ -375,11 +375,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
         int to = head.id();
         // this is slightly different
         // than it was defined in Dyer et al 2008
-        double cost = arc.getCost();
+        float cost = arc.getCost();
         // minimally, cost should be weighted by
         // the feature weight assigned, so we just
         // set this to 1.0 for now
-        cost = 1.0;
+        cost = 1.0f;
 
         if (cost < costs[from][to]) {
           costs[from][to] = cost;
@@ -432,11 +432,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       nodes.add(new Node<String>(i));
     }
 
-    nodes.get(0).addArc(nodes.get(1), 1.0, "x");
-    nodes.get(1).addArc(nodes.get(2), 1.0, "y");
-    nodes.get(0).addArc(nodes.get(2), 1.5, "a");
-    nodes.get(2).addArc(nodes.get(3), 3.0, "b");
-    nodes.get(2).addArc(nodes.get(3), 5.0, "c");
+    nodes.get(0).addArc(nodes.get(1), 1.0f, "x");
+    nodes.get(1).addArc(nodes.get(2), 1.0f, "y");
+    nodes.get(0).addArc(nodes.get(2), 1.5f, "a");
+    nodes.get(2).addArc(nodes.get(3), 3.0f, "b");
+    nodes.get(2).addArc(nodes.get(3), 5.0f, "c");
 
     Lattice<String> graph = new Lattice<String>(nodes);
 

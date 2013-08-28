@@ -4,8 +4,6 @@ tm = thrax glue -1 glue-grammar
 #lm config
 lm = berkeleylm 3 false false 100 test.lm
 
-output-format = %i ||| %s
-
 #tm config
 default_non_terminal=X
 goalSymbol=GOAL
@@ -18,16 +16,22 @@ use_unique_nbest = true
 include-align-index = false
 top-n = 5
 
+mark-oovs = false
+
+feature-function = OOVPenalty
+feature-function = WordPenalty
+feature-function = SourcePath
+
 ###### model weights
 #lm order weight
-lm 0 1.0
+lm_0 1.0
 
 #phrasemodel owner column(0-indexed) weight
-phrasemodel pt 0 1.0
-phrasemodel glue 0 0.0
+tm_pt_0 1.0
+tm_glue_0 0.0
 
 #wordpenalty weight
 wordpenalty -1.0
-latticecost 1.0
+sourcepath 1.0
 
 oovpenalty -100

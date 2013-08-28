@@ -441,7 +441,6 @@ my $finished_step_file = "finished_step.txt";
 my $start_run = 1;
 my $bestpoint = undef;
 my $devbleu = undef;
-my $weights_file = undef;
 
 my $prev_feature_file = undef;
 my $prev_score_file = undef;
@@ -452,8 +451,7 @@ my $prev_init_file = undef;
 $___CONFIG_ORIG = $___CONFIG;
 
 # Read the list of weights from the weights file
-chomp($weights_file = `cat $___CONFIG | grep ^weights-file | awk '{print \$NF}'`);
-my $featlist = get_featlist_from_file($weights_file);
+my $featlist = get_featlist_from_file($___CONFIG);
 
 $featlist = insert_ranges_to_featlist($featlist, $___RANGES);
 
@@ -522,8 +520,8 @@ if ($continue) {
         }
       }
     }
-    if (! -e "run$step.weights.txt") {
-      die "Can't start from step $step, because run$step.weights.txt was not found!";
+    if (! -e "run$step.joshua.config") {
+      die "Can't start from step $step, because run$step.joshua.config was not found!";
     }
     if (! -e "run$step.$mert_logfile") {
       die "Can't start from step $step, because run$step.$mert_logfile was not found!";
@@ -572,8 +570,8 @@ while (1) {
   print "run $run start at ".`date`;
 
   # In case something dies later, we might wish to have a copy
-  create_config($weights_file, "./run$run.weights", $featlist, $run, (defined $devbleu ? $devbleu : "--not-estimated--"));
-  system("cp run$run.weights $weights_file");
+  create_config($___CONFIG, "./run$run.joshua.config", $featlist, $run, (defined $devbleu ? $devbleu : "--not-estimated--"));
+  system("cp run$run.joshua.config $___CONFIG");
 
   # skip running the decoder if the user wanted
   if (! $skip_decoder) {
@@ -816,10 +814,9 @@ if ($___RETURN_BEST_DEV) {
     close $fh;
   }
   print "copying weights from best iteration ($bestit, bleu=$bestbleu) to moses.ini\n";
-  create_config($weights_file, "./weights.final", get_featlist_from_file("run$bestit.weights"),
-                $bestit, $bestbleu);
+  create_config($___CONFIG, "./joshua.config.final", get_featlist_from_file("run$bestit.joshua.config"), $bestit, $bestbleu);
 } else {
-  create_config($weights_file, "./weights.final", $featlist, $run, $devbleu);
+  create_config($___CONFIG, "./joshua.config.final", $featlist, $run, $devbleu);
 }
 
 # just to be sure that we have the really last finished step marked
@@ -966,6 +963,7 @@ sub get_featlist_from_file {
     $nr++;
     chomp;
     next if (/^#/ || /^\s*$/);   # skip blank lines and comments
+    next if /=/;                 # skip lines not containing features
     /^(\S+) (\S+)$/ || die "invalid feature: $_";
     my ($feature, $value) = ($1, $2);
     push @errs, "$featlistfn:$nr:Bad initial value of $feature: $value\n"

@@ -159,6 +159,14 @@ public class FeatureTypeAnalyzer {
     out_stream.close();
   }
 
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (int feature_id : featureToType.keySet()) {
+      sb.append(types.get(featureToType.get(feature_id)).analyzer.toString(Vocabulary.word(feature_id)));
+    }
+    return sb.toString();
+  }
+  
   public boolean isLabeled() {
     return labeled;
   }

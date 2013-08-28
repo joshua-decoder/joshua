@@ -3,7 +3,6 @@ package joshua.decoder.chart_parser;
 import java.util.Collection;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 

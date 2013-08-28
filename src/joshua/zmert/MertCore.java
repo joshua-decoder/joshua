@@ -16,8 +16,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -716,9 +716,7 @@ public class MertCore {
         }
       }
 
-
-
-      double[] initialScore = new double[1 + initsPerIt];
+//      double[] initialScore = new double[1 + initsPerIt];
       double[] finalScore = new double[1 + initsPerIt];
 
       int[][][] best1Cand_suffStats = new int[1 + initsPerIt][numSentences][suffStatsCount];
@@ -1094,10 +1092,6 @@ public class MertCore {
             line_mergedKnown = inFile_statsMergedKnown.readLine();
           }
 
-
-          int d = -1;
-
-
           int[] stats = new int[suffStatsCount];
 
           for (int n = 0; n <= sizeOfNBest; ++n) {
@@ -1114,8 +1108,6 @@ public class MertCore {
             if (sents_str.equals("||||||")) {
               n = sizeOfNBest + 1;
             } else if (!existingCandStats.containsKey(sents_str)) {
-
-              ++d;
 
               if (!statsCurrIt_exists) {
                 stats_str = inFile_statsCurrIt_unknown.readLine();
@@ -1451,6 +1443,7 @@ public class MertCore {
       try {
         ArrayList<String> cmd = new ArrayList<String>();
         cmd.add(decoderCommandFileName);
+
         if (passIterationToDecoder)
           cmd.add(Integer.toString(iteration));
 

@@ -19,25 +19,29 @@ use Getopt::Std;
 
 my %opts = (
   m => '4g',    # amount of memory to give the packer
-  c => '',       # use alternate packer config
   T => '/state/partition1',
 );
-getopts("m:c:T:", \%opts);
+getopts("m:T:", \%opts);
 
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
 
 sub usage {
-  print "Usage: grammar-packer.pl [-m MEM] [-c packer-config] input-grammar [output-dir=grammar.packed\n";
+  print "Usage: grammar-packer.pl [-m MEM] [-T /path/to/tmp] input-grammar [output-dir=grammar.packed]\n";
   exit 1;
 }
 
 my $grammar = shift or usage();
 my $output_dir = shift || "grammar.packed";
 
+if (! -e $grammar) {
+  print "* FATAL: Can't find grammar '$grammar'\n";
+  exit 1;
+}
+
 # Sort the grammar.
 my $sorted_grammar = "grammar.sorted.gz";
-if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} | gzip -9n > $sorted_grammar")) {
+if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
   print STDERR "* FATAL: Couldn't sort the grammar (not enough memory? short on tmp space?)\n";
   exit 2;
 }
@@ -48,10 +52,8 @@ my $cmd = "java -Xmx$opts{m} -cp $JOSHUA/class joshua.tools.GrammarPacker -p $ou
 print STDERR "Packing with $cmd\n";
 my $retval = system($cmd);
 
-unlink($sorted_grammar);
-
 if ($retval == 0) {
-
+  unlink($sorted_grammar);
 } else {
   print STDERR "* FATAL: Couldn't pack the grammar.\n";
   exit 1;

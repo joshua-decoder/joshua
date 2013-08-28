@@ -2,8 +2,6 @@ package joshua.decoder.ff.tm;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 
@@ -90,7 +88,7 @@ public interface Rule {
 
 
   /**
-   * In order to provide sorting for cube-pruning, we need to provide this Comparator.
+   * This comparator is used for sorting during cube pruning. It sorts items in reverse.
    */
   Comparator<Rule> NegativeCostComparator = new Comparator<Rule>() {
     public int compare(Rule rule1, Rule rule2) {

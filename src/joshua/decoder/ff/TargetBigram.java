@@ -5,77 +5,35 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
-import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 public class TargetBigram extends StatefulFF {
 
-  public TargetBigram(FeatureVector weights, String name, StateComputer stateComputer) {
-    super(weights, name, stateComputer);
+  public TargetBigram(FeatureVector weights, String name) {
+    super(weights, name);
 
     // TODO Auto-generated constructor stub
   }
 
   @Override
-  public FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID) {
-    return computeTransition(rule.getEnglish(), tailNodes);
-  }
-
-  @Override
-  public float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID) {
-    return computeTransition(rule.getEnglish(), tailNodes).innerProduct(this.weights);
-  }
-
-  @Override
-  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
-    return 0.0f;
-  }
-
-  @Override
-  public FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID) {
-  
-    NgramDPState state = (NgramDPState) tailNode.getDPState(this.getStateComputer());
-    int leftWord = state.getLeftLMStateWords()[0];
-    int[] rightContext = state.getRightLMStateWords();
-    int rightWord = rightContext[rightContext.length - 1];
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
+      SourcePath sourcePath, int sentID, Accumulator acc) {
     
-    FeatureVector features = new FeatureVector();
-    features.put("<s> " + leftWord, 1.0f);
-    features.put(rightWord + " </s>", 1.0f);
+    int[] enWords = rule.getEnglish();
     
-    return features;
-  }
-
-  @Override
-  public float estimateCost(Rule rule, int sentID) {
-    return computeTransition(rule.getEnglish(), null).innerProduct(weights);
-  }
-
-  /**
-   * This function computes all of the bigrams triggered by a rule application, and returns a
-   * FeatureVector containing counts of those bigrams.
-   * 
-   * @param enWords
-   * @param tailNodes
-   * @param features
-   */
-  private FeatureVector computeTransition(int[] enWords, List<HGNode> tailNodes) {
     List<Integer> currentNgram = new LinkedList<Integer>();
     FeatureVector features = new FeatureVector();
-    
+
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
 
       if (Vocabulary.nt(curID)) {
         int index = -(curID + 1);
-        NgramDPState state = (NgramDPState) tailNodes.get(index)
-            .getDPState(this.getStateComputer());
+        NgramDPState state = (NgramDPState) tailNodes.get(index).getDPState(stateIndex);
         int[] leftContext = state.getLeftLMStateWords();
         int[] rightContext = state.getRightLMStateWords();
 
@@ -95,20 +53,47 @@ public class TargetBigram extends StatefulFF {
         int tSize = currentNgram.size();
         for (int i = 0; i < rightContext.length; i++)
           currentNgram.set(tSize - rightContext.length + i, rightContext[i]);
-        
+
       } else { // terminal words
         currentNgram.add(curID);
         if (currentNgram.size() == 2) {
           String ngram = join(currentNgram);
-          if (features.containsKey(ngram))
-            features.put(ngram, 1);
-          else
-            features.put(ngram, features.get(ngram) + 1);
+          acc.add(ngram, 1);
           currentNgram.remove(0);
         }
       }
     }
-    return features;
+
+    // TODO 07/2013: use a real state here!
+    return null;
+  }
+
+  @Override
+  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
+    return 0.0f;
+  }
+
+  @Override
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+  
+    NgramDPState state = (NgramDPState) tailNode.getDPState(stateIndex);
+    int leftWord = state.getLeftLMStateWords()[0];
+    int[] rightContext = state.getRightLMStateWords();
+    int rightWord = rightContext[rightContext.length - 1];
+    
+    FeatureVector features = new FeatureVector();
+    features.put("<s> " + leftWord, 1.0f);
+    features.put(rightWord + " </s>", 1.0f);
+    
+    int[] left = new int[1];   left[0] = LanguageModelFF.START_SYM_ID; 
+    int[] right = new int[1]; right[0] = LanguageModelFF.STOP_SYM_ID; 
+    return new NgramDPState(left, right);
+  }
+
+  @Override
+  public float estimateCost(Rule rule, int sentID) {
+    return 0.0f;
   }
 
   private String join(List<Integer> list) {
