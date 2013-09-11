@@ -5,7 +5,6 @@ import java.util.List;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 
-
 /**
  * This class define the interface for Rule. Normally, the feature score in the rule should be
  * *cost* (i.e., -LogP), so that the feature weight should be positive.
@@ -33,13 +32,28 @@ public interface Rule {
   void setEnglish(int[] eng);
 
   int[] getEnglish();
-  
+
   String getEnglishWords();
+
+  
+  /**
+   * Return the French (source) nonterminals as list of Strings
+   * @return
+   */
+  public List<String> getForeignNonTerminals();
+  
+  /**
+   * Return the English (target) nonterminals as list of Strings
+   * @return
+   */
+  List<String> getEnglishNonTerminals();
+  
+  public boolean ruleIsInverting();
 
   void setFrench(int[] french);
 
   int[] getFrench();
-  
+
   String getFrenchWords();
 
   /**
@@ -86,7 +100,6 @@ public interface Rule {
    */
   float estimateRuleCost(List<FeatureFunction> models);
 
-
   /**
    * This comparator is used for sorting during cube pruning. It sorts items in reverse.
    */
@@ -105,4 +118,5 @@ public interface Rule {
   };
 
   String toString();
+
 }
