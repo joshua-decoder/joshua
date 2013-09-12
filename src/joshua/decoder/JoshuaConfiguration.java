@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import joshua.decoder.ff.StatefulFF;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -76,18 +77,11 @@ public class JoshuaConfiguration {
    * translations). The string can include arbitrary text and also variables. The following
    * variables are available:
    * 
-   * <pre> 
-   *   %i the 0-indexed sentence number 
-   *   %e the source string
-   *   %s the translated sentence 
-   *   %S the translated sentence with some basic capitalization and denormalization 
-   *   %t the synchronous derivation
-   *   %f the list of feature values (as name=value pairs) 
-   *   %c the model cost 
-   *   %w the weight vector 
-   *   %a the alignments between source and target words (currently unimplemented) 
-   *   %d a verbose, many-line version of the derivation 
-   * </pre>
+   * <pre> %i the 0-indexed sentence number %e the source string %s the translated sentence %S the
+   * translated sentence with some basic capitalization and denormalization %t the synchronous
+   * derivation %f the list of feature values (as name=value pairs) %c the model cost %w the weight
+   * vector %a the alignments between source and target words (currently unimplemented) %d a
+   * verbose, many-line version of the derivation </pre>
    */
   public static String outputFormat = "%i ||| %s ||| %f ||| %c";
 
@@ -117,7 +111,7 @@ public class JoshuaConfiguration {
 
   /* A list of the feature functions. */
   public static ArrayList<String> features = new ArrayList<String>();
-  
+
   /* A list of weights found in the main config file (instead of in a separate weights file) */
   public static ArrayList<String> weights = new ArrayList<String>();
 
@@ -126,6 +120,51 @@ public class JoshuaConfiguration {
 
   /* Whether to do forest rescoring. If set to true, requires an oracle file. */
   public static boolean rescoreForest = false;
+  /**
+   * This method resets the state of JoshuaConfiguration back to the state after initialization.
+   * This is useful when for example making different calls to the decoder within the same java
+   * program, which otherwise leads to potential errors due to inconsistent state as a result of
+   * loading the configuration multiple times without resetting etc.
+   * 
+   * This leads to the insight that in fact it may be an even better idea to refactor the code and
+   * make JoshuaConfiguration an object that is is created and passed as an argument, rather than a
+   * shared static object. This is just a suggestion for the next step.
+   * 
+   */
+  public static void reset() {
+    logger.info("Resetting the JoshuaConfiguration to its defaults ...");
+    logger.info("\n\tResetting the StatefullFF global state index ...");
+    logger.info("\n\t...done");
+    StatefulFF.resetGlobalStateIndex();
+    lms = new ArrayList<String>();
+    tms = new ArrayList<String>();
+    weights_file = "";
+    default_non_terminal = "[X]";
+    goal_symbol = "[GOAL]";
+    amortized_sorting = true;
+    constrain_parse = false;
+    use_pos_labels = false;
+    true_oovs_only = false;
+    filter_grammar = false;
+    pop_limit = 100;
+    maxlen = 200;
+    use_unique_nbest = false;
+    include_align_index = false;
+    topN = 1;
+    outputFormat = "%i ||| %s ||| %f ||| %c";
+    num_parallel_decoders = 1;
+    hypergraphFilePattern = "";
+    visualize_hypergraph = false;
+    useGoogleLinearCorpusGain = false;
+    linearCorpusGainThetas = null;
+    mark_oovs = true;
+    // oracleFile = null;
+    parse = false; // perform synchronous parsing
+    features = new ArrayList<String>();
+    weights = new ArrayList<String>();
+    server_port = 0;
+    logger.info("...done");
+  }
 
   // ===============================================================
   // Methods
@@ -337,7 +376,7 @@ public class JoshuaConfiguration {
         } else {
           /*
            * Lines that don't have an equals sign and are not blank lines, empty lines, or comments,
-           * are feature values, which can be present in this file 
+           * are feature values, which can be present in this file
            */
 
           weights.add(line);
