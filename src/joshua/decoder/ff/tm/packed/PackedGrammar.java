@@ -26,6 +26,7 @@ import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
+import joshua.decoder.ff.tm.RuleMethods;
 import joshua.decoder.ff.tm.Trie;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
@@ -218,11 +219,10 @@ public class PackedGrammar extends BatchGrammar {
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
       target_lookup_stream.close();
-      
+
       tries = new HashMap<Integer, PackedTrie>();
     }
 
-    
     @SuppressWarnings("unused")
     private final Object guardian = new Object() {
       @Override
@@ -547,22 +547,10 @@ public class PackedGrammar extends BatchGrammar {
           }
           return tgt;
         }
-        
+
         @Override
         public String getEnglishWords() {
-          ArrayList<String> foreignNTs = new ArrayList<String>();
-          for (int i = 0; i < this.getFrench().length; i++)
-            if (this.getFrench()[i] < 0) foreignNTs.add(Vocabulary.word(this.getFrench()[i]));
-
-          StringBuilder sb = new StringBuilder();
-          for (int i = 0; i < this.getEnglish().length; i++) {
-            if (this.getEnglish()[i] >= 0)
-              sb.append(Vocabulary.word(this.getEnglish()[i]) + " ");
-            else
-              sb.append(foreignNTs.get(Math.abs(this.getEnglish()[i]) - 1) + "," + Math.abs(this.getEnglish()[i]) + " ");
-          }
-
-          return sb.toString().trim();
+          return RuleMethods.getEnglishWords(this);
         }
 
         @Override
@@ -578,7 +566,7 @@ public class PackedGrammar extends BatchGrammar {
         public String getFrenchWords() {
           return Vocabulary.getWords(getFrench());
         }
-        
+
         @Override
         public FeatureVector getFeatureVector() {
           if (features == null) {
@@ -626,6 +614,21 @@ public class PackedGrammar extends BatchGrammar {
           sb.append(" " + getFeatureVector());
           sb.append(String.format(" ||| %.3f", getEstimatedCost()));
           return sb.toString();
+        }
+
+        @Override
+        public List<String> getForeignNonTerminals() {
+          return RuleMethods.getForeignNonTerminals(this);
+        }
+
+        @Override
+        public List<String> getEnglishNonTerminals() {
+          return RuleMethods.getEnglishNonTerminals(this);
+        }
+
+        @Override
+        public boolean ruleIsInverting() {
+          return RuleMethods.ruleIsInverting(this);
         }
       }
     }
