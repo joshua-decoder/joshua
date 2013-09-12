@@ -70,7 +70,8 @@ public class KBestExtractor {
 
   private final HashMap<HGNode, VirtualNode> virtualNodesTable = new HashMap<HGNode, VirtualNode>();
 
-  static final String rootSym = JoshuaConfiguration.goal_symbol;
+//  static final String rootSym = JoshuaConfiguration.goal_symbol;
+  static final String rootSym = "ROOT";
   static final int rootID = Vocabulary.id(rootSym);
 
   private enum Side {
