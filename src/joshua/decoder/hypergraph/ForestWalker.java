@@ -18,7 +18,7 @@ public class ForestWalker {
   };
 
   private Set<HGNode> visitedNodes;
-  private TRAVERSAL traversalType;
+  private TRAVERSAL traversalType = TRAVERSAL.PREORDER;
 
   public ForestWalker() {
     visitedNodes = new HashSet<HGNode>();
