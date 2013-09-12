@@ -13,18 +13,18 @@ import java.util.Set;
  */
 public class ForestWalker {
 
-  public static enum TRAVERSAL_TYPE {
+  public static enum TRAVERSAL {
     PREORDER, POSTORDER
   };
 
   private Set<HGNode> visitedNodes;
-  private TRAVERSAL_TYPE traversalType;
+  private TRAVERSAL traversalType;
 
   public ForestWalker() {
     visitedNodes = new HashSet<HGNode>();
   }
 
-  public ForestWalker(TRAVERSAL_TYPE traversal) {
+  public ForestWalker(TRAVERSAL traversal) {
     this.traversalType = traversal;
     visitedNodes = new HashSet<HGNode>();
   }
@@ -35,12 +35,8 @@ public class ForestWalker {
       return;
 
     visitedNodes.add(node);
-    // numVisited++;
-    // if (numVisited % 1000 == 0)
-    // System.err.printf(" * Visited %d nodes\n", numVisited);
-    // apply the function
     
-    if (this.traversalType == TRAVERSAL_TYPE.PREORDER)
+    if (this.traversalType == TRAVERSAL.PREORDER)
       walker.apply(node);
 
     if (node.getHyperEdges() != null) {
@@ -53,7 +49,7 @@ public class ForestWalker {
       }
     }
     
-    if (this.traversalType == TRAVERSAL_TYPE.POSTORDER)
+    if (this.traversalType == TRAVERSAL.POSTORDER)
       walker.apply(node);
   }
 }
