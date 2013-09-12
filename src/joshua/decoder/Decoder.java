@@ -15,6 +15,7 @@ import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.LabelCombinationFeatureFunction;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
@@ -140,9 +141,10 @@ public class Decoder {
     }
 
     /*
-     *  TODO: we need to clear out the entire trie of positive sorting markings.
+     * TODO: we need to clear out the entire trie of positive sorting markings.
      */
-    System.err.println("* FATAL: changing the feature weights won't work until you clear the sorted settings for the complete trie");
+    System.err
+        .println("* FATAL: changing the feature weights won't work until you clear the sorted settings for the complete trie");
     System.exit(1);
     for (GrammarFactory grammarFactory : this.grammarFactories) {
       // if (grammarFactory instanceof Grammar) {
@@ -250,12 +252,12 @@ public class Decoder {
         threadPool.put(decoderThread);
       } catch (InterruptedException e) {
         // TODO Auto-generated catch block
-        System.err.println("* WARNING: I encountered an error trying to return the decoder thread.");
+        System.err
+            .println("* WARNING: I encountered an error trying to return the decoder thread.");
         e.printStackTrace();
       }
     }
   }
-
 
   /**
    * This function is the main entry point into the decoder. It translates all the sentences in a
@@ -297,7 +299,7 @@ public class Decoder {
   }
 
   public void cleanUp() {
-    for (DecoderThread thread: threadPool) {
+    for (DecoderThread thread : threadPool) {
       try {
         thread.join();
       } catch (InterruptedException e) {
@@ -384,19 +386,22 @@ public class Decoder {
        * in the Joshua config file. Config file values take precedent.
        */
       Decoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
-      
+
       for (int i = 0; i < JoshuaConfiguration.weights.size(); i++) {
         String pair[] = JoshuaConfiguration.weights.get(i).split("\\s+");
 
         /* Sanity check for old-style unsupported feature invocations. */
         if (pair.length != 2) {
           System.err.println("FATAL: Invalid feature weight line found in config file.");
-          System.err.println(String.format("The line was '%s'", JoshuaConfiguration.weights.get(i)));
-          System.err.println("You might be using an old version of the config file that is no longer supported");
-          System.err.println("Check joshua-decoder.org or email joshua_support@googlegroups.com for help");
+          System.err
+              .println(String.format("The line was '%s'", JoshuaConfiguration.weights.get(i)));
+          System.err
+              .println("You mifeatureFunctionNameght be using an old version of the config file that is no longer supported");
+          System.err
+              .println("Check joshua-decoder.org or email joshua_support@googlegroups.com for help");
           System.exit(17);
         }
-        
+
         weights.put(pair[0].toLowerCase(), Float.parseFloat(pair[1]));
       }
 
@@ -427,7 +432,7 @@ public class Decoder {
         }
         logger.info(String.format("Grammar sorting took %d seconds.",
             (System.currentTimeMillis() - pre_sort_time) / 1000));
-      }        
+      }
 
       // Create the threads
       for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
@@ -451,6 +456,8 @@ public class Decoder {
 
     // lm = kenlm 5 0 0 100 file
     for (String lmLine : JoshuaConfiguration.lms) {
+
+      logger.info("lm line: " + lmLine);
 
       String tokens[] = lmLine.split("\\s+");
       String lm_type = tokens[0];
@@ -481,9 +488,10 @@ public class Decoder {
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      
+      logger.info("Language model " + i + " " + this.languageModels.get(i));
+
       if (lm instanceof KenLM && lm.isMinimizing()) {
-        this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM)lm));
+        this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM) lm));
       } else {
         this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
       }
@@ -537,18 +545,17 @@ public class Decoder {
       for (String owner : ownersSeen) {
         this.featureFunctions.add(new PhraseModelFF(weights, owner));
       }
-        
 
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       // TODO: this should initialize the grammar dynamically so that the goal symbol and default
       // non terminal match
-      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", 
-          String.format("%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
+          "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
           JoshuaConfiguration.default_non_terminal, -1);
       this.grammarFactories.add(glueGrammar);
     }
-    
+
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
   }
@@ -570,7 +577,7 @@ public class Decoder {
 
       for (String line : lineReader) {
         line = line.replaceAll("\\s+", " ");
-        
+
         if (line.equals("") || line.startsWith("#") || line.startsWith("//")
             || line.indexOf(' ') == -1)
           continue;
@@ -596,8 +603,8 @@ public class Decoder {
   }
 
   /**
-   * Feature functions are instantiated with a line of the form 
-   *
+   * Feature functions are instantiated with a line of the form
+   * 
    * <pre>
    *   feature_function = FEATURE OPTIONS
    * </pre>
@@ -606,7 +613,7 @@ public class Decoder {
    * 
    */
   private void initializeFeatureFunctions() {
-    
+
     for (String featureLine : JoshuaConfiguration.features) {
 
       // Get rid of the leading crap.
@@ -636,14 +643,16 @@ public class Decoder {
       else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
 
-        logger
-            .info(String.format("FEATURE: WordPenalty (weight %.3f)", weights.get("WordPenalty")));
+        logger.info(String.format("FEATURE: WordPenalty (weight %.3f)",
+            weights.get("WordPenalty".toLowerCase())));
+        logger.info("Weights: " + weights.getMap());
       }
 
       else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights));
 
-        logger.info(String.format("FEATURE: OOVPenalty (weight %.3f)", weights.get("OOVPenalty")));
+        logger.info(String.format("FEATURE: OOVPenalty (weight %.3f)",
+            weights.get("OOVPenalty".toLowerCase())));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
@@ -664,7 +673,13 @@ public class Decoder {
         Float weight = Float.parseFloat(fields[3]);
 
         weights.put(String.format("tm_%s_%s", owner, index), weight);
-      } else {
+      }
+
+      else if (feature.equals(LabelCombinationFeatureFunction.getLowerCasedFeatureName())) {
+        this.featureFunctions.add(new LabelCombinationFeatureFunction(weights));
+      }
+
+      else {
         System.err.println("* WARNING: invalid feature '" + featureLine + "'");
       }
     }

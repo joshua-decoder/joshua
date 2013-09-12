@@ -39,6 +39,10 @@ public abstract class StatefulFF extends FeatureFunction {
     stateIndex = GLOBAL_STATE_INDEX++;
   }
 
+  public static void resetGlobalStateIndex() {
+    GLOBAL_STATE_INDEX = 0;
+  }
+
   public final boolean isStateful() {
     return true;
   }
