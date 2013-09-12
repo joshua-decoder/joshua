@@ -6,12 +6,12 @@ import java.io.FileWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Stack;
 import java.util.logging.Logger;
 
-import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.BLEU;
 
 /**
  * this class implement (1) HyperGraph-related data structures (Item and Hyper-edges)
@@ -58,32 +58,32 @@ public class HyperGraph {
     HashSet<HGNode> allNodes = new HashSet<HGNode>();
     Stack<HGNode> nodesToVisit = new Stack<HGNode>();
     nodesToVisit.push(this.goalNode);
-    while (! nodesToVisit.empty()) {
+    while (!nodesToVisit.empty()) {
       HGNode node = nodesToVisit.pop();
       allNodes.add(node);
       if (node.getHyperEdges() != null)
-        for (HyperEdge edge: node.getHyperEdges())
+        for (HyperEdge edge : node.getHyperEdges())
           if (edge.getTailNodes() != null)
-            for (HGNode tailNode: edge.getTailNodes()) {
-              if (! allNodes.contains(tailNode))
+            for (HGNode tailNode : edge.getTailNodes()) {
+              if (!allNodes.contains(tailNode))
                 nodesToVisit.push(tailNode);
             }
     }
 
     ArrayList<HGNode> list = new ArrayList<HGNode>();
-    for (HGNode node: allNodes)
+    for (HGNode node : allNodes)
       list.add(node);
 
     Collections.sort(list, HGNode.spanComparator);
     try {
-      for (HGNode node: list) {
+      for (HGNode node : list) {
 
         out.write(String.format("%s %s\n", Integer.toHexString(node.hashCode()), node));
         if (node.getHyperEdges() != null)
-          for (HyperEdge edge: node.getHyperEdges()) {
+          for (HyperEdge edge : node.getHyperEdges()) {
             out.write(String.format("  %s", edge));
             if (edge.getTailNodes() != null)
-              for (HGNode tailNode: edge.getTailNodes())
+              for (HGNode tailNode : edge.getTailNodes())
                 out.write(String.format(" ||| %s", Integer.toHexString(tailNode.hashCode())));
             out.write("\n");
           }
@@ -95,74 +95,45 @@ public class HyperGraph {
     }
   }
 
-  public double bestLogP() {
-    return this.goalNode.bestHyperedge.bestDerivationLogP;
+  public float bestScore() {
+    return this.goalNode.bestHyperedge.getBestDerivationScore();
   }
 
-  // === merge two hypergraphs at root node
-  public static HyperGraph mergeTwoHyperGraphs(HyperGraph hg1, HyperGraph hg2) {
-    List<HyperGraph> hgs = new ArrayList<HyperGraph>();
-    hgs.add(hg1);
-    hgs.add(hg2);
-    return mergeHyperGraphs(hgs);
-  }
-
-  public static HyperGraph mergeHyperGraphs(List<HyperGraph> hgs) {
-    // Use the first hg to get i, j, lhs, sentID, sentLen.
-    HyperGraph hg1 = hgs.get(0);
-    int sentID = hg1.sentID;
-    int sentLen = hg1.sentLen;
-
-    // Create new goal node.
-    int goalI = hg1.goalNode.i;
-    int goalJ = hg1.goalNode.j;
-    int goalLHS = hg1.goalNode.lhs;
-    List<DPState> goalDPStates = null;
-    double goalEstTotalLogP = -1;
-    HGNode newGoalNode = new HGNode(goalI, goalJ, goalLHS, goalDPStates, null, goalEstTotalLogP);;
-
-    // Attach all edges under old goal nodes into the new goal node.
-    int numNodes = 0;
-    int numEdges = 0;
-    for (HyperGraph hg : hgs) {
-      // Sanity check if the hgs belongs to the same source input.
-      if (hg.sentID != sentID || hg.sentLen != sentLen || hg.goalNode.i != goalI
-          || hg.goalNode.j != goalJ || hg.goalNode.lhs != goalLHS) {
-        logger.severe("hg belongs to different source sentences, must be wrong");
-        System.exit(1);
-      }
-
-      newGoalNode.addHyperedgesInNode(hg.goalNode.hyperedges);
-      numNodes += hg.numNodes;
-      numEdges += hg.numEdges;
-    }
-    numNodes = numNodes - hgs.size() + 1;
-
-    return new HyperGraph(newGoalNode, numNodes, numEdges, sentID, sentLen);
-  }
-
-  // ####### template to explore hypergraph #########################
-  /*
-   * private HashSet<HGNode> processHGNodesTbl = new HashSet<HGNode>();
+  /**
+   * Rescore a forest using BLEU score.
    * 
-   * private void operationHG(HyperGraph hg){ processHGNodesTbl.clear(); operationNode(hg.goalNode);
-   * }
+   * This is a somewhat complicated endeavor. What we want is to have every edge in the forest
+   * reflect a weighted score between (a) the original model score and (b) a BLEU approximation.
    * 
-   * private void operationNode(HGNode it){ if(processHGNodesTbl.contains(it)) return;
-   * processHGNodesTbl.add(it);
+   * This function walks the hyperforest in a depth-first, post-order traversal. This provides us
+   * with the necessary CKY guarantee that the antecedents of each node will have been updated
+   * before the node itself.
    * 
-   * //=== recursive call on each edge for(HyperEdge dt : it.hyperedges){ operationEdge(dt); }
+   * The update does a few things:
    * 
-   * //=== node-specific operation }
+   * <ol>
+   * <li> For each hyperedge, we compute the BLEU statistics incurred by applying that edge. Together 
+   * with the BLEU statistics from the tail nodes, we can compute a BLEU score, which is recorded
+   * for that hyperedge.
+   * <li> It is
    * 
-   * private void operationEdge(HyperEdge dt){
-   * 
-   * //=== recursive call on each ant node if(dt.getAntNodes()!=null) for(HGNode ant_it :
-   * dt.getAntNodes()) operationNode(ant_it);
-   * 
-   * //=== edge-specific operation Rule rl = dt.getRule(); if(rl!=null){
-   * 
-   * } }
+   * @param corpusStats
    */
-  // ############ end ##############################
+  public void rescore(BLEU.Stats corpusStats, float bleuWeight) {
+    final HashMap<HGNode, BLEU.Stats> bleuStatsHash = new HashMap<HGNode, BLEU.Stats>();
+
+    ForestWalker walker = new ForestWalker(ForestWalker.TRAVERSAL.POSTORDER);
+    walker.walk(this.goalNode, new WalkerFunction() {
+      public void apply(HGNode node) {
+        for (HyperEdge edge : node.getHyperEdges()) {
+          BLEU.Stats stats = BLEU.compute(edge.getRule());
+          if (edge.getTailNodes() != null) {
+            for (HGNode tailNode : edge.getTailNodes()) {
+              stats.add(bleuStatsHash.get(tailNode));
+            }
+          }
+        }
+      }
+    });
+  }
 }

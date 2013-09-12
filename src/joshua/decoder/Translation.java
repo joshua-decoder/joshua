@@ -7,7 +7,6 @@ import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.KenLMFF;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;

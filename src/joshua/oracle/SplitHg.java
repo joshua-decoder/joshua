@@ -115,7 +115,7 @@ public abstract class SplitHg {
     if (original_dt.getTailNodes() != null)
       l_ant_items = new ArrayList<HGNode>(original_dt.getTailNodes());
     HyperEdge res =
-        new HyperEdge(original_dt.getRule(), original_dt.bestDerivationLogP,
+        new HyperEdge(original_dt.getRule(), original_dt.getBestDerivationScore(),
             original_dt.getTransitionLogP(false), l_ant_items, original_dt.getSourcePath());
     return res;
   }

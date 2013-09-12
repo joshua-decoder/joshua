@@ -1,19 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
-
 package joshua.metrics;
 
 import java.util.HashMap;
@@ -23,10 +7,12 @@ import java.util.logging.Logger;
 public class BLEU extends EvaluationMetric {
   private static final Logger logger = Logger.getLogger(BLEU.class.getName());
 
+  // The maximum n-gram we care about
   protected int maxGramLength;
   protected EffectiveLengthMethod effLengthMethod;
   // 1: closest, 2: shortest, 3: average
   // protected HashMap[][] maxNgramCounts;
+
   protected HashMap<String, Integer>[] maxNgramCounts;
   protected int[][] refWordCount;
   protected double[] weights;
@@ -61,10 +47,7 @@ public class BLEU extends EvaluationMetric {
     }
 
     initialize();
-
   }
-
-
 
   protected void initialize() {
     metricName = "BLEU";
@@ -75,14 +58,19 @@ public class BLEU extends EvaluationMetric {
     set_maxNgramCounts();
   }
 
+  @Override
   public double bestPossibleScore() {
     return 1.0;
   }
 
+  @Override
   public double worstPossibleScore() {
     return 0.0;
   }
 
+  /**
+   * Sets the BLEU weights for each n-gram level to uniform.
+   */
   protected void set_weightsArray() {
     weights = new double[1 + maxGramLength];
     for (int n = 1; n <= maxGramLength; ++n) {
@@ -90,7 +78,10 @@ public class BLEU extends EvaluationMetric {
     }
   }
 
-
+  /**
+   * Computes the maximum ngram counts for each sentence (storing them in
+   * <code>maxNgramCounts</code>), which are used for clipping n-gram counts.
+   */
   protected void set_maxNgramCounts() {
     @SuppressWarnings("unchecked")
     HashMap<String, Integer>[] temp_HMA = new HashMap[numSentences];
@@ -135,10 +126,11 @@ public class BLEU extends EvaluationMetric {
         refWordCount[i][r] = wordCount(refSentences[i][r]);
       }
     }
-
   }
 
-
+  /**
+   * Computes the BLEU sufficient statistics on a hypothesis.
+   */
   public int[] suffStats(String cand_str, int i) {
     int[] stats = new int[suffStatsCount];
 
@@ -160,6 +152,13 @@ public class BLEU extends EvaluationMetric {
     return stats;
   }
 
+  /**
+   * Computes the precision sufficient statistics, clipping counts.
+   * 
+   * @param stats
+   * @param words
+   * @param i
+   */
   public void set_prec_suffStats(int[] stats, String[] words, int i) {
     HashMap<String, Integer>[] candCountsArray = getNgramCountsArray(words);
 
@@ -184,16 +183,13 @@ public class BLEU extends EvaluationMetric {
         }
 
         clippedCount = Math.min(candGramCount, maxRefGramCount);
-
         correctGramCount += clippedCount;
-
       }
 
       stats[2 * (n - 1)] = correctGramCount;
       stats[2 * (n - 1) + 1] = Math.max(words.length - (n - 1), 0); // total gram count
 
     } // for (n)
-
   }
 
   public int effLength(int candLength, int i) {
@@ -282,7 +278,8 @@ public class BLEU extends EvaluationMetric {
     }
 
     double BP = 1.0;
-    if (c_len < r_len) BP = Math.exp(1 - (r_len / c_len));
+    if (c_len < r_len)
+      BP = Math.exp(1 - (r_len / c_len));
     // if c_len > r_len, no penalty applies
 
     return BP * Math.exp(BLEUsum);
@@ -353,7 +350,8 @@ public class BLEU extends EvaluationMetric {
     }
 
     double BP = 1.0;
-    if (c_len < r_len) BP = Math.exp(1 - (r_len / c_len));
+    if (c_len < r_len)
+      BP = Math.exp(1 - (r_len / c_len));
     // if c_len > r_len, no penalty applies
 
     if (oneLiner) {
@@ -368,7 +366,6 @@ public class BLEU extends EvaluationMetric {
     System.out.println("  => BLEU = " + f4.format(BP * Math.exp(BLEUsum)));
   }
 
-
   protected int wordCount(String cand_str) {
     if (!cand_str.equals("")) {
       return cand_str.split("\\s+").length;
@@ -377,7 +374,6 @@ public class BLEU extends EvaluationMetric {
     }
   }
 
-
   public HashMap<String, Integer>[] getNgramCountsArray(String cand_str) {
     if (!cand_str.equals("")) {
       return getNgramCountsArray(cand_str.split("\\s+"));
@@ -385,7 +381,6 @@ public class BLEU extends EvaluationMetric {
       return getNgramCountsArray(new String[0]);
     }
   }
-
 
   public HashMap<String, Integer>[] getNgramCountsArray(String[] words) {
     @SuppressWarnings("unchecked")
@@ -452,7 +447,6 @@ public class BLEU extends EvaluationMetric {
     return ngramCountsArray;
 
   }
-
 
   public HashMap<String, Integer> getNgramCountsAll(String cand_str) {
     if (!cand_str.equals("")) {
@@ -526,5 +520,4 @@ public class BLEU extends EvaluationMetric {
   enum EffectiveLengthMethod {
     CLOSEST, SHORTEST, AVERAGE
   }
-
 }

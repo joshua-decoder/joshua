@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.util.ArrayList;
@@ -22,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import joshua.decoder.ff.tm.Rule;
 import joshua.util.Ngram;
 import joshua.util.Regex;
 
@@ -30,12 +16,11 @@ import joshua.util.Regex;
  * this class implements: (1) sentence-level bleu, with smoothing
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class BLEU {
   // do_ngram_clip: consider global n-gram clip
 
-  public static double computeSentenceBleu(String[] refSents, String hypSent) {
+  public static float computeSentenceBleu(String[] refSents, String hypSent) {
     return computeSentenceBleu(refSents, hypSent, true, 4, false);
   }
 
@@ -48,7 +33,7 @@ public class BLEU {
    * @param bleuOrder Should usually be 4
    * @param useShortestRef Probably use false
    */
-  public static double computeSentenceBleu(String[] refSents, String hypSent, boolean doNgramClip,
+  public static float computeSentenceBleu(String[] refSents, String hypSent, boolean doNgramClip,
       int bleuOrder, boolean useShortestRef) {
     // === ref tbl
     HashMap<String, Integer> maxRefCountTbl = constructMaxRefCountTable(refSents, bleuOrder);
@@ -60,7 +45,7 @@ public class BLEU {
       refLens[i] = refWords.length;
     }
 
-    double effectiveRefLen = computeEffectiveLen(refLens, useShortestRef);
+    float effectiveRefLen = computeEffectiveLen(refLens, useShortestRef);
 
     // === hyp tbl
     String[] hypWrds = Regex.spaces.split(hypSent);
@@ -69,18 +54,18 @@ public class BLEU {
     return computeSentenceBleu(effectiveRefLen, maxRefCountTbl, hypWrds.length, hypNgramTbl,
         doNgramClip, bleuOrder);
   }
-
-  public static double computeEffectiveLen(int[] refLens, boolean useShortestRef) {
+  
+  public static float computeEffectiveLen(int[] refLens, boolean useShortestRef) {
     if (useShortestRef) {
       int res = Integer.MAX_VALUE;
       for (int i = 0; i < refLens.length; i++)
         if (refLens[i] < res) res = refLens[i];
       return res;
     } else {// default is average length
-      double res = 0;
+      float res = 0;
       for (int i = 0; i < refLens.length; i++)
         res += refLens[i];
-      return res * 1.0 / refLens.length;
+      return res * 1.0f / refLens.length;
     }
   }
 
@@ -132,11 +117,11 @@ public class BLEU {
     return merged;
   }
 
-  public static double computeSentenceBleu(double effectiveRefLen,
+  public static float computeSentenceBleu(float effectiveRefLen,
       HashMap<String, Integer> maxRefCountTbl, int hypLen, HashMap<String, Integer> hypNgramTbl,
       boolean doNgramClip, int bleuOrder) {
 
-    double resBleu = 0;
+    float resBleu = 0.0f;
 
     int[] numNgramMatch = new int[bleuOrder];
     for (String ngram : hypNgramTbl.keySet()) {// each ngram in hyp
@@ -168,7 +153,7 @@ public class BLEU {
 
 
 
-  public static double computeSentenceBleu(String refSent, String hypSent, boolean doNgramClip,
+  public static float computeSentenceBleu(String refSent, String hypSent, boolean doNgramClip,
       int bleuOrder) {
     String[] refWrds = Regex.spaces.split(refSent);
     String[] hypWrds = Regex.spaces.split(hypSent);
@@ -180,9 +165,9 @@ public class BLEU {
         doNgramClip, bleuOrder);
   }
 
-  public static double computeSentenceBleu(int refLen, HashMap<String, Integer> refNgramTbl,
+  public static float computeSentenceBleu(int refLen, HashMap<String, Integer> refNgramTbl,
       int hypLen, HashMap<String, Integer> hypNgramTbl, boolean doNgramClip, int bleuOrder) {
-    double resBleu = 0;
+    float resBleu = 0;
 
     int[] numNgramMatch = new int[bleuOrder];
     for (Iterator<String> it = hypNgramTbl.keySet().iterator(); it.hasNext();) {
@@ -208,15 +193,15 @@ public class BLEU {
   }
 
   // sentence-bleu: BLEU= bp * prec; where prec = exp (sum 1/4 * log(prec[order]))
-  public static double computeBleu(int hypLen, double refLen, int[] numNgramMatch, int bleuOrder) {
+  public static float computeBleu(int hypLen, float refLen, int[] numNgramMatch, int bleuOrder) {
     if (hypLen <= 0 || refLen <= 0) {
       System.out.println("error: ref or hyp is zero len");
       System.exit(1);
     }
-    double res = 0;
-    double wt = 1.0 / bleuOrder;
-    double prec = 0;
-    double smooth_factor = 1.0;
+    float res = 0;
+    float wt = 1.0f / bleuOrder;
+    float prec = 0;
+    float smooth_factor = 1.0f;
     for (int t = 0; t < bleuOrder && t < hypLen; t++) {
       if (numNgramMatch[t] > 0) {
         prec += wt * Math.log(numNgramMatch[t] * 1.0 / (hypLen - t));
@@ -225,8 +210,8 @@ public class BLEU {
         prec += wt * Math.log(smooth_factor / (hypLen - t));
       }
     }
-    double bp = (hypLen >= refLen) ? 1.0 : Math.exp(1 - refLen / hypLen);
-    res = bp * Math.exp(prec);
+    float bp = (hypLen >= refLen) ? 1.0f : (float) Math.exp(1 - refLen / hypLen);
+    res = bp * (float) Math.exp(prec);
     // System.out.println("hyp_len: " + hyp_len + "; ref_len:" + ref_len + "prec: " + Math.exp(prec)
     // + "; bp: " + bp + "; bleu: " + res);
     return res;
@@ -245,7 +230,7 @@ public class BLEU {
 
   // ================================ Google linear corpus gain
   // ============================================
-  public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, String[] refSents,
+  public static float computeLinearCorpusGain(float[] linearCorpusGainThetas, String[] refSents,
       String hypSent) {
     int bleuOrder = 4;
     int hypLength = Regex.spaces.split(hypSent).length;
@@ -259,9 +244,9 @@ public class BLEU {
   /**
    * speed consideration: assume hypNgramTable has a smaller size than referenceNgramTable does
    */
-  public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength,
+  public static float computeLinearCorpusGain(float[] linearCorpusGainThetas, int hypLength,
       Map<String, Integer> hypNgramTable, Map<String, Integer> referenceNgramTable) {
-    double res = 0;
+    float res = 0;
     res += linearCorpusGainThetas[0] * hypLength;
     for (Entry<String, Integer> entry : hypNgramTable.entrySet()) {
       String ngram = entry.getKey();
@@ -296,14 +281,14 @@ public class BLEU {
     return res;
   }
 
-  static public double[] computeLinearCorpusThetas(int numUnigramTokens, double unigramPrecision,
-      double decayRatio) {
-    double[] res = new double[5];
-    res[0] = -1.0 / numUnigramTokens;
+  static public float[] computeLinearCorpusThetas(int numUnigramTokens, float unigramPrecision,
+      float decayRatio) {
+    float[] res = new float[5];
+    res[0] = -1.0f / numUnigramTokens;
     for (int i = 1; i < 5; i++)
-      res[i] = 1.0 / (4.0 * numUnigramTokens * unigramPrecision * Math.pow(decayRatio, i - 1));
+      res[i] = (1.0f / (4.0f * numUnigramTokens * unigramPrecision * (float)Math.pow(decayRatio, i - 1)));
 
-    double firstWeight = res[0];
+    float firstWeight = res[0];
     for (int i = 0; i < 5; i++)
       res[i] /= Math.abs(firstWeight);// normalize by first one
 
@@ -315,6 +300,32 @@ public class BLEU {
 
     return res;
   }
+  
+  public static Stats compute(Rule rule) {
+    Stats stats = new Stats();
+    
+    return stats;
+  }
 
-
+  /**
+   * Accumulated sufficient statistics for computing BLEU.
+   */
+  public static class Stats {
+    private int[] counts;
+    private float reflen;
+    
+    public Stats() {
+      counts = new int[4];
+      reflen = 0.0f;
+    }
+    
+    public Stats(int[] counts, float reflen) {
+      this.counts = counts;
+      this.reflen = reflen;
+//      HashMap<String, Integer> ngrams = constructNgramTable(reference, 4);
+    }
+    
+    public void add(Stats otherStats) {
+    }
+  }
 }

@@ -3,10 +3,8 @@ package joshua.decoder.hypergraph;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Level;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.chart_parser.Prunable;
 import joshua.decoder.ff.state_maintenance.DPState;
 
 /**
@@ -18,7 +16,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 
 // TODO: handle the case that the Hypergraph only maintains the one-best tree
 
-public class HGNode implements Prunable<HGNode> {
+public class HGNode {
 
   public int i, j;
 
@@ -39,19 +37,19 @@ public class HGNode implements Prunable<HGNode> {
 
   // For pruning purposes.
   public boolean isDead = false;
-  private double estTotalLogP = 0.0; // it includes the estimated LogP
+  private float score = 0.0f;
 
   // ===============================================================
   // Constructors
   // ===============================================================
 
   public HGNode(int i, int j, int lhs, List<DPState> dpStates, HyperEdge hyperEdge,
-      double pruningEstimate) {
+      float pruningEstimate) {
     this.lhs = lhs;
     this.i = i;
     this.j = j;
     this.dpStates = dpStates;
-    this.estTotalLogP = pruningEstimate;
+    this.score = pruningEstimate;
     addHyperedgeInNode(hyperEdge);
   }
 
@@ -70,6 +68,10 @@ public class HGNode implements Prunable<HGNode> {
   // Methods
   // ===============================================================
 
+  public float getScore() {
+    return this.score;
+  }
+  
   /**
    * Adds the hyperedge to the list of incoming hyperedges (i.e., ways to form this node), creating
    * the list if necessary. We then update the cache of the best incoming hyperedge via a call to
@@ -97,7 +99,7 @@ public class HGNode implements Prunable<HGNode> {
    * Updates the cache of the best incoming hyperedge.
    */
   public void semiringPlus(HyperEdge hyperEdge) {
-    if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < hyperEdge.bestDerivationLogP) {
+    if (null == bestHyperedge || bestHyperedge.getBestDerivationScore() < hyperEdge.getBestDerivationScore()) {
       bestHyperedge = hyperEdge;
     }
   }
@@ -112,12 +114,6 @@ public class HGNode implements Prunable<HGNode> {
     } else {
       return this.dpStates.get(i);
     }
-  }
-
-  public void printInfo(Level level) {
-    if (HyperGraph.logger.isLoggable(level))
-      HyperGraph.logger.log(level,
-          String.format("lhs: %s; logP: %.3f", lhs, bestHyperedge.bestDerivationLogP));
   }
 
   public Signature signature() {
@@ -171,8 +167,8 @@ public class HGNode implements Prunable<HGNode> {
     }
   }
 
-  public double getEstTotalLogP() {
-    return this.estTotalLogP;
+  public float getEstTotalLogP() {
+    return this.score;
   }
 
   /*
@@ -211,8 +207,8 @@ public class HGNode implements Prunable<HGNode> {
 
   public static Comparator<HGNode> inverseLogPComparator = new Comparator<HGNode>() {
     public int compare(HGNode item1, HGNode item2) {
-      double logp1 = item1.estTotalLogP;
-      double logp2 = item2.estTotalLogP;
+      float logp1 = item1.score;
+      float logp2 = item2.score;
       if (logp1 > logp2) {
         return -1;
       } else if (logp1 == logp2) {
@@ -228,8 +224,8 @@ public class HGNode implements Prunable<HGNode> {
    * */
   public static Comparator<HGNode> logPComparator = new Comparator<HGNode>() {
     public int compare(HGNode item1, HGNode item2) {
-      double logp1 = item1.estTotalLogP;
-      double logp2 = item2.estTotalLogP;
+      float logp1 = item1.score;
+      float logp2 = item2.score;
       if (logp1 > logp2) {
         return 1;
       } else if (logp1 == logp2) {
@@ -240,27 +236,11 @@ public class HGNode implements Prunable<HGNode> {
     }
   };
 
-  public boolean isDead() {
-    return this.isDead;
-  }
-
-  public double getPruneLogP() {
-    return this.estTotalLogP;
-  }
-
-  public void setDead() {
-    this.isDead = true;
-  }
-
-  public void setPruneLogP(double estTotalLogP) {
-    this.estTotalLogP = estTotalLogP;
-  }
-
   public String toString() {
     StringBuilder sb = new StringBuilder();
 
     sb.append(String.format("%s (%d,%d) score=%.5f", Vocabulary.word(lhs), i, j,
-        bestHyperedge.bestDerivationLogP));
+        bestHyperedge.getBestDerivationScore()));
     if (dpStates != null)
       for (DPState state : dpStates)
         sb.append(" <" + state + ">");

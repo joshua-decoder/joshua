@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 import joshua.corpus.Vocabulary;
+import joshua.decoder.BLEU;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
@@ -17,12 +18,46 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.io.DeNormalize;
 
 /**
- * This class implements lazy k-best extraction on a hyper-graph. To seed the kbest extraction, it
- * only needs that each hyperedge should have the best_cost properly set, and it does not require
- * any list being sorted. Instead, the priority queue heap_cands will do internal sorting In fact,
- * the real crucial cost is the transition-cost at each hyperedge. We store the best-cost instead of
- * the transition cost since it is easy to do pruning and find one-best. Moreover, the transition
- * cost can be recovered by get_transition_cost(), though somewhat expensive.
+ * This class implements lazy k-best extraction on a hyper-graph.
+ * 
+ * K-best extraction over hypergraphs is a little hairy, but is best understood in the following
+ * manner. Imagine a hypergraph, which is composed of nodes connected by hyperedges. A hyperedge has
+ * exactly one parent node and 1 or more tail nodes, corresponding to the rank of the rule that gave
+ * rise to the hyperedge. Each node has 1 or more incoming hyperedges.
+ * 
+ * K-best extraction works in the following manner. A derivation is a set of nodes and hyperedges
+ * that leads from the root node down and exactly covers the source-side sentence. To define a
+ * derivation, we start at the root node, choose one of its incoming hyperedges, and then recurse to
+ * the tail (or antecedent) nodes of that hyperedge, where we continually make the same decision.
+ * 
+ * Each hypernode has its hyperedges sorted according to their model score. To get the best
+ * (Viterbi) derivation, we simply recursively follow the best hyperedge coming in to each
+ * hypernode.
+ * 
+ * How do we get the second-best derivation? It is defined by changing exactly one of the decisions
+ * about which hyperedge to follow in the recursion. Somewhere, we take the second-best. Similarly,
+ * the third-best derivation makes a single change from the second-best: either making another
+ * (differnt) second-best choice somewhere along the 1-best derivation, or taking the third-best
+ * choice at the same spot where the second-best derivation took the second-best choice. And so on.
+ * 
+ * This class uses two classes that encode the necessary meta-information. The first is the
+ * DerivationState class. It roughly corresponds to a hyperedge, and records, for each of that
+ * hyperedge's tail nodes, which-best to take. So for a hyperedge with three tail nodes, the 1-best
+ * derivation will be (1,1,1), the second-best will be one of (2,1,1), (1,2,1), or (1,1,2), the
+ * third best will be one of
+ * 
+ * (3,1,1), (2,2,1), (1,1,3)
+ * 
+ * and so on.
+ * 
+ * Technical notes (from before):
+ * 
+ * To seed the kbest extraction, it only needs that each hyperedge should have the best_cost
+ * properly set, and it does not require any list being sorted. Instead, the priority queue
+ * heap_cands will do internal sorting. In fact, the real crucial cost is the transition-cost at
+ * each hyperedge. We store the best-cost instead of the transition cost since it is easy to do
+ * pruning and find one-best. Moreover, the transition cost can be recovered by
+ * get_transition_cost(), though somewhat expensive.
  * 
  * To recover the model cost for each individual model, we should either have access to the model,
  * or store the model cost in the hyperedge. (For example, in the case of disk-hypergraph, we need
@@ -33,10 +68,10 @@ import joshua.decoder.io.DeNormalize;
  */
 public class KBestExtractor {
 
-  private final HashMap<HGNode, VirtualNode> virtualNodesTbl = new HashMap<HGNode, VirtualNode>();
+  private final HashMap<HGNode, VirtualNode> virtualNodesTable = new HashMap<HGNode, VirtualNode>();
 
-  static String rootSym = "ROOT";
-  static int rootID;// TODO: bug
+  static final String rootSym = JoshuaConfiguration.goal_symbol;
+  static final int rootID = Vocabulary.id(rootSym);
 
   private enum Side {
     SOURCE, TARGET
@@ -53,8 +88,7 @@ public class KBestExtractor {
 
   public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean includeAlign,
       boolean isMonolingual) {
-    rootID = Vocabulary.id(rootSym);
-
+    
     this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
     this.includeAlign = includeAlign;
@@ -69,7 +103,7 @@ public class KBestExtractor {
   public String getKthHyp(HGNode node, int k, int sentID, List<FeatureFunction> models) {
 
     this.sentID = sentID;
-    VirtualNode virtualNode = addVirtualNode(node);
+    VirtualNode virtualNode = getVirtualNode(node);
 
     String outputString = null;
 
@@ -113,6 +147,9 @@ public class KBestExtractor {
 
   // =========================== end kbestHypergraph
 
+  /**
+   * Convenience function for k-best extraction that prints to STDOUT.
+   */
   public void lazyKBestExtractOnHG(HyperGraph hg, List<FeatureFunction> models, int topN, int sentID)
       throws IOException {
 
@@ -155,22 +192,21 @@ public class KBestExtractor {
    * This clears the virtualNodesTbl, which maintains a list of virtual nodes.
    */
   public void resetState() {
-    virtualNodesTbl.clear();
+    virtualNodesTable.clear();
   }
 
   /**
-   * Adds an entry to a global hash of virtual nodes. This hash contains all virtual nodes across
-   * all spans. It maps HGNode instances to VirtualNode instances, so that if an HGNode is
-   * encountered more than once, it will give back the same VirtualNode.
+   * Returns the VirtualNode corresponding to an HGNode. If no such VirtualNode exists, it is
+   * created.
    * 
    * @param hgnode
-   * @return
+   * @return the corresponding VirtualNode
    */
-  private VirtualNode addVirtualNode(HGNode hgnode) {
-    VirtualNode virtualNode = virtualNodesTbl.get(hgnode);
+  private VirtualNode getVirtualNode(HGNode hgnode) {
+    VirtualNode virtualNode = virtualNodesTable.get(hgnode);
     if (null == virtualNode) {
       virtualNode = new VirtualNode(hgnode);
-      virtualNodesTbl.put(hgnode, virtualNode);
+      virtualNodesTable.put(hgnode, virtualNode);
     }
     return virtualNode;
   }
@@ -187,6 +223,9 @@ public class KBestExtractor {
 
   private class VirtualNode {
 
+    // The node being annotated.
+    HGNode node = null;
+
     // sorted ArrayList of DerivationState, in the paper is: D(^) [v]
     public List<DerivationState> nbests = new ArrayList<DerivationState>();
 
@@ -200,14 +239,12 @@ public class KBestExtractor {
     // This records unique *strings* at each item, used for unique-nbest-string extraction.
     private HashMap<String, Integer> uniqueStringsTable = null;
 
-    // The node being annotated.
-    HGNode node = null;
-
     public VirtualNode(HGNode it) {
       this.node = it;
     }
 
     /**
+     * This returns a DerivationState corresponding to the kth-best derivation rooted at this node.
      * 
      * @param kbestExtractor
      * @param k (indexed from one)
@@ -262,8 +299,8 @@ public class KBestExtractor {
 
           // debug: sanity check
           tAdded++;
-          if (!extractUniqueNbest && tAdded > 1) { // this is possible only when extracting unique
-                                                   // nbest
+          // this is possible only when extracting unique nbest
+          if (!extractUniqueNbest && tAdded > 1) {
             throw new RuntimeException("In lazyKBestExtractOnNode, add more than one time, k is "
                 + k);
           }
@@ -299,7 +336,7 @@ public class KBestExtractor {
       for (int i = 0; i < previousState.edge.getTailNodes().size(); i++) {
         /* Create a new virtual node that is a copy of the current node */
         HGNode tailNode = (HGNode) previousState.edge.getTailNodes().get(i);
-        VirtualNode virtualTailNode = kbestExtractor.addVirtualNode(tailNode);
+        VirtualNode virtualTailNode = kbestExtractor.getVirtualNode(tailNode);
         // Copy over the ranks.
         int[] newRanks = new int[previousState.ranks.length];
         for (int c = 0; c < newRanks.length; c++) {
@@ -321,7 +358,7 @@ public class KBestExtractor {
           if (newRanks[i] <= virtualTailNode.nbests.size()) {
             // System.err.println("NODE: " + this.node);
             // System.err.println("  tail is " + virtualTailNode.node);
-            double cost = previousState.cost
+            float cost = previousState.cost
                 - virtualTailNode.nbests.get(previousState.ranks[i] - 1).cost
                 + virtualTailNode.nbests.get(newRanks[i] - 1).cost;
             nextState.setCost(cost);
@@ -427,16 +464,15 @@ public class KBestExtractor {
         /* Initialize the one-best at each tail node. */
         for (int i = 0; i < hyperEdge.getTailNodes().size(); i++) { // children is ready
           ranks[i] = 1;
-          VirtualNode childVirtualNode = kbestExtractor.addVirtualNode((HGNode) hyperEdge
-              .getTailNodes().get(i));
+          VirtualNode childVirtualNode = kbestExtractor.getVirtualNode(hyperEdge.getTailNodes()
+              .get(i));
           // recurse
           childVirtualNode.lazyKBestExtractOnNode(kbestExtractor, ranks[i]);
         }
       }
-      cost = (float) -hyperEdge.bestDerivationLogP;
+      cost = (float) -hyperEdge.getBestDerivationScore();
 
-      DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
-      return state;
+      return new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
     }
   };
 
@@ -468,9 +504,17 @@ public class KBestExtractor {
     int[] ranks;
 
     // the cost of this hypothesis
-    double cost;
+    private float cost;
 
-    public DerivationState(HGNode pa, HyperEdge e, int[] r, double c, int pos) {
+    /*
+     * The BLEU sufficient statistics associated with the edge's derivation. Note that this is a
+     * function of the complete derivation headed by the edge, i.e., all the particular
+     * subderivations of edges beneath it. That is why it must be contained in DerivationState
+     * instead of in the HyperEdge itself.
+     */
+    BLEU.Stats stats;
+
+    public DerivationState(HGNode pa, HyperEdge e, int[] r, float c, int pos) {
       parentNode = pa;
       edge = e;
       ranks = r;
@@ -478,8 +522,12 @@ public class KBestExtractor {
       edgePos = pos;
     }
 
-    public void setCost(double cost2) {
+    public void setCost(float cost2) {
       this.cost = cost2;
+    }
+
+    public float getCost() {
+      return this.cost;
     }
 
     public String toString() {
@@ -496,14 +544,16 @@ public class KBestExtractor {
     /**
      * TODO: This should not be using strings!
      * 
-     * @return
-     * 
-     *         TODO: this shouldn't be string-based.
+     * @return a string identifying the state
      */
     private String getSignature() {
       StringBuffer res = new StringBuffer();
-      // res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as
-      // it represent the class name and hashcode which my be equal for different objects)
+
+      // Wrong: this may not be unique to identify a hyperedge (as it represent the class name and
+      // hashcode which my be equal for different objects)
+
+      // res.apend(p_edge2.toString());
+
       res.append(edgePos);
       if (null != ranks) {
         for (int i = 0; i < ranks.length; i++) {
@@ -577,6 +627,24 @@ public class KBestExtractor {
       }
       return sb.toString();
     }
+
+    /**
+     * A DerivationState describes which path to follow through the hypergraph. For example, it
+     * might say to use the 1-best from the first tail node, the 9th-best from the second tail node,
+     * and so on. This information is represented recursively through a chain of DerivationState
+     * objects. This function follows that chain, extracting the information according to a number
+     * of parameters, and returning results to a string, and also (optionally) accumulating the
+     * feature values into the passed-in FeatureVector.
+     * 
+     * If "features" is null, then no replaying of feature functions is necessary.
+     * 
+     * @param kbestExtractor
+     * @param useTreeFormat
+     * @param features
+     * @param models
+     * @param side
+     * @return
+     */
 
     // get the numeric sequence of the particular hypothesis
     // if want to get model cost, then have to set model_cost and l_models
@@ -703,11 +771,21 @@ public class KBestExtractor {
      * numNodesAndEdges) ; } } numNodesAndEdges[0]++; numNodesAndEdges[1]++; }
      */
 
+    /**
+     * Helper function for navigating the hierarchical list of DerivationState objects. This
+     * function looks up the VirtualNode corresponding to the HGNode pointed to by the edge's
+     * {tailNodeIndex}th tail node.
+     * 
+     * @param kbestExtractor
+     * @param edge
+     * @param tailNodeIndex
+     * @return
+     */
     private DerivationState getChildDerivationState(KBestExtractor kbestExtractor, HyperEdge edge,
-        int id) {
-      HGNode child = edge.getTailNodes().get(id);
-      VirtualNode virtualChild = kbestExtractor.addVirtualNode(child);
-      return virtualChild.nbests.get(ranks[id] - 1);
+        int tailNodeIndex) {
+      HGNode child = edge.getTailNodes().get(tailNodeIndex);
+      VirtualNode virtualChild = kbestExtractor.getVirtualNode(child);
+      return virtualChild.nbests.get(ranks[tailNodeIndex] - 1);
     }
 
     // accumulate cost into modelCost
