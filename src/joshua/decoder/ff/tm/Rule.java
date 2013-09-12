@@ -1,7 +1,10 @@
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 
@@ -11,64 +14,136 @@ import joshua.decoder.ff.FeatureVector;
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
-public interface Rule {
+public abstract class Rule {
 
   // ===============================================================
   // Attributes
   // ===============================================================
 
-  void setArity(int arity);
+  public abstract void setArity(int arity);
 
-  int getArity();
+  public abstract int getArity();
 
-  void setOwner(int ow);
+  public abstract void setOwner(int ow);
 
-  int getOwner();
+  public abstract int getOwner();
 
-  void setLHS(int lhs);
+  public abstract void setLHS(int lhs);
 
-  int getLHS();
+  public abstract int getLHS();
 
-  void setEnglish(int[] eng);
+  public abstract void setEnglish(int[] eng);
 
-  int[] getEnglish();
+  public abstract int[] getEnglish();
 
-  String getEnglishWords();
+  /**
+   * The nonterminals on the English side are pointers to the source side nonterminals (-1 and -2),
+   * rather than being directly encoded. These number indicate the correspondence between the
+   * nonterminals on each side, introducing a level of indirection however when we want to resolve
+   * them. So to get the ID, we need to look up the corresponding source side ID.
+   * 
+   * @return The string of English words
+   */
+  public String getEnglishWords() {
+    List<String> foreignNTs = getForeignNonTerminals();
 
+    StringBuilder sb = new StringBuilder();
+    for (Integer index : getEnglish()) {
+      if (index >= 0)
+        sb.append(Vocabulary.word(index) + " ");
+      else
+        sb.append(foreignNTs.get(foreignNonTerminalIndexForEnglishIndex(index)) + ","
+            + Math.abs(index) + " ");
+    }
+
+    return sb.toString().trim();
+  }
+
+  public boolean isTerminal() {
+    for (int i = 0; i < getEnglish().length; i++)
+      if (getEnglish()[i] < 0)
+        return false;
+    
+    return true;
+  }
   
   /**
    * Return the French (source) nonterminals as list of Strings
    * @return
    */
-  public List<String> getForeignNonTerminals();
+  public List<String> getForeignNonTerminals() {
+    List<String> foreignNTs = new ArrayList<String>();
+    for (int i = 0; i < getFrench().length; i++) {
+      if (getFrench()[i] < 0)
+        foreignNTs.add(Vocabulary.word(getFrench()[i]));
+    }
+    return foreignNTs;
+  }
   
   /**
    * Return the English (target) nonterminals as list of Strings
    * @return
    */
-  List<String> getEnglishNonTerminals();
+  List<String> getEnglishNonTerminals() {
+    List<String> result = new ArrayList<String>();
+    List<String> foreignNTs = getForeignNonTerminals();
+
+    // for (int i = 0; i < this.getEnglish().length; i++) {
+    for (Integer index : getEnglish()) {
+      if (index < 0) {
+        result.add(foreignNTs.get(foreignNonTerminalIndexForEnglishIndex(index)) + ","
+            + Math.abs(index));
+      }
+    }
+
+    return result;
+  }
   
-  public boolean ruleIsInverting();
+  private static int foreignNonTerminalIndexForEnglishIndex(int index) {
+    return Math.abs(index) - 1;
+  }
+  
+  private List<Integer> getNormalizedEnglishNonterminalIndices() {
+    List<Integer> result = new ArrayList<Integer>();
 
-  void setFrench(int[] french);
+    for (Integer index : getEnglish()) {
+      if (index < 0) {
+        result.add(foreignNonTerminalIndexForEnglishIndex(index));
+      }
+    }
 
-  int[] getFrench();
+    return result;
+  }
+  
+  public boolean isInverting() {
+    List<Integer> normalizedEnglishNonTerminalIndices = getNormalizedEnglishNonterminalIndices();
+    if (normalizedEnglishNonTerminalIndices.size() == 2) {
+      if (normalizedEnglishNonTerminalIndices.get(0) == 1) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  String getFrenchWords();
+  public abstract void setFrench(int[] french);
+
+  public abstract int[] getFrench();
+
+  public abstract String getFrenchWords();
 
   /**
    * This function returns the dense (phrasal) features discovered when the rule was loaded. Dense
    * features are the list of unlabeled features that preceded labeled ones. They can also be
    * specified as labeled features of the form "tm_OWNER_INDEX", but the former format is preferred.
    */
-  public FeatureVector getFeatureVector();
+  public abstract FeatureVector getFeatureVector();
 
   /**
    * This allows the estimated cost of a rule to be applied from the outside.
    * 
    * @param cost
    */
-  void setEstimatedCost(float cost);
+  public abstract void setEstimatedCost(float cost);
 
   /**
    * This function is called by the rule comparator when sorting the grammar. As such it may be
@@ -76,7 +151,7 @@ public interface Rule {
    * 
    * @return the estimated cost of the rule (a lower bound on the true cost)
    */
-  float getEstimatedCost();
+  public abstract float getEstimatedCost();
 
   /**
    * Precomputable costs is the inner product of the weights found on each grammar rule and the
@@ -87,9 +162,9 @@ public interface Rule {
    * 
    * @return the precomputable cost of each rule
    */
-  float getPrecomputableCost();
+  public abstract float getPrecomputableCost();
 
-  void setPrecomputableCost(float cost);
+  public abstract void setPrecomputableCost(float cost);
 
   // ===============================================================
   // Methods
@@ -98,12 +173,12 @@ public interface Rule {
   /**
    * Set a lower-bound estimate inside the rule returns full estimate.
    */
-  float estimateRuleCost(List<FeatureFunction> models);
+  public abstract float estimateRuleCost(List<FeatureFunction> models);
 
   /**
    * This comparator is used for sorting during cube pruning. It sorts items in reverse.
    */
-  Comparator<Rule> NegativeCostComparator = new Comparator<Rule>() {
+  public static Comparator<Rule> NegativeCostComparator = new Comparator<Rule>() {
     public int compare(Rule rule1, Rule rule2) {
       float cost1 = rule1.getEstimatedCost();
       float cost2 = rule2.getEstimatedCost();
@@ -116,7 +191,4 @@ public interface Rule {
       }
     }
   };
-
-  String toString();
-
 }

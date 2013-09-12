@@ -14,7 +14,7 @@ import joshua.decoder.ff.FeatureVector;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author Matt Post <post@cs.jhu.edu>
  */
-public class BilingualRule implements Rule {
+public class BilingualRule extends Rule {
 
   private static final Logger logger = Logger.getLogger(BilingualRule.class.getName());
 
@@ -98,39 +98,6 @@ public class BilingualRule implements Rule {
 
   public final int[] getEnglish() {
     return this.english;
-  }
-
-  /**
-   * The nonterminals on the English side are pointers to the source side nonterminals (-1 and -2),
-   * rather than being directly encoded. These number indicate the correspondence between the
-   * nonterminals on each side, introducing a level of indirection however when we want to resolve
-   * them. So to get the ID, we need to look up the corresponding source side ID.
-   * 
-   * @return The string of English words
-   */
-  @Override
-  public String getEnglishWords() {
-    return RuleMethods.getEnglishWords(this);
-  }
-
-  @Override
-  public List<String> getForeignNonTerminals() {
-    return RuleMethods.getForeignNonTerminals(this);
-  }
-
-  /**
-   * This method returns a list of the non-terminals on the target side (as Strings)
-   * 
-   * @return
-   */
-  @Override
-  public List<String> getEnglishNonTerminals() {
-    return RuleMethods.getEnglishNonTerminals(this);
-  }
-
-  @Override
-  public boolean ruleIsInverting() {
-    return RuleMethods.ruleIsInverting(this);
   }
 
   /**

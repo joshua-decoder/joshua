@@ -26,7 +26,6 @@ import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.ff.tm.RuleMethods;
 import joshua.decoder.ff.tm.Trie;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
@@ -499,7 +498,7 @@ public class PackedGrammar extends BatchGrammar {
         return arity;
       }
 
-      public final class PackedRule implements Rule {
+      public final class PackedRule extends Rule {
         private final int address;
 
         private int[] tgt = null;
@@ -546,11 +545,6 @@ public class PackedGrammar extends BatchGrammar {
             tgt = getTarget(source[address + 1]);
           }
           return tgt;
-        }
-
-        @Override
-        public String getEnglishWords() {
-          return RuleMethods.getEnglishWords(this);
         }
 
         @Override
@@ -614,21 +608,6 @@ public class PackedGrammar extends BatchGrammar {
           sb.append(" " + getFeatureVector());
           sb.append(String.format(" ||| %.3f", getEstimatedCost()));
           return sb.toString();
-        }
-
-        @Override
-        public List<String> getForeignNonTerminals() {
-          return RuleMethods.getForeignNonTerminals(this);
-        }
-
-        @Override
-        public List<String> getEnglishNonTerminals() {
-          return RuleMethods.getEnglishNonTerminals(this);
-        }
-
-        @Override
-        public boolean ruleIsInverting() {
-          return RuleMethods.ruleIsInverting(this);
         }
       }
     }
