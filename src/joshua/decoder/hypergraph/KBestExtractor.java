@@ -545,16 +545,16 @@ public class KBestExtractor {
     public boolean equals(Object other) {
       if (other instanceof DerivationState) {
         DerivationState that = (DerivationState) other;
-        if (edgePos == that.edgePos)
-          if (ranks != null && that.ranks != null)
+        if (edgePos == that.edgePos) {
+          if (ranks != null && that.ranks != null) {
             if (ranks.length == that.ranks.length) {
-              for (int i = 0; i < ranks.length; i++) {
+              for (int i = 0; i < ranks.length; i++)
                 if (ranks[i] != that.ranks[i])
                   return false;
-
-                return true;
-              }
+              return true;
             }
+          }
+        }
       }
       
       return false;
