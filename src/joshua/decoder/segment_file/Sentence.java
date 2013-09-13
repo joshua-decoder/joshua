@@ -35,7 +35,8 @@ public class Sentence {
    */
   protected String sentence;
   protected String target = null;
-
+  protected String[] references = null; 
+  
   /* Lattice representation of the source sentence. */
   protected Lattice<Integer> sourceLattice = null;
 
@@ -70,9 +71,15 @@ public class Sentence {
       this.id = Integer.parseInt(idstr);
     } else {
       if (inputSentence.indexOf(" ||| ") != -1) {
-        String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
+        String[] pieces = inputSentence.split("\\s?\\|{3}\\s?");
         sentence = pieces[0];
         target = pieces[1];
+        if (target.equals(""))
+          target = null;
+        if (pieces.length > 2) {
+          references = new String[pieces.length - 2];
+          System.arraycopy(pieces, 2, references, 0, pieces.length - 2);
+        }
       } else {
         sentence = inputSentence;
       }
@@ -189,6 +196,10 @@ public class Sentence {
    */
   public String target() {
     return target;
+  }
+  
+  public String[] references() {
+    return references;
   }
 
   public int[] intSentence() {
