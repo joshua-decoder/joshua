@@ -282,45 +282,20 @@ public class BilingualRule extends Rule {
     return features;
   }
 
-  // ===============================================================
-  // Serialization Methods
-  // ===============================================================
-  // BUG: These are all far too redundant. Should be refactored to share.
-  /*
-   * public String toString() { StringBuffer sb = new StringBuffer();
-   * sb.append(Vocabulary.word(this.getLHS())); sb.append(" ||| ");
-   * sb.append(Vocabulary.getWords(this.getFrench())); sb.append(" ||| ");
-   * sb.append(getEnglishWords()); sb.append(" |||"); sb.append(" " + getFeatureVector());
-   * sb.append(String.format(" ||| %.3f", getEstimatedCost())); return sb.toString(); }
-   */
-
   public String toString() {
     StringBuffer sb = new StringBuffer();
-    sb.append(Vocabulary.word(this.lhs));
+    sb.append(Vocabulary.word(this.getLHS()));
     sb.append(" ||| ");
-    sb.append(Vocabulary.getWords(this.pFrench));
-    sb.append(" ||| " + sparseFeatures);
-    // FeatureVector features = this.getFeatureVector();
-    // for (String feature: features.keySet()) {
-    // sb.append(String.format(" %s=%.5f", feature, features.get(feature)));
-    // }
-    return sb.toString();
-  }
-
-  public String convertToString(int[] words) {
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < words.length; i++) {
-      sb.append(Vocabulary.word(words[i]));
-
-      if (i < words.length - 1)
-        sb.append(" ");
-    }
+    sb.append(getFrenchWords());
+    sb.append(" ||| ");
+    sb.append(getEnglishWords());
+    sb.append(" |||");
+    sb.append(" " + getFeatureVector());
+    sb.append(String.format(" ||| %.3f", getEstimatedCost()));
     return sb.toString();
   }
 
   public final String getFeatureString() {
     return sparseFeatures;
   }
-
-  
 }
