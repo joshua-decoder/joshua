@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 import joshua.decoder.ff.LabelCombinationFeatureFunction;
+import joshua.decoder.ff.StatefulFF;
 import joshua.util.FileUtility;
 import joshua.util.NBestListUtility;
 import junit.framework.Assert;
@@ -279,7 +280,8 @@ public class FeatureFunctionsTest {
     // write the new configuration file based on the list of extra features found in the first run
     writeJoshuaExtraFeaturesConfigFile(featureName, decoderOutput1.getExtraFeaturesList());
     // Re-run the experiment, using the new configuration file with weights for the extra features
-    JoshuaConfiguration.reset();
+    //JoshuaConfiguration.reset();
+    StatefulFF.resetGlobalStateIndex();
     DecoderOutput decoderOutput2 = runDecoder(JOSHUA_EXTRA_FEATURES_CONFIG_FILE_NAME);
 
     assertBothDecoderRunsProduceSameNumberOfTotalWeights(decoderOutput1, decoderOutput2);

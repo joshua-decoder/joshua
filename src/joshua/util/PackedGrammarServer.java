@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
@@ -16,8 +17,8 @@ public class PackedGrammarServer {
 
   private PackedGrammar grammar;
 
-  public PackedGrammarServer(String packed_directory) throws FileNotFoundException, IOException {
-    grammar = new PackedGrammar(packed_directory, -1, "owner");
+  public PackedGrammarServer(String packed_directory,JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
+    grammar = new PackedGrammar(packed_directory, -1, "owner", joshuaConfiguration);
   }
 
   public List<Rule> get(String source) {
@@ -55,7 +56,8 @@ public class PackedGrammarServer {
   
   
   public static void main(String[] args) throws FileNotFoundException, IOException {
-    PackedGrammarServer pgs = new PackedGrammarServer(args[0]);
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+    PackedGrammarServer pgs = new PackedGrammarServer(args[0],joshuaConfiguration);
     
     Scanner user = new Scanner(System.in);
     while (user.hasNextLine()) {

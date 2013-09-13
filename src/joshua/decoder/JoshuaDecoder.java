@@ -24,7 +24,8 @@ public class JoshuaDecoder {
   // ===============================================================
   public static void main(String[] args) throws IOException {
 
-    ArgsParser userArgs = new ArgsParser(args);
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+    ArgsParser userArgs = new ArgsParser(args,joshuaConfiguration);
 
     String logFile = System.getenv().get("JOSHUA") + "/logging.properties";
     try {
@@ -36,10 +37,10 @@ public class JoshuaDecoder {
     long startTime = System.currentTimeMillis();
 
     /* Step-0: some sanity checking */
-    JoshuaConfiguration.sanityCheck();
+    joshuaConfiguration.sanityCheck();
 
     /* Step-1: initialize the decoder, test-set independent */
-    Decoder decoder = new Decoder(userArgs.getConfigFile());
+    Decoder decoder = new Decoder(joshuaConfiguration, userArgs.getConfigFile());
 
     logger.info(String.format("Model loading took %d seconds",
       (System.currentTimeMillis() - startTime) / 1000));
@@ -48,13 +49,13 @@ public class JoshuaDecoder {
 
     /* Step-2: Decoding */
     // create a server if requested, which will create TranslationRequest objects
-    if (JoshuaConfiguration.server_port > 0) {
-      new TcpServer(decoder, JoshuaConfiguration.server_port).start();
+    if (joshuaConfiguration.server_port > 0) {
+      new TcpServer(decoder, joshuaConfiguration.server_port,joshuaConfiguration).start();
       return;
     }
     
     // create a TranslationRequest object on STDIN
-    TranslationRequest fileRequest = new TranslationRequest(System.in);
+    TranslationRequest fileRequest = new TranslationRequest(System.in, joshuaConfiguration);
     Translations translationStream = decoder.decodeAll(fileRequest);
     for (;;) {
       Translation translation = translationStream.next();

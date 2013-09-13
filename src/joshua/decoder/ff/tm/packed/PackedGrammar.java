@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.BasicRuleCollection;
@@ -39,8 +40,9 @@ public class PackedGrammar extends BatchGrammar {
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
-  public PackedGrammar(String grammar_dir, int span_limit, String owner)
-      throws FileNotFoundException, IOException {
+  public PackedGrammar(String grammar_dir, int span_limit, String owner,
+      JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
+    super(joshuaConfiguration);
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
