@@ -32,6 +32,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.metrics.EvaluationMetric;
 import joshua.util.StreamGobbler;
 
@@ -43,6 +44,7 @@ import joshua.util.StreamGobbler;
  */
 
 public class MertCore {
+  private final JoshuaConfiguration joshuaConfiguration;
   private TreeSet<Integer>[] indicesOfInterest_all;
 
   private final static DecimalFormat f4 = new DecimalFormat("###0.0000");
@@ -232,15 +234,20 @@ public class MertCore {
 
   // private int useDisk;
 
-  public MertCore() {}
+  public MertCore(JoshuaConfiguration joshuaConfiguration) 
+  {
+    this.joshuaConfiguration = joshuaConfiguration;
+  }
 
-  public MertCore(String[] args) {
+  public MertCore(String[] args, JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     EvaluationMetric.set_knownMetrics();
     processArgsArray(args);
     initialize(0);
   }
 
-  public MertCore(String configFileName) {
+  public MertCore(String configFileName,JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     EvaluationMetric.set_knownMetrics();
     processArgsArray(cfgFileToArgsArray(configFileName));
     initialize(0);
@@ -469,7 +476,7 @@ public class MertCore {
 
     if (decoderCommand == null && fakeFileNameTemplate == null) {
       println("Loading Joshua decoder...", 1);
-      myDecoder = new Decoder(decoderConfigFileName + ".ZMERT.orig");
+      myDecoder = new Decoder(joshuaConfiguration, decoderConfigFileName + ".ZMERT.orig");
       println("...finished loading @ " + (new Date()), 1);
       println("");
     } else {
@@ -3028,13 +3035,16 @@ public class MertCore {
 
   public static void main(String[] args) {
 
-    MertCore DMC = new MertCore(); // dummy MertCore object
-
-    // if bad args[], System.exit(80)
-
     String configFileName = args[0];
     String stateFileName = args[1];
     int currIteration = Integer.parseInt(args[2]);
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+    
+    MertCore DMC = new MertCore(joshuaConfiguration); // dummy MertCore object
+
+    // if bad args[], System.exit(80)
+
+
 
 
     int randsToSkip = 0;

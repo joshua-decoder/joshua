@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.segment_file.LatticeInput;
 import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
@@ -18,7 +19,7 @@ import joshua.decoder.segment_file.Sentence;
  * 
  */
 public class TranslationRequest {
-
+  private final JoshuaConfiguration joshuaConfiguration;
   private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 
   private BufferedReader reader = null;
@@ -30,7 +31,8 @@ public class TranslationRequest {
   /* Whether the request has been killed by a broken client connection. */
   private boolean isShutDown = false;
 
-  public TranslationRequest(InputStream in) {
+  public TranslationRequest(InputStream in,JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     reader = new BufferedReader(new InputStreamReader(in, FILE_ENCODING));
   }
 
@@ -57,11 +59,11 @@ public class TranslationRequest {
         // TODO: This should be replace with a single Input object type that knows about all kinds
         // of expected inputs
         if (line.replaceAll("\\s", "").startsWith("(((")) {
-          nextSentence = new LatticeInput(line, sentenceNo);
+          nextSentence = new LatticeInput(line, sentenceNo, joshuaConfiguration);
         } else if (ParsedSentence.matches(line)) {
-          nextSentence = new ParsedSentence(line, sentenceNo);
+          nextSentence = new ParsedSentence(line, sentenceNo, joshuaConfiguration);
         } else {
-          nextSentence = new Sentence(line, sentenceNo);
+          nextSentence = new Sentence(line, sentenceNo, joshuaConfiguration);
         }
       }
     } catch (IOException e) {

@@ -3,13 +3,14 @@ package joshua.decoder.segment_file;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.syntax.ArraySyntaxTree;
 import joshua.corpus.syntax.SyntaxTree;
+import joshua.decoder.JoshuaConfiguration;
 
 public class ParsedSentence extends Sentence {
 
   private SyntaxTree syntaxTree = null;
 
-  public ParsedSentence(String input, int id) {
-    super(input, id);
+  public ParsedSentence(String input, int id,JoshuaConfiguration joshuaConfiguration) {
+    super(input, id, joshuaConfiguration);
   }
 
   public int[] intSentence() {

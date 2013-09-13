@@ -60,6 +60,9 @@ import joshua.util.io.LineReader;
  * @author Lane Schwartz <dowobeha@users.sourceforge.net>
  */
 public class Decoder {
+
+  private final JoshuaConfiguration joshuaConfiguration;
+
   /*
    * Many of these objects themselves are global objects. We pass them in when constructing other
    * objects, so that they all share pointers to the same object. This is good because it reduces
@@ -82,14 +85,26 @@ public class Decoder {
   // Constructors
   // ===============================================================
 
+  
   /**
-   * Constructs a new decoder using the specified configuration file.
+   * Constructor method that creates a new decoder using the specified configuration file.
    * 
    * @param configFile Name of configuration file.
    */
-  public Decoder(String configFile) {
-    this();
+  public Decoder(JoshuaConfiguration joshuaConfiguration, String configFile) {
+
+    this(joshuaConfiguration);
     this.initialize(configFile);
+  }
+
+  /**
+   * Factory method that creates a new decoder using the specified configuration file.
+   * 
+   * @param configFile Name of configuration file.
+   */
+  public static Decoder createDecoder(String configFile) {
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+    return new Decoder(joshuaConfiguration, configFile);
   }
 
   /**
@@ -99,10 +114,11 @@ public class Decoder {
    * {@link #getUninitalizedDecoder()} method to provide an uninitialized decoder for use in
    * testing.
    */
-  private Decoder() {
+  private Decoder(JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     this.grammarFactories = new ArrayList<GrammarFactory>();
     this.threadPool = new ArrayBlockingQueue<DecoderThread>(
-        JoshuaConfiguration.num_parallel_decoders, true);
+        this.joshuaConfiguration.num_parallel_decoders, true);
   }
 
   /**
@@ -111,8 +127,8 @@ public class Decoder {
    * This method is called by unit tests or any outside packages (e.g., MERT) relying on the
    * decoder.
    */
-  static public Decoder getUninitalizedDecoder() {
-    return new Decoder();
+  static public Decoder getUninitalizedDecoder(JoshuaConfiguration joshuaConfiguration) {
+    return new Decoder(joshuaConfiguration);
   }
 
   // ===============================================================
@@ -385,16 +401,16 @@ public class Decoder {
        * Weights can be listed in a separate file (denoted by parameter "weights-file") or directly
        * in the Joshua config file. Config file values take precedent.
        */
-      Decoder.weights = this.readWeights(JoshuaConfiguration.weights_file);
+      Decoder.weights = this.readWeights(joshuaConfiguration.weights_file);
 
-      for (int i = 0; i < JoshuaConfiguration.weights.size(); i++) {
-        String pair[] = JoshuaConfiguration.weights.get(i).split("\\s+");
+      for (int i = 0; i < joshuaConfiguration.weights.size(); i++) {
+        String pair[] = joshuaConfiguration.weights.get(i).split("\\s+");
 
         /* Sanity check for old-style unsupported feature invocations. */
         if (pair.length != 2) {
           System.err.println("FATAL: Invalid feature weight line found in config file.");
           System.err
-              .println(String.format("The line was '%s'", JoshuaConfiguration.weights.get(i)));
+              .println(String.format("The line was '%s'", joshuaConfiguration.weights.get(i)));
           System.err
               .println("You mifeatureFunctionNameght be using an old version of the config file that is no longer supported");
           System.err
@@ -420,7 +436,7 @@ public class Decoder {
       this.initializeFeatureFunctions();
 
       // Sort the TM grammars (needed to do cube pruning)
-      if (JoshuaConfiguration.amortized_sorting) {
+      if (joshuaConfiguration.amortized_sorting) {
         logger.info("Grammar sorting happening lazily on-demand.");
       } else {
         long pre_sort_time = System.currentTimeMillis();
@@ -435,9 +451,9 @@ public class Decoder {
       }
 
       // Create the threads
-      for (int i = 0; i < JoshuaConfiguration.num_parallel_decoders; i++) {
+      for (int i = 0; i < joshuaConfiguration.num_parallel_decoders; i++) {
         this.threadPool.put(new DecoderThread(this.grammarFactories, Decoder.weights,
-            this.featureFunctions));
+            this.featureFunctions, joshuaConfiguration));
       }
 
     } catch (IOException e) {
@@ -455,7 +471,7 @@ public class Decoder {
     this.languageModels = new ArrayList<NGramLanguageModel>();
 
     // lm = kenlm 5 0 0 100 file
-    for (String lmLine : JoshuaConfiguration.lms) {
+    for (String lmLine : joshuaConfiguration.lms) {
 
       logger.info("lm line: " + lmLine);
 
@@ -469,13 +485,13 @@ public class Decoder {
         KenLM lm = new KenLM(lm_order, lm_file, minimizing);
         this.languageModels.add(lm);
         Vocabulary.registerLanguageModel(lm);
-        Vocabulary.id(JoshuaConfiguration.default_non_terminal);
+        Vocabulary.id(joshuaConfiguration.default_non_terminal);
 
       } else if (lm_type.equals("berkeleylm")) {
         LMGrammarBerkeley lm = new LMGrammarBerkeley(lm_order, lm_file);
         this.languageModels.add(lm);
         Vocabulary.registerLanguageModel(lm);
-        Vocabulary.id(JoshuaConfiguration.default_non_terminal);
+        Vocabulary.id(joshuaConfiguration.default_non_terminal);
 
       } else if (lm_type.equals("none")) {
         ; // do nothing
@@ -503,13 +519,13 @@ public class Decoder {
 
   private void initializeTranslationGrammars() throws IOException {
 
-    if (JoshuaConfiguration.tms.size() > 0) {
+    if (joshuaConfiguration.tms.size() > 0) {
 
       // Records which PhraseModelFF's have been instantiated (one is needed for each owner).
       HashSet<String> ownersSeen = new HashSet<String>();
 
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
-      for (String tmLine : JoshuaConfiguration.tms) {
+      for (String tmLine : joshuaConfiguration.tms) {
         String tokens[] = tmLine.split("\\s+");
         String format = tokens[0];
         String owner = tokens[1];
@@ -519,7 +535,7 @@ public class Decoder {
         GrammarFactory grammar = null;
         if (format.equals("packed") || new File(file).isDirectory()) {
           try {
-            grammar = new PackedGrammar(file, span_limit, owner);
+            grammar = new PackedGrammar(file, span_limit, owner,joshuaConfiguration);
           } catch (FileNotFoundException e) {
             System.err.println(String.format("Couldn't load packed grammar from '%s'", file));
             System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
@@ -528,7 +544,7 @@ public class Decoder {
 
         } else if (format.equals("thrax") || format.equals("regexp")) {
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
-              JoshuaConfiguration.default_non_terminal, span_limit);
+              joshuaConfiguration.default_non_terminal, span_limit,joshuaConfiguration);
         }
         this.grammarFactories.add(grammar);
 
@@ -552,7 +568,7 @@ public class Decoder {
       // non terminal match
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
           "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
-          JoshuaConfiguration.default_non_terminal, -1);
+          joshuaConfiguration.default_non_terminal, -1, joshuaConfiguration);
       this.grammarFactories.add(glueGrammar);
     }
 
@@ -614,7 +630,7 @@ public class Decoder {
    */
   private void initializeFeatureFunctions() {
 
-    for (String featureLine : JoshuaConfiguration.features) {
+    for (String featureLine : joshuaConfiguration.features) {
 
       // Get rid of the leading crap.
       featureLine = featureLine.replaceFirst("^feature_function\\s*=\\s*", "");
