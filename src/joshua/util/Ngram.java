@@ -55,7 +55,7 @@ public class Ngram {
         StringBuffer ngram = new StringBuffer();
         for (int k = i; k <= i + j; k++) {
           String t_wrd = wrds[k];
-          ngram.append(Vocabulary.id(t_wrd));
+          ngram.append(t_wrd);
           if (k < i + j)
             ngram.append(" ");
         }
