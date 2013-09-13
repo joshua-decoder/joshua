@@ -48,12 +48,18 @@ public class Translation {
         }
 
         long startTime = System.currentTimeMillis();
-        KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
+        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, 
             JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
-        kBestExtractor.lazyKBestExtractOnHG(hypergraph, featureFunctions,
-            JoshuaConfiguration.topN, id(), out);
-
+        kBestExtractor.lazyKBestExtractOnHG(hypergraph, JoshuaConfiguration.topN, out);
+        if (JoshuaConfiguration.rescoreForest) {
+          Decoder.weights.put("BLEU", 100);
+          kBestExtractor.lazyKBestExtractOnHG(hypergraph, JoshuaConfiguration.topN, out);
+          
+          Decoder.weights.put("BLEU", -100);
+          kBestExtractor.lazyKBestExtractOnHG(hypergraph, JoshuaConfiguration.topN, out);
+        }
+                
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
         System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
             JoshuaConfiguration.topN, seconds));
