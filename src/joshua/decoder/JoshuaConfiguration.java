@@ -110,9 +110,6 @@ public class JoshuaConfiguration {
    */
   public static boolean mark_oovs = true;
 
-  // used to extract oracle hypotheses from the forest
-  public static String oracleFile = null;
-
   /* Enables synchronous parsing. */
   public static boolean parse = false; // perform synchronous parsing
 
@@ -126,6 +123,9 @@ public class JoshuaConfiguration {
 
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
   public static int server_port = 0;
+
+  /* Whether to do forest rescoring. If set to true, requires an oracle file. */
+  public static boolean rescoreForest = false;
 
   // ===============================================================
   // Methods
@@ -295,17 +295,13 @@ public class JoshuaConfiguration {
 
             logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));
 
-          } else if (parameter.equals(normalize_key("oracleFile"))) {
-            oracleFile = fds[1].trim();
-            logger.info(String.format("    oracle file: %s", oracleFile));
-            if (!new File(oracleFile).exists()) {
-              logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
-              System.exit(1);
-            }
-
           } else if (parameter.equals(normalize_key("server-port"))) {
             server_port = Integer.parseInt(fds[1]);
             logger.info(String.format("    server-port: %d", server_port));
+
+          } else if (parameter.equals(normalize_key("rescore-forest"))) {
+            rescoreForest = true;
+            logger.info(String.format("    rescore-forest: %s", rescoreForest));
 
           } else if (parameter.equals("c") || parameter.equals("config")) {
             // this was used to send in the config file, just ignore it
