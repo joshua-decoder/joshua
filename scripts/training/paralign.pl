@@ -85,8 +85,9 @@ sub run_berkeley_aligner {
 
 sub run_jacana_aligner {
   my ($chunkdir,$chunkno) = @_;
+  my $jacana_home = "$JOSHUA/scripts/training/templates/alignment/jacana";
 
   # run the job
   $cachepipe->cmd("jacana-aligner-chunk-$chunkno",
-                  "java -d64 -Xmx$args{aligner_mem} -DJACANA_HOME=$JOSHUA -jar $JOSHUA/lib/jacana-xy.jar -m $JOSHUA/resources/model/fr-en.model -src fr -tgt en -a $args{train_dir}/splits/corpus.$args{source}.$chunkno -b $args{train_dir}/splits/corpus.$args{target}.$chunkno -o $chunkdir/training.align");
+                  "java -d64 -Xmx$args{aligner_mem} -DJACANA_HOME=$jacana_home -jar $JOSHUA/lib/jacana-xy.jar -m $jacana_home/resources/model/fr-en.model -src fr -tgt en -a $args{train_dir}/splits/corpus.$args{source}.$chunkno -b $args{train_dir}/splits/corpus.$args{target}.$chunkno -o $chunkdir/training.align");
 }
