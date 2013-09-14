@@ -73,6 +73,10 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
 my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
+
+# Which GHKM extractor to use ("galley" or "moses")
+my $GHKM_EXTRACTOR = "moses";
+
 my $WITTEN_BELL = 0;
 
 my $JOSHUA_ARGS = "";
@@ -125,7 +129,7 @@ my $HADOOP_CONF = undef;
 my $PARSER_MEM = "2g";
 
 # memory available for building the language model
-my $BUILDLM_MEM = "2g";
+my $BUILDLM_MEM = "2G";
 
 # Memory available for packing the grammar.
 my $PACKER_MEM = "2g";
@@ -225,6 +229,7 @@ my $retval = GetOptions(
   "maxspan=i"         => \$MAXSPAN,
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
+  "ghkm-extractor=s"  => \$GHKM_EXTRACTOR,
   "maxlen=i"        => \$MAXLEN,
   "maxlen-tune=i"        => \$MAXLEN_TUNE,
   "maxlen-test=i"        => \$MAXLEN_TEST,
@@ -892,10 +897,45 @@ if (! defined $GRAMMAR_FILE) {
   my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? $TRAIN{target} : $TRAIN{parsed};
 
   if ($GRAMMAR_TYPE eq "ghkm") {
-    $cachepipe->cmd("ghkm-extract",
-                    "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
-                    $ALIGNMENT,
-                    "grammar.gz");
+    if ($GHKM_EXTRACTOR eq "galley") {
+      $cachepipe->cmd("ghkm-extract",
+                      "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
+                      $ALIGNMENT,
+                      "grammar.gz");
+    } elsif ($GHKM_EXTRACTOR eq "moses") {
+      # XML-ize, also replacing unary chains with OOV at the bottom by removing their unary parents
+      $cachepipe->cmd("ghkm-moses-xmlize",
+                      "cat $target_file | perl -pe 's/\\(\\S+ \\(OOV (.*?)\\)\\)/(OOV \$1)/g' | $MOSES/scripts/training/wrappers/berkeleyparsed2mosesxml.perl > $DATA_DIRS{train}/corpus.xml",
+                      # "cat $target_file | perl -pe 's/\\(\\S+ \\(OOV (.*?)\\)\\)/(OOV \$1)/g' > $DATA_DIRS{train}/corpus.ptb",
+                      $target_file,
+                      "$DATA_DIRS{train}/corpus.xml");
+
+      if (! -e "$DATA_DIRS{train}/corpus.$SOURCE") {
+        system("ln -sf $TRAIN{source} $DATA_DIRS{train}/corpus.$SOURCE");
+      }
+
+      if ($ALIGNMENT ne "alignments/training.align") {
+        system("mkdir alignments") unless -d "alignments";
+        system("ln -sf $ALIGNMENT alignments/training.align");
+        $ALIGNMENT = "alignments/training.align";
+      }
+
+      system("mkdir model");
+      $cachepipe->cmd("ghkm-moses-extract",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --glue-grammar --glue-grammar-file glue-grammar.ghkm",
+                      "$DATA_DIRS{train}/corpus.xml",
+                      "glue-grammar.ghkm",
+                      "model/rule-table.gz");
+
+      $cachepipe->cmd("ghkm-moses-convert",
+                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
+                      "model/rule-table.gz",
+                      "grammar.gz");
+
+    } else {
+      print STDERR "* FATAL: no such GHKM extractor '$GHKM_EXTRACTOR'\n";
+      exit(1);
+    }
   } elsif (! -e "grammar.gz" && ! -z "grammar.gz") {
 
     # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
