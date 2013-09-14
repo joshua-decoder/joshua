@@ -101,7 +101,7 @@ my %TUNEFILES = (
 my $DO_MBR = 0;
 
 # Which aligner to use. The options are "giza" or "berkeley".
-my $ALIGNER = "giza"; # "berkeley" or "giza"
+my $ALIGNER = "giza"; # "berkeley" or "giza" or "jacana"
 
 # Filter rules to the following maximum scope (Hopkins & Langmead, 2011).
 my $SCOPE = 3;
@@ -444,8 +444,8 @@ foreach my $corpus (@CORPORA) {
   }
 }
 
-if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
-  print "* FATAL: aligner must be one of 'giza', or 'berkeley'\n";
+if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley" and $ALIGNER ne "jacana") {
+  print "* FATAL: aligner must be one of 'giza', 'berkeley' or 'jacana' (only French-English)\n";
   exit 1;
 }
 
@@ -746,6 +746,8 @@ if (! defined $ALIGNMENT) {
   if ($ALIGNER eq "giza") {
     @aligned_files = map { "alignments/$_/model/aligned.$GIZA_MERGE" } (0..$lastchunk);
   } elsif ($ALIGNER eq "berkeley") {
+    @aligned_files = map { "alignments/$_/training.align" } (0..$lastchunk);
+  } elsif ($ALIGNER eq "jacana") {
     @aligned_files = map { "alignments/$_/training.align" } (0..$lastchunk);
   }
 	my $aligned_file_list = join(" ", @aligned_files);

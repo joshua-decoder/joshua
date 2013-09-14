@@ -40,6 +40,8 @@ while (my $chunkno = <>) {
     run_giza($chunkdir, $chunkno, $args{num_threads} > 1);
   } elsif ($args{aligner} eq "berkeley") {
     run_berkeley_aligner($chunkdir, $chunkno);
+  } elsif ($args{aligner} eq "jacana") {
+    run_jacana_aligner($chunkdir, $chunkno);
   }
 
   print "1\n";
@@ -79,4 +81,12 @@ sub run_berkeley_aligner {
                   "$args{train_dir}/splits/corpus.$args{source}.$chunkno",
                   "$args{train_dir}/splits/corpus.$args{target}.$chunkno",
                   "$chunkdir/training.align");
+}
+
+sub run_jacana_aligner {
+  my ($chunkdir,$chunkno) = @_;
+
+  # run the job
+  $cachepipe->cmd("jacana-aligner-chunk-$chunkno",
+                  "java -d64 -Xmx$args{aligner_mem} -DJACANA_HOME=$JOSHUA -jar $JOSHUA/lib/jacana-xy.jar -m $JOSHUA/resources/model/fr-en.model -src fr -tgt en -a $args{train_dir}/splits/corpus.$args{source}.$chunkno -b $args{train_dir}/splits/corpus.$args{target}.$chunkno -o $chunkdir/training.align");
 }
