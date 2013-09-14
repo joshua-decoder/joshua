@@ -197,6 +197,12 @@ my $PARSED_CORPUS = undef;
 # Allows the user to set a temp dir for various tasks
 my $TMPDIR = "/tmp";
 
+# Enable forest rescoring
+my $RESCORE_FOREST = 0;
+my $LM_STATE_MINIMIZATION = "true";
+
+my $NBEST = 300;
+
 my $retval = GetOptions(
   "readme=s"    => \$README,
   "corpus=s"        => \@CORPORA,
@@ -258,11 +264,18 @@ my $retval = GetOptions(
   "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
   "tmp=s"             => \$TMPDIR,
+  "rescore-forest!"  => \$RESCORE_FOREST,
+  "nbest=i"           => \$NBEST,
 );
 
 if (! $retval) {
   print "Invalid usage, quitting\n";
   exit 1;
+}
+
+# Forest rescoring doesn't work with LM state minimization
+if ($RESCORE_FOREST) {
+  $LM_STATE_MINIMIZATION = "false";
 }
 
 $RUNDIR = get_absolute_path($RUNDIR);
@@ -1205,7 +1218,7 @@ my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER true false 100 $lmfile";
+  my $configstring = "lm = $LM_TYPE $LM_ORDER $LM_STATE_MINIMIZATION false 100 $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
@@ -1338,11 +1351,13 @@ for my $run (1..$OPTIMIZER_RUNS) {
   } elsif ($TUNER eq "mira") {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
+
+    my $rescore_str = ($RESCORE_FOREST == 1) ? "--rescore-forest" : "--no-rescore-forest";
     
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest $NBEST --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" $rescore_str > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/joshua.config.final");
