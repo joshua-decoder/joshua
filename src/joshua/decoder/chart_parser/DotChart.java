@@ -16,15 +16,19 @@ import joshua.lattice.Lattice;
 import joshua.lattice.Node;
 
 /**
- * The DotChart handles the building of the -LM forest. The set of (Dot)Items over a span represent
- * the rules that have been completely applied through the implicit binarization. These DotItems are
- * available to be incorporated into the main chart after the LM score has been applied (assuming
- * they pass pruning).
+ * The DotChart handles Earley-style implicit binarization of translation rules.
  * 
- * DotItem represent (possibly partial) application of synchronous rules that have been implicitly
- * binarized. As spans are considered, the next symbol in the rule's source right-hand side is
- * matched against proved items (items in the +LM chart, Chart.java) or input symbols. Once the rule
- * is complete, it is entered into the DotChart.
+ * The {@link DotNode} object represents the (possibly partial) application of a synchronous rule.
+ * The implicit binarization is maintained with a pointer to the {@link Trie} node in the grammar,
+ * for easy retrieval of the next symbol to be matched. At every span (i,j) of the input sentence,
+ * every incomplete DotNode is examined to see whether it (a) needs a terminal and matches against
+ * the final terminal of the span or (b) needs a nonterminal and matches against a completed
+ * nonterminal in the main chart at some split point (k,j).
+ * 
+ * Once a rule is completed, it is entered into the {@link DotChart}. {@link DotCell} objects are
+ * used to group completed DotNodes over a span.
+ * 
+ * There is a separate DotChart for every grammar.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author Matt Post <post@cs.jhu.edu>
@@ -37,7 +41,7 @@ class DotChart {
   // ===============================================================
   /**
    * Two-dimensional chart of cells. Some cells might be null. This could definitely be represented
-   * more efficiently, especially since access is already mitigated through an accessor function.
+   * more efficiently, since only the upper half of this triangle is every used.
    */
   private DotCell[][] dotcells;
 
@@ -114,29 +118,6 @@ class DotChart {
     this.regexpMatching = useRegexpMatching;
   }
 
-  /**
-   * Constructs a new dot chart from a specified input sentence, a translation grammar, and a parse
-   * chart.
-   * 
-   * @param input An array of integers which represents an input sentence.
-   * @param grammar A translation grammar.
-   * @param chart A CKY+ style chart in which completed span entries are stored.
-   */
-  /*
-   * public DotChart(int[] inputSentence, Grammar grammar, Chart chart) {
-   * 
-   * if (logger.isLoggable(Level.FINEST))
-   * logger.finest("Constructing DotChart from input sentence: " + Arrays.toString(inputSentence));
-   * 
-   * this.p_chart = chart; this.p_grammar = grammar; this.sent_len = inputSentence.length;
-   * this.l_dot_bins = new DotBin[sent_len][sent_len+1];
-   * 
-   * Integer[] input = new Integer[inputSentence.length]; for (int i = 0; i < inputSentence.length;
-   * i++) { input[i] = inputSentence[i]; }
-   * 
-   * this.input = new Lattice<Integer>(input); }
-   */
-
   // ===============================================================
   // Package-protected methods
   // ===============================================================
@@ -162,18 +143,20 @@ class DotChart {
    * 
    * There are two kinds of expansions:
    * 
-   * 1. Expansion over a nonterminal symbol. For this kind of expansion, a rule has a dot
+   * <ol>
+   * <li>Expansion over a nonterminal symbol. For this kind of expansion, a rule has a dot
    * immediately prior to a source-side nonterminal. The main Chart is consulted to see whether
    * there exists a completed nonterminal with the same label. If so, the dot is advanced.
    * 
    * Discovering nonterminal expansions is a matter of enumerating all split points k such that i <
    * k and k < j. The nonterminal symbol must exist in the main Chart over (k,j).
    * 
-   * 2. Expansion over a terminal symbol. In this case, expansion is a simple matter of determing
+   * <li>Expansion over a terminal symbol. In this case, expansion is a simple matter of determing
    * whether the input symbol at position j (the end of the span) matches the next symbol in the
    * rule. This is equivalent to choosing a split point k = j - 1 and looking for terminal symbols
    * over (k,j). Note that phrases in the input rule are handled one-by-one as we consider longer
    * spans.
+   * </ol>
    */
   void expandDotCell(int i, int j) {
     if (logger.isLoggable(Level.FINEST))
@@ -239,8 +222,9 @@ class DotChart {
   // ===============================================================
 
   /**
-   * Attempt to combine an item in the dot chart with an item in the chart to create a new item in
-   * the dot chart.
+   * Attempt to combine an item in the dot chart with an item in the main chart to create a new item
+   * in the dot chart. The DotChart item is a DotNode begun at position i with the dot currently at
+   * position k.
    * <p>
    * In other words, this method looks for (proved) theorems or axioms in the completed chart that
    * may apply and extend the dot position.
@@ -256,13 +240,19 @@ class DotChart {
     }
 
     // complete super-items (items over the same span with different LHSs)
-    List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(this.dotChart.getCell(k, j)
+    List<SuperNode> superNodes = new ArrayList<SuperNode>(this.dotChart.getCell(k, j)
         .getSortedSuperItems().values());
 
-    // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
+    /* For every partially complete item over (i,k) */
     for (DotNode dotNode : dotcells[i][k].dotNodes) {
-      // see if it matches what the dotitem is looking for
-      for (SuperNode superNode : t_ArrayList) {
+      /* For every completed nonterminal in the main chart */
+      for (SuperNode superNode : superNodes) {
+        /*
+         * Regular Expression matching allows for a regular-expression style rules in the grammar,
+         * which allows for a very primitive treatment of morphology. This is an advanced,
+         * undocumented feature that introduces a complexity, in that the next "word" in the grammar
+         * rule might match more than one outgoing arc in the grammar trie.
+         */
         if (this.regexpMatching) {
           ArrayList<Trie> child_tnodes = matchAll(dotNode, superNode.lhs);
           if (child_tnodes.isEmpty())
@@ -276,11 +266,15 @@ class DotChart {
                 .getSourcePath().extendNonTerminal());
           }
         } else {
-          Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
-          if (child_tnode != null) {
-            if (true == startDotItems && !child_tnode.hasExtensions())
+          /*
+           * Standard approach: Check with the item needed by this grammar rule matches the lefthand
+           * side of the rule group under consideration.
+           */
+          Trie trie = dotNode.trieNode.match(superNode.lhs);
+          if (trie != null) {
+            if (true == startDotItems && !trie.hasExtensions())
               continue;
-            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+            addDotItem(trie, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
                 .getSourcePath().extendNonTerminal());
           }
         }
@@ -381,11 +375,8 @@ class DotChart {
   }
 
   /**
-   * A DotNode represents the partial application of a rule. It contains the following fields:
-   * 
-   * - trieNode, a pointer into the grammar trie structure - antSuperNodes, a list of zero or more
-   * nonterminal nodes that have been traversed in the rule - srcPath, which represents a path taken
-   * through the input lattice
+   * A DotNode represents the partial application of a rule rooted to a particular span (i,j). It
+   * maintains a pointer to the trie node in the grammar for efficient mapping.
    */
   static class DotNode {
 
@@ -428,6 +419,10 @@ class DotChart {
       return true;
     }
 
+    /**
+     * Technically the hash should include the span (i,j), but since DotNodes are grouped by span,
+     * this isn't necessary, and we gain something by not having to store the span.
+     */
     public int hashCode() {
       return this.trieNode.hashCode();
     }
