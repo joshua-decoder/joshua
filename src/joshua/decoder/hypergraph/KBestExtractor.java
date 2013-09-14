@@ -141,8 +141,8 @@ public class KBestExtractor {
       else
         hypothesis = derivationState.getHypothesis(this, false, null, models, Side.TARGET);
 
-      if (JoshuaConfiguration.rescoreForest)
-        features.put("BLEU", derivationState.computeBLEU());
+      // if (JoshuaConfiguration.rescoreForest)
+      //   features.put("BLEU", derivationState.computeBLEU());
       
       outputString = JoshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
