@@ -9,13 +9,15 @@ import static org.testng.Assert.*;
 import joshua.decoder.JoshuaConfiguration;
 
 public class AlmostTooLongSentenceTest {
+  private JoshuaConfiguration joshuaConfiguration;
   private String almostTooLongInput;
   private Sentence sentencePlusTarget;
 
   @BeforeMethod
   public void setUp() {
-    almostTooLongInput = concatStrings(".", JoshuaConfiguration.maxlen);
-    sentencePlusTarget = new Sentence(this.almostTooLongInput + " ||| target side", 0);
+    joshuaConfiguration = new JoshuaConfiguration();
+    almostTooLongInput = concatStrings(".", joshuaConfiguration.maxlen);
+    sentencePlusTarget = new Sentence(this.almostTooLongInput + " ||| target side", 0,joshuaConfiguration);
   }
 
   @AfterMethod
@@ -24,18 +26,18 @@ public class AlmostTooLongSentenceTest {
 
   @Test
   public void testConstructor() {
-    Sentence sent = new Sentence("", 0);
+    Sentence sent = new Sentence("", 0,joshuaConfiguration);
     assertNotNull(sent);
   }
 
   @Test
   public void testEmpty() {
-    assertTrue(new Sentence("", 0).isEmpty());
+    assertTrue(new Sentence("", 0,joshuaConfiguration).isEmpty());
   }
 
   @Test
   public void testNotEmpty() {
-    assertFalse(new Sentence("hello , world", 0).isEmpty());
+    assertFalse(new Sentence("hello , world", 0, joshuaConfiguration).isEmpty());
   }
 
   /**
@@ -55,12 +57,12 @@ public class AlmostTooLongSentenceTest {
 
   @Test
   public void testAlmostButNotTooManyTokensSourceOnlyNotEmpty() {
-    assertFalse(new Sentence(this.almostTooLongInput, 0).isEmpty());
+    assertFalse(new Sentence(this.almostTooLongInput, 0, joshuaConfiguration).isEmpty());
   }
 
   @Test
   public void testAlmostButNotTooManyTokensSourceOnlyTargetNull() {
-    assertNull(new Sentence(this.almostTooLongInput, 0).target);
+    assertNull(new Sentence(this.almostTooLongInput, 0, joshuaConfiguration).target);
   }
 
   @Test

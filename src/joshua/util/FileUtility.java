@@ -2,19 +2,27 @@ package joshua.util;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
-
 
 /**
  * utility functions for file operations
@@ -24,13 +32,13 @@ import java.util.zip.GZIPInputStream;
  * @since 28 February 2009
  */
 public class FileUtility {
+  public static String DEFAULT_ENCODING = "UTF-8";
 
   /*
    * Note: charset name is case-agnostic "UTF-8" is the canonical name "UTF8", "unicode-1-1-utf-8"
    * are aliases Java doesn't distinguish utf8 vs UTF-8 like Perl does
    */
-  private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
-
+  private static final Charset FILE_ENCODING = Charset.forName(DEFAULT_ENCODING);
 
   /**
    * @deprecated use {@link joshua.util.io.LineReader} instead.
@@ -42,7 +50,6 @@ public class FileUtility {
         fis) : fis, FILE_ENCODING));
   }
 
-
   /** Warning, will truncate/overwrite existing files */
   public static BufferedWriter getWriteFileStream(String filename) throws IOException {
     return new BufferedWriter(new OutputStreamWriter(
@@ -51,14 +58,12 @@ public class FileUtility {
             filename, false), FILE_ENCODING));
   }
 
-
   // Currently unused, but maybe desirable to keep on hand
   public static BufferedWriter getAppendFileStream(String filename) throws IOException {
     return new BufferedWriter(new OutputStreamWriter(
     // TODO: add GZIP (Is that safe? or will it garble?)
         new FileOutputStream(filename, true), FILE_ENCODING));
   }
-
 
   /**
    * @deprecated use {@link joshua.util.io.LineReader} instead.
@@ -74,7 +79,6 @@ public class FileUtility {
     return str;
   }
 
-
   /**
    * Recursively delete the specified file or directory.
    * 
@@ -84,15 +88,14 @@ public class FileUtility {
    */
   public static boolean deleteRecursively(File f) {
     if (null != f) {
-      if (f.isDirectory()) for (File child : f.listFiles())
-        deleteRecursively(child);
+      if (f.isDirectory())
+        for (File child : f.listFiles())
+          deleteRecursively(child);
       return f.delete();
     } else {
       return false;
     }
   }
-
-
 
   /**
    * Writes data from the integer array to disk as raw bytes, overwriting the old file if present.
@@ -107,7 +110,6 @@ public class FileUtility {
     writeBytes(data, out);
     return out;
   }
-
 
   /**
    * Writes data from the integer array to disk as raw bytes.
@@ -129,7 +131,6 @@ public class FileUtility {
       out.write(b);
     }
   }
-
 
   public static void copyFile(String srFile, String dtFile) throws IOException {
     try {
@@ -171,27 +172,29 @@ public class FileUtility {
     }
   }
 
-
-
   static public boolean deleteFile(String fileName) {
 
     File f = new File(fileName);
 
     // Make sure the file or directory exists and isn't write protected
-    if (!f.exists()) System.out.println("Delete: no such file or directory: " + fileName);
+    if (!f.exists())
+      System.out.println("Delete: no such file or directory: " + fileName);
 
-    if (!f.canWrite()) System.out.println("Delete: write protected: " + fileName);
+    if (!f.canWrite())
+      System.out.println("Delete: write protected: " + fileName);
 
     // If it is a directory, make sure it is empty
     if (f.isDirectory()) {
       String[] files = f.list();
-      if (files.length > 0) System.out.println("Delete: directory not empty: " + fileName);
+      if (files.length > 0)
+        System.out.println("Delete: directory not empty: " + fileName);
     }
 
     // Attempt to delete it
     boolean success = f.delete();
 
-    if (!success) System.out.println("Delete: deletion failed");
+    if (!success)
+      System.out.println("Delete: deletion failed");
 
     return success;
 
@@ -206,5 +209,144 @@ public class FileUtility {
       return fileName.substring(0, fileName.lastIndexOf(File.separator));
 
     return ".";
+  }
+
+  public static void createFolderIfNotExisting(String folderName) {
+    File f = new File(folderName);
+    if (!f.isDirectory()) {
+      System.out.println(" createFolderIfNotExisting -- Making directory: " + folderName);
+      f.mkdirs();
+    } else {
+      System.out.println(" createFolderIfNotExisting -- Directory: " + folderName
+          + " already existed");
+    }
+  }
+
+  public static void closeCloseableIfNotNull(Closeable fileWriter) {
+    if (fileWriter != null) {
+      try {
+        fileWriter.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public static void copyFileNative(String inputFilePath, String outputFilePath,
+      boolean replaceExistingFile) {
+    System.out.println("copyFileNative: copying " + inputFilePath + " to " + outputFilePath);
+    Path sourcePath = Paths.get(inputFilePath);
+    Path targetPath = Paths.get(outputFilePath);
+    try {
+      // See :
+      // http://docs.oracle.com/javase/tutorial/essential/io/copy.html
+      if (replaceExistingFile) {
+        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+      } else {
+        Files.copy(sourcePath, targetPath);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Returns the directory were the program has been started,
+   * the base directory you will implicitly get when specifying no
+   * full path when e.g. opening a file
+   * @return
+   */
+  public static String getWorkingDirectory() {
+    return System.getProperty("user.dir");
+  }
+
+  /**
+   * Method to handle standard IO xceptions. catch (Exception e) {Utility.handleIO_exception(e);}
+   */
+  public static void handleExceptions(Exception e) {
+    e.printStackTrace();
+    System.exit(-1);
+  }
+
+  /**
+   * Convenience method to get a full file as a String
+   * @param file
+   * @return The file as a String. Lines are separated by newline character.
+   */
+  public static String getFileAsString(File file) {
+    String result = "";
+    List<String> lines = getLines(file, true);
+    for (int i = 0; i < lines.size() - 1; i++) {
+      result += lines.get(i) + "\n";
+    }
+    if (!lines.isEmpty()) {
+      result += lines.get(lines.size() - 1);
+    }
+    return result;
+  }
+
+  /**
+   * This method returns a List of String. Each element of the list corresponds to a line from the
+   * input file. The boolean keepDuplicates in the input determines if duplicate lines are allowed
+   * in the output LinkedList or not.
+   */
+  static public List<String> getLines(File file, boolean keepDuplicates) {
+    LinkedList<String> list = new LinkedList<String>();
+    String line = "";
+    try {
+      BufferedReader InputReader = new BufferedReader(new FileReader(file));
+      for (;;) { // this loop writes writes in a Sting each sentence of
+        // the file and process it
+        int current = InputReader.read();
+        if (current == -1 || current == '\n') {
+          if (keepDuplicates || !list.contains(line))
+            list.add(line);
+          line = "";
+          if (current == -1)
+            break; // EOF
+        } else
+          line += (char) current;
+      }
+      InputReader.close();
+    } catch (Exception e) {
+      handleExceptions(e);
+    }
+    return list;
+  }
+
+  /**
+   * Returns a Scanner of the inputFile using a specific encoding
+   * 
+   * @param inputFile
+   * @return : Scanner
+   */
+  public static Scanner getScanner(File inputFile, String encoding) {
+    Scanner scan = null;
+    try {
+      scan = new Scanner(inputFile, encoding);
+    } catch (IOException e) {
+      FileUtility.handleExceptions(e);
+    }
+    return scan;
+  }
+
+  /**
+   * Returns a Scanner of the inputFile using default encoding
+   * 
+   * @param inputFile
+   * @return : Scanner
+   */
+  public static Scanner getScanner(File inputFile) {
+    return getScanner(inputFile, DEFAULT_ENCODING);
+  }
+
+  static public String getFirstLineInFile(File inputFile) {
+    Scanner scan = FileUtility.getScanner(inputFile);
+    if (!scan.hasNextLine())
+      return null;
+    String line = scan.nextLine();
+    scan.close();
+    return line;
   }
 }

@@ -66,7 +66,7 @@ public abstract class Rule {
   }
   
   /**
-   * Return the French (source) nonterminals as list of Strings
+   * Return the French (source) nonterminals as as array of integers
    * @return
    */
   public int[] getForeignNonTerminals() {
@@ -79,7 +79,7 @@ public abstract class Rule {
   }
   
   /**
-   * Return the English (target) nonterminals as list of Strings
+   * Return the English (target) nonterminals as array of integers
    * @return
    */
   public int[] getEnglishNonTerminals() {

@@ -31,6 +31,7 @@ import joshua.corpus.Vocabulary;
  */
 
 public class DecoderThread extends Thread {
+  private final JoshuaConfiguration joshuaConfiguration;
   /*
    * these variables may be the same across all threads (e.g., just copy from DecoderFactory), or
    * differ from thread to thread
@@ -44,8 +45,9 @@ public class DecoderThread extends Thread {
   // Constructor
   // ===============================================================
   public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-      List<FeatureFunction> featureFunctions) throws IOException {
+      List<FeatureFunction> featureFunctions,JoshuaConfiguration joshuaConfiguration) throws IOException {
 
+    this.joshuaConfiguration = joshuaConfiguration;
     this.grammarFactories = grammarFactories;
 
     this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -83,7 +85,7 @@ public class DecoderThread extends Thread {
     // skip blank sentences
     if (sentence.isEmpty()) {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
-      return new Translation(sentence, null, featureFunctions);
+      return new Translation(sentence, null, featureFunctions, joshuaConfiguration);
     }
 
     long startTime = System.currentTimeMillis();
@@ -96,7 +98,7 @@ public class DecoderThread extends Thread {
 
     /* Seeding: the chart only sees the grammars, not the factories */
     Chart chart = new Chart(sentence, this.featureFunctions, grammars,
-        JoshuaConfiguration.goal_symbol);
+        joshuaConfiguration.goal_symbol,joshuaConfiguration);
 
     /* Parsing */
     HyperGraph hypergraph = null;
@@ -114,8 +116,8 @@ public class DecoderThread extends Thread {
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
     /* Return the translation unless we're doing synchronous parsing. */
-    if (!JoshuaConfiguration.parse || hypergraph == null) {
-      return new Translation(sentence, hypergraph, featureFunctions);
+    if (!joshuaConfiguration.parse || hypergraph == null) {
+      return new Translation(sentence, hypergraph, featureFunctions, joshuaConfiguration);
     }
 
     /*****************************************************************************************/
@@ -125,7 +127,7 @@ public class DecoderThread extends Thread {
      * 
      * Step 1. Traverse the hypergraph to create a grammar for the second-pass parse.
      */
-    Grammar newGrammar = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
+    Grammar newGrammar = getGrammarFromHyperGraph(joshuaConfiguration.goal_symbol, hypergraph);
     newGrammar.sortGrammar(this.featureFunctions);
     long sortTime = System.currentTimeMillis();
     logger.info(String.format("Sentence %d: New grammar has %d rules.", sentence.id(),
@@ -133,8 +135,8 @@ public class DecoderThread extends Thread {
 
     /* Step 2. Create a new chart and parse with the instantiated grammar. */
     Grammar[] newGrammarArray = new Grammar[] { newGrammar };
-    Sentence targetSentence = new Sentence(sentence.target(), sentence.id());
-    chart = new Chart(targetSentence, featureFunctions, newGrammarArray, "GOAL");
+    Sentence targetSentence = new Sentence(sentence.target(), sentence.id(), joshuaConfiguration);
+    chart = new Chart(targetSentence, featureFunctions, newGrammarArray, "GOAL",joshuaConfiguration);
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     String goalSymbolString = Vocabulary.word(goalSymbol);
     logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(),
@@ -151,11 +153,11 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
-    return new Translation(sentence, englishParse, featureFunctions); // or do something else
+    return new Translation(sentence, englishParse, featureFunctions, joshuaConfiguration); // or do something else
   }
 
-  private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {
-    GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal);
+  private Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {
+    GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal,joshuaConfiguration);
     ForestWalker walker = new ForestWalker();
     walker.walk(hg.goalNode, f);
     return f.getGrammar();

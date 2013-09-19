@@ -234,7 +234,9 @@ public abstract class FeatureFunction {
     }
 
     public void add(String name, float value) {
-      score += value * weights.get(name.toLowerCase());
+      if (weights.containsKey(name.toLowerCase())) {
+        score += value * weights.get(name.toLowerCase());
+      }
     }
 
     public float getScore() {
@@ -250,7 +252,11 @@ public abstract class FeatureFunction {
     }
 
     public void add(String name, float value) {
-      features.put(name, features.get(name) + value);
+      if (features.containsKey(name)) {
+        features.put(name, features.get(name) + value);
+      } else {
+        features.put(name, value);
+      }
     }
 
     public FeatureVector getFeatures() {

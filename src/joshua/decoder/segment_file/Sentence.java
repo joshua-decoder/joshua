@@ -55,7 +55,7 @@ public class Sentence {
    * @param inputSentence
    * @param id
    */
-  public Sentence(String inputSentence, int id) {
+  public Sentence(String inputSentence, int id, JoshuaConfiguration joshuaConfiguration) {
 
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
 
@@ -85,7 +85,7 @@ public class Sentence {
       }
       this.id = id;
     }
-    adjustForLength();
+    adjustForLength(joshuaConfiguration);
   }
 
   /**
@@ -146,20 +146,21 @@ public class Sentence {
    * 
    * Note that this code assumes the underlying representation is a sentence, and not a lattice. Its
    * behavior is undefined for lattices.
+   * @param joshuaConfiguration 
    */
-  private void adjustForLength() {
+  private void adjustForLength(JoshuaConfiguration joshuaConfiguration) {
 
     Lattice<Integer> lattice = this.intLattice();
     int size = lattice.size() - 2; // subtract off the start- and end-of-sentence tokens
 
-    if (size > JoshuaConfiguration.maxlen) {
+    if (size > joshuaConfiguration.maxlen) {
       logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
-          id(), size, JoshuaConfiguration.maxlen));
+          id(), size, joshuaConfiguration.maxlen));
 
       // Replace the input sentence (and target)
       String[] tokens = source().split("\\s+");
       sentence = tokens[0];
-      for (int i = 1; i < JoshuaConfiguration.maxlen; i++)
+      for (int i = 1; i < joshuaConfiguration.maxlen; i++)
         sentence += " " + tokens[i];
       sourceLattice = null;
       if (target != null) {

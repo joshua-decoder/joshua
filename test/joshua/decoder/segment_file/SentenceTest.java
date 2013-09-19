@@ -9,10 +9,13 @@ import static org.testng.Assert.*;
 
 public class SentenceTest {
   private String tooLongInput;
+  private final JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+  
+  
 
   @BeforeMethod
   public void setUp() {
-    tooLongInput = concatTokens("*", JoshuaConfiguration.maxlen * 2);
+    tooLongInput = concatTokens("*", joshuaConfiguration.maxlen * 2);
   }
 
   @AfterMethod
@@ -21,18 +24,18 @@ public class SentenceTest {
 
   @Test
   public void testConstructor() {
-    Sentence sent = new Sentence("", 0);
+    Sentence sent = new Sentence("", 0, joshuaConfiguration);
     assertNotNull(sent);
   }
 
   @Test
   public void testEmpty() {
-    assertTrue(new Sentence("", 0).isEmpty());
+    assertTrue(new Sentence("", 0, joshuaConfiguration).isEmpty());
   }
 
   @Test
   public void testNotEmpty() {
-    assertFalse(new Sentence("hello , world", 0).isEmpty());
+    assertFalse(new Sentence("hello , world", 0, joshuaConfiguration).isEmpty());
   }
 
   /**
@@ -57,23 +60,23 @@ public class SentenceTest {
    */
   @Test
   public void testTooManyTokensSourceOnlyEmpty() {
-    assertTrue(new Sentence(this.tooLongInput, 0).isEmpty());
+    assertTrue(new Sentence(this.tooLongInput, 0, joshuaConfiguration).isEmpty());
   }
 
   @Test
   public void testTooManyTokensSourceOnlyNotNull() {
-    assertNotNull(new Sentence(this.tooLongInput, 0));
+    assertNotNull(new Sentence(this.tooLongInput, 0, joshuaConfiguration));
   }
 
   @Test
   public void testTooManyTokensSourceAndTargetIsEmpty() {
-    Sentence sentence = new Sentence(this.tooLongInput + " ||| target side", 0);
+    Sentence sentence = new Sentence(this.tooLongInput + " ||| target side", 0, joshuaConfiguration);
     assertEquals(sentence.target, "");
   }
 
   @Test
   public void testTooManyTokensSourceAndTargetEmptyString() {
-    Sentence sentence = new Sentence(this.tooLongInput + " ||| target side", 0);
+    Sentence sentence = new Sentence(this.tooLongInput + " ||| target side", 0, joshuaConfiguration);
     assertTrue(sentence.isEmpty());
   }
 
@@ -81,7 +84,7 @@ public class SentenceTest {
   public void testClearlyNotTooManyTokens() {
     // Concatenate MAX_SENTENCE_NODES, each shorter than the average length, joined by a space.
     String input = "token";
-    assertFalse(new Sentence(input, 0).isEmpty());
+    assertFalse(new Sentence(input, 0, joshuaConfiguration).isEmpty());
   }
 
 }

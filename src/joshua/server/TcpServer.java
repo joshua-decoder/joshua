@@ -11,11 +11,12 @@ import joshua.decoder.JoshuaConfiguration;
  * all, and writes the resulting translations back out to the socket.
  */
 public class TcpServer {
-
+  private final JoshuaConfiguration joshuaConfiguration;
   private Decoder decoder;
   private int port;
 
-  public TcpServer(Decoder decoder, int port) {
+  public TcpServer(Decoder decoder, int port,JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     this.decoder = decoder;
     this.port = port;
   }
@@ -29,17 +30,17 @@ public class TcpServer {
   public void start() {
 
     try {
-      ServerSocket serverSocket = new ServerSocket(JoshuaConfiguration.server_port);
+      ServerSocket serverSocket = new ServerSocket(joshuaConfiguration.server_port);
       System.err.println(String.format("** TCP Server running and listening on port %d.", port));  
 
       boolean listening = true;
       while (listening)
-        new TcpServerThread(serverSocket.accept(), decoder).start();
+        new TcpServerThread(serverSocket.accept(), decoder, joshuaConfiguration).start();
 
       serverSocket.close();
 
     } catch (IOException e) {
-      System.err.println(String.format("Could not listen on port: %d.", JoshuaConfiguration.server_port));
+      System.err.println(String.format("Could not listen on port: %d.", joshuaConfiguration.server_port));
       System.exit(-1);
     }
   }

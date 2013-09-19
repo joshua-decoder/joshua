@@ -69,7 +69,7 @@ import joshua.decoder.segment_file.Sentence;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class KBestExtractor {
-
+  private final JoshuaConfiguration joshuaConfiguration;
   private final HashMap<HGNode, VirtualNode> virtualNodesTable = new HashMap<HGNode, VirtualNode>();
 
   // static final String rootSym = JoshuaConfiguration.goal_symbol;
@@ -97,18 +97,30 @@ public class KBestExtractor {
 
   /* The feature functions */
   private List<FeatureFunction> models;
-
+  
   /* BLEU statistics of the references */
   BLEU.References references = null;
+  
+  public KBestExtractor(FeatureVector weights, boolean extractUniqueNbest, boolean includeAlign,
+      boolean isMonolingual, JoshuaConfiguration joshuaConfiguration) {
 
-  public KBestExtractor(Sentence sentence, List<FeatureFunction> models, FeatureVector weights,
-      boolean extractUniqueNbest, boolean includeAlign, boolean isMonolingual) {
-
-    this.models = models;
+    this.joshuaConfiguration = joshuaConfiguration;
     this.weights = weights;
     this.extractUniqueNbest = extractUniqueNbest;
     this.includeAlign = includeAlign;
     this.defaultSide = (isMonolingual ? Side.SOURCE : Side.TARGET);
+
+    if (JoshuaConfiguration.rescoreForest) {
+      references = new BLEU.References(sentence.references());
+    }
+
+  }
+
+  public KBestExtractor(Sentence sentence, List<FeatureFunction> models, FeatureVector weights,
+      boolean extractUniqueNbest, boolean includeAlign, boolean isMonolingual,JoshuaConfiguration joshuaConfiguration) {
+
+    this(weights,extractUniqueNbest,includeAlign,isMonolingual,joshuaConfiguration);
+    this.models = models;
     this.sentence = sentence;
 
     if (JoshuaConfiguration.rescoreForest) {
@@ -135,32 +147,30 @@ public class KBestExtractor {
 
       /* Don't extract the features (expensive) if they're not requested */
       String hypothesis = null;
-      if (JoshuaConfiguration.outputFormat.contains("%f")
-          || JoshuaConfiguration.outputFormat.contains("%d"))
+      if (joshuaConfiguration.outputFormat.contains("%f")
+          || joshuaConfiguration.outputFormat.contains("%d"))
         hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
       else
         hypothesis = derivationState.getHypothesis(this, false, null, models, Side.TARGET);
 
-      // if (JoshuaConfiguration.rescoreForest)
-      //   features.put("BLEU", derivationState.computeBLEU());
-      
-      outputString = JoshuaConfiguration.outputFormat.replace("%s", hypothesis)
+      outputString = joshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
-          .replace("%i", Integer.toString(sentence.id()))
-          .replace("%f", features.toString())
+          .replace("%i", Integer.toString(sentence.id())).replace("%f", features.toString())
           .replace("%c", String.format("%.3f", -derivationState.cost));
+      // if (JoshuaConfiguration.rescoreForest)
+      // features.put("BLEU", derivationState.computeBLEU());
 
-      if (JoshuaConfiguration.outputFormat.contains("%t")) {
+      if (joshuaConfiguration.outputFormat.contains("%t")) {
         outputString = outputString.replace("%t",
             derivationState.getHypothesis(this, true, null, models, Side.TARGET));
       }
 
-      if (JoshuaConfiguration.outputFormat.contains("%e"))
+      if (joshuaConfiguration.outputFormat.contains("%e"))
         outputString = outputString.replace("%e",
             derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
 
       /* %d causes a derivation with rules one per line to be output */
-      if (JoshuaConfiguration.outputFormat.contains("%d")) {
+      if (joshuaConfiguration.outputFormat.contains("%d")) {
         outputString = outputString.replace("%d",
             derivationState.getDerivation(this, new FeatureVector(), models, 0));
       }
@@ -761,7 +771,7 @@ public class KBestExtractor {
               sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
                   kbestExtractor, useTreeFormat, features, models, side));
             } else {
-              if (JoshuaConfiguration.parse
+              if (joshuaConfiguration.parse
                   || useTreeFormat
                   || (english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary
                       .id(Vocabulary.STOP_SYM)))

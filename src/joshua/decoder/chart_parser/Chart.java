@@ -47,6 +47,7 @@ import joshua.lattice.Node;
 
 public class Chart {
 
+  private final JoshuaConfiguration joshuaConfiguration;
   // ===========================================================
   // Statistics
   // ===========================================================
@@ -102,7 +103,8 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
-      String goalSymbol) {
+      String goalSymbol,JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
@@ -122,7 +124,7 @@ public class Chart {
     this.grammars = new Grammar[grammars.length + 1];
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i] = grammars[i];
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov");
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov",joshuaConfiguration);
     this.grammars[this.grammars.length - 1] = oovGrammar;
 
     // each grammar will have a dot chart
@@ -150,7 +152,7 @@ public class Chart {
           continue;
 
         // Determine if word is actual OOV.
-        if (JoshuaConfiguration.true_oovs_only) {
+        if (joshuaConfiguration.true_oovs_only) {
           boolean true_oov = true;
           for (Grammar g : grammars) {
             if (g.getTrieRoot().match(sourceWord) != null
@@ -164,20 +166,20 @@ public class Chart {
         }
 
         final int targetWord;
-        if (JoshuaConfiguration.mark_oovs) {
+        if (joshuaConfiguration.mark_oovs) {
           targetWord = Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV");
         } else {
           targetWord = sourceWord;
         }
 
-        int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll(
+        int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
             "\\[\\]", ""));
 
         List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
         int[] sourceWords = { sourceWord };
         int[] targetWords = { targetWord };
         if (parseTree != null
-            && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
+            && (joshuaConfiguration.constrain_parse || joshuaConfiguration.use_pos_labels)) {
           Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber() - 1,
               node.getNumber());
           for (int label : labels) {
@@ -334,7 +336,7 @@ public class Chart {
       }
     }
 
-    int popLimit = JoshuaConfiguration.pop_limit;
+    int popLimit = joshuaConfiguration.pop_limit;
     int popCount = 0;
     while (candidates.size() > 0 && ((++popCount <= popLimit) || popLimit == 0)) {
       CubePruneState state = candidates.poll();

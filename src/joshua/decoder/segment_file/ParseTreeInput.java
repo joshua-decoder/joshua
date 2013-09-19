@@ -1,9 +1,11 @@
 package joshua.decoder.segment_file;
 
+import joshua.decoder.JoshuaConfiguration;
+
 public class ParseTreeInput extends Sentence {
 
-  public ParseTreeInput(String input, int id) {
-    super(input, id);
+  public ParseTreeInput(String input, int id, JoshuaConfiguration joshuaConfiguration) {
+    super(input, id,joshuaConfiguration);
   }
 
   // looks_like_parse_tree = sentence.sentence().matches("^\\(+[A-Z]+ .*");
