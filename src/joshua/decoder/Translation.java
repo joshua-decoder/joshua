@@ -52,6 +52,10 @@ public class Translation {
         KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, 
             joshuaConfiguration.use_unique_nbest, joshuaConfiguration.include_align_index, false,joshuaConfiguration);
 
+        // We must put this weight as zero, otherwise we get an error when we try to retrieve it 
+        // without checking
+        Decoder.weights.put("BLEU", 0);
+        
         kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
         if (JoshuaConfiguration.rescoreForest) {
           Decoder.weights.put("BLEU", 100);
