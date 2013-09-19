@@ -73,6 +73,10 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
 my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
+
+# Which GHKM extractor to use ("galley" or "moses")
+my $GHKM_EXTRACTOR = "moses";
+
 my $WITTEN_BELL = 0;
 
 my $JOSHUA_ARGS = "";
@@ -125,7 +129,7 @@ my $HADOOP_CONF = undef;
 my $PARSER_MEM = "2g";
 
 # memory available for building the language model
-my $BUILDLM_MEM = "2g";
+my $BUILDLM_MEM = "2G";
 
 # Memory available for packing the grammar.
 my $PACKER_MEM = "2g";
@@ -193,6 +197,12 @@ my $PARSED_CORPUS = undef;
 # Allows the user to set a temp dir for various tasks
 my $TMPDIR = "/tmp";
 
+# Enable forest rescoring
+my $RESCORE_FOREST = 0;
+my $LM_STATE_MINIMIZATION = "true";
+
+my $NBEST = 300;
+
 my $retval = GetOptions(
   "readme=s"    => \$README,
   "corpus=s"        => \@CORPORA,
@@ -225,6 +235,7 @@ my $retval = GetOptions(
   "maxspan=i"         => \$MAXSPAN,
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
+  "ghkm-extractor=s"  => \$GHKM_EXTRACTOR,
   "maxlen=i"        => \$MAXLEN,
   "maxlen-tune=i"        => \$MAXLEN_TUNE,
   "maxlen-test=i"        => \$MAXLEN_TEST,
@@ -253,11 +264,18 @@ my $retval = GetOptions(
   "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
   "tmp=s"             => \$TMPDIR,
+  "rescore-forest!"  => \$RESCORE_FOREST,
+  "nbest=i"           => \$NBEST,
 );
 
 if (! $retval) {
   print "Invalid usage, quitting\n";
   exit 1;
+}
+
+# Forest rescoring doesn't work with LM state minimization
+if ($RESCORE_FOREST) {
+  $LM_STATE_MINIMIZATION = "false";
 }
 
 $RUNDIR = get_absolute_path($RUNDIR);
@@ -892,10 +910,45 @@ if (! defined $GRAMMAR_FILE) {
   my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? $TRAIN{target} : $TRAIN{parsed};
 
   if ($GRAMMAR_TYPE eq "ghkm") {
-    $cachepipe->cmd("ghkm-extract",
-                    "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
-                    $ALIGNMENT,
-                    "grammar.gz");
+    if ($GHKM_EXTRACTOR eq "galley") {
+      $cachepipe->cmd("ghkm-extract",
+                      "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
+                      $ALIGNMENT,
+                      "grammar.gz");
+    } elsif ($GHKM_EXTRACTOR eq "moses") {
+      # XML-ize, also replacing unary chains with OOV at the bottom by removing their unary parents
+      $cachepipe->cmd("ghkm-moses-xmlize",
+                      "cat $target_file | perl -pe 's/\\(\\S+ \\(OOV (.*?)\\)\\)/(OOV \$1)/g' | $MOSES/scripts/training/wrappers/berkeleyparsed2mosesxml.perl > $DATA_DIRS{train}/corpus.xml",
+                      # "cat $target_file | perl -pe 's/\\(\\S+ \\(OOV (.*?)\\)\\)/(OOV \$1)/g' > $DATA_DIRS{train}/corpus.ptb",
+                      $target_file,
+                      "$DATA_DIRS{train}/corpus.xml");
+
+      if (! -e "$DATA_DIRS{train}/corpus.$SOURCE") {
+        system("ln -sf $TRAIN{source} $DATA_DIRS{train}/corpus.$SOURCE");
+      }
+
+      if ($ALIGNMENT ne "alignments/training.align") {
+        system("mkdir alignments") unless -d "alignments";
+        system("ln -sf $ALIGNMENT alignments/training.align");
+        $ALIGNMENT = "alignments/training.align";
+      }
+
+      system("mkdir model");
+      $cachepipe->cmd("ghkm-moses-extract",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --glue-grammar --glue-grammar-file glue-grammar.ghkm",
+                      "$DATA_DIRS{train}/corpus.xml",
+                      "glue-grammar.ghkm",
+                      "model/rule-table.gz");
+
+      $cachepipe->cmd("ghkm-moses-convert",
+                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
+                      "model/rule-table.gz",
+                      "grammar.gz");
+
+    } else {
+      print STDERR "* FATAL: no such GHKM extractor '$GHKM_EXTRACTOR'\n";
+      exit(1);
+    }
   } elsif (! -e "grammar.gz" && ! -z "grammar.gz") {
 
     # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
@@ -1044,7 +1097,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
     }
 
     $cachepipe->cmd("kenlm",
-                    "cat $TRAIN{target} | $JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR --verbose_header | gzip -9n > lm.gz",
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $BUILDLM_MEM --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
                     $TRAIN{target},
                     $lmfile);
   }
@@ -1165,7 +1218,7 @@ my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER true false 100 $lmfile";
+  my $configstring = "lm = $LM_TYPE $LM_ORDER $LM_STATE_MINIMIZATION false 100 $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
@@ -1298,11 +1351,13 @@ for my $run (1..$OPTIMIZER_RUNS) {
   } elsif ($TUNER eq "mira") {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
+
+    my $rescore_str = ($RESCORE_FOREST == 1) ? "--rescore-forest" : "--no-rescore-forest";
     
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest $NBEST --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" $rescore_str > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/joshua.config.final");

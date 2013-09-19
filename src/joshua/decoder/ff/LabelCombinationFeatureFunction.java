@@ -26,9 +26,9 @@ public class LabelCombinationFeatureFunction extends StatelessFF {
   private static final String computeRuleLabelCombinationDescriptor(Rule rule) {
     String result = LABEL_COMINATION_FEATURE_FUNCTION_NAME + "_";
     result += getLHSAsString(rule);
-    //System.out.println("Rule: " + rule);
-    for (String nonTerminal : rule.getForeignNonTerminals()) {
-      result += "_" + nonTerminal;
+    // System.out.println("Rule: " + rule);
+    for (Integer nonTerminalIndex : rule.getForeignNonTerminals()) {
+      result += "_" + Vocabulary.word(nonTerminalIndex);
     }
     return result;
   }

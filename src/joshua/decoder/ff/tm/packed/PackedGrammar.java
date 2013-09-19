@@ -603,9 +603,9 @@ public class PackedGrammar extends BatchGrammar {
           StringBuffer sb = new StringBuffer();
           sb.append(Vocabulary.word(this.getLHS()));
           sb.append(" ||| ");
-          sb.append(Vocabulary.getWords(this.getFrench()));
+          sb.append(getFrenchWords());
           sb.append(" ||| ");
-          sb.append(Vocabulary.getWords(getEnglish()));
+          sb.append(getEnglishWords());
           sb.append(" |||");
           sb.append(" " + getFeatureVector());
           sb.append(String.format(" ||| %.3f", getEstimatedCost()));

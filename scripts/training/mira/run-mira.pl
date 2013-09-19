@@ -137,6 +137,8 @@ my $prev_aggregate_nbl_size = -1; # number of previous step to consider when loa
                                   # and so on
 my $maximum_iterations = 8;
 
+my $___RESCORE_FOREST = 0;
+
 use Getopt::Long;
 GetOptions(
   "working-dir=s" => \$___WORKING_DIR,
@@ -185,7 +187,8 @@ GetOptions(
   "historic-interpolation=f" => \$___HISTORIC_INTERPOLATION,
   "batch-mira" => \$___BATCH_MIRA,
   "batch-mira-args=s" => \$batch_mira_args,
-  "threads=i" => \$__THREADS
+  "threads=i" => \$__THREADS,
+  "rescore-forest!" => \$___RESCORE_FOREST,
 ) or exit(1);
 
 # the 4 required parameters can be supplied on the command line directly
@@ -277,6 +280,7 @@ Options:
   --threads=NUMBER          ... Use multi-threaded mert (must be compiled in).
   --historic-interpolation  ... Interpolate optimized weights with prior iterations' weight
                                 (parameter sets factor [0;1] given to current weights)
+  --rescore-forest          ... Rescore the forest for MIRA
 ";
   exit 1;
 }
@@ -900,7 +904,15 @@ sub run_decoder {
     # if (defined $___JOBS && $___JOBS > 0) {
       # $decoder_cmd = "$moses_parallel_cmd $pass_old_sge -config $___CONFIG -inputtype $___INPUTTYPE -qsub-prefix mert$run -queue-parameters \"$queue_flags\" -decoder-parameters \"$___DECODER_FLAGS $decoder_config\" $lsamp_cmd -n-best-list \"$filename $___N_BEST_LIST_SIZE\" -input-file $___DEV_F -jobs $___JOBS -decoder $___DECODER > run$run.out";
     # } else {
-    $decoder_cmd = "cat $___DEV_F | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -top-n $___N_BEST_LIST_SIZE 2> run$run.log | $JOSHUA/scripts/training/mira/feature_label_munger.pl | tee $filename | $JOSHUA/bin/extract-1best > run$run.out";
+    my $get_dev_cmd;
+    if ($___RESCORE_FOREST) {
+      $___DECODER_FLAGS .= " -rescore-forest";
+      $get_dev_cmd = "paste $___DEV_F $___DEV_E* | perl -pe 's/\\t/ \\|\\|\\|  \\|\\|\\| /; s/\\t/ \\|\\|\\| /g'";
+    } else {
+      $get_dev_cmd = "cat $___DEV_F";
+    }
+
+    $decoder_cmd = "$get_dev_cmd | $___DECODER $___DECODER_FLAGS -config $___CONFIG $decoder_config -top-n $___N_BEST_LIST_SIZE 2> run$run.log | $JOSHUA/scripts/training/mira/feature_label_munger.pl | tee $filename | $JOSHUA/bin/extract-1best > run$run.out";
     # }
 
     safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";

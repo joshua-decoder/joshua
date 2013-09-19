@@ -1,6 +1,5 @@
 package joshua.decoder.ff.tm;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,15 +44,14 @@ public abstract class Rule {
    * @return The string of English words
    */
   public String getEnglishWords() {
-    List<String> foreignNTs = getForeignNonTerminals();
+    int[] foreignNTs = getForeignNonTerminals();
 
     StringBuilder sb = new StringBuilder();
     for (Integer index : getEnglish()) {
       if (index >= 0)
         sb.append(Vocabulary.word(index) + " ");
       else
-        sb.append(foreignNTs.get(foreignNonTerminalIndexForEnglishIndex(index)) + ","
-            + Math.abs(index) + " ");
+        sb.append(Vocabulary.word(foreignNTs[-index - 1]) + "," + Math.abs(index) + " ");
     }
 
     return sb.toString().trim();
@@ -68,57 +66,51 @@ public abstract class Rule {
   }
   
   /**
-   * Return the French (source) nonterminals as list of Strings
+   * Return the French (source) nonterminals as as array of integers
    * @return
    */
-  public List<String> getForeignNonTerminals() {
-    List<String> foreignNTs = new ArrayList<String>();
-    for (int i = 0; i < getFrench().length; i++) {
-      if (getFrench()[i] < 0)
-        foreignNTs.add(Vocabulary.word(getFrench()[i]));
-    }
-    return foreignNTs;
+  public int[] getForeignNonTerminals() {
+    int[] nts = new int[getArity()];
+    int index = 0;
+    for (int id: getFrench())
+      if (id < 0)
+        nts[index++] = -id;
+    return nts;
   }
   
   /**
-   * Return the English (target) nonterminals as list of Strings
+   * Return the English (target) nonterminals as array of integers
    * @return
    */
-  List<String> getEnglishNonTerminals() {
-    List<String> result = new ArrayList<String>();
-    List<String> foreignNTs = getForeignNonTerminals();
+  public int[] getEnglishNonTerminals() {
+    int[] nts = new int[getArity()];
+    int[] foreignNTs = getForeignNonTerminals();
+    int index = 0;
 
-    // for (int i = 0; i < this.getEnglish().length; i++) {
-    for (Integer index : getEnglish()) {
-      if (index < 0) {
-        result.add(foreignNTs.get(foreignNonTerminalIndexForEnglishIndex(index)) + ","
-            + Math.abs(index));
-      }
+    for (int i: getEnglish()) {
+      if (i < 0)
+        nts[index++] = foreignNTs[Math.abs(getEnglish()[i]) - 1];
     }
 
-    return result;
+    return nts;
   }
   
-  private static int foreignNonTerminalIndexForEnglishIndex(int index) {
-    return Math.abs(index) - 1;
-  }
-  
-  private List<Integer> getNormalizedEnglishNonterminalIndices() {
-    List<Integer> result = new ArrayList<Integer>();
+  private int[] getNormalizedEnglishNonterminalIndices() {
+    int[] result = new int[getArity()];
 
+    int ntIndex = 0;
     for (Integer index : getEnglish()) {
-      if (index < 0) {
-        result.add(foreignNonTerminalIndexForEnglishIndex(index));
-      }
+      if (index < 0)
+        result[ntIndex++] = -index - 1;
     }
 
     return result;
   }
   
   public boolean isInverting() {
-    List<Integer> normalizedEnglishNonTerminalIndices = getNormalizedEnglishNonterminalIndices();
-    if (normalizedEnglishNonTerminalIndices.size() == 2) {
-      if (normalizedEnglishNonTerminalIndices.get(0) == 1) {
+    int[] normalizedEnglishNonTerminalIndices = getNormalizedEnglishNonterminalIndices();
+    if (normalizedEnglishNonTerminalIndices.length == 2) {
+      if (normalizedEnglishNonTerminalIndices[0] == 1) {
         return true;
       }
     }
