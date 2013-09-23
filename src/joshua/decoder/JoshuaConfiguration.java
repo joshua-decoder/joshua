@@ -72,16 +72,20 @@ public class JoshuaConfiguration {
   /* The number of hypotheses to output by default. */
   public int topN = 1;
 
-  /*
+  /**
    * This string describes the format of each line of output from the decoder (i.e., the
    * translations). The string can include arbitrary text and also variables. The following
    * variables are available:
    * 
-   * <pre> %i the 0-indexed sentence number %e the source string %s the translated sentence %S the
-   * translated sentence with some basic capitalization and denormalization %t the synchronous
-   * derivation %f the list of feature values (as name=value pairs) %c the model cost %w the weight
-   * vector %a the alignments between source and target words (currently unimplemented) %d a
-   * verbose, many-line version of the derivation </pre>
+   * - %i the 0-indexed sentence number
+   * - %e the source string %s the translated sentence
+   * - %S the translated sentence with some basic capitalization and denormalization 
+   * - %t the synchronous derivation 
+   * - %f the list of feature values (as name=value pairs) 
+   * - %c the model cost
+   * - %w the weight vector 
+   * - %a the alignments between source and target words (currently unimplemented) 
+   * - %d a verbose, many-line version of the derivation
    */
   public String outputFormat = "%i ||| %s ||| %f ||| %c";
 

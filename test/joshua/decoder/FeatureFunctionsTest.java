@@ -11,7 +11,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
-import joshua.decoder.ff.LabelCombinationFeatureFunction;
+import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.StatefulFF;
 import joshua.util.FileUtility;
 import joshua.util.NBestListUtility;
@@ -27,7 +27,7 @@ import org.junit.Test;
  */
 public class FeatureFunctionsTest {
 
-  private static String LABEL_COMBINATION_FEATURE_NAME = LabelCombinationFeatureFunction
+  private static String LABEL_COMBINATION_FEATURE_NAME = LabelCombinationFF
       .getLowerCasedFeatureName();
 
   private static String FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME = "FeatureFunctionsTestTempFiles";
@@ -304,7 +304,7 @@ public class FeatureFunctionsTest {
 
   private List<String> findAllLabelCombinationFeatureOccurences(String contentsString) {
     return NBestListUtility.findAllFeatureOccurences(contentsString,
-        LabelCombinationFeatureFunction.getLowerCasedFeatureName());
+        LabelCombinationFF.getLowerCasedFeatureName());
   }
 
   // See : http://stackoverflow.com/questions/2235471/save-a-list-of-unique-strings-in-the-arraylist
