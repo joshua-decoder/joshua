@@ -1,13 +1,13 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
-
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.Grammar;
@@ -190,31 +190,31 @@ class DotChart {
       if (null != dotcells.get(i, j - 1)) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
 
-        for (DotNode dotNode : dotcells.get(i, j-1).getDotNodes()) {
+        for (DotNode dotNode : dotcells.get(i, j - 1).getDotNodes()) {
 
-          
           String arcWord = Vocabulary.word(last_word);
           Assert.assertFalse(arcWord.endsWith("]"));
           Assert.assertFalse(arcWord.startsWith("["));
-         // logger.info("DotChart.expandDotCell: " + arcWord);
-          
+          // logger.info("DotChart.expandDotCell: " + arcWord);
+
+          List<Trie> child_tnodes = null;
+
           if (this.regexpMatching) {
-            ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
-            if (child_tnodes == null || child_tnodes.isEmpty())
-              continue;
+            child_tnodes = matchAll(dotNode, last_word);
+          } else {
+            Trie child_node = dotNode.trieNode.match(last_word);
+            child_tnodes = Arrays.asList(child_node);
+          }
+
+          if (!(child_tnodes == null || child_tnodes.isEmpty())) {
             for (Trie child_tnode : child_tnodes) {
               if (null != child_tnode) {
                 addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
                     dotNode.srcPath.extend(arc));
               }
             }
-          } else {
-            Trie child_node = dotNode.trieNode.match(last_word);
-            if (null != child_node) {
-              addDotItem(child_node, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
-                  dotNode.srcPath.extend(arc));
-            }
           }
+
         }
       }
     }
@@ -259,40 +259,53 @@ class DotChart {
     for (DotNode dotNode : dotcells.get(i, k).dotNodes) {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
-       
+
         String arcWord = Vocabulary.word(superNode.lhs);
         logger.info("DotChart.extendDotItemsWithProvedItems: " + arcWord);
         Assert.assertTrue(arcWord.endsWith("]"));
         Assert.assertTrue(arcWord.startsWith("["));
-        
+
         /*
          * Regular Expression matching allows for a regular-expression style rules in the grammar,
          * which allows for a very primitive treatment of morphology. This is an advanced,
          * undocumented feature that introduces a complexity, in that the next "word" in the grammar
          * rule might match more than one outgoing arc in the grammar trie.
          */
+        List<Trie> child_tnodes = null;
         if (this.regexpMatching) {
-          ArrayList<Trie> child_tnodes = matchAll(dotNode, superNode.lhs);
-          if (!child_tnodes.isEmpty()) {
-            for (Trie child_tnode : child_tnodes) {
-              if (child_tnode != null)
-                if (!skipUnary || child_tnode.hasExtensions())
-                  addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-                      .getSourcePath().extendNonTerminal());
+          child_tnodes = matchAll(dotNode, superNode.lhs);
+        } else {
+          Trie child_node = dotNode.trieNode.match(superNode.lhs);
+          child_tnodes = Arrays.asList(child_node);
+        }
+
+        if (!child_tnodes.isEmpty()) {
+          for (Trie child_tnode : child_tnodes) {
+            if (child_tnode != null) {
+              if ((!skipUnary) || (child_tnode.hasExtensions())) {
+                addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                    .getSourcePath().extendNonTerminal());
+              }
             }
           }
-        } else {
-          /*
-           * Standard approach: Check with the item needed by this grammar rule matches the lefthand
-           * side of the rule group under consideration.
-           */
-          Trie trie = dotNode.trieNode.match(superNode.lhs);
-          if (trie != null) {
-            if (!skipUnary || trie.hasExtensions())
-              addDotItem(trie, i, j, dotNode.getAntSuperNodes(), superNode, dotNode.getSourcePath()
-                  .extendNonTerminal());
-          }
         }
+        /*
+         * if (!child_tnodes.isEmpty()) { for (Trie child_tnode : child_tnodes) { if (null !=
+         * child_tnode) { if (true == startDotItems && !child_tnode.hasExtensions()) continue; //
+         * TODO addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+         * .getSourcePath().extendNonTerminal()); >>>>>>> Gideon : Refactored
+         * ../src/joshua/decoder/chart_parser/DotChart.java } } }
+         */
+
+        /*
+         * else { /* Standard approach: Check with the item needed by this grammar rule matches the
+         * lefthand side of the rule group under consideration.
+         */
+        /*
+         * Trie trie = dotNode.trieNode.match(superNode.lhs); if (trie != null) { if (!skipUnary ||
+         * trie.hasExtensions()) addDotItem(trie, i, j, dotNode.getAntSuperNodes(), superNode,
+         * dotNode.getSourcePath() .extendNonTerminal()); } }
+         */
       }
     }
   }
