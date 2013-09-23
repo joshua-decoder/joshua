@@ -194,6 +194,7 @@ class DotChart {
       if (null != dotcells.get(i, j - 1)) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
 
+
         for (DotNode dotNode : dotcells.get(i, j - 1).getDotNodes()) {
 
           // String arcWord = Vocabulary.word(last_word);
@@ -206,6 +207,7 @@ class DotChart {
 
 
           List<Trie> child_tnodes = null;
+
           if (this.regexpMatching) {
             child_tnodes = matchAll(dotNode, last_word);
           } else {
@@ -268,10 +270,12 @@ class DotChart {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
 
+
         // String arcWord = Vocabulary.word(superNode.lhs);
         // logger.info("DotChart.extendDotItemsWithProvedItems: " + arcWord);
         // Assert.assertTrue(arcWord.endsWith("]"));
         // Assert.assertTrue(arcWord.startsWith("["));
+
 
         /*
          * Regular Expression matching allows for a regular-expression style rules in the grammar,
