@@ -1180,7 +1180,7 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
 # Pack the grammar, if requested (yes by default). This must be done after the glue grammar is
 # created, since we don't have a script (yet) to dump the rules from a packed grammar, which
 # information we need to create the glue grammar.
-if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
+if ($DO_PACK_GRAMMARS && ! is_packed($TUNE_GRAMMAR)) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
@@ -1401,7 +1401,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   }
 
 	# Pack the grammar.
-	if ($DO_PACK_GRAMMARS && !($TEST_GRAMMAR =~ m/packed$/)) {
+	if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
@@ -1614,7 +1614,7 @@ if ($TUNEFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
   exit 1;
 }
 
-if ($DO_PACK_GRAMMARS) {
+if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
   $cachepipe->cmd("pack-test",
@@ -2003,4 +2003,14 @@ sub compute_time_summary {
     printf(TIMES "%s / %d = %s\n", join(" + ", @times), scalar(@times), 1.0 * sum(@times) / scalar(@times));
     close(TIMES);
   }
+}
+
+sub is_packed {
+  my ($grammar) = @_;
+
+  if (-d $grammar && -e "$grammar/encoding") {
+    return 1;
+  }
+
+  return 0;
 }
