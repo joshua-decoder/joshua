@@ -27,7 +27,7 @@ public class SoftSyntacticConstraintDecodingTest {
       boolean useSoftSyntacticConstraintsDecoding) {
     return TestConfigFileCreater.createFeaturesTestConfigFileCreater(
         SOFT_SYNTACTIC_CONSTRAINT_DECODING_TEST_TEMP_FILES_FOLDER_NAME, MAIN_GRAMMAR_FILE_NAME,
-        GLUE_GRAMMAR_FILE_NAME, getPhraseTableWeights(), useSoftSyntacticConstraintsDecoding,true);
+        GLUE_GRAMMAR_FILE_NAME, getPhraseTableWeights(),useSoftSyntacticConstraintsDecoding,true);
   }
 
   private static final TestConfigFileCreater TEST_CONFIG_FILE_CREATER_SOFT_CONSTRAINTS = createFeaturesTestConfigFileCreater(true);
@@ -46,7 +46,6 @@ public class SoftSyntacticConstraintDecodingTest {
     String glueGrammarFilePath = testConfigFileCreater.createFullPath(GLUE_GRAMMAR_FILE_NAME);
     String testFilePath = testConfigFileCreater.createFullPath(TEST_FILE_NAME);
 
-
     ArtificialGrammarAndCorpusCreater artificialGrammarAndCorpusCreater = ArtificialGrammarAndCorpusCreater
         .createArtificialGrammarAndCorpusCreater(mainGrammarFilePath, glueGrammarFilePath,
             testFilePath);
@@ -59,7 +58,6 @@ public class SoftSyntacticConstraintDecodingTest {
 
   private static void copyStaticFilesToTestDirectory(TestConfigFileCreater testConfigFileCreater) {
     FeatureFunctionsTest.copyOriginnlFileToTestDirectory(testConfigFileCreater,
-
         FeatureFunctionsTest.ORIGINAL_LANGUAGE_MODEL_FILE_PATH,
         TestConfigFileCreater.LANGUAGE_MODEL_FILE_NAME);
   }
@@ -111,7 +109,6 @@ public class SoftSyntacticConstraintDecodingTest {
     // TODO : Please Refactor so this is no longer necessary
     StatefulFF.resetGlobalStateIndex();
     testNormalDecodingHasexpectedNumberDerivations(1);
-
 
   }
 

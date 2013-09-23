@@ -162,5 +162,4 @@ public class TestConfigFileCreater {
         createJoshuaConfigFileContentsWithExtraFeatures(featureFunctionName, featureNames));
   }
 
-
 }
