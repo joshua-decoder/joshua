@@ -113,6 +113,7 @@ class DotChart {
     this.nonTerminalMatcher = nonTerminalMatcher;
     this.regexpMatching = regExpMatching;
 
+
     // seeding the dotChart
     seed();
   }
@@ -213,6 +214,7 @@ class DotChart {
             child_tnodes = Arrays.asList(child_node);
           }
 
+
           if (!(child_tnodes == null || child_tnodes.isEmpty())) {
             for (Trie child_tnode : child_tnodes) {
               if (null != child_tnode) {
@@ -222,6 +224,7 @@ class DotChart {
             }
           }
         }
+
       }
 
     }
@@ -281,6 +284,7 @@ class DotChart {
         List<Trie> child_tnodes = nonTerminalMatcher.produceMatchingChildTNodesNonterminalLevel(
             dotNode, superNode);
 
+
         if (!child_tnodes.isEmpty()) {
           for (Trie child_tnode : child_tnodes) {
             if (child_tnode != null) {
@@ -326,6 +330,7 @@ class DotChart {
     }
     return trieList;
   }
+
 
   /**
    * Creates a {@link DotNode} and adds it into the {@link DotChart} at the correct place. These
