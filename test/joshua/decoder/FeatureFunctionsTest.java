@@ -10,7 +10,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.TreeSet;
 import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.StatefulFF;
@@ -27,13 +26,11 @@ import org.junit.Test;
  */
 public class FeatureFunctionsTest {
 
-  private static final String LIBRARY_PATH_PROPERTY = "java.library.path";
   private static String LABEL_COMBINATION_FEATURE_NAME = LabelCombinationFF
       .getLowerCasedFeatureName();
 
   private static String FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME = "FeatureFunctionsTestTempFiles";
   private static String MAIN_GRAMMAR_FILE_NAME = "mainGrammar.gz";
-  private static String LANGUAGE_MODEL_FILE_NAME = "lm.gz";
   private static String GLUE_GRAMMAR_FILE_NAME = "glueGrammar.txt";
   private static String JOSHUA_CONFIG_FILE_NAME = "joshua.config";
   private static String JOSHUA_EXTRA_FEATURES_CONFIG_FILE_NAME = "joshua_extra_features.config";
@@ -41,87 +38,17 @@ public class FeatureFunctionsTest {
   private static String ORIGINAL_GLUE_GRAMMAR_FILE_PATH = "./test/bn-en/samt/grammar.glue";
   static String ORIGINAL_LANGUAGE_MODEL_FILE_PATH = "./test/bn-en/samt/lm.gz";
 
-  private static final String NL = "\n";
-  private static final Double NEW_FEATURES_WEIGHT = 0.2;
   private static final String CONFIG_PROPERTY_ARG = "-config";
 
-  private static final String createGlueGrammarFileSpecificationLine() {
-    return "tm = thrax glue -1 " + "./" + FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME + "/"
-        + GLUE_GRAMMAR_FILE_NAME;
-  }
+  public static TestConfigFileCreater createFeaturesTestConfigFileCreater() {
+    return TestConfigFileCreater.createFeaturesTestConfigFileCreater(
+        FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME, MAIN_GRAMMAR_FILE_NAME,
+        GLUE_GRAMMAR_FILE_NAME, getPhraseTableWeights(),false,false);
 
-  private static final String createMainGrammarFileSpecificationLine() {
-    return "tm = thrax pt 12 " + "./" + FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME + "/"
-        + MAIN_GRAMMAR_FILE_NAME;
-  }
-
-  private static String getFeatureSwitchOnString(String featureFunctionName) {
-    return "feature-function = " + featureFunctionName;
   }
 
   private static final TestConfigFileCreater TEST_CONFIG_FILE_CREATER = createFeaturesTestConfigFileCreater();
 
-  // Large String containing the mostly static, partly dynamic generated mose config
-  // file contents used for the test
-  private static final String MOSES_CONFIG_FILE_CONTENTS_FIRST_PART = "lm = kenlm 5 false false 100 "
-      + TEST_CONFIG_FILE_CREATER.createFullPath(LANGUAGE_MODEL_FILE_NAME)
-      + NL
-      + createMainGrammarFileSpecificationLine()
-      + NL
-      + createGlueGrammarFileSpecificationLine()
-      + NL
-      + "mark_oovs=false"
-      + NL
-      + "#tm config"
-      + NL
-      + "default_non_terminal = OOV"
-      + NL
-      + "goalSymbol = GOAL"
-      + NL
-      + "#pruning config"
-      + NL
-      + "pop-limit = 10"
-      + NL
-      + "#nbest config"
-      + NL + "use_unique_nbest = true" + NL + "top_n = 10" // + NL + "feature-function = OOVPenalty"
-      + NL + "feature-function = WordPenalty";
-
-  private static final String MOSES_CONFIG_FILE_CONTENTS_PART2 = "###### model weights"
-      + NL
-      + "#lm order weight"
-      + NL
-      + "WordPenalty -3.0476045270236662"
-      + NL
-      + "lm_0 1.3200621467242506"
-      // "#phrasemodel owner column(0-indexed)"
-      + NL + "tm_pt_0 0.4571255198114019" + NL + "tm_pt_1 -0.17399038425384106" + NL
-      + "tm_pt_2 -0.784547842535801" + NL + "tm_pt_3 0.76254324621594" + NL
-      + "tm_pt_4 -0.8628695028838571" + NL + "tm_pt_5 0.04258438925263152" + NL
-      + "tm_pt_6 0.5278815893934184" + NL + "tm_pt_7 0.9255662450788644" + NL
-      + "tm_pt_8 0.03385066779097645" + NL + "tm_pt_9 0.9918446849428446" + NL
-      + "tm_pt_10 0.52186013168725" + NL + "tm_pt_11 -0.7874679555197446" + NL
-      + "tm_pt_12 -0.03770136145251124" + NL + "tm_pt_13 0.37085201114442157" + NL
-      + "tm_pt_14 0.34054825749510886" + NL + "tm_pt_15 0.008348471483412778" + NL
-      + "tm_pt_16 0.7984119288127296" + NL + "tm_glue_0 1" + NL
-
-      + "oovpenalty -100.0" + NL;
-
-  // private static final int NO_PHRASE_WEIGTHS = 22;
-
-  /*
-   * private static String createPhraseWeightsSpecification() { String result =
-   * "#phrasemodel owner column(0-indexed) weight" + NL; for (int i = 0; i < NO_PHRASE_WEIGTHS; i++)
-   * { result += "tm_pt_" + i + 0.5; } return result; }
-   */
-
-  private static String createFeatureWeightSpecifications(List<String> featureNames,
-      double featureWeight) {
-    String result = "";
-    for (String featureName : featureNames) {
-      result += featureName + " " + featureWeight + "\n";
-    }
-    return result;
-  }
 
   private static final List<Double> getPhraseTableWeights() {
     return Arrays.asList(0.4571255198114019,
@@ -130,12 +57,6 @@ public class FeatureFunctionsTest {
         0.04258438925263152, 0.5278815893934184, 0.9255662450788644, 0.03385066779097645,
         0.9918446849428446, 0.52186013168725, -0.7874679555197446, -0.03770136145251124,
         0.37085201114442157, 0.34054825749510886, 0.008348471483412778, 0.7984119288127296);
-  }
-
-  public static TestConfigFileCreater createFeaturesTestConfigFileCreater() {
-    return TestConfigFileCreater.createFeaturesTestConfigFileCreater(
-        FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME, MAIN_GRAMMAR_FILE_NAME,
-        GLUE_GRAMMAR_FILE_NAME, getPhraseTableWeights());
   }
 
   private static void writeBasicJoshuaConfigFile(String featureFunctionName) {

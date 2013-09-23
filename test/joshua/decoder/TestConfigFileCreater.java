@@ -4,9 +4,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
-
-import org.junit.Assert;
-
 import joshua.util.FileUtility;
 
 public class TestConfigFileCreater {
@@ -19,21 +16,26 @@ public class TestConfigFileCreater {
   private final String mainGrammarFileName;
   private final String glueGrammarFileName;
   private final List<Double> phraseTableWeights;
+  private final boolean useSoftSyntacticDecoding;
+  private final boolean switchOfPruning;
 
   private TestConfigFileCreater(String testTemFilesFolderName, String mainGrammarFileName,
-      String glueGrammarFileName, List<Double> phraseTableWeights) {
+      String glueGrammarFileName, List<Double> phraseTableWeights,
+      boolean useSoftSyntacticDecoding, boolean switchOfPruning) {
     this.testTempFilesFolderName = testTemFilesFolderName;
     this.mainGrammarFileName = mainGrammarFileName;
     this.glueGrammarFileName = glueGrammarFileName;
     this.phraseTableWeights = phraseTableWeights;
+    this.useSoftSyntacticDecoding = useSoftSyntacticDecoding;
+    this.switchOfPruning = switchOfPruning;
   }
 
   public static TestConfigFileCreater createFeaturesTestConfigFileCreater(
       String testTemFilesFolderName, String mainGrammarFileName, String glueGrammarFileName,
-      List<Double> phraseTableWeights) {
-    Assert.assertNotNull(phraseTableWeights);
+
+      List<Double> phraseTableWeights, boolean useSoftSyntacticDecoding, boolean switchOfPruning) {
     return new TestConfigFileCreater(testTemFilesFolderName, mainGrammarFileName,
-        glueGrammarFileName, phraseTableWeights);
+        glueGrammarFileName, phraseTableWeights, useSoftSyntacticDecoding, switchOfPruning);
   }
 
   private final String createGlueGrammarFileSpecificationLine() {
@@ -48,15 +50,25 @@ public class TestConfigFileCreater {
     return "feature-function = " + featureFunctionName;
   }
 
+  public String getPruningSpecification() {
+    if (switchOfPruning) {
+      return "pop-limit = 0" + NL;
+    } else {
+      return "pop-limit = 100" + NL;
+    }
+  }
+
   // Large String containing the mostly static, partly dynamic generated mose config
   // file contents used for the test
-  private final String getJoshuaConfigFileFirstPart() {
+  private final String getJoshuaConfigFileFirstPart(boolean useSoftSyntacticDecoding) {
     String result = "lm = kenlm 5 false false 100 " + createFullPath(LANGUAGE_MODEL_FILE_NAME) + NL
         + createMainGrammarFileSpecificationLine() + NL + createGlueGrammarFileSpecificationLine()
         + NL + "mark_oovs=false" + NL + "#tm config" + NL + "default_non_terminal = OOV" + NL
-        + "goalSymbol = GOAL" + NL + "#pruning config" + NL + "pop-limit = 0" + NL
-        + "#nbest config" + NL + "use_unique_nbest = true" + NL + "top_n = 10" // + NL +
-                                                                               // "feature-function = OOVPenalty"
+        + "goalSymbol = GOAL" + NL + "#pruning config" + NL + getPruningSpecification()
+        + JoshuaConfiguration.SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME + " = "
+        + useSoftSyntacticDecoding + NL + "#nbest config" + NL + "use_unique_nbest = true" + NL
+        + "top_n = 10" // + NL +
+                       // "feature-function = OOVPenalty"
         + NL + "feature-function = WordPenalty";
     return result;
   }
@@ -104,14 +116,14 @@ public class TestConfigFileCreater {
   }
 
   protected String createJoshuaConfigFileContents(String featureFunctionName) {
-    String result = getJoshuaConfigFileFirstPart();
+    String result = getJoshuaConfigFileFirstPart(useSoftSyntacticDecoding);
     result += NL + getFeatureSwitchOnString(featureFunctionName) + NL;
     result += getMosesConfigFilePart2();
     return result;
   }
 
   protected String createJoshuaConfigFileContents() {
-    String result = getJoshuaConfigFileFirstPart();
+    String result = getJoshuaConfigFileFirstPart(useSoftSyntacticDecoding);
     result += NL;
     result += getMosesConfigFilePart2();
     return result;

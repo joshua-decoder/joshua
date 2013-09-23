@@ -132,6 +132,10 @@ public class JoshuaConfiguration {
   
   public boolean rescoreForest = false;
   public float rescoreForestWeight = 10.0f;
+
+  
+  public boolean softSyntacticConstraintDecoding = false;
+  public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "softSyntacticConstraintDecoding";
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -370,7 +374,16 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             features.add("feature_function = " + fds[1]);
 
-          } else {
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // add the feature to the list of features for later processing
+            maxlen = Integer.parseInt(fds[1]);
+
+          } else if (parameter.equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
+            softSyntacticConstraintDecoding = Boolean.parseBoolean(fds[1]);
+            logger.finest(String.format(softSyntacticConstraintDecoding +": %s", softSyntacticConstraintDecoding));
+          }
+          
+          else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))
