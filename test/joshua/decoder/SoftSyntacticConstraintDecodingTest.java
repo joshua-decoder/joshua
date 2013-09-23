@@ -75,7 +75,7 @@ public class SoftSyntacticConstraintDecodingTest {
         testInputFilePath);
     // Test that the number of derivations in the list is 2
     int numberOfDerivationsInNBestList = decoderOutput1.getnBestListTotalWeights().size();
-    Assert.assertEquals(numberOfDerivationsInNBestList, 4);
+    Assert.assertEquals(numberOfDerivationsInNBestList, 9);
   }
 
 }

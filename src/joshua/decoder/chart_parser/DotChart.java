@@ -74,7 +74,8 @@ class DotChart {
   private final Lattice<Integer> input;
 
   /* If enabled, rule terminals are treated as regular expressions. */
-  private boolean regexpMatching = false;
+  // private boolean regexpMatching = false;
+  private final RuleMatcher ruleMatcher;
 
   // ===============================================================
   // Static fields
@@ -98,29 +99,28 @@ class DotChart {
    * @param grammar A translation grammar.
    * @param chart A CKY+ style chart in which completed span entries are stored.
    */
-  public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart) {
+  public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, RuleMatcher ruleMatcher) {
     this.dotChart = chart;
     this.pGrammar = grammar;
     this.input = input;
     this.sentLen = input.size();
+
     this.dotcells = new ChartSpan<DotCell>(sentLen, null);
+    this.ruleMatcher = ruleMatcher;
 
     // seeding the dotChart
     seed();
   }
 
-  public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, boolean useRegexpMatching) {
-    this.dotChart = chart;
-    this.pGrammar = grammar;
-    this.input = input;
-    this.sentLen = input.size();
-    this.dotcells = new ChartSpan<DotCell>(sentLen, null);
-
-    // seeding the dotChart
-    seed();
-
-    this.regexpMatching = useRegexpMatching;
-  }
+  /*
+   * public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, boolean
+   * useRegexpMatching) { this.dotChart = chart; this.pGrammar = grammar; this.input = input;
+   * this.sentLen = input.size(); this.dotcells = new ChartSpan<DotCell>(sentLen, null);
+   * 
+   * // seeding the dotChart seed();
+   * 
+   * this.regexpMatching = useRegexpMatching; }
+   */
 
   // ===============================================================
   // Package-protected methods
@@ -192,19 +192,24 @@ class DotChart {
 
         for (DotNode dotNode : dotcells.get(i, j - 1).getDotNodes()) {
 
-          String arcWord = Vocabulary.word(last_word);
-          Assert.assertFalse(arcWord.endsWith("]"));
-          Assert.assertFalse(arcWord.startsWith("["));
+          // String arcWord = Vocabulary.word(last_word);
+          // Assert.assertFalse(arcWord.endsWith("]"));
+          // Assert.assertFalse(arcWord.startsWith("["));
           // logger.info("DotChart.expandDotCell: " + arcWord);
 
-          List<Trie> child_tnodes = null;
+          List<Trie> child_tnodes = ruleMatcher.produceMatchingChildTNodesTerminalevel(dotNode,
+              last_word);
 
-          if (this.regexpMatching) {
-            child_tnodes = matchAll(dotNode, last_word);
-          } else {
-            Trie child_node = dotNode.trieNode.match(last_word);
-            child_tnodes = Arrays.asList(child_node);
-          }
+          /*
+           * >>>>>>> Gideon : Implemented a first working version of soft constraint Rule matching.
+           * if (this.regexpMatching) { child_tnodes = matchAll(dotNode, last_word); } else { Trie
+           * child_node = dotNode.trieNode.match(last_word); child_tnodes =
+           * Arrays.asList(child_node); <<<<<<< HEAD }
+           * 
+           * if (!(child_tnodes == null || child_tnodes.isEmpty())) { for (Trie child_tnode :
+           * child_tnodes) { if (null != child_tnode) { addDotItem(child_tnode, i, j - 1 + arc_len,
+           * dotNode.antSuperNodes, null, dotNode.srcPath.extend(arc)); ======= }
+           */
 
           if (!(child_tnodes == null || child_tnodes.isEmpty())) {
             for (Trie child_tnode : child_tnodes) {
@@ -214,8 +219,8 @@ class DotChart {
               }
             }
           }
-
         }
+
       }
     }
   }
@@ -260,10 +265,10 @@ class DotChart {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
 
-        String arcWord = Vocabulary.word(superNode.lhs);
-        logger.info("DotChart.extendDotItemsWithProvedItems: " + arcWord);
-        Assert.assertTrue(arcWord.endsWith("]"));
-        Assert.assertTrue(arcWord.startsWith("["));
+        // String arcWord = Vocabulary.word(superNode.lhs);
+        // logger.info("DotChart.extendDotItemsWithProvedItems: " + arcWord);
+        // Assert.assertTrue(arcWord.endsWith("]"));
+        // Assert.assertTrue(arcWord.startsWith("["));
 
         /*
          * Regular Expression matching allows for a regular-expression style rules in the grammar,
@@ -271,13 +276,8 @@ class DotChart {
          * undocumented feature that introduces a complexity, in that the next "word" in the grammar
          * rule might match more than one outgoing arc in the grammar trie.
          */
-        List<Trie> child_tnodes = null;
-        if (this.regexpMatching) {
-          child_tnodes = matchAll(dotNode, superNode.lhs);
-        } else {
-          Trie child_node = dotNode.trieNode.match(superNode.lhs);
-          child_tnodes = Arrays.asList(child_node);
-        }
+        List<Trie> child_tnodes = ruleMatcher.produceMatchingChildTNodesNonterminalLevel(dotNode,
+            superNode);
 
         if (!child_tnodes.isEmpty()) {
           for (Trie child_tnode : child_tnodes) {
@@ -289,23 +289,6 @@ class DotChart {
             }
           }
         }
-        /*
-         * if (!child_tnodes.isEmpty()) { for (Trie child_tnode : child_tnodes) { if (null !=
-         * child_tnode) { if (true == startDotItems && !child_tnode.hasExtensions()) continue; //
-         * TODO addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-         * .getSourcePath().extendNonTerminal()); >>>>>>> Gideon : Refactored
-         * ../src/joshua/decoder/chart_parser/DotChart.java } } }
-         */
-
-        /*
-         * else { /* Standard approach: Check with the item needed by this grammar rule matches the
-         * lefthand side of the rule group under consideration.
-         */
-        /*
-         * Trie trie = dotNode.trieNode.match(superNode.lhs); if (trie != null) { if (!skipUnary ||
-         * trie.hasExtensions()) addDotItem(trie, i, j, dotNode.getAntSuperNodes(), superNode,
-         * dotNode.getSourcePath() .extendNonTerminal()); } }
-         */
       }
     }
   }
@@ -320,19 +303,16 @@ class DotChart {
    * the grammar trie node to see if any of them match, and then return the whole set. This is quite
    * expensive, which is why you should only enable regular expressions for small grammars.
    */
-  private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
-    ArrayList<Trie> trieList = new ArrayList<Trie>();
-    HashMap<Integer, ? extends Trie> childrenTbl = dotNode.trieNode.getChildren();
-
-    if (childrenTbl != null && wordID >= 0) {
-      for (Integer arcID : childrenTbl.keySet()) {
-        /* Allow exact matches and regular expression matches */
-        if (arcID == wordID || Vocabulary.word(wordID).matches(Vocabulary.word(arcID)))
-          trieList.add(childrenTbl.get(arcID));
-      }
-    }
-    return trieList;
-  }
+  /*
+   * private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) { ArrayList<Trie> trieList = new
+   * ArrayList<Trie>(); HashMap<Integer, ? extends Trie> childrenTbl =
+   * dotNode.trieNode.getChildren();
+   * 
+   * if (childrenTbl != null && wordID >= 0) { for (Integer arcID : childrenTbl.keySet()) { // Allow
+   * exact matches and regular expression matches if (arcID == wordID ||
+   * Vocabulary.word(wordID).matches(Vocabulary.word(arcID))) trieList.add(childrenTbl.get(arcID));
+   * } } return trieList; }
+   */
 
   /**
    * Creates a {@link DotNode} and adds it into the {@link DotChart} at the correct place. These

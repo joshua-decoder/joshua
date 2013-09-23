@@ -17,11 +17,15 @@ public class ArtificialGrammarAndCorpusCreater {
       + JOSHUA_RULE_SEPARATOR + "girl" + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
   private static final String ARTIFICAL_TERMINAL_RULE3 = "[T3]" + JOSHUA_RULE_SEPARATOR + "garcon"
       + JOSHUA_RULE_SEPARATOR + "mister" + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
-  private static final String ARTIFICAL_TERMINAL_RULE4 = "[T4]" + JOSHUA_RULE_SEPARATOR + "woman"
-      + JOSHUA_RULE_SEPARATOR + "girl" + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
+  private static final String ARTIFICAL_TERMINAL_RULE4 = "[T4]" + JOSHUA_RULE_SEPARATOR + "fille"
+      + JOSHUA_RULE_SEPARATOR + "woman" + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
+  private static final String ARTIFICAL_TERMINAL_RULE5 = "[T5]" + JOSHUA_RULE_SEPARATOR + "fille"
+      + JOSHUA_RULE_SEPARATOR + "lady" + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
   private static final String ARTIFICAL_NONTERTERMINAL_RULE1 = "[NT1]" + JOSHUA_RULE_SEPARATOR
       + "le [T1,1] aime la [T2,2]" + JOSHUA_RULE_SEPARATOR + "the [T1,1] loves the [T2,2]"
       + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
+  private static final String ARTIFICAL_TERMINAL_RULE6 = "[T6]" + JOSHUA_RULE_SEPARATOR + "garcon"
+      + JOSHUA_RULE_SEPARATOR + "sir" + JOSHUA_RULE_SEPARATOR + "0.5 0.4";
 
   private static final String GLUE_RULE_BEGIN = "[GOAL] ||| <s> ||| <s> ||| 0";
   private static final String GLUE_RULE_NT = "[GOAL] ||| [GOAL,1] [NT1,2] ||| [GOAL,1] [NT1,2] ||| -1";
@@ -31,7 +35,8 @@ public class ArtificialGrammarAndCorpusCreater {
 
   private static final List<String> ARTIFICIAL_GRAMMAR_RULES_LIST = Arrays.asList(
       ARTIFICAL_TERMINAL_RULE1, ARTIFICAL_TERMINAL_RULE2, ARTIFICAL_TERMINAL_RULE3,
-      ARTIFICAL_TERMINAL_RULE4, ARTIFICAL_NONTERTERMINAL_RULE1);
+      ARTIFICAL_TERMINAL_RULE4,ARTIFICAL_TERMINAL_RULE5,ARTIFICAL_TERMINAL_RULE6,
+      ARTIFICAL_NONTERTERMINAL_RULE1);
 
   private static final List<String> ARTIFICIAL_GLUE_GRAMMAR_RULES_LIST = Arrays.asList(GLUE_RULE_BEGIN,GLUE_RULE_NT,GLUE_RULE_END);
 
@@ -55,7 +60,7 @@ public class ArtificialGrammarAndCorpusCreater {
     BufferedWriter outputWriter = null;
     try {
       outputWriter = new BufferedWriter(new FileWriter(filePath));
-      for (int i = 0; i < lines.size(); i++) {
+      for (int i = 0; i < lines.size() -1; i++) {
         outputWriter.write(lines.get(i) + "\n");
       }
       if (!lines.isEmpty()) {

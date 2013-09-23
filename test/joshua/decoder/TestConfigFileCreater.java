@@ -54,7 +54,7 @@ public class TestConfigFileCreater {
     String result = "lm = kenlm 5 false false 100 " + createFullPath(LANGUAGE_MODEL_FILE_NAME) + NL
         + createMainGrammarFileSpecificationLine() + NL + createGlueGrammarFileSpecificationLine()
         + NL + "mark_oovs=false" + NL + "#tm config" + NL + "default_non_terminal = OOV" + NL
-        + "goalSymbol = GOAL" + NL + "#pruning config" + NL + "pop-limit = 10" + NL
+        + "goalSymbol = GOAL" + NL + "#pruning config" + NL + "pop-limit = 0" + NL
         + "#nbest config" + NL + "use_unique_nbest = true" + NL + "top_n = 10" // + NL +
                                                                                // "feature-function = OOVPenalty"
         + NL + "feature-function = WordPenalty";
