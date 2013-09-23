@@ -78,6 +78,7 @@ class DotChart {
    */
   private final NonterminalMatcher nonTerminalMatcher;
 
+
   // ===============================================================
   // Static fields
   // ===============================================================
@@ -101,8 +102,10 @@ class DotChart {
    * @param chart A CKY+ style chart in which completed span entries are stored.
    */
 
+
   public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart,
       NonterminalMatcher nonTerminalMatcher, boolean regExpMatching) {
+
     this.dotChart = chart;
     this.pGrammar = grammar;
     this.input = input;
@@ -115,6 +118,7 @@ class DotChart {
     // seeding the dotChart
     seed();
   }
+
 
   /*
    * public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, boolean
@@ -208,6 +212,7 @@ class DotChart {
 
           List<Trie> child_tnodes = null;
 
+
           if (this.regexpMatching) {
             child_tnodes = matchAll(dotNode, last_word);
           } else {
@@ -221,6 +226,7 @@ class DotChart {
               if (null != child_tnode) {
                 addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
                     dotNode.srcPath.extend(arc));
+
               }
             }
           }
@@ -277,6 +283,7 @@ class DotChart {
         // Assert.assertTrue(arcWord.startsWith("["));
 
 
+
         /*
          * Regular Expression matching allows for a regular-expression style rules in the grammar,
          * which allows for a very primitive treatment of morphology. This is an advanced,
@@ -288,6 +295,7 @@ class DotChart {
 
 
         if (!child_tnodes.isEmpty()) {
+
           for (Trie child_tnode : child_tnodes) {
             if (child_tnode != null) {
               if ((!skipUnary) || (child_tnode.hasExtensions())) {
@@ -311,8 +319,8 @@ class DotChart {
    * the grammar trie node to see if any of them match, and then return the whole set. This is quite
    * expensive, which is why you should only enable regular expressions for small grammars.
    */
-
  
+
   private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
     ArrayList<Trie> trieList = new ArrayList<Trie>();
     HashMap<Integer, ? extends Trie> childrenTbl = dotNode.trieNode.getChildren();

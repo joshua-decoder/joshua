@@ -46,6 +46,7 @@ public class SoftSyntacticConstraintDecodingTest {
     String glueGrammarFilePath = testConfigFileCreater.createFullPath(GLUE_GRAMMAR_FILE_NAME);
     String testFilePath = testConfigFileCreater.createFullPath(TEST_FILE_NAME);
 
+
     ArtificialGrammarAndCorpusCreater artificialGrammarAndCorpusCreater = ArtificialGrammarAndCorpusCreater
         .createArtificialGrammarAndCorpusCreater(mainGrammarFilePath, glueGrammarFilePath,
             testFilePath);
@@ -58,6 +59,7 @@ public class SoftSyntacticConstraintDecodingTest {
 
   private static void copyStaticFilesToTestDirectory(TestConfigFileCreater testConfigFileCreater) {
     FeatureFunctionsTest.copyOriginnlFileToTestDirectory(testConfigFileCreater,
+
         FeatureFunctionsTest.ORIGINAL_LANGUAGE_MODEL_FILE_PATH,
         TestConfigFileCreater.LANGUAGE_MODEL_FILE_NAME);
   }
@@ -89,7 +91,6 @@ public class SoftSyntacticConstraintDecodingTest {
     // Test that the number of derivations in the list is 2
     int numberOfDerivationsInNBestList = decoderOutput1.getnBestListTotalWeights().size();
     Assert.assertEquals(numberOfDerivationsInNBestList, expectedNumberDerivations);
-
   }
 
 
@@ -110,6 +111,7 @@ public class SoftSyntacticConstraintDecodingTest {
     // TODO : Please Refactor so this is no longer necessary
     StatefulFF.resetGlobalStateIndex();
     testNormalDecodingHasexpectedNumberDerivations(1);
+
 
   }
 
