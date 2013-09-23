@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.junit.Assert;
+
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
@@ -186,7 +189,15 @@ class DotChart {
 
       if (null != dotcells.get(i, j - 1)) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-        for (DotNode dotNode : dotcells.get(i, j - 1).getDotNodes()) {
+
+        for (DotNode dotNode : dotcells.get(i, j-1).getDotNodes()) {
+
+          
+          String arcWord = Vocabulary.word(last_word);
+          Assert.assertFalse(arcWord.endsWith("]"));
+          Assert.assertFalse(arcWord.startsWith("["));
+         // logger.info("DotChart.expandDotCell: " + arcWord);
+          
           if (this.regexpMatching) {
             ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
             if (child_tnodes == null || child_tnodes.isEmpty())
@@ -248,6 +259,12 @@ class DotChart {
     for (DotNode dotNode : dotcells.get(i, k).dotNodes) {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
+       
+        String arcWord = Vocabulary.word(superNode.lhs);
+        logger.info("DotChart.extendDotItemsWithProvedItems: " + arcWord);
+        Assert.assertTrue(arcWord.endsWith("]"));
+        Assert.assertTrue(arcWord.startsWith("["));
+        
         /*
          * Regular Expression matching allows for a regular-expression style rules in the grammar,
          * which allows for a very primitive treatment of morphology. This is an advanced,

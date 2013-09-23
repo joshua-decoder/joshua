@@ -46,6 +46,7 @@ public class FeatureFunctionsTest {
 
   private static final String NL = "\n";
   private static final Double NEW_FEATURES_WEIGHT = 0.2;
+  private static final String CONFIG_PROPERTY_ARG = "-config";
 
   private static final String createGlueGrammarFileSpecificationLine() {
     return "tm = thrax glue -1 " + "./" + FEATURE_FUNCTIONS_TEST_TEMP_FILES_FOLDER_NAME + "/"
@@ -191,6 +192,7 @@ public class FeatureFunctionsTest {
 
   private String[] createDecoderArguments(String joshuaConfigFileName) {
     List<String> argumentsList = new ArrayList<String>();
+    argumentsList.add(CONFIG_PROPERTY_ARG);
     argumentsList.add(createFullPath(joshuaConfigFileName));
     // argumentsList.add("-Djava.library.path=/home/gmaillet/AI/tools/joshua/lib/");
     return argumentsList.toArray(new String[argumentsList.size()]);
