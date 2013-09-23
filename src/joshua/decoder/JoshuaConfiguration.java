@@ -139,6 +139,7 @@ public class JoshuaConfiguration {
   public boolean fuzzy_matching = false;
   public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
   
+  
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
    * This is useful when for example making different calls to the decoder within the same java

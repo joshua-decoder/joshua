@@ -6,25 +6,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.testng.Assert;
+
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.tm.Trie;
 
 public class RuleMatcherFactory {
 
-  public static RuleMatcher createRuleMatcher(boolean useRegularExpressionGrammar,
-      boolean useSoftConstraintMatching, Logger logger) {
+  public static RuleMatcher createRuleMatcher(boolean useRegularExpressionGrammar, Logger logger,JoshuaConfiguration joshuaConfiguration) {
     if (useRegularExpressionGrammar) {
-      if (useSoftConstraintMatching) {
-        return new RegularExpressionRuleMatcherSoftConstraints(logger);
+      if (joshuaConfiguration.softSyntacticConstraintDecoding) {
+        return new RegularExpressionRuleMatcherSoftConstraints(logger,joshuaConfiguration);
       } else {
-        return new RegularExpressionRuleMatcherStrict(logger);
+        return new RegularExpressionRuleMatcherStrict(logger,joshuaConfiguration);
       }
     } else {
-      if (useSoftConstraintMatching) {
-        return new StandardRuleMatcherSoftConstraints(logger);
+      if (joshuaConfiguration.softSyntacticConstraintDecoding) {
+        return new StandardRuleMatcherSoftConstraints(logger,joshuaConfiguration);
       } else {
-        return new StandardRuleMatcherStrict(logger);
+        return new StandardRuleMatcherStrict(logger,joshuaConfiguration);
       }
 
     }
@@ -33,9 +35,11 @@ public class RuleMatcherFactory {
   protected abstract static class AbstractRuleMatcher implements RuleMatcher {
 
     protected final Logger logger;
+    protected final JoshuaConfiguration joshuaConfiguration;
 
-    protected AbstractRuleMatcher(Logger logger) {
+    protected AbstractRuleMatcher(Logger logger,JoshuaConfiguration joshuaConfiguration) {
       this.logger = logger;
+      this.joshuaConfiguration = joshuaConfiguration;
     }
 
     /*
@@ -72,14 +76,15 @@ public class RuleMatcherFactory {
       List<Trie> trieList = new ArrayList<Trie>();
       HashMap<Integer, ? extends Trie> childrenTbl = dotNode.getTrieNode().getChildren();
 
-     // logger.info("wordID: " + wordID + " Vocabulary.word(Math.abs(wordID)) "
-     //     + Vocabulary.word(Math.abs(wordID)));
+      // logger.info("wordID: " + wordID + " Vocabulary.word(Math.abs(wordID)) "
+      // + Vocabulary.word(Math.abs(wordID)));
       ;
       if (childrenTbl != null) {
         // get all the extensions, map to string, check for *, build regexp
         for (Integer arcID : childrenTbl.keySet()) {
           String arcWord = Vocabulary.word(arcID);
-        //  logger.info("Vocabulary.word(wordID), arcWord ||| " + Vocabulary.word(wordID) + " "+ arcWord);
+          // logger.info("Vocabulary.word(wordID), arcWord ||| " + Vocabulary.word(wordID) + " "+
+          // arcWord);
           String wordIdWord = Vocabulary.word(wordID);
           if (wordIdWord.equals(arcWord)) {
             trieList.add(childrenTbl.get(arcID));
@@ -88,75 +93,97 @@ public class RuleMatcherFactory {
             trieList.add(childrenTbl.get(arcID));
           }
 
-          //logger.info("added node for arcWord: " + arcWord);
+          // logger.info("added node for arcWord: " + arcWord);
         }
       }
-     // logger.info("trieList.size(): " + trieList.size());
+      // logger.info("trieList.size(): " + trieList.size());
       return trieList;
     }
   }
 
+  protected static List<Trie> produceStandardMatchingChildTNodesTerminalevel(DotNode dotNode,
+      int lastWordIndex) {
+    Trie child_node = dotNode.getTrieNode().match(lastWordIndex);
+    List<Trie> child_tnodes = Arrays.asList(child_node);
+    return child_tnodes;
+  }
+
+  public static List<Trie> produceStandardMatchingChildTNodesNonterminalLevel(DotNode dotNode,
+      SuperNode superNode) {
+    Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
+    List<Trie> child_tnodes = Arrays.asList(child_node);
+    return child_tnodes;
+  }
+
   protected abstract static class StandardRuleMatcher extends AbstractRuleMatcher {
 
-    protected StandardRuleMatcher(Logger logger) {
-      super(logger);
+    protected StandardRuleMatcher(Logger logger,JoshuaConfiguration joshuaConfiguration) {
+      super(logger,joshuaConfiguration);
     }
 
     @Override
     public List<Trie> produceMatchingChildTNodesTerminalevel(DotNode dotNode, int lastWordIndex) {
-      Trie child_node = dotNode.getTrieNode().match(lastWordIndex);
-      List<Trie> child_tnodes = Arrays.asList(child_node);
-      return child_tnodes;
+      return produceStandardMatchingChildTNodesTerminalevel(dotNode, lastWordIndex);
     }
   }
 
   protected abstract static class RegularExpressionRuleMatcher extends AbstractRuleMatcher {
 
-    protected RegularExpressionRuleMatcher(Logger logger) {
-      super(logger);
+    protected RegularExpressionRuleMatcher(Logger logger,JoshuaConfiguration joshuaConfiguration) {
+      super(logger,joshuaConfiguration);
     }
 
     @Override
     public List<Trie> produceMatchingChildTNodesTerminalevel(DotNode dotNode, int lastWordIndex) {
-      return matchAllRegularExpression(dotNode, lastWordIndex);
+      if (lastWordIndex >= 0) {
+        return matchAllRegularExpression(dotNode, lastWordIndex);
+      } else {
+        return produceStandardMatchingChildTNodesTerminalevel(dotNode, lastWordIndex);
+      }
     }
 
   }
 
   protected static class RegularExpressionRuleMatcherStrict extends RegularExpressionRuleMatcher {
 
-    protected RegularExpressionRuleMatcherStrict(Logger logger) {
-      super(logger);
+    protected RegularExpressionRuleMatcherStrict(Logger logger,JoshuaConfiguration joshuaConfiguration) {
+      super(logger,joshuaConfiguration);
     }
 
     @Override
     public List<Trie> produceMatchingChildTNodesNonterminalLevel(DotNode dotNode,
         SuperNode superNode) {
-      return matchAllRegularExpression(dotNode, superNode.lhs);
-    }
-
+      /*
+      if (superNode.lhs >= 0) {
+        Assert.fail();
+        return matchAllRegularExpression(dotNode, superNode.lhs);
+      } else {*/
+        // TODO : Presumably regular expression matching should only be allowed at the terminal level
+        // Check with Matt Post if that is really the case
+        logger.info("produceMatchingChildTnodesNonTerminalLevel" + Vocabulary.word(superNode.lhs));
+        return produceStandardMatchingChildTNodesTerminalevel(dotNode, superNode.lhs);
+      }
+   
   }
 
   protected static class StandardRuleMatcherStrict extends StandardRuleMatcher {
 
-    protected StandardRuleMatcherStrict(Logger logger) {
-      super(logger);
+    protected StandardRuleMatcherStrict(Logger logger,JoshuaConfiguration joshuaConfiguration) {
+      super(logger,joshuaConfiguration);
     }
 
     @Override
     public List<Trie> produceMatchingChildTNodesNonterminalLevel(DotNode dotNode,
         SuperNode superNode) {
-      Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
-      List<Trie> child_tnodes = Arrays.asList(child_node);
-      return child_tnodes;
+      return produceStandardMatchingChildTNodesNonterminalLevel(dotNode, superNode);
     }
   }
 
   protected static class RegularExpressionRuleMatcherSoftConstraints extends
       RegularExpressionRuleMatcher {
 
-    protected RegularExpressionRuleMatcherSoftConstraints(Logger logger) {
-      super(logger);
+    protected RegularExpressionRuleMatcherSoftConstraints(Logger logger,JoshuaConfiguration joshuaConfiguration) {
+      super(logger,joshuaConfiguration);
     }
 
     @Override
@@ -169,28 +196,26 @@ public class RuleMatcherFactory {
 
   protected static class StandardRuleMatcherSoftConstraints extends StandardRuleMatcher {
 
-    protected StandardRuleMatcherSoftConstraints(Logger logger) {
-      super(logger);
+    protected StandardRuleMatcherSoftConstraints(Logger logger,JoshuaConfiguration joshuaConfiguration) {
+      super(logger,joshuaConfiguration);
     }
 
     @Override
     public List<Trie> produceMatchingChildTNodesNonterminalLevel(DotNode dotNode,
         SuperNode superNode) {
 
-      if (Vocabulary.word(superNode.lhs).equals("[GOAL]")) {
-        //logger.info("BLAA - Vocabulary.word(superNode.lhs)" + Vocabulary.word(superNode.lhs));
+      // We do not allow substitution of other things for GOAL labels
+      // TODO : Make this more generic - i.e. find out what is the goal label automatically
+      if (Vocabulary.word(superNode.lhs).equals(joshuaConfiguration.goal_symbol)) {
+        // logger.info("BLAA - Vocabulary.word(superNode.lhs)" + Vocabulary.word(superNode.lhs));
         Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
-        //logger.info("child_node.toString()" + child_node);
+        // logger.info("child_node.toString()" + child_node);
         List<Trie> child_tnodes = Arrays.asList(child_node);
         return child_tnodes;
       } else {
-
-        //logger.info("Vocabulary.word(superNode.lhs): " + Vocabulary.word(superNode.lhs));
+        // logger.info("Vocabulary.word(superNode.lhs): " + Vocabulary.word(superNode.lhs));
         return matchAllEqualOrBothNonTerminal(dotNode, superNode.lhs);
       }
-      // Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
-      // List<Trie> child_tnodes = Arrays.asList(child_node);
-      // return child_tnodes;
     }
   }
 
