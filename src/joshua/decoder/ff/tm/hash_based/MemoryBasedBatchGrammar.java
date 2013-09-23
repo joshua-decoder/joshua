@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
@@ -63,29 +64,30 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // Constructors
   // ===============================================================
 
-  public MemoryBasedBatchGrammar() {
+  public MemoryBasedBatchGrammar(JoshuaConfiguration joshuaConfiguration) {
+    super(joshuaConfiguration);
     this.root = new MemoryBasedTrie();
   }
 
-  public MemoryBasedBatchGrammar(String owner) {
-    this.root = new MemoryBasedTrie();
+  public MemoryBasedBatchGrammar(String owner,JoshuaConfiguration joshuaConfiguration) {
+    this(joshuaConfiguration);
     this.owner = Vocabulary.id(owner);
   }
 
-  public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr) {
+  public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr,JoshuaConfiguration joshuaConfiguration) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
-    this.root = new MemoryBasedTrie();
+    this(joshuaConfiguration);
     modelReader = gr;
   }
 
   public MemoryBasedBatchGrammar(String formatKeyword, String grammarFile, String owner,
-      String defaultLHSSymbol, int spanLimit) throws IOException {
+      String defaultLHSSymbol, int spanLimit,JoshuaConfiguration joshuaConfiguration) throws IOException {
 
+    this(joshuaConfiguration);
     this.owner = Vocabulary.id(owner);
     Vocabulary.id(defaultLHSSymbol);
     this.spanLimit = spanLimit;
-    this.root = new MemoryBasedTrie();
     this.grammarFile = grammarFile;
     this.setRegexpGrammar(formatKeyword.equals("regexp"));
     
