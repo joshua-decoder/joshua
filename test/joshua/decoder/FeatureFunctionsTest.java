@@ -182,7 +182,7 @@ public class FeatureFunctionsTest {
   }
 
   private String[] createDecoderArguments(String joshuaConfigFileName) {
-    List<String> argumentsList = new ArrayList<>();
+    List<String> argumentsList = new ArrayList<String>();
     argumentsList.add(createFullPath(joshuaConfigFileName));
     // argumentsList.add("-Djava.library.path=/home/gmaillet/AI/tools/joshua/lib/");
     return argumentsList.toArray(new String[argumentsList.size()]);
