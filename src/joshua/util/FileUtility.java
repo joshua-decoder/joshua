@@ -15,10 +15,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -229,25 +225,6 @@ public class FileUtility {
       } catch (IOException e) {
         e.printStackTrace();
       }
-    }
-  }
-
-  public static void copyFileNative(String inputFilePath, String outputFilePath,
-      boolean replaceExistingFile) {
-    System.out.println("copyFileNative: copying " + inputFilePath + " to " + outputFilePath);
-    Path sourcePath = Paths.get(inputFilePath);
-    Path targetPath = Paths.get(outputFilePath);
-    try {
-      // See :
-      // http://docs.oracle.com/javase/tutorial/essential/io/copy.html
-      if (replaceExistingFile) {
-        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-      } else {
-        Files.copy(sourcePath, targetPath);
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
     }
   }
 

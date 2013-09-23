@@ -166,7 +166,11 @@ public class FeatureFunctionsTest {
 
   private static void copyOriginnlFileToTestDirectory(String originalGrammarFilePath,
       String newGrammarFileName) {
-    FileUtility.copyFileNative(originalGrammarFilePath, createFullPath(newGrammarFileName), true);
+    try {
+      FileUtility.copyFile(new File(originalGrammarFilePath), new File(createFullPath(newGrammarFileName)));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private static void copyStaticFilesToTestDirectory() {
