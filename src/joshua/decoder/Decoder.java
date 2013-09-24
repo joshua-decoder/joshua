@@ -412,13 +412,13 @@ public class Decoder {
           System.err
               .println(String.format("The line was '%s'", joshuaConfiguration.weights.get(i)));
           System.err
-              .println("You mifeatureFunctionNameght be using an old version of the config file that is no longer supported");
+              .println("You might be using an old version of the config file that is no longer supported");
           System.err
               .println("Check joshua-decoder.org or email joshua_support@googlegroups.com for help");
           System.exit(17);
         }
 
-        weights.put(pair[0].toLowerCase(), Float.parseFloat(pair[1]));
+        weights.put(pair[0], Float.parseFloat(pair[1]));
       }
 
       // Do this before loading the grammars and the LM.
@@ -504,16 +504,12 @@ public class Decoder {
 
     for (int i = 0; i < this.languageModels.size(); i++) {
       NGramLanguageModel lm = this.languageModels.get(i);
-      logger.info("Language model " + i + " " + this.languageModels.get(i));
 
       if (lm instanceof KenLM && lm.isMinimizing()) {
         this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM) lm));
       } else {
         this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
       }
-
-      logger.info(String.format("FEATURE: lm #%d, order %d (weight %.3f)", i, languageModels.get(i)
-          .getOrder(), weights.get(String.format("lm_%d", i))));
     }
   }
 
@@ -599,7 +595,7 @@ public class Decoder {
           continue;
 
         String tokens[] = line.split("\\s+");
-        String feature = tokens[0].toLowerCase();
+        String feature = tokens[0];
         Float value = Float.parseFloat(tokens[1]);
 
         weights.put(feature, value);
@@ -640,7 +636,6 @@ public class Decoder {
 
       if (feature.equals("latticecost") || feature.equals("sourcepath")) {
         this.featureFunctions.add(new SourcePathFF(Decoder.weights));
-        logger.info(String.format("FEATURE: SourcePath (weight %.3f)", weights.get("SourcePath")));
       }
 
       else if (feature.equals("arityphrasepenalty") || feature.equals("aritypenalty")) {
@@ -650,25 +645,14 @@ public class Decoder {
 
         this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
             owner, startArity, endArity)));
-
-        logger.info(String.format(
-            "FEATURE: ArityPenalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity,
-            endArity, weights.get("ArityPenalty")));
       }
 
       else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
-
-        logger.info(String.format("FEATURE: WordPenalty (weight %.3f)",
-            weights.get("WordPenalty".toLowerCase())));
-        logger.info("Weights: " + weights.getMap());
       }
 
       else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights));
-
-        logger.info(String.format("FEATURE: OOVPenalty (weight %.3f)",
-            weights.get("OOVPenalty".toLowerCase())));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
@@ -681,8 +665,7 @@ public class Decoder {
           e.printStackTrace();
           System.exit(1);
         }
-        logger.info(String.format("FEATURE: edge similarity (weight %.3f)",
-            weights.get("edgephrasesimilarity")));
+
       } else if (feature.equals("phrasemodel") || feature.equals("tm")) {
         String owner = fields[1].trim();
         String index = fields[2].trim();
@@ -691,13 +674,17 @@ public class Decoder {
         weights.put(String.format("tm_%s_%s", owner, index), weight);
       }
 
-      else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
+      else if (feature.equals("labelcombination")) {
         this.featureFunctions.add(new LabelCombinationFF(weights));
       }
 
       else {
         System.err.println("* WARNING: invalid feature '" + featureLine + "'");
       }
+    }
+
+    for (FeatureFunction feature: featureFunctions) {
+      logger.info(String.format("FEATURE: %s", feature.logString()));
     }
   }
 }
