@@ -12,7 +12,7 @@ public class LabelCombinationFF extends StatelessFF {
   private static final String LABEL_COMINATION_FEATURE_FUNCTION_NAME = "LabelCombination";
 
   public LabelCombinationFF(FeatureVector weights) {
-    super(weights, LABEL_COMINATION_FEATURE_FUNCTION_NAME);
+    super(weights, getLowerCasedFeatureName());
   }
 
   public static String getLowerCasedFeatureName() {
@@ -24,7 +24,7 @@ public class LabelCombinationFF extends StatelessFF {
   }
 
   private static final String computeRuleLabelCombinationDescriptor(Rule rule) {
-    String result = LABEL_COMINATION_FEATURE_FUNCTION_NAME + "_";
+    String result = getLowerCasedFeatureName() + "_";
     result += getLHSAsString(rule);
     //System.out.println("Rule: " + rule);
     for (int nonTerminalIndex : rule.getForeignNonTerminals()) {
