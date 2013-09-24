@@ -17,6 +17,12 @@ import joshua.decoder.JoshuaConfiguration;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
 public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory {
+  private final JoshuaConfiguration joshuaConfiguration;
+
+  protected BatchGrammar(JoshuaConfiguration joshuaConfiguration) {
+    super();
+    this.joshuaConfiguration = joshuaConfiguration;
+  }
 
   /**
    * Returns a grammar that has been adapted to the current sentence, subject to the
@@ -27,12 +33,12 @@ public abstract class BatchGrammar extends AbstractGrammar implements GrammarFac
    */
   @Override
   public Grammar getGrammarForSentence(Sentence sentence) {
-    if (JoshuaConfiguration.filter_grammar)
+    if (this.joshuaConfiguration.filter_grammar)
       return new SentenceFilteredGrammar(this, sentence);
     else
       return this;
   }
-  
+
   /**
    * Returns the grammar itself.
    */
@@ -61,6 +67,7 @@ public abstract class BatchGrammar extends AbstractGrammar implements GrammarFac
      * @param sentence
      */
     SentenceFilteredGrammar(BatchGrammar baseGrammar, Sentence sentence) {
+      super(baseGrammar.joshuaConfiguration);
       this.baseGrammar = baseGrammar;
       this.tokens = sentence.intSentence();
 

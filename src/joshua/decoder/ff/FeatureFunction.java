@@ -1,7 +1,9 @@
 package joshua.decoder.ff;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import joshua.decoder.Decoder;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -39,6 +41,8 @@ public abstract class FeatureFunction {
   // The weight vector used by the decoder, passed it when the feature is instantiated.
   protected FeatureVector weights;
 
+  private static final Logger logger = Logger.getLogger(Decoder.class.getName());
+
   // Accessor functions
   public String getName() {
     return name;
@@ -62,6 +66,14 @@ public abstract class FeatureFunction {
     this.argString = args;
 
     processArgs(this.argString);
+  } 
+
+  public String logString() {
+    try {
+      return String.format("%s (weight %.3f)", name, weights.get(name));
+    } catch (RuntimeException e) {
+      return name;
+    }
   }
 
   /**
@@ -234,7 +246,9 @@ public abstract class FeatureFunction {
     }
 
     public void add(String name, float value) {
-      score += value * weights.get(name.toLowerCase());
+      if (weights.containsKey(name)) {
+        score += value * weights.get(name);
+      }
     }
 
     public float getScore() {
@@ -250,7 +264,11 @@ public abstract class FeatureFunction {
     }
 
     public void add(String name, float value) {
-      features.put(name, features.get(name) + value);
+      if (features.containsKey(name)) {
+        features.put(name, features.get(name) + value);
+      } else {
+        features.put(name, value);
+      }
     }
 
     public FeatureVector getFeatures() {

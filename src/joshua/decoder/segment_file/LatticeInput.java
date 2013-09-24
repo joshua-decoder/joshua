@@ -1,5 +1,6 @@
 package joshua.decoder.segment_file;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.lattice.Lattice;
 
 /**
@@ -13,8 +14,8 @@ import joshua.lattice.Lattice;
 
 public class LatticeInput extends Sentence {
 
-  public LatticeInput(String input, int id) {
-    super(input, id);
+  public LatticeInput(String input, int id, JoshuaConfiguration joshuaConfiguration) {
+    super(input, id,joshuaConfiguration);
   }
 
   public Lattice<Integer> intLattice() {

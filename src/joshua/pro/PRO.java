@@ -16,11 +16,13 @@
 
 package joshua.pro;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.util.FileUtility;
 import joshua.util.StreamGobbler;
 
 public class PRO {
   public static void main(String[] args) throws Exception {
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
     boolean external = false; // should each PRO iteration be launched externally?
 
     if (args.length == 1) {
@@ -38,7 +40,7 @@ public class PRO {
     }
 
     if (!external) {
-      PROCore myPRO = new PROCore(args[0]);
+      PROCore myPRO = new PROCore(args[0],joshuaConfiguration);
       myPRO.run_PRO(); // optimize lambda[]!!!
       myPRO.finish();
     } else {

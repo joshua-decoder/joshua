@@ -7,7 +7,7 @@ import java.io.IOException;
  *
  */
 public class ArgsParser {
-
+  
   private String configFile = null;
   private String testFile = "-";
 
@@ -17,8 +17,9 @@ public class ArgsParser {
    * 
    * @param args
    */
-  public ArgsParser(String[] args) {
-
+  public ArgsParser(String[] args, JoshuaConfiguration joshuaConfiguration) {
+  
+    
     // if (args.length < 1) {
     // System.out.println("Usage: java " + JoshuaDecoder.class.getName()
     // + " -c configFile [other args]");
@@ -44,7 +45,7 @@ public class ArgsParser {
             setConfigFile(args[i + 1].trim());
             try {
               System.err.println("Parameters read from configuration file:");
-              JoshuaConfiguration.readConfigFile(getConfigFile());
+              joshuaConfiguration.readConfigFile(getConfigFile());
             } catch (IOException e) {
               // TODO Auto-generated catch block
               e.printStackTrace();
@@ -56,14 +57,14 @@ public class ArgsParser {
 
         // now process all the command-line args
         System.err.println("Parameters overridden from the command line:");
-        JoshuaConfiguration.processCommandLineOptions(args);
+        joshuaConfiguration.processCommandLineOptions(args);
 
       } else {
 
         setConfigFile(args[0].trim());
 
         try {
-          JoshuaConfiguration.readConfigFile(getConfigFile());
+          joshuaConfiguration.readConfigFile(getConfigFile());
         } catch (IOException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();

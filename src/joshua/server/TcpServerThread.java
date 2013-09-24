@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Translation;
 import joshua.decoder.Translations;
 import joshua.decoder.io.TranslationRequest;
@@ -16,6 +17,7 @@ import joshua.decoder.io.TranslationRequest;
  * This class handles a concurrent request for translations from a newly opened socket.
  */
 public class TcpServerThread extends Thread {
+  private final JoshuaConfiguration joshuaConfiguration;
   private Socket socket = null;
   private final Decoder decoder;
 
@@ -25,7 +27,8 @@ public class TcpServerThread extends Thread {
    * @param socket the socket representing the input/output streams
    * @param decoder the configured decoder that handles performing translations
    */
-  public TcpServerThread(Socket socket, Decoder decoder) {
+  public TcpServerThread(Socket socket, Decoder decoder,JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     this.socket = socket;
     this.decoder = decoder;
   }
@@ -42,7 +45,7 @@ public class TcpServerThread extends Thread {
       InputStream in = socket.getInputStream();
       BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-      TranslationRequest request = new TranslationRequest(in);
+      TranslationRequest request = new TranslationRequest(in,joshuaConfiguration);
       Translations translations = decoder.decodeAll(request);
       for (;;) {
         Translation translation = translations.next();

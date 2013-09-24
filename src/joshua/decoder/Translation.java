@@ -28,7 +28,7 @@ public class Translation {
    */
   private String output = null;
 
-  public Translation(Sentence source, HyperGraph hypergraph, List<FeatureFunction> featureFunctions) {
+  public Translation(Sentence source, HyperGraph hypergraph, List<FeatureFunction> featureFunctions,JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
 
     StringWriter sw = new StringWriter();
@@ -43,31 +43,36 @@ public class Translation {
 
     try {
       if (hypergraph != null) {
-        if (!JoshuaConfiguration.hypergraphFilePattern.equals("")) {
-          hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
+        if (!joshuaConfiguration.hypergraphFilePattern.equals("")) {
+          hypergraph.dump(String.format(joshuaConfiguration.hypergraphFilePattern, source.id()));
         }
 
         long startTime = System.currentTimeMillis();
-        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, 
-            JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
-        kBestExtractor.lazyKBestExtractOnHG(hypergraph, JoshuaConfiguration.topN, out);
+        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, 
+            joshuaConfiguration.use_unique_nbest, joshuaConfiguration.include_align_index, false,joshuaConfiguration);
+
+        // We must put this weight as zero, otherwise we get an error when we try to retrieve it 
+        // without checking
+        Decoder.weights.put("BLEU", 0);
+        
+        kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
         if (JoshuaConfiguration.rescoreForest) {
           Decoder.weights.put("BLEU", 100);
-          kBestExtractor.lazyKBestExtractOnHG(hypergraph, JoshuaConfiguration.topN, out);
+          kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
           
           Decoder.weights.put("BLEU", -100);
-          kBestExtractor.lazyKBestExtractOnHG(hypergraph, JoshuaConfiguration.topN, out);
+          kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
         }
-                
+ 
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
         System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
-            JoshuaConfiguration.topN, seconds));
+            joshuaConfiguration.topN, seconds));
 
       } else {
 
         // There is no output for the given input (e.g. blank line)
-        String outputString = JoshuaConfiguration.outputFormat.replace("%s", "").replace("%e", "")
+        String outputString = joshuaConfiguration.outputFormat.replace("%s", "").replace("%e", "")
             .replace("%S", "").replace("%t", "").replace("%i", Integer.toString(source.id()))
             .replace("%f", "").replace("%c", "0.000");
 
