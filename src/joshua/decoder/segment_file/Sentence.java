@@ -85,13 +85,17 @@ public class Sentence {
       }
       this.id = id;
     }
-    adjustForLength(joshuaConfiguration);
+
+    // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
+    if (joshuaConfiguration.maxlen != 0 && ! this.intLattice().hasMoreThanOnePath())
+      adjustForLength(joshuaConfiguration.maxlen);
   }
 
   /**
    * Returns the length of the sentence. For lattices, the length is the shortest path through the
    * lattice.
    */
+  @SuppressWarnings("unused")
   private int length() {
     return this.intLattice().getShortestDistance();
   }
@@ -146,21 +150,19 @@ public class Sentence {
    * 
    * Note that this code assumes the underlying representation is a sentence, and not a lattice. Its
    * behavior is undefined for lattices.
-   * @param joshuaConfiguration 
+   * @param length 
    */
-  private void adjustForLength(JoshuaConfiguration joshuaConfiguration) {
+  private void adjustForLength(int length) {
+    int size = this.intLattice().size() - 2; // subtract off the start- and end-of-sentence tokens
 
-    Lattice<Integer> lattice = this.intLattice();
-    int size = lattice.size() - 2; // subtract off the start- and end-of-sentence tokens
-
-    if (size > joshuaConfiguration.maxlen) {
+    if (size > length) {
       logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
-          id(), size, joshuaConfiguration.maxlen));
+          id(), size, length));
 
       // Replace the input sentence (and target)
       String[] tokens = source().split("\\s+");
       sentence = tokens[0];
-      for (int i = 1; i < joshuaConfiguration.maxlen; i++)
+      for (int i = 1; i < length; i++)
         sentence += " " + tokens[i];
       sourceLattice = null;
       if (target != null) {

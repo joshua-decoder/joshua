@@ -105,7 +105,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param head
    * @return
    */
-  public int distance(Arc arc) {
+  public int distance(Arc<Value> arc) {
     return (int) this.getShortestPath(arc.getTail().getNumber(), arc.getHead().getNumber());
   }
   
