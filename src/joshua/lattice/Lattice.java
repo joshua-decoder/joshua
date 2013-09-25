@@ -31,7 +31,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   /**
    * Costs of the best path between each pair of nodes in the lattice.
    */
-  private final float[][] costs;
+  private final ChartArray costs;
   
   /**
    * List of all nodes in the lattice. Nodes are assumed to be in topological order.
@@ -56,7 +56,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   public Lattice(List<Node<Value>> nodes) {
     this.nodes = nodes;
-    this.costs = calculateAllPairsShortestPath(nodes);
+    this.costs = calculateAllPairsShortestPath();
     this.latticeHasAmbiguity = true;
   }
 
@@ -64,7 +64,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     // Node<Value> sink = new Node<Value>(nodes.size());
     // nodes.add(sink);
     this.nodes = nodes;
-    this.costs = calculateAllPairsShortestPath(nodes);
+    this.costs = calculateAllPairsShortestPath();
     this.latticeHasAmbiguity = isAmbiguous;
   }
 
@@ -90,7 +90,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       i++;
     }
 
-    this.costs = calculateAllPairsShortestPath(nodes);
+    this.costs = calculateAllPairsShortestPath();
   }
 
   public final boolean hasMoreThanOnePath() {
@@ -304,7 +304,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   public float getShortestPath(int from, int to) {
 //    System.err.println(String.format("DISTANCE(%d,%d) = %f", from, to, costs[from][to]));
-    return costs[from][to];
+    return costs.get(from,to);
   }
 
   /**
@@ -352,18 +352,10 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param nodes A list of nodes which must be in topological order.
    * @return The all-pairs shortest path for all pairs of nodes.
    */
-  private float[][] calculateAllPairsShortestPath(List<Node<Value>> nodes) {
+  private ChartArray calculateAllPairsShortestPath() {
 
     int size = nodes.size();
-    float[][] costs = new float[size][size];
-
-    // Initialize pairwise costs. Costs from a node to itself are 0, and are infinite between
-    // different nodes.
-    for (int from = 0; from < size; from++) {
-      for (int to = 0; to < size; to++) {
-        costs[from][to] = (from == to) ? 0.0f : Float.POSITIVE_INFINITY;
-      }
-    }
+    ChartArray costs = new ChartArray(size);
 
     // Loop over all pairs of immediate neighbors and
     // record the actual costs.
@@ -381,8 +373,8 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
         // set this to 1.0 for now
         cost = 1.0f;
 
-        if (cost < costs[from][to]) {
-          costs[from][to] = cost;
+        if (cost < costs.get(from, to)) {
+          costs.set(from, to, cost);
         }
       }
     }
@@ -400,10 +392,10 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
           // The best cost is the minimum of the previously recorded cost and the sum of costs in
           // the currently considered path
-          costs[i][j] = Math.min(costs[i][j], costs[i][k] + costs[k][j]);
+          costs.set(i, j, Math.min(costs.get(i,j), costs.get(i,k) + costs.get(k,j)));
 
-          if (i == 0 && j == size - 1 && costs[i][j] < shortestDistance)
-            shortestDistance = (int)costs[i][j];
+          if (i == 0 && j == size - 1 && costs.get(i,j) < shortestDistance)
+            shortestDistance = (int)costs.get(i,j);
         }
       }
     }
@@ -441,5 +433,44 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     Lattice<String> graph = new Lattice<String>(nodes);
 
     System.out.println("Shortest path from 0 to 3: " + graph.getShortestPath(0, 3));
+  }
+  
+  /**
+   * This class maps spans (i,j) such that (i <= j <= max) to a one-dimensional array, saving space
+   * over a two-dimensional array often used to represent charts.
+   *
+   * @author Matt Post
+   */
+  private class ChartArray {
+    float[] chart;
+    int max;
+    
+    public ChartArray(int w) {
+      this.max = w;
+      
+      /* offset(max,max) is the last position in the array */
+      int size = offset(max, max);
+      System.err.println(String.format("CREATED CHART OF SIZE %d (MAX %d)", size, max));
+      chart = new float[size];
+      
+      /* Initialize all arcs to infinity, except self-loops, which have distance 0 */
+      for (int i = 0; i < size; i++)
+        chart[i] = Float.POSITIVE_INFINITY;
+      for (int i = 0; i < w; i++)
+        set(i, i, 0.0f);
+    }
+    
+    public float get(int i, int j) {
+      return chart[offset(i,j)];
+    }
+    
+    public void set(int i, int j, float value) {
+      System.err.println(String.format("SET(%d,%d | %d) = %d TO %f", i, j, max, offset(i,j), value));
+      chart[offset(i,j)] = value;
+    }
+    
+    private int offset(int i, int j) {
+      return i * (max + 1) - i * (i + 1) / 2 + j;
+    }
   }
 }
