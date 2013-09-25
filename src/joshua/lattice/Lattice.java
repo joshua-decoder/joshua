@@ -135,15 +135,15 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   public static Lattice<Integer> createIntLatticeFromString(String data) {
     Map<Integer, Node<Integer>> nodes = new HashMap<Integer, Node<Integer>>();
 
-    // this matches a sequence of tuples, which describe arcs
-    // leaving this node
+    // This matches a sequence of tuples, which describe arcs leaving this node
     Pattern nodePattern = Pattern.compile("(.+?)\\(\\s*(\\(.+?\\),\\s*)\\s*\\)(.*)");
 
-    // this matches a comma-delimited, parenthesized tuple of a
-    // (a) single-quoted word (b) a number (c) an offset (how many
-    // states to jump ahead)
+    /*
+     * This matches a comma-delimited, parenthesized tuple of a (a) single-quoted word (b) a number,
+     * optionally in scientific notation (c) an offset (how many states to jump ahead)
+     */
     Pattern arcPattern = Pattern
-        .compile("\\s*\\('(.+?)',\\s*(-?\\d+\\.?\\d*?),\\s*(\\d+)\\),\\s*(.*)");
+        .compile("\\s*\\('(.+?)',\\s*(-?\\d+\\.?\\d*?(?:[eE]-?\\d+)?),\\s*(\\d+)\\),\\s*(.*)");
 
     Matcher nodeMatcher = nodePattern.matcher(data);
 
