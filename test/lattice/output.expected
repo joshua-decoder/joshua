@@ -13,3 +13,5 @@
 0 ||| dieses_OOV small house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.346
 0 ||| ein_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.597
 0 ||| dieses_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.697
+1 ||| a ||| WordPenalty=-1.303 lm_0=-3.040 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -1.851
+1 ||| ein_OOV ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 ||| -199.378
