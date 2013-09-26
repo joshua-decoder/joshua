@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
+import joshua.util.ChartSpan;
 
 /**
  * A lattice representation of a directed graph.
@@ -31,7 +32,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   /**
    * Costs of the best path between each pair of nodes in the lattice.
    */
-  private final ChartArray costs;
+  private final ChartSpan<Float> costs;
   
   /**
    * List of all nodes in the lattice. Nodes are assumed to be in topological order.
@@ -352,11 +353,12 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param nodes A list of nodes which must be in topological order.
    * @return The all-pairs shortest path for all pairs of nodes.
    */
-  private ChartArray calculateAllPairsShortestPath() {
+  private ChartSpan<Float> calculateAllPairsShortestPath() {
 
     int size = nodes.size();
-    ChartArray costs = new ChartArray(size);
-
+    ChartSpan<Float> costs = new ChartSpan<Float>(size, Float.POSITIVE_INFINITY);
+    costs.setDiagonal(0.0f);
+    
     // Loop over all pairs of immediate neighbors and
     // record the actual costs.
     for (Node<Value> tail : nodes) {
@@ -395,7 +397,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
           costs.set(i, j, Math.min(costs.get(i,j), costs.get(i,k) + costs.get(k,j)));
 
           if (i == 0 && j == size - 1 && costs.get(i,j) < shortestDistance)
-            shortestDistance = (int)costs.get(i,j);
+            shortestDistance = (int)costs.get(i,j).floatValue();
         }
       }
     }

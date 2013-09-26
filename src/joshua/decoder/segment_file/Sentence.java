@@ -12,6 +12,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
+import joshua.util.ChartSpan;
 import joshua.util.Regex;
 
 /**
@@ -127,14 +128,14 @@ public class Sentence {
        */
       if (isOOV) {
         String word = Vocabulary.word(label);
-        int[][] chart = new int[word.length()][word.length()];
+        ChartSpan<Boolean> chart = new ChartSpan<Boolean>(word.length(), false);
 
         for (int width = 1; width <= word.length(); width++) {
           for (int i = 0; i <= word.length() - width; i++) {
             int j = i + width;
             
             // TODO: finish this
-            chart[i][j] = 1;  
+            chart.set(i, j, true);
           }
         }
         
