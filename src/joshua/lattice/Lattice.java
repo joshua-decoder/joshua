@@ -436,43 +436,4 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
     System.out.println("Shortest path from 0 to 3: " + graph.getShortestPath(0, 3));
   }
-  
-  /**
-   * This class maps spans (i,j) such that (i <= j <= max) to a one-dimensional array, saving space
-   * over a two-dimensional array often used to represent charts.
-   *
-   * @author Matt Post
-   */
-  private class ChartArray {
-    float[] chart;
-    int max;
-    
-    public ChartArray(int w) {
-      this.max = w;
-      
-      /* offset(max,max) is the last position in the array */
-      int size = offset(max, max);
-      System.err.println(String.format("CREATED CHART OF SIZE %d (MAX %d)", size, max));
-      chart = new float[size];
-      
-      /* Initialize all arcs to infinity, except self-loops, which have distance 0 */
-      for (int i = 0; i < size; i++)
-        chart[i] = Float.POSITIVE_INFINITY;
-      for (int i = 0; i < w; i++)
-        set(i, i, 0.0f);
-    }
-    
-    public float get(int i, int j) {
-      return chart[offset(i,j)];
-    }
-    
-    public void set(int i, int j, float value) {
-      System.err.println(String.format("SET(%d,%d | %d) = %d TO %f", i, j, max, offset(i,j), value));
-      chart[offset(i,j)] = value;
-    }
-    
-    private int offset(int i, int j) {
-      return i * (max + 1) - i * (i + 1) / 2 + j;
-    }
-  }
 }
