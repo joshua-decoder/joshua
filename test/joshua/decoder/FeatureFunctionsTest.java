@@ -7,9 +7,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.TreeSet;
 import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.StatefulFF;
@@ -27,6 +30,7 @@ import org.junit.Test;
  */
 public class FeatureFunctionsTest {
 
+  private static final String LIBRARY_PATH_PROPERTY = "java.library.path";
   private static String LABEL_COMBINATION_FEATURE_NAME = LabelCombinationFF
       .getLowerCasedFeatureName();
 
@@ -262,6 +266,42 @@ public class FeatureFunctionsTest {
   }
 
   /**
+  * Adds the specified path to the java library path
+  * Source : http://fahdshariff.blogspot.nl/2011/08/changing-java-library-path-at-runtime.html
+  *
+  * @param pathToAdd the path to add
+  * @throws Exception
+  */
+  public static void addLibraryPath(String pathToAdd) throws Exception{
+      final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+      usrPathsField.setAccessible(true);
+   
+      //get array of paths
+      final String[] paths = (String[])usrPathsField.get(null);
+   
+      //check if the path to add is already present
+      for(String path : paths) {
+          if(path.equals(pathToAdd)) {
+              return;
+          }
+      }
+   
+      //add the new path
+      final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+      newPaths[newPaths.length-1] = pathToAdd;
+      usrPathsField.set(null, newPaths);
+  }
+  
+  private void addJoshuaLibFolderToLibraryPath()
+  {
+    try {
+      addLibraryPath("./lib");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+  /**
    * This test function tests a feature function. This is done as follows. First the test set is
    * decoded with the feature switched on but without weights. From this test output, the names of
    * features that fired as well as the total weights of the NBest list are collected and returned
@@ -275,6 +315,11 @@ public class FeatureFunctionsTest {
    * should not occur ).
    */
   public void testFeatureFunctions(String featureName) {
+    // We need to add the lib library path dynamically to avoid having to specify 
+    // this in the VM arguments with --Djava.library.path=./lib
+    // This is necessary to make the decoder find KenLM
+    addJoshuaLibFolderToLibraryPath();
+    
     System.out.println("Working directory : " + FileUtility.getWorkingDirectory());
     createTestFilesBasicTest(featureName);
     // First run the decoder without extra features weights specified:
