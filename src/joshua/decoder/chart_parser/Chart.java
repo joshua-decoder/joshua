@@ -28,6 +28,7 @@ import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
+import joshua.util.ChartSpan;
 
 /**
  * Chart class this class implements chart-parsing: (1) seeding the chart (2) cky main loop over
@@ -66,7 +67,7 @@ public class Chart {
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================
-  private Cell[][] cells; // note that in some cell, it might be null
+  private ChartSpan<Cell> cells; // note that in some cell, it might be null
   private int sourceLength;
   private List<FeatureFunction> featureFunctions;
   private Grammar[] grammars;
@@ -114,7 +115,7 @@ public class Chart {
     if (sentence instanceof ParsedSentence)
       this.parseTree = ((ParsedSentence) sentence).syntaxTree();
 
-    this.cells = new Cell[sourceLength][sourceLength + 1];
+    this.cells = new ChartSpan<Cell>(sourceLength, null);
 
     this.segmentID = sentence.id();
     this.goalSymbolID = Vocabulary.id(goalSymbol);
@@ -283,8 +284,8 @@ public class Chart {
           continue;
 
         // Create the Cell if necessary.
-        if (cells[i][j] == null)
-          cells[i][j] = new Cell(this, goalSymbolID);
+        if (cells.get(i, j) == null)
+          cells.set(i, j, new Cell(this, goalSymbolID));
 
         /*
          * TODO: This causes the whole list of rules to be copied, which is unnecessary when there
@@ -307,7 +308,7 @@ public class Chart {
             ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
                 j, sourcePath, this.segmentID);
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
-              cells[i][j].addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
+              cells.get(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
           }
         } else {
 
@@ -351,7 +352,7 @@ public class Chart {
        * decoding or (b) we are and the state is legal.
        */
       if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates())) {
-        cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
+        cells.get(i, j).addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
             state.antNodes, sourcePath, true);
       }
 
@@ -450,8 +451,8 @@ public class Chart {
          * 
          * Sort the nodes in this span, to make them usable for future applications of cube pruning.
          */
-        if (null != this.cells[i][j]) {
-          this.cells[i][j].getSortedNodes();
+        if (null != this.cells.get(i, j)) {
+          this.cells.get(i, j).getSortedNodes();
         }
       }
     }
@@ -459,8 +460,8 @@ public class Chart {
     logStatistics(Level.INFO);
 
     // transition_final: setup a goal item, which may have many deductions
-    if (null == this.cells[0][sourceLength]
-        || !this.goalBin.transitToGoal(this.cells[0][sourceLength], this.featureFunctions,
+    if (null == this.cells.get(0, sourceLength)
+        || !this.goalBin.transitToGoal(this.cells.get(0, sourceLength), this.featureFunctions,
             this.sourceLength)) {
       logger.severe("No complete item in the Cell[0," + sourceLength + "]; possible reasons: "
           + "(1) your grammar does not have any valid derivation for the source sentence; "
@@ -474,7 +475,7 @@ public class Chart {
   }
 
   public Cell getCell(int i, int j) {
-    return this.cells[i][j];
+    return this.cells.get(i, j);
   }
 
   // ===============================================================
@@ -493,7 +494,7 @@ public class Chart {
    */
   private int addUnaryNodes(Grammar[] grammars, int i, int j) {
 
-    Cell chartBin = this.cells[i][j];
+    Cell chartBin = this.cells.get(i, j);
     if (null == chartBin) {
       return 0;
     }
@@ -547,14 +548,14 @@ public class Chart {
    * This functions add to the hypergraph rules with zero arity (i.e., terminal rules).
    */
   public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
-    if (null == this.cells[i][j]) {
-      this.cells[i][j] = new Cell(this, this.goalSymbolID);
+    if (null == this.cells.get(i, j)) {
+      this.cells.set(i,  j, new Cell(this, this.goalSymbolID));
     }
 
     // System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule,
     // srcPath));
 
-    this.cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
+    this.cells.get(i, j).addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
         j, srcPath, segmentID), rule, i, j, null, srcPath, false);
   }
 }

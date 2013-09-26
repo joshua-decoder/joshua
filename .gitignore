@@ -79,3 +79,5 @@ test/decoder/n-ary/log
 test/decoder/n-ary/output
 test/decoder/n-ary/output.scores
 debug.txt
+
+scripts/training/MGIZA/

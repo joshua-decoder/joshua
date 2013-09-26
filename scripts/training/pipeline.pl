@@ -1899,15 +1899,25 @@ sub is_lattice {
 sub count_num_features {
   my ($grammar) = @_;
 
-  open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
-  chomp(my $line = <GRAMMAR>);
-  close(GRAMMAR);
+  if (-d $grammar) {
+    chomp(my $line = `java -cp $JOSHUA/class joshua.util.encoding.EncoderConfiguration $grammar | grep num_features`);
+    my @tokens = split(' ', $line);
+    return $tokens[-1];
 
-  my @tokens = split(/ \|\|\| /, $line);
-  my @numfeatures = split(' ', $tokens[-1]);
-	my $num = scalar(@numfeatures);
+  } elsif (-e $grammar) {
+    open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
+    chomp(my $line = <GRAMMAR>);
+    close(GRAMMAR);
 
-  return scalar @numfeatures;
+    my @tokens = split(/ \|\|\| /, $line);
+    my @numfeatures = split(' ', $tokens[-1]);
+    my $num = scalar(@numfeatures);
+
+    return scalar @numfeatures;
+  } else {
+    print STDERR "* FATAL: count_num_features(): can't read grammar '$grammar'\n";
+    exit 1;
+  }
 }
 
 # File names reflecting relative paths need to be absolute-ized for --rundir to work.

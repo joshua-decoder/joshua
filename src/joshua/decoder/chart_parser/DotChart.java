@@ -14,6 +14,7 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
+import joshua.util.ChartSpan;
 
 /**
  * The DotChart handles Earley-style implicit binarization of translation rules.
@@ -43,10 +44,10 @@ class DotChart {
    * Two-dimensional chart of cells. Some cells might be null. This could definitely be represented
    * more efficiently, since only the upper half of this triangle is every used.
    */
-  private DotCell[][] dotcells;
+  private ChartSpan<DotCell> dotcells;
 
   public DotCell getDotCell(int i, int j) {
-    return dotcells[i][j];
+    return dotcells.get(i,j);
   }
 
   // ===============================================================
@@ -99,7 +100,7 @@ class DotChart {
     this.pGrammar = grammar;
     this.input = input;
     this.sentLen = input.size();
-    this.dotcells = new DotCell[sentLen][sentLen + 1];
+    this.dotcells = new ChartSpan<DotCell>(sentLen, null);
 
     // seeding the dotChart
     seed();
@@ -110,7 +111,7 @@ class DotChart {
     this.pGrammar = grammar;
     this.input = input;
     this.sentLen = input.size();
-    this.dotcells = new DotCell[sentLen][sentLen + 1];
+    this.dotcells = new ChartSpan<DotCell>(sentLen, null);
 
     // seeding the dotChart
     seed();
@@ -183,9 +184,9 @@ class DotChart {
 
       // int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //
 
-      if (null != dotcells[i][j - 1]) {
+      if (null != dotcells.get(i, j-1)) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-        for (DotNode dotNode : dotcells[i][j - 1].getDotNodes()) {
+        for (DotNode dotNode : dotcells.get(i, j-1).getDotNodes()) {
           if (this.regexpMatching) {
             ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
             if (child_tnodes == null || child_tnodes.isEmpty())
@@ -223,7 +224,7 @@ class DotChart {
 
   /**
    * Attempt to combine an item in the dot chart with an item in the main chart to create a new item
-   * in the dot chart. The DotChart item is a DotNode begun at position i with the dot currently at
+   * in the dot chart. The DotChart item is a {@link DotNode} begun at position i with the dot currently at
    * position k.
    * <p>
    * In other words, this method looks for (proved) theorems or axioms in the completed chart that
@@ -235,7 +236,7 @@ class DotChart {
    * @param startDotItems
    */
   private void extendDotItemsWithProvedItems(int i, int k, int j, boolean startDotItems) {
-    if (this.dotcells[i][k] == null || this.dotChart.getCell(k, j) == null) {
+    if (this.dotcells.get(i, k) == null || this.dotChart.getCell(k, j) == null) {
       return;
     }
 
@@ -244,7 +245,7 @@ class DotChart {
         .getSortedSuperItems().values());
 
     /* For every partially complete item over (i,k) */
-    for (DotNode dotNode : dotcells[i][k].dotNodes) {
+    for (DotNode dotNode : dotcells.get(i,k).dotNodes) {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
         /*
@@ -328,10 +329,10 @@ class DotChart {
     }
 
     DotNode item = new DotNode(i, j, tnode, antSuperNodes, srcPath);
-    if (dotcells[i][j] == null) {
-      dotcells[i][j] = new DotCell();
+    if (dotcells.get(i,j) == null) {
+      dotcells.set(i, j, new DotCell());
     }
-    dotcells[i][j].addDotNode(item);
+    dotcells.get(i, j).addDotNode(item);
     dotChart.nDotitemAdded++;
 
     if (logger.isLoggable(Level.FINEST)) {

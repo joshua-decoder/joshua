@@ -345,6 +345,10 @@ public class JoshuaConfiguration {
             rescoreForest = true;
             logger.info(String.format("    rescore-forest: %s", rescoreForest));
 
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // reset the maximum length
+            maxlen = Integer.parseInt(fds[1]);
+
           } else if (parameter.equals("c") || parameter.equals("config")) {
             // this was used to send in the config file, just ignore it
             ;
@@ -352,10 +356,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("feature-function"))) {
             // add the feature to the list of features for later processing
             features.add("feature_function = " + fds[1]);
-
-          } else if (parameter.equals(normalize_key("maxlen"))) {
-            // add the feature to the list of features for later processing
-            maxlen = Integer.parseInt(fds[1]);
 
           } else {
 
