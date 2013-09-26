@@ -13,6 +13,15 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.tm.Trie;
 
+/**
+ * This is the Factory class for the RuleMatcher Interface, producing different flavors of 
+ * RuleMatcher corresponding to strict (basic) matching, Regular Expression matching and 
+ * soft syntactic matching. Notice that regular expression matching and soft constraint matching 
+ * can in fact be combined, getting the 'loosest' way of matching possible. 
+ * 
+ * @author Gideon Maillette de Buy Wenniger <gemdbw AT gmail DOT com>
+ *
+ */
 public class RuleMatcherFactory {
 
   public static RuleMatcher createRuleMatcher(boolean useRegularExpressionGrammar, Logger logger,JoshuaConfiguration joshuaConfiguration) {
@@ -196,16 +205,30 @@ public class RuleMatcherFactory {
 
   protected static class StandardRuleMatcherSoftConstraints extends StandardRuleMatcher {
 
+ 
+
+    /**
+     * 
+     * @param logger
+     * @param joshuaConfiguration
+     */
     protected StandardRuleMatcherSoftConstraints(Logger logger,JoshuaConfiguration joshuaConfiguration) {
       super(logger,joshuaConfiguration);
     }
 
-    @Override
+
+    /**
+     * This method will perform strict matching if the target node superNode is a 
+     * Goal Symbol. Otherwise it will call a method that produces all available 
+     * substitutions that correspond to Nonterminals. 
+     * 
+     * @param dotNode
+     * @param superNode
+     */
     public List<Trie> produceMatchingChildTNodesNonterminalLevel(DotNode dotNode,
         SuperNode superNode) {
 
       // We do not allow substitution of other things for GOAL labels
-      // TODO : Make this more generic - i.e. find out what is the goal label automatically
       if (Vocabulary.word(superNode.lhs).equals(joshuaConfiguration.goal_symbol)) {
         // logger.info("BLAA - Vocabulary.word(superNode.lhs)" + Vocabulary.word(superNode.lhs));
         Trie child_node = dotNode.getTrieNode().match(superNode.lhs);

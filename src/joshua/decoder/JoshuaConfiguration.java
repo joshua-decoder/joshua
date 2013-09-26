@@ -134,6 +134,8 @@ public class JoshuaConfiguration {
   public float rescoreForestWeight = 10.0f;
 
   
+  /*Whether to use soft syntactic constraint decoding, which allows that any nonterminal may be substituted 
+   * for any other nonterminal (except for OOV and GOAL)*/ 
   public boolean softSyntacticConstraintDecoding = false;
   public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "softSyntacticConstraintDecoding";
   
