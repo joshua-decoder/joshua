@@ -132,7 +132,7 @@ public class Chart {
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
       this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
-          RuleMatcherFactory.createRuleMatcher(this.grammars[i].isRegexpGrammar(), logger,joshuaConfiguration));
+          NonterminalMatcherFactory.createNonterminalMatcher(logger,joshuaConfiguration),this.grammars[i].isRegexpGrammar());
 
     // Begin to do initialization work
 
