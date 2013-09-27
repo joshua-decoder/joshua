@@ -112,7 +112,6 @@ class DotChart {
     this.nonTerminalMatcher = nonTerminalMatcher;
     this.regexpMatching = regExpMatching;
 
-
     // seeding the dotChart
     seed();
   }
@@ -205,6 +204,7 @@ class DotChart {
           // List<Trie> child_tnodes = ruleMatcher.produceMatchingChildTNodesTerminalevel(dotNode,
           // last_word);
 
+
           List<Trie> child_tnodes = null;
           if (this.regexpMatching) {
             child_tnodes = matchAll(dotNode, last_word);
@@ -223,7 +223,6 @@ class DotChart {
             }
           }
         }
-
       }
 
     }
