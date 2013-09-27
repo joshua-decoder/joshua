@@ -103,6 +103,7 @@ class DotChart {
    */
 
 
+
   public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart,
       NonterminalMatcher nonTerminalMatcher, boolean regExpMatching) {
 
@@ -213,6 +214,7 @@ class DotChart {
           List<Trie> child_tnodes = null;
 
 
+
           if (this.regexpMatching) {
             child_tnodes = matchAll(dotNode, last_word);
           } else {
@@ -226,6 +228,7 @@ class DotChart {
               if (null != child_tnode) {
                 addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
                     dotNode.srcPath.extend(arc));
+
 
               }
             }
@@ -296,6 +299,7 @@ class DotChart {
 
         if (!child_tnodes.isEmpty()) {
 
+
           for (Trie child_tnode : child_tnodes) {
             if (child_tnode != null) {
               if ((!skipUnary) || (child_tnode.hasExtensions())) {
@@ -319,7 +323,6 @@ class DotChart {
    * the grammar trie node to see if any of them match, and then return the whole set. This is quite
    * expensive, which is why you should only enable regular expressions for small grammars.
    */
- 
 
   private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
     ArrayList<Trie> trieList = new ArrayList<Trie>();
