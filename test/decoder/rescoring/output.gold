@@ -1,0 +1,12 @@
+0 ||| the boy ate the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-6.000 ||| -19.240
+0 ||| the boy eated the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-11.000 ||| -24.240
+0 ||| the boy ate the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-6.000 ||| 34.054
+0 ||| the boy ate the bug ||| WordPenalty=-3.040 lm_0=-18.059 tm_glue_0=5.000 tm_pt_0=-15.000 ||| 6.334
+0 ||| the boy eated the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-11.000 ||| -40.343
+0 ||| the kid eated the cockroach ||| WordPenalty=-3.040 lm_0=-20.053 tm_glue_0=5.000 tm_pt_0=-15.000 ||| -44.374
+1 ||| the boy ate the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-6.000 ||| -19.240
+1 ||| the boy eated the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-11.000 ||| -24.240
+1 ||| the big storm swarmed the coast ||| WordPenalty=-3.474 lm_0=-21.293 tm_glue_0=3.000 tm_pt_0=-48.000 ||| 13.037
+1 ||| the big storm only swarmed the coast ||| WordPenalty=-3.909 lm_0=-24.541 tm_glue_0=3.000 tm_pt_0=-78.000 ||| 71.211
+1 ||| the boy ate the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-6.000 ||| -26.011
+1 ||| the boy eated the cockroach ||| WordPenalty=-3.040 lm_0=-17.198 tm_glue_0=5.000 tm_pt_0=-11.000 ||| -31.011
