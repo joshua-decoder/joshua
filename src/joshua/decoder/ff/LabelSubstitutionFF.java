@@ -56,7 +56,7 @@ public class LabelSubstitutionFF extends StatelessFF {
           .getRuleSourceNonterminalStrings(rule);
       List<String> substitutionNonterminals = RulePropertiesQuerying
           .getSourceNonterminalStrings(tailNodes);
-      Assert.assertEquals(ruleSourceNonterminals.size(), substitutionNonterminals.size());
+      //Assert.assertEquals(ruleSourceNonterminals.size(), substitutionNonterminals.size());
       for (int nonterinalIndex = 0; nonterinalIndex < ruleSourceNonterminals.size(); nonterinalIndex++) {
         String ruleNonterminal = ruleSourceNonterminals.get(nonterinalIndex);
         String substitutionNonterminal = substitutionNonterminals.get(nonterinalIndex);
