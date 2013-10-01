@@ -388,7 +388,7 @@ public class KBestExtractor {
               // TODO: pass the scaled span width, not the actual span width (this serves as the
               // reflen)
               float bleu = nextState.computeBLEU();
-              nextState.cost -= weights.get("BLEU") * bleu;
+              nextState.bleu = bleu;
             }
 
             candHeap.add(nextState);
@@ -504,7 +504,7 @@ public class KBestExtractor {
       DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
       if (JoshuaConfiguration.rescoreForest) {
         float bleu = state.computeBLEU();
-        state.cost -= weights.get("BLEU") * bleu;
+        state.bleu = bleu;
       }
 
       return state;
@@ -543,6 +543,8 @@ public class KBestExtractor {
      */
     private float cost;
 
+    private float bleu = 0.0f;
+    
     /*
      * The BLEU sufficient statistics associated with the edge's derivation. Note that this is a
      * function of the complete derivation headed by the edge, i.e., all the particular
@@ -584,10 +586,7 @@ public class KBestExtractor {
      * @return
      */
     public float getModelCost() {
-      if (stats != null)
-        return this.cost + weights.get("BLEU") * computeBLEU();
-      else
-        return this.cost;
+      return this.cost;
     }
 
     /**
@@ -596,7 +595,7 @@ public class KBestExtractor {
      * @return
      */
     public float getCost() {
-      return cost;
+      return cost - weights.get("BLEU") * bleu;
     }
 
     public String toString() {
