@@ -16,6 +16,7 @@ import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.LabelCombinationFF;
+import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
@@ -674,8 +675,12 @@ public class Decoder {
         weights.put(String.format("tm_%s_%s", owner, index), weight);
       }
 
-      else if (feature.equals("labelcombination")) {
+      else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelCombinationFF(weights));
+      }
+      
+      else if (feature.equals(LabelSubstitutionFF.getLowerCasedFeatureName())) {
+        this.featureFunctions.add(new LabelSubstitutionFF(weights));
       }
 
       else {
