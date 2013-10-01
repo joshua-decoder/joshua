@@ -102,10 +102,11 @@ public class KBestExtractor {
   BLEU.References references = null;
 
   public KBestExtractor(Sentence sentence, List<FeatureFunction> models, FeatureVector weights,
-      boolean extractUniqueNbest, boolean includeAlign, boolean isMonolingual,JoshuaConfiguration joshuaConfiguration) {
+      boolean extractUniqueNbest, boolean includeAlign, boolean isMonolingual,
+      JoshuaConfiguration joshuaConfiguration) {
 
     this.models = models;
-    
+
     this.joshuaConfiguration = joshuaConfiguration;
 
     this.weights = weights;
@@ -144,15 +145,13 @@ public class KBestExtractor {
       else
         hypothesis = derivationState.getHypothesis(this, false, null, models, Side.TARGET);
 
-
       // if (JoshuaConfiguration.rescoreForest)
-      //   features.put("BLEU", derivationState.computeBLEU());
-      
+      // features.put("BLEU", derivationState.computeBLEU());
+
       outputString = joshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
-          .replace("%i", Integer.toString(sentence.id()))
-          .replace("%f", features.toString())
-          .replace("%c", String.format("%.3f", -derivationState.cost));
+          .replace("%i", Integer.toString(sentence.id())).replace("%f", features.toString())
+          .replace("%c", String.format("%.3f", -derivationState.getModelCost()));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
         outputString = outputString.replace("%t",
@@ -380,9 +379,9 @@ public class KBestExtractor {
           if (newRanks[i] <= virtualTailNode.nbests.size()) {
             // System.err.println("NODE: " + this.node);
             // System.err.println("  tail is " + virtualTailNode.node);
-            float cost = previousState.cost
-                - virtualTailNode.nbests.get(previousState.ranks[i] - 1).cost
-                + virtualTailNode.nbests.get(newRanks[i] - 1).cost;
+            float cost = previousState.getModelCost()
+                - virtualTailNode.nbests.get(previousState.ranks[i] - 1).getModelCost()
+                + virtualTailNode.nbests.get(newRanks[i] - 1).getModelCost();
             nextState.setCost(cost);
 
             if (JoshuaConfiguration.rescoreForest) {
@@ -504,7 +503,6 @@ public class KBestExtractor {
 
       DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
       if (JoshuaConfiguration.rescoreForest) {
-        // TODO: pass the scaled span width, not the actual span width (this serves as the reflen)
         float bleu = state.computeBLEU();
         state.cost -= weights.get("BLEU") * bleu;
       }
@@ -540,7 +538,9 @@ public class KBestExtractor {
      */
     int[] ranks;
 
-    // the cost of this hypothesis
+    /*
+     * The cost of the hypothesis, including a weighted BLEU score, if any.
+     */
     private float cost;
 
     /*
@@ -577,8 +577,26 @@ public class KBestExtractor {
       this.cost = cost2;
     }
 
+    /**
+     * Returns the model cost. This is obtained by subtracting off the incorporated BLEU score (if
+     * used).
+     * 
+     * @return
+     */
+    public float getModelCost() {
+      if (stats != null)
+        return this.cost + weights.get("BLEU") * computeBLEU();
+      else
+        return this.cost;
+    }
+
+    /**
+     * Returns the model cost plus the BLEU score.
+     * 
+     * @return
+     */
     public float getCost() {
-      return this.cost;
+      return cost;
     }
 
     public String toString() {
@@ -848,9 +866,9 @@ public class KBestExtractor {
 
     // natural order by cost
     public int compareTo(DerivationState another) {
-      if (this.cost < another.cost) {
+      if (this.getCost() < another.getCost()) {
         return -1;
-      } else if (this.cost == another.cost) {
+      } else if (this.getCost() == another.getCost()) {
         return 0;
       } else {
         return 1;
