@@ -47,7 +47,7 @@ class DotChart {
   private ChartSpan<DotCell> dotcells;
 
   public DotCell getDotCell(int i, int j) {
-    return dotcells.get(i,j);
+    return dotcells.get(i, j);
   }
 
   // ===============================================================
@@ -184,9 +184,9 @@ class DotChart {
 
       // int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //
 
-      if (null != dotcells.get(i, j-1)) {
+      if (null != dotcells.get(i, j - 1)) {
         // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-        for (DotNode dotNode : dotcells.get(i, j-1).getDotNodes()) {
+        for (DotNode dotNode : dotcells.get(i, j - 1).getDotNodes()) {
           if (this.regexpMatching) {
             ArrayList<Trie> child_tnodes = matchAll(dotNode, last_word);
             if (child_tnodes == null || child_tnodes.isEmpty())
@@ -224,18 +224,18 @@ class DotChart {
 
   /**
    * Attempt to combine an item in the dot chart with an item in the main chart to create a new item
-   * in the dot chart. The DotChart item is a {@link DotNode} begun at position i with the dot currently at
-   * position k.
-   * <p>
+   * in the dot chart. The DotChart item is a {@link DotNode} begun at position i with the dot
+   * currently at position k, that is, a partially-applied rule.
+   * 
    * In other words, this method looks for (proved) theorems or axioms in the completed chart that
    * may apply and extend the dot position.
    * 
    * @param i Start index of a dot chart item
    * @param k End index of a dot chart item; start index of a completed chart item
    * @param j End index of a completed chart item
-   * @param startDotItems
+   * @param skipUnary if true, don't extend unary rules
    */
-  private void extendDotItemsWithProvedItems(int i, int k, int j, boolean startDotItems) {
+  private void extendDotItemsWithProvedItems(int i, int k, int j, boolean skipUnary) {
     if (this.dotcells.get(i, k) == null || this.dotChart.getCell(k, j) == null) {
       return;
     }
@@ -245,7 +245,7 @@ class DotChart {
         .getSortedSuperItems().values());
 
     /* For every partially complete item over (i,k) */
-    for (DotNode dotNode : dotcells.get(i,k).dotNodes) {
+    for (DotNode dotNode : dotcells.get(i, k).dotNodes) {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
         /*
@@ -256,15 +256,13 @@ class DotChart {
          */
         if (this.regexpMatching) {
           ArrayList<Trie> child_tnodes = matchAll(dotNode, superNode.lhs);
-          if (child_tnodes.isEmpty())
-            continue;
-          for (Trie child_tnode : child_tnodes) {
-            if (null == child_tnode)
-              continue;
-            if (true == startDotItems && !child_tnode.hasExtensions())
-              continue; // TODO
-            addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-                .getSourcePath().extendNonTerminal());
+          if (!child_tnodes.isEmpty()) {
+            for (Trie child_tnode : child_tnodes) {
+              if (child_tnode != null)
+                if (!skipUnary || child_tnode.hasExtensions())
+                  addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                      .getSourcePath().extendNonTerminal());
+            }
           }
         } else {
           /*
@@ -273,10 +271,9 @@ class DotChart {
            */
           Trie trie = dotNode.trieNode.match(superNode.lhs);
           if (trie != null) {
-            if (true == startDotItems && !trie.hasExtensions())
-              continue;
-            addDotItem(trie, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-                .getSourcePath().extendNonTerminal());
+            if (!skipUnary || trie.hasExtensions())
+              addDotItem(trie, i, j, dotNode.getAntSuperNodes(), superNode, dotNode.getSourcePath()
+                  .extendNonTerminal());
           }
         }
       }
@@ -284,26 +281,24 @@ class DotChart {
   }
 
   /*
-   * We introduced the ability to have regular expressions in rules. When this is enabled for a
-   * grammar, we first check whether there are any children. If there are, we need to try to match
-   * _every rule_ against the symbol we're querying. This is expensive, which is an argument for
-   * keeping your set of regular expression s small and limited to a separate grammar.
+   * We introduced the ability to have regular expressions in rules for matching against terminals.
+   * For example, you could have the rule
+   * 
+   * <pre> [X] ||| l?s herman?s ||| siblings </pre>
+   * 
+   * When this is enabled for a grammar, we need to test against *all* (positive) outgoing arcs of
+   * the grammar trie node to see if any of them match, and then return the whole set. This is quite
+   * expensive, which is why you should only enable regular expressions for small grammars.
    */
   private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
     ArrayList<Trie> trieList = new ArrayList<Trie>();
     HashMap<Integer, ? extends Trie> childrenTbl = dotNode.trieNode.getChildren();
 
     if (childrenTbl != null && wordID >= 0) {
-      // get all the extensions, map to string, check for *, build regexp
       for (Integer arcID : childrenTbl.keySet()) {
-        if (arcID == wordID) {
+        /* Allow exact matches and regular expression matches */
+        if (arcID == wordID || Vocabulary.word(wordID).matches(Vocabulary.word(arcID)))
           trieList.add(childrenTbl.get(arcID));
-        } else {
-          String arcWord = Vocabulary.word(arcID);
-          if (Vocabulary.word(wordID).matches(arcWord)) {
-            trieList.add(childrenTbl.get(arcID));
-          }
-        }
       }
     }
     return trieList;
@@ -312,11 +307,11 @@ class DotChart {
   /**
    * Creates a dot item and adds it into the cell(i,j) of this dot chart.
    * 
-   * @param tnode
+   * @param tnode the trie node pointing to the "dot" in the grammar trie
    * @param i
    * @param j
-   * @param ant_s_items_in
-   * @param curSuperNode
+   * @param antSuperNodesIn the supernodes representing the rule's tail nodes
+   * @param curSuperNode the lefthand side of the rule being created
    */
   private void addDotItem(Trie tnode, int i, int j, List<SuperNode> antSuperNodesIn,
       SuperNode curSuperNode, SourcePath srcPath) {
@@ -329,7 +324,7 @@ class DotChart {
     }
 
     DotNode item = new DotNode(i, j, tnode, antSuperNodes, srcPath);
-    if (dotcells.get(i,j) == null) {
+    if (dotcells.get(i, j) == null) {
       dotcells.set(i, j, new DotCell());
     }
     dotcells.get(i, j).addDotNode(item);

@@ -104,7 +104,7 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
-      String goalSymbol,JoshuaConfiguration joshuaConfiguration) {
+      String goalSymbol, JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
@@ -125,7 +125,7 @@ public class Chart {
     this.grammars = new Grammar[grammars.length + 1];
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i] = grammars[i];
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov",joshuaConfiguration);
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", joshuaConfiguration);
     this.grammars[this.grammars.length - 1] = oovGrammar;
 
     // each grammar will have a dot chart
@@ -488,9 +488,14 @@ public class Chart {
   }
 
   /**
-   * agenda based extension: this is necessary in case more than two unary rules can be applied in
-   * topological order s->x; ss->s for unary rules like s->x, once x is complete, then s is also
-   * complete
+   * Handles expansion of unary rules. Rules are expanded in an agenda-based manner to avoid
+   * constructing infinite unary chains. Assumes a triangle inequality of unary rule expansion
+   * (e.g., A -> B will always be cheaper than A -> C -> B), which is not a true assumption.
+   * 
+   * @param grammars A list of the grammars for the sentence
+   * @param i
+   * @param j
+   * @return the number of nodes added
    */
   private int addUnaryNodes(Grammar[] grammars, int i, int j) {
 
@@ -502,7 +507,8 @@ public class Chart {
     ArrayList<HGNode> queue = new ArrayList<HGNode>(chartBin.getSortedNodes());
     HashSet<Integer> seen_lhs = new HashSet<Integer>();
 
-    logger.finest("Adding unary to [" + i + ", " + j + "]");
+    if (logger.isLoggable(Level.FINEST))
+      logger.finest("Adding unary to [" + i + ", " + j + "]");
 
     while (queue.size() > 0) {
       HGNode node = queue.remove(0);
@@ -512,13 +518,10 @@ public class Chart {
         if (!gr.hasRuleForSpan(i, j, inputLattice.distance(i, j)))
           continue;
 
-        Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and
-                                                           // complete part
+        /* Match against the node's LHS, and then make sure the rule collection has unary rules */
+        Trie childNode = gr.getTrieRoot().match(node.lhs);
         if (childNode != null && childNode.getRuleCollection() != null
-            && childNode.getRuleCollection().getArity() == 1) { // have unary
-                                                                // rules under
-                                                                // this
-                                                                // trienode
+            && childNode.getRuleCollection().getArity() == 1) {
 
           ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
           antecedents.add(node);
@@ -549,13 +552,14 @@ public class Chart {
    */
   public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
     if (null == this.cells.get(i, j)) {
-      this.cells.set(i,  j, new Cell(this, this.goalSymbolID));
+      this.cells.set(i, j, new Cell(this, this.goalSymbolID));
     }
 
     // System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule,
     // srcPath));
 
-    this.cells.get(i, j).addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
-        j, srcPath, segmentID), rule, i, j, null, srcPath, false);
+    this.cells.get(i, j).addHyperEdgeInCell(
+        new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, segmentID), rule,
+        i, j, null, srcPath, false);
   }
 }
