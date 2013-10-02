@@ -6,7 +6,6 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.util.ListUtil;
-import junit.framework.Assert;
 
 public class LabelSubstitutionFF extends StatelessFF {
   private static final String LABEL_SUBSTITUTION_FEATURE_FUNCTION_NAME = "LabelSubstitution";

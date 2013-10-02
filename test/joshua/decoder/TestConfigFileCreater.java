@@ -68,7 +68,8 @@ public class TestConfigFileCreater {
         + "goalSymbol = GOAL" + NL + "#pruning config" + NL + getPruningSpecification()
         + JoshuaConfiguration.SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME + " = "
         + useSoftSyntacticDecoding + NL + "#nbest config" + NL + "use_unique_nbest = true" + NL
-        + "top_n = 10" // + NL +
+
+        + "top_n = 100" // + NL +
                        // "feature-function = OOVPenalty"
         + NL + "feature-function = WordPenalty";
     return result;

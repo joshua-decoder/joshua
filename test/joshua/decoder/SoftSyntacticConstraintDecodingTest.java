@@ -4,10 +4,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.junit.Test;
 import org.testng.Assert;
-
 import joshua.decoder.FeatureFunctionsTest.DecoderOutput;
 import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.StatefulFF;
@@ -20,6 +18,7 @@ public class SoftSyntacticConstraintDecodingTest {
   private static String LABEL_SUBSTITUTION_FEATURE_NAME = LabelSubstitutionFF
       .getLowerCasedFeatureName();
   protected static String MAIN_GRAMMAR_FILE_NAME = "mainGrammar.txt";
+  protected static String MAIN_GRAMMAR_FILE_WITH_INVERSION_RULE_NAME = "mainGrammarWithInversionRule.txt";
   protected static String GLUE_GRAMMAR_FILE_NAME = "glueGrammar.txt";
   private static String JOSHUA_CONFIG_FILE_NAME_BASIC = "joshua.basic.config";
   private static String JOSHUA_CONFIG_FILE_NAME_BASIC_EXTRA_FEATURES = "joshua.basic.extra-features.config";
@@ -31,15 +30,39 @@ public class SoftSyntacticConstraintDecodingTest {
     return Arrays.asList(0.5, 0.5);
   }
 
-  public static TestConfigFileCreater createFeaturesTestConfigFileCreater(
-      boolean useSoftSyntacticConstraintsDecoding) {
-    return TestConfigFileCreater.createFeaturesTestConfigFileCreater(
-        SOFT_SYNTACTIC_CONSTRAINT_DECODING_TEST_TEMP_FILES_FOLDER_NAME, MAIN_GRAMMAR_FILE_NAME,
-        GLUE_GRAMMAR_FILE_NAME, getPhraseTableWeights(),useSoftSyntacticConstraintsDecoding,true);
+  private static String getMainGrammarFileName(boolean includeInvertingNonterminalRule) {
+    if (includeInvertingNonterminalRule) {
+      return MAIN_GRAMMAR_FILE_WITH_INVERSION_RULE_NAME;
+    } else {
+      return MAIN_GRAMMAR_FILE_NAME;
+    }
   }
 
-  private static final TestConfigFileCreater TEST_CONFIG_FILE_CREATER_SOFT_CONSTRAINTS = createFeaturesTestConfigFileCreater(true);
-  private static final TestConfigFileCreater TEST_CONFIG_FILE_CREATER_NORMAL_DECODING = createFeaturesTestConfigFileCreater(false);
+  public static TestConfigFileCreater createFeaturesTestConfigFileCreater(
+      boolean useSoftSyntacticConstraintsDecoding, boolean includeInvertingNonterminalRule) {
+    return TestConfigFileCreater.createFeaturesTestConfigFileCreater(
+        SOFT_SYNTACTIC_CONSTRAINT_DECODING_TEST_TEMP_FILES_FOLDER_NAME,
+        getMainGrammarFileName(includeInvertingNonterminalRule), GLUE_GRAMMAR_FILE_NAME,
+        getPhraseTableWeights(), useSoftSyntacticConstraintsDecoding, true);
+  }
+
+  private static TestConfigFileCreater getTestConfigFileCreaterNormal(
+      boolean includeInvertingNonterminalRule) {
+    if (includeInvertingNonterminalRule) {
+      return createFeaturesTestConfigFileCreater(false, true);
+    } else {
+      return createFeaturesTestConfigFileCreater(false, false);
+    }
+  }
+
+  private static TestConfigFileCreater getTestConfigFileCreaterSoftConstraints(
+      boolean includeInvertingNonterminalRule) {
+    if (includeInvertingNonterminalRule) {
+      return createFeaturesTestConfigFileCreater(true, true);
+    } else {
+      return createFeaturesTestConfigFileCreater(true, false);
+    }
+  }
 
   private static void writeBasicJoshuaConfigFile(TestConfigFileCreater testConfigFileCreater,
       boolean useLabelSubstitutionFeatures, String configFileName) {
@@ -52,19 +75,21 @@ public class SoftSyntacticConstraintDecodingTest {
   }
 
   private static void createTestFilesBasicTest(TestConfigFileCreater testConfigFileCreater,
-      boolean useLabelSubstitutionFeatures, String configFileName) {
+      boolean useLabelSubstitutionFeatures, String configFileName,
+      boolean includeInvertingNonterminalRule) {
     FileUtility
         .createFolderIfNotExisting(SOFT_SYNTACTIC_CONSTRAINT_DECODING_TEST_TEMP_FILES_FOLDER_NAME);
 
     writeBasicJoshuaConfigFile(testConfigFileCreater, useLabelSubstitutionFeatures, configFileName);
-    String mainGrammarFilePath = testConfigFileCreater.createFullPath(MAIN_GRAMMAR_FILE_NAME);
+    String mainGrammarFilePath = testConfigFileCreater
+        .createFullPath(getMainGrammarFileName(includeInvertingNonterminalRule));
     String glueGrammarFilePath = testConfigFileCreater.createFullPath(GLUE_GRAMMAR_FILE_NAME);
     String testFilePath = testConfigFileCreater.createFullPath(TEST_FILE_NAME);
 
     ArtificialGrammarAndCorpusCreater artificialGrammarAndCorpusCreater = ArtificialGrammarAndCorpusCreater
         .createArtificialGrammarAndCorpusCreater(mainGrammarFilePath, glueGrammarFilePath,
             testFilePath);
-    artificialGrammarAndCorpusCreater.writeMainGrammar();
+    artificialGrammarAndCorpusCreater.writeMainGrammar(includeInvertingNonterminalRule);
     artificialGrammarAndCorpusCreater.writeTestSentencesFile1();
     artificialGrammarAndCorpusCreater.writeGlueGrammar();
     copyStaticFilesToTestDirectory(testConfigFileCreater);
@@ -77,13 +102,14 @@ public class SoftSyntacticConstraintDecodingTest {
   }
 
   private DecoderOutput runSoftSyntacticConstraintDecoding(boolean useLabelSubstitutionFeatures,
-      String configFileName) {
-    createTestFilesBasicTest(TEST_CONFIG_FILE_CREATER_SOFT_CONSTRAINTS,
-        useLabelSubstitutionFeatures, configFileName);
+      String configFileName, boolean includeInvertingNonterminalRule) {
+    createTestFilesBasicTest(
+        getTestConfigFileCreaterSoftConstraints(includeInvertingNonterminalRule),
+        useLabelSubstitutionFeatures, configFileName, includeInvertingNonterminalRule);
     String testInputFilePath = "./"
         + SOFT_SYNTACTIC_CONSTRAINT_DECODING_TEST_TEMP_FILES_FOLDER_NAME + "/" + TEST_FILE_NAME;
-    String joshuaConfigFilePath = TEST_CONFIG_FILE_CREATER_SOFT_CONSTRAINTS
-        .createFullPath(configFileName);
+    String joshuaConfigFilePath = getTestConfigFileCreaterSoftConstraints(
+        includeInvertingNonterminalRule).createFullPath(configFileName);
     DecoderOutput decoderOutput1 = FeatureFunctionsTest.runDecoder(joshuaConfigFilePath,
         testInputFilePath, LABEL_SUBSTITUTION_FEATURE_NAME);
     return decoderOutput1;
@@ -92,7 +118,7 @@ public class SoftSyntacticConstraintDecodingTest {
   private void testSoftSyntacticConstraintDecodingHasexpectedNumberDerivations(
       int expectedNumberDerivations) {
     DecoderOutput decoderOutput1 = runSoftSyntacticConstraintDecoding(false,
-        JOSHUA_CONFIG_FILE_NAME_SOFT_SYNTACTIC);
+        JOSHUA_CONFIG_FILE_NAME_SOFT_SYNTACTIC, false);
     // Test that the number of derivations in the list is 2
     int numberOfDerivationsInNBestList = decoderOutput1.getnBestListTotalWeights().size();
     Assert.assertEquals(numberOfDerivationsInNBestList, expectedNumberDerivations);
@@ -100,19 +126,19 @@ public class SoftSyntacticConstraintDecodingTest {
   }
 
   private void testNormalDecodingHasexpectedNumberDerivations(int expectedNumberDerivations) {
-    DecoderOutput decoderOutput1 = runNormalDecoding(false, JOSHUA_CONFIG_FILE_NAME_BASIC);
+    DecoderOutput decoderOutput1 = runNormalDecoding(false, JOSHUA_CONFIG_FILE_NAME_BASIC, false);
     // Test that the number of derivations in the list is 2
     int numberOfDerivationsInNBestList = decoderOutput1.getnBestListTotalWeights().size();
     Assert.assertEquals(numberOfDerivationsInNBestList, expectedNumberDerivations);
   }
 
   private DecoderOutput runNormalDecoding(boolean useLabelSubstitutionFeatures,
-      String configFileName) {
-    createTestFilesBasicTest(TEST_CONFIG_FILE_CREATER_NORMAL_DECODING,
-        useLabelSubstitutionFeatures, configFileName);
+      String configFileName, boolean includeInvertingNonterminalRule) {
+    createTestFilesBasicTest(getTestConfigFileCreaterNormal(includeInvertingNonterminalRule),
+        useLabelSubstitutionFeatures, configFileName, includeInvertingNonterminalRule);
     String testInputFilePath = "./"
         + SOFT_SYNTACTIC_CONSTRAINT_DECODING_TEST_TEMP_FILES_FOLDER_NAME + "/" + TEST_FILE_NAME;
-    String joshuaConfigFilePath = TEST_CONFIG_FILE_CREATER_SOFT_CONSTRAINTS
+    String joshuaConfigFilePath = getTestConfigFileCreaterNormal(includeInvertingNonterminalRule)
         .createFullPath(configFileName);
     DecoderOutput decoderOutput1 = FeatureFunctionsTest.runDecoder(joshuaConfigFilePath,
         testInputFilePath, LABEL_SUBSTITUTION_FEATURE_NAME);
@@ -149,10 +175,10 @@ public class SoftSyntacticConstraintDecodingTest {
   public void testSoftSyntacticDecodingYieldsDifferentSubstitutionFeatures() {
     StatefulFF.resetGlobalStateIndex();
     DecoderOutput decoderOutputNormalDecoding = runNormalDecoding(true,
-        JOSHUA_CONFIG_FILE_NAME_BASIC_EXTRA_FEATURES);
+        JOSHUA_CONFIG_FILE_NAME_BASIC_EXTRA_FEATURES, true);
     StatefulFF.resetGlobalStateIndex();
     DecoderOutput decoderOutputSoftConstraintDecoding = runSoftSyntacticConstraintDecoding(true,
-        JOSHUA_CONFIG_FILE_NAME_SOFT_SYNTACTIC_EXTRA_FEATURES);
+        JOSHUA_CONFIG_FILE_NAME_SOFT_SYNTACTIC_EXTRA_FEATURES, true);
 
     Set<String> extraFeatureNamesNormalDecoding = new HashSet<String>(
         decoderOutputNormalDecoding.getExtraFeaturesList());
@@ -180,6 +206,23 @@ public class SoftSyntacticConstraintDecodingTest {
       System.out.println("feature unique for soft-syntactic decoding: " + featureName);
     }
 
+  }
+
+  private boolean decoderProducedFeaturesContainInversionInFeatureNames(DecoderOutput decoderOutput) {
+    for (String featureName : decoderOutput.getExtraFeaturesList()) {
+      if (featureName.contains("_INV_")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Test
+  public void testSoftSyntacticDecodingYieldsRuleSubstitutionCombinationFeaturesWithInversion() {
+    StatefulFF.resetGlobalStateIndex();
+    DecoderOutput decoderOutputSoftConstraintDecoding = runSoftSyntacticConstraintDecoding(true,
+        JOSHUA_CONFIG_FILE_NAME_SOFT_SYNTACTIC_EXTRA_FEATURES, true);
+    Assert.assertTrue(decoderProducedFeaturesContainInversionInFeatureNames(decoderOutputSoftConstraintDecoding));
   }
 
 }
