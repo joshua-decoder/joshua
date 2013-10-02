@@ -544,7 +544,7 @@ public class KBestExtractor {
     private float cost;
 
     private float bleu = 0.0f;
-    
+
     /*
      * The BLEU sufficient statistics associated with the edge's derivation. Note that this is a
      * function of the complete derivation headed by the edge, i.e., all the particular
@@ -561,10 +561,20 @@ public class KBestExtractor {
       edgePos = pos;
     }
 
+    /**
+     * Computes a scaled approximate BLEU from the accumulated statistics. We know the number of
+     * words; to compute the effective reference length, we take the real reference length statistic
+     * and scale it by the percentage of the input sentence that is consumed, based on the assumption that
+     * the total number of words in the hypothesis scales linearly with the input sentence span.
+     * 
+     * @return
+     */
     public float computeBLEU() {
-      // TODO: pass the scaled span width, not the actual span width (this serves as the reflen)
       if (stats == null) {
-        stats = BLEU.compute(edge, parentNode.j - parentNode.i, references);
+        float percentage = 1.0f * (parentNode.j - parentNode.i) / (sentence.length());
+//        System.err.println(String.format("computeBLEU: (%d - %d) / %d = %f", parentNode.j, parentNode.i, sentence.length(), percentage));
+        stats = BLEU.compute(edge, percentage, references);
+        
         if (edge.getTailNodes() != null) {
           for (int id = 0; id < edge.getTailNodes().size(); id++) {
             stats.add(getChildDerivationState(KBestExtractor.this, edge, id).stats);

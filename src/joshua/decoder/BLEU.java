@@ -335,10 +335,10 @@ public class BLEU {
    */
   public static final int maxOrder = 4;
 
-  public static Stats compute(HyperEdge edge, int spanWidth, References references) {
+  public static Stats compute(HyperEdge edge, float spanPct, References references) {
     Stats stats = new Stats();
     // TODO: this should not be the span width, but the real ref scaled to the span percentage
-    stats.reflen = spanWidth;
+    stats.reflen = (int) (spanPct * references.reflen);
 
     Rule rule = edge.getRule();
     if (rule != null) {

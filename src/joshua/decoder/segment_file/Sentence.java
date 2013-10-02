@@ -96,8 +96,7 @@ public class Sentence {
    * Returns the length of the sentence. For lattices, the length is the shortest path through the
    * lattice.
    */
-  @SuppressWarnings("unused")
-  private int length() {
+  public int length() {
     return this.intLattice().getShortestDistance();
   }
 
