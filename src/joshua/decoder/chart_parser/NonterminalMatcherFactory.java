@@ -21,7 +21,8 @@ import joshua.decoder.ff.tm.Trie;
  */
 public class NonterminalMatcherFactory {
 
-  public static NonterminalMatcher createNonterminalMatcher(Logger logger, JoshuaConfiguration joshuaConfiguration) {
+  public static NonterminalMatcher createNonterminalMatcher(Logger logger,
+      JoshuaConfiguration joshuaConfiguration) {
     if (joshuaConfiguration.softSyntacticConstraintDecoding) {
       return new StandardNonterminalMatcherSoftConstraints(logger, joshuaConfiguration);
     } else {
@@ -31,6 +32,7 @@ public class NonterminalMatcherFactory {
 
   protected abstract static class AbstractNonterminalMatcher implements NonterminalMatcher {
 
+    private static String OOV_LABEL = "[OOV]";
     protected final Logger logger;
     protected final JoshuaConfiguration joshuaConfiguration;
 
@@ -43,7 +45,11 @@ public class NonterminalMatcherFactory {
       return wordIndex < 0;
     }
 
-    protected List<Trie> matchAllEqualOrBothNonTerminal(DotNode dotNode, int wordID) {
+    protected boolean isOOVLabelOrGoalLabel(String label) {
+      return (label.equals(OOV_LABEL) || label.equals(joshuaConfiguration.goal_symbol));
+    }
+
+    protected List<Trie> matchAllEqualOrBothNonTerminalAndNotGoalOrOOV(DotNode dotNode, int wordID) {
       List<Trie> trieList = new ArrayList<Trie>();
       HashMap<Integer, ? extends Trie> childrenTbl = dotNode.getTrieNode().getChildren();
 
@@ -59,8 +65,8 @@ public class NonterminalMatcherFactory {
           String wordIdWord = Vocabulary.word(wordID);
           if (wordIdWord.equals(arcWord)) {
             trieList.add(childrenTbl.get(arcID));
-          } else if (isNonterminal(wordID) && isNonterminal(arcID) && !wordIdWord.equals("[OOV]")) {
-            logger.info("Substituing : " + arcWord + " for " + wordIdWord);
+          } else if (isNonterminal(wordID) && isNonterminal(arcID) && !isOOVLabelOrGoalLabel(wordIdWord)) {
+            // logger.info("Substituing : " + arcWord + " for " + wordIdWord);
             trieList.add(childrenTbl.get(arcID));
           }
 
@@ -95,7 +101,8 @@ public class NonterminalMatcherFactory {
 
   protected static class StandardNonterminalMatcherStrict extends StandardNonterminalMatcher {
 
-    protected StandardNonterminalMatcherStrict(Logger logger, JoshuaConfiguration joshuaConfiguration) {
+    protected StandardNonterminalMatcherStrict(Logger logger,
+        JoshuaConfiguration joshuaConfiguration) {
       super(logger, joshuaConfiguration);
     }
 
@@ -106,7 +113,8 @@ public class NonterminalMatcherFactory {
     }
   }
 
-  protected static class StandardNonterminalMatcherSoftConstraints extends StandardNonterminalMatcher {
+  protected static class StandardNonterminalMatcherSoftConstraints extends
+      StandardNonterminalMatcher {
 
     /**
      * 
@@ -129,8 +137,8 @@ public class NonterminalMatcherFactory {
     public List<Trie> produceMatchingChildTNodesNonterminalLevel(DotNode dotNode,
         SuperNode superNode) {
 
-      // We do not allow substitution of other things for GOAL labels
-      if (Vocabulary.word(superNode.lhs).equals(joshuaConfiguration.goal_symbol)) {
+      // We do not allow substitution of other things for GOAL labels or OOV symbols
+      if (isOOVLabelOrGoalLabel(Vocabulary.word(superNode.lhs))) {
         // logger.info("BLAA - Vocabulary.word(superNode.lhs)" + Vocabulary.word(superNode.lhs));
         Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
         // logger.info("child_node.toString()" + child_node);
@@ -138,7 +146,7 @@ public class NonterminalMatcherFactory {
         return child_tnodes;
       } else {
         // logger.info("Vocabulary.word(superNode.lhs): " + Vocabulary.word(superNode.lhs));
-        return matchAllEqualOrBothNonTerminal(dotNode, superNode.lhs);
+        return matchAllEqualOrBothNonTerminalAndNotGoalOrOOV(dotNode, superNode.lhs);
       }
     }
   }
