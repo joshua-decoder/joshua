@@ -123,8 +123,6 @@ public class NonterminalMatcherFactory {
         // get all the extensions, map to string, check for *, build regexp
 
         for (Integer index : this.nonterminalIndicesExceptForGoalAndOOV) {
-          String wordIdWord = Vocabulary.word(index);
-          logger.info(">>>>>>>>>>>>wordIDWord: " + wordIdWord);
 
           int nonterminalIndexTrieFormat = -index;
           if (childrenTbl.containsKey(nonterminalIndexTrieFormat)) {
