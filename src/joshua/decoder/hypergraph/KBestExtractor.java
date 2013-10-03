@@ -114,7 +114,7 @@ public class KBestExtractor {
     this.defaultSide = (isMonolingual ? Side.SOURCE : Side.TARGET);
     this.sentence = sentence;
 
-    if (JoshuaConfiguration.rescoreForest) {
+    if (joshuaConfiguration.rescoreForest) {
       references = new BLEU.References(sentence.references());
     }
   }
@@ -379,7 +379,7 @@ public class KBestExtractor {
                 + virtualTailNode.nbests.get(newRanks[i] - 1).getModelCost();
             nextState.setCost(cost);
 
-            if (JoshuaConfiguration.rescoreForest)
+            if (joshuaConfiguration.rescoreForest)
               nextState.bleu = nextState.computeBLEU();
 
             candHeap.add(nextState);
@@ -493,7 +493,7 @@ public class KBestExtractor {
       cost = (float) -hyperEdge.getBestDerivationScore();
 
       DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
-      if (JoshuaConfiguration.rescoreForest)
+      if (joshuaConfiguration.rescoreForest)
         state.bleu = state.computeBLEU();
 
       return state;
