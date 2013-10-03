@@ -33,11 +33,10 @@ public class NonterminalMatcherFactory {
    */
   private static final int MAX_TOTAL_NON_TERMINALS_FOR_TARGETED_QUERYING = 1000;
 
-  private static String OOV_LABEL = "[OOV]";
 
   protected static boolean isOOVLabelOrGoalLabel(String label,
       JoshuaConfiguration joshuaConfiguration) {
-    return (label.equals(OOV_LABEL) || label.equals(joshuaConfiguration.goal_symbol));
+    return (label.equals(joshuaConfiguration.default_non_terminal) || label.equals(joshuaConfiguration.goal_symbol));
   }
 
   private static boolean useTargetdQuerying(List<Integer> nonterminalIndicesExceptForGoalAndOOV) {
