@@ -14,11 +14,7 @@
 	<classpathentry kind="lib" path="lib/pmd-4.2.5.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
-	<classpathentry kind="lib" path="lib/testng-6.7-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/testng-6.7-sources.jar"/>
 	<classpathentry kind="lib" path="lib/testng-6.7.jar"/>
-	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/mockito-all-1.9.5-sources.jar"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5.jar"/>
 	<classpathentry kind="output" path="class"/>
 </classpath>
