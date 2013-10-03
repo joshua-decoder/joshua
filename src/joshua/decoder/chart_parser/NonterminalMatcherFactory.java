@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
@@ -55,34 +56,37 @@ public class NonterminalMatcherFactory {
 
       // logger.info("wordID: " + wordID + " Vocabulary.word(Math.abs(wordID)) "
       // + Vocabulary.word(Math.abs(wordID)));
-      ;
+
+      if (!isNonterminal(wordID)) {
+        throw new RuntimeException("Error : expexted nonterminal, but did not get it "
+            + "in matchAllEqualOrBothNonTerminalAndNotGoalOrOOV(DotNode dotNode, int wordID)");
+      }
+
       if (childrenTbl != null) {
         // get all the extensions, map to string, check for *, build regexp
-        for (Integer arcID : childrenTbl.keySet()) {
-          String arcWord = Vocabulary.word(arcID);
+
+        // This has now been optimized.
+        // It is not a good idea to first get the keyset, and then do get for each
+        // entry See:
+        // http://stackoverflow.com/questions/5826384/java-iteration-through-a-hashmap-which-is-more-efficient
+        // Although if the set of nonterminals is small, it might not matter too much
+        for (Entry<Integer, ? extends Trie> entry : childrenTbl.entrySet()) {
           // logger.info("Vocabulary.word(wordID), arcWord ||| " + Vocabulary.word(wordID) + " "+
           // arcWord);
-          String wordIdWord = Vocabulary.word(wordID);
-          if (wordIdWord.equals(arcWord)) {
-            trieList.add(childrenTbl.get(arcID));
-          } else if (isNonterminal(wordID) && isNonterminal(arcID) && !isOOVLabelOrGoalLabel(wordIdWord)) {
-            // logger.info("Substituing : " + arcWord + " for " + wordIdWord);
-            trieList.add(childrenTbl.get(arcID));
-          }
+          Integer arcID = entry.getKey();
 
+          String wordIdWord = Vocabulary.word(wordID);
+          if (isNonterminal(arcID) && !isOOVLabelOrGoalLabel(wordIdWord)) {
+            Trie value = entry.getValue();
+            // logger.info("Substituing : " + arcWord + " for " + wordIdWord);
+            trieList.add(value);
+          }
           // logger.info("added node for arcWord: " + arcWord);
         }
       }
       // logger.info("trieList.size(): " + trieList.size());
       return trieList;
     }
-  }
-
-  protected static List<Trie> produceStandardMatchingChildTNodesTerminalevel(DotNode dotNode,
-      int lastWordIndex) {
-    Trie child_node = dotNode.getTrieNode().match(lastWordIndex);
-    List<Trie> child_tnodes = Arrays.asList(child_node);
-    return child_tnodes;
   }
 
   public static List<Trie> produceStandardMatchingChildTNodesNonterminalLevel(DotNode dotNode,
