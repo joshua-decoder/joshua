@@ -17,13 +17,13 @@ public class HyperEdge {
   /**
    * the 1-best logP of all possible derivations: best logP of ant hgnodes + transitionlogP
    **/
-  public double bestDerivationLogP = Double.NEGATIVE_INFINITY;
+  private float bestDerivationScore = Float.NEGATIVE_INFINITY;
 
   /**
    * this remembers the stateless + non_stateless logP assocated with the rule (excluding the
    * best-logP from ant nodes)
    * */
-  private Double transitionLogP = null;
+  private Float transitionScore = null;
 
   private Rule rule;
 
@@ -35,10 +35,10 @@ public class HyperEdge {
    * */
   private List<HGNode> tailNodes = null;
 
-  public HyperEdge(Rule rule, double bestDerivationLogP, Double transitionLogP,
+  public HyperEdge(Rule rule, float bestDerivationScore, float transitionScore,
       List<HGNode> tailNodes, SourcePath srcPath) {
-    this.bestDerivationLogP = bestDerivationLogP;
-    this.transitionLogP = transitionLogP;
+    this.bestDerivationScore = bestDerivationScore;
+    this.transitionScore = transitionScore;
     this.rule = rule;
     this.tailNodes = tailNodes;
     this.srcPath = srcPath;
@@ -46,6 +46,10 @@ public class HyperEdge {
 
   public Rule getRule() {
     return rule;
+  }
+  
+  public float getBestDerivationScore() {
+    return bestDerivationScore;
   }
 
   public SourcePath getSourcePath() {
@@ -56,23 +60,23 @@ public class HyperEdge {
     return tailNodes;
   }
 
-  public double getTransitionLogP(boolean forceCompute) {
+  public float getTransitionLogP(boolean forceCompute) {
     StringBuilder sb = new StringBuilder();
-    if (forceCompute || transitionLogP == null) {
-      double res = bestDerivationLogP;
+    if (forceCompute || transitionScore == null) {
+      float res = bestDerivationScore;
       sb.append(String.format("Best derivation = %.5f", res));
       if (tailNodes != null) for (HGNode tailNode : tailNodes) {
-        res -= tailNode.bestHyperedge.bestDerivationLogP;
-        sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationLogP));
+        res -= tailNode.bestHyperedge.bestDerivationScore;
+        sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationScore));
       }
-      transitionLogP = res;
+      transitionScore = res;
     }
     // System.err.println("HYPEREDGE SCORE = " + sb.toString());
-    return transitionLogP;
+    return transitionScore;
   }
 
-  public void setTransitionLogP(double transitionLogP) {
-    this.transitionLogP = transitionLogP;
+  public void setTransitionLogP(float transitionLogP) {
+    this.transitionScore = transitionLogP;
   }
 
   public String toString() {

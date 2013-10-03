@@ -19,6 +19,7 @@ package joshua.zmert;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.util.FileUtility;
 
 public class ZMERT {
@@ -40,7 +41,8 @@ public class ZMERT {
     }
 
     if (!external) {
-      MertCore myMert = new MertCore(args[0]);
+      JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+      MertCore myMert = new MertCore(args[0],joshuaConfiguration);
       myMert.run_MERT(); // optimize lambda[]!!!
       myMert.finish();
     } else {

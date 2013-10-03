@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.BasicRuleCollection;
@@ -39,8 +40,9 @@ public class PackedGrammar extends BatchGrammar {
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
-  public PackedGrammar(String grammar_dir, int span_limit, String owner)
-      throws FileNotFoundException, IOException {
+  public PackedGrammar(String grammar_dir, int span_limit, String owner,
+      JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
+    super(joshuaConfiguration);
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
@@ -218,11 +220,10 @@ public class PackedGrammar extends BatchGrammar {
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
       target_lookup_stream.close();
-      
+
       tries = new HashMap<Integer, PackedTrie>();
     }
 
-    
     @SuppressWarnings("unused")
     private final Object guardian = new Object() {
       @Override
@@ -499,7 +500,7 @@ public class PackedGrammar extends BatchGrammar {
         return arity;
       }
 
-      public final class PackedRule implements Rule {
+      public final class PackedRule extends Rule {
         private final int address;
 
         private int[] tgt = null;
@@ -547,23 +548,6 @@ public class PackedGrammar extends BatchGrammar {
           }
           return tgt;
         }
-        
-        @Override
-        public String getEnglishWords() {
-          ArrayList<String> foreignNTs = new ArrayList<String>();
-          for (int i = 0; i < this.getFrench().length; i++)
-            if (this.getFrench()[i] < 0) foreignNTs.add(Vocabulary.word(this.getFrench()[i]));
-
-          StringBuilder sb = new StringBuilder();
-          for (int i = 0; i < this.getEnglish().length; i++) {
-            if (this.getEnglish()[i] >= 0)
-              sb.append(Vocabulary.word(this.getEnglish()[i]) + " ");
-            else
-              sb.append(foreignNTs.get(Math.abs(this.getEnglish()[i]) - 1) + "," + Math.abs(this.getEnglish()[i]) + " ");
-          }
-
-          return sb.toString().trim();
-        }
 
         @Override
         public void setFrench(int[] french) {
@@ -578,7 +562,7 @@ public class PackedGrammar extends BatchGrammar {
         public String getFrenchWords() {
           return Vocabulary.getWords(getFrench());
         }
-        
+
         @Override
         public FeatureVector getFeatureVector() {
           if (features == null) {
@@ -619,9 +603,9 @@ public class PackedGrammar extends BatchGrammar {
           StringBuffer sb = new StringBuffer();
           sb.append(Vocabulary.word(this.getLHS()));
           sb.append(" ||| ");
-          sb.append(Vocabulary.getWords(this.getFrench()));
+          sb.append(getFrenchWords());
           sb.append(" ||| ");
-          sb.append(Vocabulary.getWords(getEnglish()));
+          sb.append(getEnglishWords());
           sb.append(" |||");
           sb.append(" " + getFeatureVector());
           sb.append(String.format(" ||| %.3f", getEstimatedCost()));

@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.Decoder;
 import joshua.decoder.hypergraph.HGNode;
@@ -99,7 +100,7 @@ public class OracleExtractionHG extends SplitHg {
    */
   @SuppressWarnings({ "deprecation", "unused" })
   public static void main(String[] args) throws IOException {
-
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
     /*
      * String f_hypergraphs="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.items"; String
      * f_rule_tbl="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.rules"; String
@@ -133,7 +134,8 @@ public class OracleExtractionHG extends SplitHg {
     boolean do_ngram_clip_nbest = true; // TODO
     if (orc_extract_nbest) {
       System.out.println("oracle extraction from nbest list");
-      kbest_extractor = new KBestExtractor(Decoder.weights, extract_unique_nbest, false, false);
+
+      kbest_extractor = new KBestExtractor(null, null, Decoder.weights, extract_unique_nbest, false, false,joshuaConfiguration);
     }
 
     BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);
@@ -205,7 +207,7 @@ public class OracleExtractionHG extends SplitHg {
     double orc_bleu = -1;
     String orc_sent = null;
     while (true) {
-      String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null);// ?????????
+      String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n);// ?????????
       if (hyp_sent == null || next_n > n) break;
       double t_bleu = compute_sentence_bleu(ref_sent, hyp_sent, do_ngram_clip, 4);
       if (t_bleu > orc_bleu) {

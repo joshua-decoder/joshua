@@ -28,6 +28,7 @@ import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
+import joshua.util.ChartSpan;
 
 /**
  * Chart class this class implements chart-parsing: (1) seeding the chart (2) cky main loop over
@@ -47,6 +48,7 @@ import joshua.lattice.Node;
 
 public class Chart {
 
+  private final JoshuaConfiguration joshuaConfiguration;
   // ===========================================================
   // Statistics
   // ===========================================================
@@ -65,7 +67,7 @@ public class Chart {
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================
-  private Cell[][] cells; // note that in some cell, it might be null
+  private ChartSpan<Cell> cells; // note that in some cell, it might be null
   private int sourceLength;
   private List<FeatureFunction> featureFunctions;
   private Grammar[] grammars;
@@ -102,7 +104,8 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
-      String goalSymbol) {
+      String goalSymbol, JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
@@ -112,7 +115,7 @@ public class Chart {
     if (sentence instanceof ParsedSentence)
       this.parseTree = ((ParsedSentence) sentence).syntaxTree();
 
-    this.cells = new Cell[sourceLength][sourceLength + 1];
+    this.cells = new ChartSpan<Cell>(sourceLength, null);
 
     this.segmentID = sentence.id();
     this.goalSymbolID = Vocabulary.id(goalSymbol);
@@ -122,7 +125,7 @@ public class Chart {
     this.grammars = new Grammar[grammars.length + 1];
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i] = grammars[i];
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov");
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", joshuaConfiguration);
     this.grammars[this.grammars.length - 1] = oovGrammar;
 
     // each grammar will have a dot chart
@@ -150,7 +153,7 @@ public class Chart {
           continue;
 
         // Determine if word is actual OOV.
-        if (JoshuaConfiguration.true_oovs_only) {
+        if (joshuaConfiguration.true_oovs_only) {
           boolean true_oov = true;
           for (Grammar g : grammars) {
             if (g.getTrieRoot().match(sourceWord) != null
@@ -164,20 +167,20 @@ public class Chart {
         }
 
         final int targetWord;
-        if (JoshuaConfiguration.mark_oovs) {
+        if (joshuaConfiguration.mark_oovs) {
           targetWord = Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV");
         } else {
           targetWord = sourceWord;
         }
 
-        int defaultNTIndex = Vocabulary.id(JoshuaConfiguration.default_non_terminal.replaceAll(
+        int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
             "\\[\\]", ""));
 
         List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
         int[] sourceWords = { sourceWord };
         int[] targetWords = { targetWord };
         if (parseTree != null
-            && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
+            && (joshuaConfiguration.constrain_parse || joshuaConfiguration.use_pos_labels)) {
           Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber() - 1,
               node.getNumber());
           for (int label : labels) {
@@ -281,8 +284,8 @@ public class Chart {
           continue;
 
         // Create the Cell if necessary.
-        if (cells[i][j] == null)
-          cells[i][j] = new Cell(this, goalSymbolID);
+        if (cells.get(i, j) == null)
+          cells.set(i, j, new Cell(this, goalSymbolID));
 
         /*
          * TODO: This causes the whole list of rules to be copied, which is unnecessary when there
@@ -305,7 +308,7 @@ public class Chart {
             ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
                 j, sourcePath, this.segmentID);
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
-              cells[i][j].addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
+              cells.get(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
           }
         } else {
 
@@ -334,7 +337,7 @@ public class Chart {
       }
     }
 
-    int popLimit = JoshuaConfiguration.pop_limit;
+    int popLimit = joshuaConfiguration.pop_limit;
     int popCount = 0;
     while (candidates.size() > 0 && ((++popCount <= popLimit) || popLimit == 0)) {
       CubePruneState state = candidates.poll();
@@ -349,7 +352,7 @@ public class Chart {
        * decoding or (b) we are and the state is legal.
        */
       if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates())) {
-        cells[i][j].addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
+        cells.get(i, j).addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
             state.antNodes, sourcePath, true);
       }
 
@@ -448,8 +451,8 @@ public class Chart {
          * 
          * Sort the nodes in this span, to make them usable for future applications of cube pruning.
          */
-        if (null != this.cells[i][j]) {
-          this.cells[i][j].getSortedNodes();
+        if (null != this.cells.get(i, j)) {
+          this.cells.get(i, j).getSortedNodes();
         }
       }
     }
@@ -457,8 +460,8 @@ public class Chart {
     logStatistics(Level.INFO);
 
     // transition_final: setup a goal item, which may have many deductions
-    if (null == this.cells[0][sourceLength]
-        || !this.goalBin.transitToGoal(this.cells[0][sourceLength], this.featureFunctions,
+    if (null == this.cells.get(0, sourceLength)
+        || !this.goalBin.transitToGoal(this.cells.get(0, sourceLength), this.featureFunctions,
             this.sourceLength)) {
       logger.severe("No complete item in the Cell[0," + sourceLength + "]; possible reasons: "
           + "(1) your grammar does not have any valid derivation for the source sentence; "
@@ -472,7 +475,7 @@ public class Chart {
   }
 
   public Cell getCell(int i, int j) {
-    return this.cells[i][j];
+    return this.cells.get(i, j);
   }
 
   // ===============================================================
@@ -485,13 +488,18 @@ public class Chart {
   }
 
   /**
-   * agenda based extension: this is necessary in case more than two unary rules can be applied in
-   * topological order s->x; ss->s for unary rules like s->x, once x is complete, then s is also
-   * complete
+   * Handles expansion of unary rules. Rules are expanded in an agenda-based manner to avoid
+   * constructing infinite unary chains. Assumes a triangle inequality of unary rule expansion
+   * (e.g., A -> B will always be cheaper than A -> C -> B), which is not a true assumption.
+   * 
+   * @param grammars A list of the grammars for the sentence
+   * @param i
+   * @param j
+   * @return the number of nodes added
    */
   private int addUnaryNodes(Grammar[] grammars, int i, int j) {
 
-    Cell chartBin = this.cells[i][j];
+    Cell chartBin = this.cells.get(i, j);
     if (null == chartBin) {
       return 0;
     }
@@ -499,7 +507,8 @@ public class Chart {
     ArrayList<HGNode> queue = new ArrayList<HGNode>(chartBin.getSortedNodes());
     HashSet<Integer> seen_lhs = new HashSet<Integer>();
 
-    logger.finest("Adding unary to [" + i + ", " + j + "]");
+    if (logger.isLoggable(Level.FINEST))
+      logger.finest("Adding unary to [" + i + ", " + j + "]");
 
     while (queue.size() > 0) {
       HGNode node = queue.remove(0);
@@ -509,13 +518,10 @@ public class Chart {
         if (!gr.hasRuleForSpan(i, j, inputLattice.distance(i, j)))
           continue;
 
-        Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and
-                                                           // complete part
+        /* Match against the node's LHS, and then make sure the rule collection has unary rules */
+        Trie childNode = gr.getTrieRoot().match(node.lhs);
         if (childNode != null && childNode.getRuleCollection() != null
-            && childNode.getRuleCollection().getArity() == 1) { // have unary
-                                                                // rules under
-                                                                // this
-                                                                // trienode
+            && childNode.getRuleCollection().getArity() == 1) {
 
           ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
           antecedents.add(node);
@@ -545,14 +551,15 @@ public class Chart {
    * This functions add to the hypergraph rules with zero arity (i.e., terminal rules).
    */
   public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
-    if (null == this.cells[i][j]) {
-      this.cells[i][j] = new Cell(this, this.goalSymbolID);
+    if (null == this.cells.get(i, j)) {
+      this.cells.set(i, j, new Cell(this, this.goalSymbolID));
     }
 
     // System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule,
     // srcPath));
 
-    this.cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(this.featureFunctions, rule, null, i,
-        j, srcPath, segmentID), rule, i, j, null, srcPath, false);
+    this.cells.get(i, j).addHyperEdgeInCell(
+        new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, segmentID), rule,
+        i, j, null, srcPath, false);
   }
 }

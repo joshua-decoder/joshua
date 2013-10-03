@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.HashSet;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
@@ -30,16 +31,16 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
   private int goalSymbol;
   private HashSet<Rule> rules;
 
-  public GrammarBuilderWalkerFunction(String goal) {
-    grammar = new MemoryBasedBatchGrammar(reader);
+  public GrammarBuilderWalkerFunction(String goal,JoshuaConfiguration joshuaConfiguration) {
+    grammar = new MemoryBasedBatchGrammar(reader,joshuaConfiguration);
     grammar.setSpanLimit(1000);
     outStream = null;
     goalSymbol = Vocabulary.id(goal);
     rules = new HashSet<Rule>();
   }
 
-  public GrammarBuilderWalkerFunction(String goal, PrintStream out) {
-    this(goal);
+  public GrammarBuilderWalkerFunction(String goal, PrintStream out,JoshuaConfiguration joshuaConfiguration) {
+    this(goal,joshuaConfiguration);
     outStream = out;
   }
 

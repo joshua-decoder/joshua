@@ -53,7 +53,7 @@ public class ComputeNodeResult {
      */
     if (null != tailNodes) {
       for (HGNode item : tailNodes) {
-        viterbiCost += item.bestHyperedge.bestDerivationLogP;
+        viterbiCost += item.bestHyperedge.getBestDerivationScore();
       }
     }
 

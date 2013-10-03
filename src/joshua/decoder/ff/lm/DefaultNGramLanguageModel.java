@@ -5,7 +5,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.JoshuaConfiguration;
 
 /**
  * This class provides a default implementation for the Equivalent LM State optimization (namely,

@@ -11,6 +11,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.AfterTest;
 
 public class TranslationsTest {
+  private final JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
   @BeforeTest
   public void beforeTest() {
   }
@@ -43,7 +44,7 @@ public class TranslationsTest {
   public void next() {
     byte[] data = "1\n2\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
-    TranslationRequest request = new TranslationRequest(input);
+    TranslationRequest request = new TranslationRequest(input, joshuaConfiguration);
     Translations translations = new Translations(request);
     assertEquals(translations.next().getSourceSentence().source(), "1");
     // Remove the next two.

@@ -61,7 +61,6 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
     throw new UnsupportedOperationException();
   }
 
-
   public void close() {
     if (null != this.reader) {
       try {
@@ -75,7 +74,6 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
     }
   }
 
-
   /**
    * For correct behavior <code>close</code> must be called on every GrammarReader, however this
    * code attempts to avoid resource leaks.
@@ -83,18 +81,18 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
    * @see joshua.util.io.LineReader
    */
   protected void finalize() throws Throwable {
-    logger.severe("Grammar file stream was not closed, this indicates a coding error: "
-        + this.fileName);
+    if (this.reader != null) {
+      logger.severe("Grammar file stream was not closed, this indicates a coding error: "
+          + this.fileName);
+    }
 
     this.close();
     super.finalize();
   }
 
-
   public boolean hasNext() {
     return lookAhead != null;
   }
-
 
   private void advanceReader() {
     try {
@@ -112,10 +110,10 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
   public R next() {
     String line = lookAhead;
     advanceReader();
-    
+
     if ((numRulesRead) % 80000 == 0) {
       System.err.println(String.format("%d rules read", numRulesRead));
-    } else if ( (numRulesRead) % 1000 == 0) {
+    } else if ((numRulesRead) % 1000 == 0) {
       System.err.print(".");
     }
     return parseLine(line);

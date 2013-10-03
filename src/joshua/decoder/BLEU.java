@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.decoder;
 
 import java.util.ArrayList;
@@ -22,20 +7,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import joshua.corpus.Vocabulary;
+import joshua.decoder.ff.state_maintenance.NgramDPState;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HyperEdge;
 import joshua.util.Ngram;
 import joshua.util.Regex;
-
 
 /**
  * this class implements: (1) sentence-level bleu, with smoothing
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public class BLEU {
   // do_ngram_clip: consider global n-gram clip
 
-  public static double computeSentenceBleu(String[] refSents, String hypSent) {
+  public static float computeSentenceBleu(String[] refSents, String hypSent) {
     return computeSentenceBleu(refSents, hypSent, true, 4, false);
   }
 
@@ -48,7 +35,7 @@ public class BLEU {
    * @param bleuOrder Should usually be 4
    * @param useShortestRef Probably use false
    */
-  public static double computeSentenceBleu(String[] refSents, String hypSent, boolean doNgramClip,
+  public static float computeSentenceBleu(String[] refSents, String hypSent, boolean doNgramClip,
       int bleuOrder, boolean useShortestRef) {
     // === ref tbl
     HashMap<String, Integer> maxRefCountTbl = constructMaxRefCountTable(refSents, bleuOrder);
@@ -60,7 +47,7 @@ public class BLEU {
       refLens[i] = refWords.length;
     }
 
-    double effectiveRefLen = computeEffectiveLen(refLens, useShortestRef);
+    float effectiveRefLen = computeEffectiveLen(refLens, useShortestRef);
 
     // === hyp tbl
     String[] hypWrds = Regex.spaces.split(hypSent);
@@ -70,17 +57,18 @@ public class BLEU {
         doNgramClip, bleuOrder);
   }
 
-  public static double computeEffectiveLen(int[] refLens, boolean useShortestRef) {
+  public static float computeEffectiveLen(int[] refLens, boolean useShortestRef) {
     if (useShortestRef) {
       int res = Integer.MAX_VALUE;
       for (int i = 0; i < refLens.length; i++)
-        if (refLens[i] < res) res = refLens[i];
+        if (refLens[i] < res)
+          res = refLens[i];
       return res;
     } else {// default is average length
-      double res = 0;
+      float res = 0;
       for (int i = 0; i < refLens.length; i++)
         res += refLens[i];
-      return res * 1.0 / refLens.length;
+      return res * 1.0f / refLens.length;
     }
   }
 
@@ -103,7 +91,6 @@ public class BLEU {
     return computeMaxRefCountTbl(listRefNgramTbl);
   }
 
-
   /**
    * compute max_ref_count for each ngram in the reference sentences
    * */
@@ -124,7 +111,8 @@ public class BLEU {
       int max = 0;
       for (HashMap<String, Integer> tbl : listRefNgramTbl) {
         Integer val = tbl.get(ngram);
-        if (val != null && val > max) max = val;
+        if (val != null && val > max)
+          max = val;
       }
 
       merged.put(ngram, max);
@@ -132,11 +120,11 @@ public class BLEU {
     return merged;
   }
 
-  public static double computeSentenceBleu(double effectiveRefLen,
+  public static float computeSentenceBleu(float effectiveRefLen,
       HashMap<String, Integer> maxRefCountTbl, int hypLen, HashMap<String, Integer> hypNgramTbl,
       boolean doNgramClip, int bleuOrder) {
 
-    double resBleu = 0;
+    float resBleu = 0.0f;
 
     int[] numNgramMatch = new int[bleuOrder];
     for (String ngram : hypNgramTbl.keySet()) {// each ngram in hyp
@@ -150,7 +138,6 @@ public class BLEU {
           effectiveNumMatch = (int) Support.findMin(hypNgramCount, maxRefCount); // ngram clip;
         }
 
-
         numNgramMatch[Regex.spaces.split(ngram).length - 1] += effectiveNumMatch;
       }
     }
@@ -163,12 +150,9 @@ public class BLEU {
     return resBleu;
   }
 
-
   // ==============================multiple references end
 
-
-
-  public static double computeSentenceBleu(String refSent, String hypSent, boolean doNgramClip,
+  public static float computeSentenceBleu(String refSent, String hypSent, boolean doNgramClip,
       int bleuOrder) {
     String[] refWrds = Regex.spaces.split(refSent);
     String[] hypWrds = Regex.spaces.split(hypSent);
@@ -180,17 +164,17 @@ public class BLEU {
         doNgramClip, bleuOrder);
   }
 
-  public static double computeSentenceBleu(int refLen, HashMap<String, Integer> refNgramTbl,
+  public static float computeSentenceBleu(int refLen, HashMap<String, Integer> refNgramTbl,
       int hypLen, HashMap<String, Integer> hypNgramTbl, boolean doNgramClip, int bleuOrder) {
-    double resBleu = 0;
+    float resBleu = 0;
 
     int[] numNgramMatch = new int[bleuOrder];
     for (Iterator<String> it = hypNgramTbl.keySet().iterator(); it.hasNext();) {
       String ngram = it.next();
       if (refNgramTbl.containsKey(ngram)) {
         if (doNgramClip) {
-          numNgramMatch[Regex.spaces.split(ngram).length - 1] +=
-              Support.findMin(refNgramTbl.get(ngram), hypNgramTbl.get(ngram)); // ngram clip
+          numNgramMatch[Regex.spaces.split(ngram).length - 1] += Support.findMin(
+              refNgramTbl.get(ngram), hypNgramTbl.get(ngram)); // ngram clip
         } else {
           numNgramMatch[Regex.spaces.split(ngram).length - 1] += hypNgramTbl.get(ngram);// without
                                                                                         // ngram
@@ -208,15 +192,15 @@ public class BLEU {
   }
 
   // sentence-bleu: BLEU= bp * prec; where prec = exp (sum 1/4 * log(prec[order]))
-  public static double computeBleu(int hypLen, double refLen, int[] numNgramMatch, int bleuOrder) {
+  public static float computeBleu(int hypLen, float refLen, int[] numNgramMatch, int bleuOrder) {
     if (hypLen <= 0 || refLen <= 0) {
       System.out.println("error: ref or hyp is zero len");
       System.exit(1);
     }
-    double res = 0;
-    double wt = 1.0 / bleuOrder;
-    double prec = 0;
-    double smooth_factor = 1.0;
+    float res = 0;
+    float wt = 1.0f / bleuOrder;
+    float prec = 0;
+    float smooth_factor = 1.0f;
     for (int t = 0; t < bleuOrder && t < hypLen; t++) {
       if (numNgramMatch[t] > 0) {
         prec += wt * Math.log(numNgramMatch[t] * 1.0 / (hypLen - t));
@@ -225,14 +209,12 @@ public class BLEU {
         prec += wt * Math.log(smooth_factor / (hypLen - t));
       }
     }
-    double bp = (hypLen >= refLen) ? 1.0 : Math.exp(1 - refLen / hypLen);
-    res = bp * Math.exp(prec);
+    float bp = (hypLen >= refLen) ? 1.0f : (float) Math.exp(1 - refLen / hypLen);
+    res = bp * (float) Math.exp(prec);
     // System.out.println("hyp_len: " + hyp_len + "; ref_len:" + ref_len + "prec: " + Math.exp(prec)
     // + "; bp: " + bp + "; bleu: " + res);
     return res;
   }
-
-
 
   public static HashMap<String, Integer> constructNgramTable(String sentence, int bleuOrder) {
     HashMap<String, Integer> ngramTable = new HashMap<String, Integer>();
@@ -241,16 +223,14 @@ public class BLEU {
     return ngramTable;
   }
 
-
-
   // ================================ Google linear corpus gain
   // ============================================
-  public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, String[] refSents,
+  public static float computeLinearCorpusGain(float[] linearCorpusGainThetas, String[] refSents,
       String hypSent) {
     int bleuOrder = 4;
     int hypLength = Regex.spaces.split(hypSent).length;
-    HashMap<String, Integer> refereceNgramTable =
-        BLEU.constructMaxRefCountTable(refSents, bleuOrder);
+    HashMap<String, Integer> refereceNgramTable = BLEU.constructMaxRefCountTable(refSents,
+        bleuOrder);
     HashMap<String, Integer> hypNgramTable = BLEU.constructNgramTable(hypSent, bleuOrder);
     return computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hypNgramTable,
         refereceNgramTable);
@@ -259,9 +239,9 @@ public class BLEU {
   /**
    * speed consideration: assume hypNgramTable has a smaller size than referenceNgramTable does
    */
-  public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength,
+  public static float computeLinearCorpusGain(float[] linearCorpusGainThetas, int hypLength,
       Map<String, Integer> hypNgramTable, Map<String, Integer> referenceNgramTable) {
-    double res = 0;
+    float res = 0;
     res += linearCorpusGainThetas[0] * hypLength;
     for (Entry<String, Integer> entry : hypNgramTable.entrySet()) {
       String ngram = entry.getKey();
@@ -273,11 +253,12 @@ public class BLEU {
     return res;
   }
 
+  /* Convenience function */
   public static int[] computeNgramMatches(String[] refSents, String hypSent) {
     int bleuOrder = 4;
     int hypLength = Regex.spaces.split(hypSent).length;
-    HashMap<String, Integer> refereceNgramTable =
-        BLEU.constructMaxRefCountTable(refSents, bleuOrder);
+    HashMap<String, Integer> refereceNgramTable = BLEU.constructMaxRefCountTable(refSents,
+        bleuOrder);
     HashMap<String, Integer> hypNgramTable = BLEU.constructNgramTable(hypSent, bleuOrder);
     return computeNgramMatches(hypLength, hypNgramTable, refereceNgramTable, bleuOrder);
   }
@@ -293,20 +274,36 @@ public class BLEU {
         res[ngramOrder] += entry.getValue();
       }
     }
+
+    /*
+    System.err.print("NGRAMS:");
+    for (String ngram: hypNgramTable.keySet())
+      System.err.print(" | " + ngram);
+    System.err.println();
+    System.err.print("REF:");
+    for (String ngram: referenceNgramTable.keySet())
+      System.err.print(" | " + ngram);
+    System.err.println();
+    System.err.print("COUNTS:");
+    for (int i = 1; i <= 4; i++)
+      System.err.print(" " + res[i]);
+    System.err.println();
+    */
+
     return res;
   }
 
-  static public double[] computeLinearCorpusThetas(int numUnigramTokens, double unigramPrecision,
-      double decayRatio) {
-    double[] res = new double[5];
-    res[0] = -1.0 / numUnigramTokens;
+  static public float[] computeLinearCorpusThetas(int numUnigramTokens, float unigramPrecision,
+      float decayRatio) {
+    float[] res = new float[5];
+    res[0] = -1.0f / numUnigramTokens;
     for (int i = 1; i < 5; i++)
-      res[i] = 1.0 / (4.0 * numUnigramTokens * unigramPrecision * Math.pow(decayRatio, i - 1));
+      res[i] = (1.0f / (4.0f * numUnigramTokens * unigramPrecision * (float) Math.pow(decayRatio,
+          i - 1)));
 
-    double firstWeight = res[0];
+    float firstWeight = res[0];
     for (int i = 0; i < 5; i++)
       res[i] /= Math.abs(firstWeight);// normalize by first one
-
 
     System.out.print("Normalized Thetas are: ");
     for (int i = 0; i < 5; i++)
@@ -316,5 +313,226 @@ public class BLEU {
     return res;
   }
 
+  /**
+   * Computes BLEU statistics incurred by a rule. This is (a) all ngram (n <= 4) for terminal rules
+   * and (b) all ngrams overlying boundary points between terminals in the rule and ngram state from
+   * tail nodes.
+   * 
+   * There are four cases to handle:
+   * <ul>
+   * <li>only words
+   * <li>a number of words followed by a nonterminal (left context of tail tail node)
+   * <li>a nonterminal (right context of tail node) followed by one or more words
+   * <li>two nonterminals (right context of tail node 1, left context of tail node 2)
+   * </ul>
+   * 
+   * Of these, all but the first have a boundary point to consider.
+   * 
+   * @param rule the rule being applied
+   * @param spanWidth the width of the span in the input sentence
+   * @param references the reference to compute statistics against
+   * @return
+   */
+  public static final int maxOrder = 4;
 
+  public static Stats compute(HyperEdge edge, int spanWidth, References references) {
+    Stats stats = new Stats();
+    // TODO: this should not be the span width, but the real ref scaled to the span percentage
+    stats.reflen = spanWidth;
+
+    Rule rule = edge.getRule();
+    if (rule != null) {
+      int[] symbols = rule.getEnglish();
+
+//      System.err.println(String.format("compute(%s)", rule));
+      
+      ArrayList<Integer> currentNgram = new ArrayList<Integer>();
+      int boundary = -1;
+      int tailIndex = -1;
+      for (int i = 0; i < symbols.length; i++) {
+        if (symbols[i] < 0) {
+          tailIndex++;
+
+          NgramDPState ngramState = null;
+          try {
+            ngramState = (NgramDPState) edge.getTailNodes().get(tailIndex).getDPState(0);
+          } catch (ClassCastException e) {
+            System.err.println(String.format(
+                "* FATAL: first state needs to be NgramDPState (found %s)", edge.getTailNodes()
+                    .get(tailIndex).getDPState(0).getClass()));
+            System.exit(1);
+          }
+          
+          // Compute ngrams overlapping with left context of tail node
+          if (currentNgram.size() > 0) {
+            boundary = currentNgram.size();
+            for (int id : ngramState.getLeftLMStateWords())
+              currentNgram.add(id);
+
+            // Compute the BLEU statistics
+            BLEU.Stats partStats = computeOverDivide(currentNgram, references, boundary);
+            stats.add(partStats);
+            
+//            System.err.println("    " + Vocabulary.getWords(ngramState.getLeftLMStateWords()));
+
+            currentNgram.clear();
+          }
+          
+//          System.err.println("    " + Vocabulary.getWords(ngramState.getRightLMStateWords()));
+
+          // Accumulate ngrams from right context of tail node
+          for (int id : ngramState.getRightLMStateWords())
+            currentNgram.add(id);
+
+          boundary = currentNgram.size();
+
+        } else { // terminal symbol
+          currentNgram.add(symbols[i]);
+          stats.len++;
+
+//          System.err.println("    " + Vocabulary.word(symbols[i]));
+          
+          if (boundary != -1) {
+            BLEU.Stats partStats = computeOverDivide(currentNgram, references, boundary);
+            stats.add(partStats);
+
+            // Shift off the context from the nonterminal's righthand side
+            for (int j = 0; j < boundary; j++)
+              currentNgram.remove(0);
+            boundary = -1;
+          }
+        }
+
+        /*
+         * At the end, we might have (a) nothing, (b) a sequence of words from a nonterminal's
+         * righthand side, (c) a sequence of words from the rule, or (d) a sequence of words from a
+         * nonterminal's righthand context and from the rule
+         */
+        if (currentNgram.size() > 0 && currentNgram.size() != boundary) { // skip cases (a) and (b)
+          BLEU.Stats partStats = computeOverDivide(currentNgram, references, boundary);
+          stats.add(partStats);
+        }
+      }
+    }
+    return stats;
+  }
+
+  /**
+   * When computing BLEU statistics over a rule, we need to avoid adding in ngrams that are
+   * exclusively contained inside tail nodes. This function accumulates all the eligible ngrams from
+   * a string respective of an optional boundary point, and then calls computeNgramMatches().
+   * 
+   * @param ngram the current set of ngrams
+   * @param references contains the set of ngrams to compare against
+   * @param boundary the boundary over which all ngrams must fall (-1 means ignore boundary)
+   * @return
+   */
+  private static Stats computeOverDivide(ArrayList<Integer> ngram, References references,
+      int boundary) {
+    
+//    System.err.print(String.format("      BOUNDARY(%s, %d)", Vocabulary.getWords(ngram), boundary));
+
+    HashMap<String, Integer> boundaryNgrams = new HashMap<String, Integer>();
+    for (int width = 1; width <= Math.min(maxOrder, ngram.size()); width++) {
+      for (int i = 0; i < ngram.size() - width + 1; i++) {
+        int j = i + width;
+
+        final List<Integer> piece = ngram.subList(i, j);
+        if (boundary == -1 || (boundary > i && boundary < j)) {
+          String ngramStr = Vocabulary.getWords(piece);
+          if (!boundaryNgrams.containsKey(ngramStr))
+            boundaryNgrams.put(ngramStr, 1);
+          else
+            boundaryNgrams.put(ngramStr, boundaryNgrams.get(ngramStr));
+        }
+      }
+    }
+    
+    /*
+    System.err.print(" FOUND");
+    for (String phr: boundaryNgrams.keySet())
+      System.err.print(" | " + phr);
+    System.err.println();
+    */
+
+    BLEU.Stats result = new BLEU.Stats();
+    int[] stats = BLEU.computeNgramMatches(0, boundaryNgrams, references.ngramCounts, maxOrder);
+    System.arraycopy(stats, 1, result.counts, 0, maxOrder);
+
+    return result;
+  }
+
+  public static class References {
+    HashMap<String, Integer> ngramCounts;
+    float reflen;
+
+    public References(String reference) {
+      String[] refs = new String[1];
+      refs[0] = reference;
+      fill(refs);
+    }
+
+    public References(String[] references) {
+      fill(references);
+    }
+
+    private void fill(String[] references) {
+      ngramCounts = new HashMap<String, Integer>();
+      reflen = 0.0f;
+      for (int i = 0; i < references.length; i++) {
+        String[] ref = references[i].split(" ");
+        Ngram.getNgrams(ngramCounts, 1, maxOrder, ref);
+        reflen += ref.length;
+      }
+      reflen /= references.length;
+    }
+  }
+
+  public static float score(Stats stats) {
+    float score = 0f;
+    float wt = 1.0f / maxOrder;
+    float prec = 0;
+    float smooth_factor = 1.0f;
+    for (int t = 0; t < maxOrder && t < stats.len; t++) {
+      if (stats.counts[t] > 0) {
+        prec += wt * Math.log(stats.counts[t] * 1.0 / (stats.len - t));
+      } else {
+        smooth_factor *= 0.5;// TODO
+        prec += wt * Math.log(smooth_factor / (stats.len - t));
+      }
+    }
+    float bp = (stats.len >= stats.reflen) ? 1.0f : (float) Math.exp(1 - stats.reflen / stats.len);
+    score = bp * (float) Math.exp(prec);
+    
+//    System.err.println(String.format("BLEU(%d %d %d %d / BP=%f) = %f", stats.counts[0], stats.counts[1], stats.counts[2], stats.counts[3], bp, score));
+    return score;
+  }
+
+  /**
+   * Accumulated sufficient statistics for computing BLEU.
+   */
+  public static class Stats {
+    public int[] counts;
+    public float len;
+    public float reflen;
+
+    public Stats() {
+      counts = new int[4];
+      len = 0.0f;
+      reflen = 0.0f;
+    }
+
+    public Stats(int[] counts, float len, float reflen) {
+      this.counts = counts;
+      this.len = len;
+      this.reflen = reflen;
+    }
+
+    public void add(Stats otherStats) {
+      for (int i = 0; i < counts.length; i++)
+        counts[i] += otherStats.counts[i];
+      
+      len += otherStats.len;
+    }
+  }
 }

@@ -12,6 +12,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
+import joshua.util.ChartSpan;
 import joshua.util.Regex;
 
 /**
@@ -35,7 +36,8 @@ public class Sentence {
    */
   protected String sentence;
   protected String target = null;
-
+  protected String[] references = null; 
+  
   /* Lattice representation of the source sentence. */
   protected Lattice<Integer> sourceLattice = null;
 
@@ -54,7 +56,7 @@ public class Sentence {
    * @param inputSentence
    * @param id
    */
-  public Sentence(String inputSentence, int id) {
+  public Sentence(String inputSentence, int id, JoshuaConfiguration joshuaConfiguration) {
 
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
 
@@ -70,21 +72,31 @@ public class Sentence {
       this.id = Integer.parseInt(idstr);
     } else {
       if (inputSentence.indexOf(" ||| ") != -1) {
-        String[] pieces = inputSentence.split("\\s\\|{3}\\s", 2);
+        String[] pieces = inputSentence.split("\\s?\\|{3}\\s?");
         sentence = pieces[0];
         target = pieces[1];
+        if (target.equals(""))
+          target = null;
+        if (pieces.length > 2) {
+          references = new String[pieces.length - 2];
+          System.arraycopy(pieces, 2, references, 0, pieces.length - 2);
+        }
       } else {
         sentence = inputSentence;
       }
       this.id = id;
     }
-    adjustForLength();
+
+    // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
+    if (joshuaConfiguration.maxlen != 0 && ! this.intLattice().hasMoreThanOnePath())
+      adjustForLength(joshuaConfiguration.maxlen);
   }
 
   /**
    * Returns the length of the sentence. For lattices, the length is the shortest path through the
    * lattice.
    */
+  @SuppressWarnings("unused")
   private int length() {
     return this.intLattice().getShortestDistance();
   }
@@ -116,14 +128,14 @@ public class Sentence {
        */
       if (isOOV) {
         String word = Vocabulary.word(label);
-        int[][] chart = new int[word.length()][word.length()];
+        ChartSpan<Boolean> chart = new ChartSpan<Boolean>(word.length(), false);
 
         for (int width = 1; width <= word.length(); width++) {
           for (int i = 0; i <= word.length() - width; i++) {
             int j = i + width;
             
             // TODO: finish this
-            chart[i][j] = 1;  
+            chart.set(i, j, true);
           }
         }
         
@@ -139,20 +151,19 @@ public class Sentence {
    * 
    * Note that this code assumes the underlying representation is a sentence, and not a lattice. Its
    * behavior is undefined for lattices.
+   * @param length 
    */
-  private void adjustForLength() {
+  private void adjustForLength(int length) {
+    int size = this.intLattice().size() - 2; // subtract off the start- and end-of-sentence tokens
 
-    Lattice<Integer> lattice = this.intLattice();
-    int size = lattice.size() - 2; // subtract off the start- and end-of-sentence tokens
-
-    if (size > JoshuaConfiguration.maxlen) {
+    if (size > length) {
       logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
-          id(), size, JoshuaConfiguration.maxlen));
+          id(), size, length));
 
       // Replace the input sentence (and target)
       String[] tokens = source().split("\\s+");
       sentence = tokens[0];
-      for (int i = 1; i < JoshuaConfiguration.maxlen; i++)
+      for (int i = 1; i < length; i++)
         sentence += " " + tokens[i];
       sourceLattice = null;
       if (target != null) {
@@ -189,6 +200,10 @@ public class Sentence {
    */
   public String target() {
     return target;
+  }
+  
+  public String[] references() {
+    return references;
   }
 
   public int[] intSentence() {

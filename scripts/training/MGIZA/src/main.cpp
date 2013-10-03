@@ -39,6 +39,7 @@
 #include "D5Tables.h"
 #include "transpair_model4.h"
 #include "transpair_model5.h"
+#include <boost/thread/thread.hpp>
 
 #define ITER_M2 0
 #define ITER_MH 5
@@ -85,7 +86,7 @@ bool Transfer2to3=0;
 short NoEmptyWord=0;
 bool FEWDUMPS=0;
 GLOBAL_PARAMETER(bool,ONLYALDUMPS,"ONLYALDUMPS","1: do not write any files",PARLEV_OUTPUT,0);
-GLOBAL_PARAMETER(short,NCPUS,"NCPUS","Number of CPUS",PARLEV_EM,2);
+GLOBAL_PARAMETER(short,NCPUS,"NCPUS","Number of threads to be executed, use 0 if you just want all CPUs to be used",PARLEV_EM,0);
 GLOBAL_PARAMETER(short,CompactAlignmentFormat,"CompactAlignmentFormat","0: detailled alignment format, 1: compact alignment format ",PARLEV_OUTPUT,0);
 GLOBAL_PARAMETER2(bool,NODUMPS,"NODUMPS","NO FILE DUMPS? (Y/N)","1: do not write any files",PARLEV_OUTPUT,0);
 
@@ -97,6 +98,7 @@ Vector<map< pair<int,int>,char > > ReferenceAlignment;
 bool useDict = false;
 string CoocurrenceFile;
 string Prefix, LogFilename, OPath, Usage, SourceVocabFilename,
+		SourceVocabClassesFilename(""), TargetVocabClassesFilename(""),
 		TargetVocabFilename, CorpusFilename, TestCorpusFilename, t_Filename,
 		a_Filename, p0_Filename, d_Filename, n_Filename, dictionary_Filename;
 
@@ -249,8 +251,8 @@ void printDecoderConfigFile() {
 	decoder << "Target.vcb = " << TargetVocabFilename << '\n';
 	//  decoder << "Source.classes = " << SourceVocabFilename + ".classes" << '\n';
 	//  decoder << "Target.classes = " << TargetVocabFilename + ".classes" <<'\n';
-	decoder << "Source.classes = " << SourceVocabFilename+".classes" << '\n';
-	decoder << "Target.classes = " << TargetVocabFilename + ".classes" <<'\n';
+	decoder << "Source.classes = " << SourceVocabClassesFilename << '\n';
+	decoder << "Target.classes = " << TargetVocabClassesFilename <<'\n';
 	p=Prefix + ".fe0_"+ /*lastModelName*/"3" + ".final";
 	decoder << "FZeroWords       = " <<stripPath(p.c_str()) << '\n';
 
@@ -671,6 +673,8 @@ double StartTraining(int&result) {
 	WordClasses french,english;
 	hmm h(m2,english,french);
 	
+	bool hmmvalid = false;
+
 	if (restart == 6 || restart ==7){  // If we want to initialize model 3 or continue train hmm, need to read jumps
 		string al = prev_hmm + ".alpha";
 		string be = prev_hmm + ".beta";
@@ -678,6 +682,19 @@ double StartTraining(int&result) {
 		if(!h.probs.readJumps(prev_hmm.c_str(),NULL,al.c_str(),be.c_str())){
 			cerr << "Failed reading" <<  prev_hmm <<"," << al << "," << be << endl;
 			exit(1);
+		}
+		hmmvalid = true;
+	}else if (restart > 7){
+		if (prev_hmm.length() > 0){
+			string al = prev_hmm + ".alpha";
+			string be = prev_hmm + ".beta";
+			cerr << "We are going to load previous (HMM) model from " << prev_hmm <<"," << al << "," << be << endl;
+			if(!h.probs.readJumps(prev_hmm.c_str(),NULL,al.c_str(),be.c_str())){
+				cerr << "Failed reading" <<  prev_hmm <<"," << al << "," << be << endl ;
+				cerr << "Continue without hmm" << endl;
+				hmmvalid = false;
+			}else
+				hmmvalid = true;
 		}
 	}
 	nmodel<PROB> nTable(m2.getNoEnglishWords()+1, MAX_FERTILITY);
@@ -820,8 +837,8 @@ double StartTraining(int&result) {
 			if (HMM_Iterations > 0 && (restart < 2 || restart == 4 || restart == 5 || restart == 6)) {
 				cout << "NOTE: I am doing iterations with the HMM model!\n";
 				
-				h.makeWordClasses(m1.Elist, m1.Flist, SourceVocabFilename
-						+".classes", TargetVocabFilename+".classes");
+				h.makeWordClasses(m1.Elist, m1.Flist, SourceVocabClassesFilename
+						, TargetVocabClassesFilename);
 				if(restart != 6) h.initialize_table_uniformly(*corpus);
 				
 				if(Model3_Iterations == 0 && Model4_Iterations == 0 &&
@@ -856,12 +873,15 @@ double StartTraining(int&result) {
 							trainPerp, trainViterbiPerp);
 				errors=m3.errorsAL();
 			}
-			if(restart == 7 ){
-				h.makeWordClasses(m1.Elist, m1.Flist, SourceVocabFilename
-						+".classes", TargetVocabFilename+".classes");
+			if(restart >= 7 && hmmvalid){
+				h.makeWordClasses(m1.Elist, m1.Flist, SourceVocabClassesFilename
+						, TargetVocabClassesFilename);
 			}
 			if (HMM_Iterations>0 || restart == 7)
 				m3.setHMM(&h);
+			else if (restart > 7 && hmmvalid){
+				m3.setHMM(&h);
+			}
 			
 			if (Model3_Iterations > 0 || Model4_Iterations > 0
 					|| Model5_Iterations || Model6_Iterations) {
@@ -940,6 +960,18 @@ int main(int argc, char* argv[]) {
 			ParameterChangedFlag,
 			"target vocabulary file name",
 			TargetVocabFilename,-1));
+	getGlobalParSet().insert(new Parameter<string>(
+			"Source Vocabulary Classes",
+			ParameterChangedFlag,
+			"source vocabulary classes file name",
+			SourceVocabClassesFilename,
+			PARLEV_INPUT));
+	getGlobalParSet().insert(new Parameter<string>(
+			"Target Vocabulary Classes",
+			ParameterChangedFlag,
+			"target vocabulary classes file name",
+			TargetVocabClassesFilename,
+			PARLEV_INPUT));
 	getGlobalParSet().insert(new Parameter<string>(
 			"C",
 			ParameterChangedFlag,
@@ -1055,7 +1087,6 @@ int main(int argc, char* argv[]) {
 	time_t st1, fn;
 	st1 = time(NULL); // starting time
 
-//	cerr << "---------------- " << endl;
 	// Program Name
 	
 	string temp(argv[0]);
@@ -1074,6 +1105,27 @@ int main(int argc, char* argv[]) {
 	// 
 	parseArguments(argc, argv);
 
+	if (SourceVocabClassesFilename=="") {
+	  makeSetCommand("sourcevocabularyclasses",SourceVocabFilename+".classes",getGlobalParSet(),2);
+	}
+
+	if (TargetVocabClassesFilename=="") {
+	  makeSetCommand("targetvocabularyclasses",TargetVocabFilename+".classes",getGlobalParSet(),2);
+	}	
+
+    // Determine number of threads
+
+    if(NCPUS == 0){
+        cerr << "Trying to detect number of CPUS...";
+        NCPUS = boost::thread::hardware_concurrency();
+        if(NCPUS==0){
+            cerr << "failed, default to 2 threads" << std::endl;
+            NCPUS = 2;
+        }
+        else{
+            cerr << NCPUS << std::endl;
+        }
+    }
 	
 	cerr << "Opening Log File " << endl;	
 	if (Log) {
@@ -1103,7 +1155,7 @@ int main(int argc, char* argv[]) {
 
 	cout << '\n' << "Entire Training took: " << difftime(fn, st1)
 			<< " seconds\n";
-	cout << "Program Finished at: "<< ctime(&fn) << '\n';
+	cout << "Program Finished at: "<< my_ctime(&fn) << '\n';
 	cout << "==========================================================\n";
 	return 0;
 }

@@ -16,6 +16,9 @@ use_unique_nbest = true
 include-align-index = false
 top_n = 300
 
+# this shouldn't apply to the lattice
+maxlen = 1
+
 feature-function = OOVPenalty
 feature-function = WordPenalty
 feature-function = SourcePath
@@ -32,7 +35,7 @@ tm_pt_2 0.5
 tm_glue_0 0.0
 
 #wordpenalty weight
-wordpenalty -1.0
-sourcepath 1.0
+WordPenalty -1.0
+SourcePath 1.0
 
-oovpenalty -100
+OOVPenalty -100

@@ -34,7 +34,7 @@ The basic method for invoking the decoder looks like this:
 You can test this using the sample configuration files and inputs can be found 
 in the example/ directory.  For example, type:
 
-    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config
+    cat examples/example/test.in | $JOSHUA/bin/decoder -c examples/example/joshua.config
 
 The decoder output will load the language model and translation models defined
 in the configuration file, and will then decode the five sentences in the
@@ -43,14 +43,14 @@ example file.
 There are a variety of command line options that you can feed to Joshua.
 For example, you can enable multithreaded decoding with the -threads N flag:
 
-    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -threads 5
+    cat examples/example/test.in | $JOSHUA/bin/decoder -c examples/example/joshua.config -threads 5
 
 The configuration file defines many additional parameters, all of which can be
 overridden on the command line by using the format -PARAMETER value.  For
 example, to output the top 10 hypotheses instead of just the top 1 specified in
 the configuration file, use -top-n N:
 
-    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -top_n 10
+    cat examples/example/test.in | $JOSHUA/bin/decoder -c examples/example/joshua.config -top-n 10
 
 Parameters, whether in the configuration file or on the command line, are
 converted to a canonical internal representation that ignores hyphens,

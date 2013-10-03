@@ -195,7 +195,7 @@ public class Vocabulary {
     return sb.append(word(ids[ids.length - 1])).toString();
   }
 
-  public static String getWords(Iterable<Integer> ids) {
+  public static String getWords(final Iterable<Integer> ids) {
     StringBuilder sb = new StringBuilder();
     for (int id : ids)
       sb.append(word(id)).append(" ");
