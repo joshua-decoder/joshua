@@ -34,13 +34,6 @@ public class Translation {
     StringWriter sw = new StringWriter();
     BufferedWriter out = new BufferedWriter(sw);
 
-    /*
-     * this.featureFunctions = new ArrayList<FeatureFunction>(); for (FeatureFunction ff :
-     * featureFunctions) { if (ff instanceof SourceDependentFF) { SourceDependentFF sdff =
-     * (SourceDependentFF) ((SourceDependentFF) ff).clone(); sdff.setSource(source);
-     * this.featureFunctions.add((FeatureFunction) sdff); } else { this.featureFunctions.add(ff); }
-     */
-
     try {
       if (hypergraph != null) {
         if (!joshuaConfiguration.hypergraphFilePattern.equals("")) {
@@ -50,7 +43,7 @@ public class Translation {
         long startTime = System.currentTimeMillis();
 
         KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, 
-            joshuaConfiguration.use_unique_nbest, joshuaConfiguration.include_align_index, false,joshuaConfiguration);
+            false, joshuaConfiguration);
 
         // We must put this weight as zero, otherwise we get an error when we try to retrieve it 
         // without checking

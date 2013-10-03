@@ -102,16 +102,15 @@ public class KBestExtractor {
   BLEU.References references = null;
 
   public KBestExtractor(Sentence sentence, List<FeatureFunction> models, FeatureVector weights,
-      boolean extractUniqueNbest, boolean includeAlign, boolean isMonolingual,
-      JoshuaConfiguration joshuaConfiguration) {
+      boolean isMonolingual, JoshuaConfiguration joshuaConfiguration) {
 
     this.models = models;
 
     this.joshuaConfiguration = joshuaConfiguration;
+    this.extractUniqueNbest = joshuaConfiguration.use_unique_nbest;
+    this.includeAlign = joshuaConfiguration.include_align_index;
 
     this.weights = weights;
-    this.extractUniqueNbest = extractUniqueNbest;
-    this.includeAlign = includeAlign;
     this.defaultSide = (isMonolingual ? Side.SOURCE : Side.TARGET);
     this.sentence = sentence;
 
@@ -141,12 +140,9 @@ public class KBestExtractor {
       String hypothesis = null;
       if (joshuaConfiguration.outputFormat.contains("%f")
           || joshuaConfiguration.outputFormat.contains("%d"))
-        hypothesis = derivationState.getHypothesis(this, false, features, models, Side.TARGET);
+        hypothesis = derivationState.getHypothesis(false, features, models, Side.TARGET);
       else
-        hypothesis = derivationState.getHypothesis(this, false, null, models, Side.TARGET);
-
-      // if (JoshuaConfiguration.rescoreForest)
-      // features.put("BLEU", derivationState.computeBLEU());
+        hypothesis = derivationState.getHypothesis(false, null, models, Side.TARGET);
 
       outputString = joshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
@@ -155,17 +151,17 @@ public class KBestExtractor {
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
         outputString = outputString.replace("%t",
-            derivationState.getHypothesis(this, true, null, models, Side.TARGET));
+            derivationState.getHypothesis(true, null, models, Side.TARGET));
       }
 
       if (joshuaConfiguration.outputFormat.contains("%e"))
         outputString = outputString.replace("%e",
-            derivationState.getHypothesis(this, false, null, models, Side.SOURCE));
+            derivationState.getHypothesis(false, null, models, Side.SOURCE));
 
       /* %d causes a derivation with rules one per line to be output */
       if (joshuaConfiguration.outputFormat.contains("%d")) {
         outputString = outputString.replace("%d",
-            derivationState.getDerivation(this, new FeatureVector(), models, 0));
+            derivationState.getDerivation(new FeatureVector(), models, 0));
       }
     }
 
@@ -305,8 +301,7 @@ public class KBestExtractor {
             // We pass false for extract_nbest_tree because we want; to check that the hypothesis
             // *strings* are unique, not the trees.
             boolean useTreeFormat = false;
-            String res_str = derivationState.getHypothesis(kbestExtractor, useTreeFormat, null,
-                null, defaultSide);
+            String res_str = derivationState.getHypothesis(useTreeFormat, null, null, defaultSide);
             if (!uniqueStringsTable.contains(res_str)) {
               nbests.add(derivationState);
               uniqueStringsTable.add(res_str);
@@ -384,12 +379,8 @@ public class KBestExtractor {
                 + virtualTailNode.nbests.get(newRanks[i] - 1).getModelCost();
             nextState.setCost(cost);
 
-            if (JoshuaConfiguration.rescoreForest) {
-              // TODO: pass the scaled span width, not the actual span width (this serves as the
-              // reflen)
-              float bleu = nextState.computeBLEU();
-              nextState.bleu = bleu;
-            }
+            if (JoshuaConfiguration.rescoreForest)
+              nextState.bleu = nextState.computeBLEU();
 
             candHeap.add(nextState);
             derivationTable.add(nextState);
@@ -502,10 +493,8 @@ public class KBestExtractor {
       cost = (float) -hyperEdge.getBestDerivationScore();
 
       DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
-      if (JoshuaConfiguration.rescoreForest) {
-        float bleu = state.computeBLEU();
-        state.bleu = bleu;
-      }
+      if (JoshuaConfiguration.rescoreForest)
+        state.bleu = state.computeBLEU();
 
       return state;
     }
@@ -559,25 +548,28 @@ public class KBestExtractor {
       ranks = r;
       cost = c;
       edgePos = pos;
+      bleu = 0.0f;
     }
 
     /**
      * Computes a scaled approximate BLEU from the accumulated statistics. We know the number of
      * words; to compute the effective reference length, we take the real reference length statistic
-     * and scale it by the percentage of the input sentence that is consumed, based on the assumption that
-     * the total number of words in the hypothesis scales linearly with the input sentence span.
+     * and scale it by the percentage of the input sentence that is consumed, based on the
+     * assumption that the total number of words in the hypothesis scales linearly with the input
+     * sentence span.
      * 
      * @return
      */
     public float computeBLEU() {
       if (stats == null) {
         float percentage = 1.0f * (parentNode.j - parentNode.i) / (sentence.length());
-//        System.err.println(String.format("computeBLEU: (%d - %d) / %d = %f", parentNode.j, parentNode.i, sentence.length(), percentage));
+        // System.err.println(String.format("computeBLEU: (%d - %d) / %d = %f", parentNode.j,
+        // parentNode.i, sentence.length(), percentage));
         stats = BLEU.compute(edge, percentage, references);
-        
+
         if (edge.getTailNodes() != null) {
           for (int id = 0; id < edge.getTailNodes().size(); id++) {
-            stats.add(getChildDerivationState(KBestExtractor.this, edge, id).stats);
+            stats.add(getChildDerivationState(edge, id).stats);
           }
         }
       }
@@ -661,8 +653,7 @@ public class KBestExtractor {
      * @param models
      * @return a string representation of the derivation
      */
-    private String getDerivation(KBestExtractor kbestExtractor, FeatureVector features,
-        List<FeatureFunction> models, int indent) {
+    private String getDerivation(FeatureVector features, List<FeatureFunction> models, int indent) {
 
       StringBuffer sb = new StringBuffer();
       Rule rule = edge.getRule();
@@ -679,8 +670,8 @@ public class KBestExtractor {
       /* The top-level item. */
       if (null == rule) {
         StringBuilder childString = new StringBuilder();
-        childString.append(getChildDerivationState(kbestExtractor, edge, 0).getDerivation(
-            kbestExtractor, features, models, indent + 2));
+        childString.append(getChildDerivationState(edge, 0).getDerivation(features, models,
+            indent + 2));
 
         sb.append(Vocabulary.word(rootID)).append(
             " ||| " + transitionFeatures + " ||| " + features + " ||| "
@@ -693,8 +684,8 @@ public class KBestExtractor {
         StringBuilder childStrings = new StringBuilder();
         if (edge.getTailNodes() != null) {
           for (int id = 0; id < edge.getTailNodes().size(); id++) {
-            childStrings.append(getChildDerivationState(kbestExtractor, edge, id).getDerivation(
-                kbestExtractor, features, models, indent + 2));
+            childStrings.append(getChildDerivationState(edge, id).getDerivation(features, models,
+                indent + 2));
           }
         }
 
@@ -732,8 +723,8 @@ public class KBestExtractor {
      * @param side
      * @return
      */
-    private String getHypothesis(KBestExtractor kbestExtractor, boolean useTreeFormat,
-        FeatureVector features, List<FeatureFunction> models, Side side) {
+    private String getHypothesis(boolean useTreeFormat, FeatureVector features,
+        List<FeatureFunction> models, Side side) {
       // ### accumulate cost of p_edge into model_cost if necessary
       if (null != features) {
         computeCost(parentNode, edge, features, models);
@@ -759,8 +750,8 @@ public class KBestExtractor {
           sb.append(' ');
         }
         for (int id = 0; id < edge.getTailNodes().size(); id++) {
-          sb.append(getChildDerivationState(kbestExtractor, edge, id).getHypothesis(kbestExtractor,
-              useTreeFormat, features, models, side));
+          sb.append(getChildDerivationState(edge, id).getHypothesis(useTreeFormat,
+              features, models, side));
           if (id < edge.getTailNodes().size() - 1)
             sb.append(' ');
         }
@@ -789,8 +780,8 @@ public class KBestExtractor {
           for (int c = 0; c < english.length; c++) {
             if (Vocabulary.idx(english[c])) {
               int index = -(english[c] + 1);
-              sb.append(getChildDerivationState(kbestExtractor, edge, index).getHypothesis(
-                  kbestExtractor, useTreeFormat, features, models, side));
+              sb.append(getChildDerivationState(edge, index).getHypothesis(useTreeFormat, features, 
+                  models, side));
             } else {
               if (joshuaConfiguration.parse
                   || useTreeFormat
@@ -806,8 +797,8 @@ public class KBestExtractor {
           int nonTerminalID = 0;// the position of the non-terminal in the rule
           for (int c = 0; c < french.length; c++) {
             if (Vocabulary.nt(french[c])) {
-              sb.append(getChildDerivationState(kbestExtractor, edge, nonTerminalID).getHypothesis(
-                  kbestExtractor, useTreeFormat, features, models, side));
+              sb.append(getChildDerivationState(edge, nonTerminalID).getHypothesis(useTreeFormat, 
+                  features, models, side));
               nonTerminalID++;
             } else {
               sb.append(Vocabulary.word(french[c]));
@@ -843,8 +834,7 @@ public class KBestExtractor {
      * @param tailNodeIndex
      * @return
      */
-    private DerivationState getChildDerivationState(KBestExtractor kbestExtractor, HyperEdge edge,
-        int tailNodeIndex) {
+    private DerivationState getChildDerivationState(HyperEdge edge, int tailNodeIndex) {
       HGNode child = edge.getTailNodes().get(tailNodeIndex);
       VirtualNode virtualChild = getVirtualNode(child);
       return virtualChild.nbests.get(ranks[tailNodeIndex] - 1);
