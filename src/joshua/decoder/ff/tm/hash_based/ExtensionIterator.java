@@ -12,9 +12,13 @@ public class ExtensionIterator implements Iterator<Integer> {
 
   public ExtensionIterator(HashMap<Integer, ?> map, boolean terminal) {
     this.terminal = terminal;
-    this.iterator = map.keySet().iterator();
     done = false;
-    forward();
+    if (map == null) {
+      done = true;
+    } else {
+      this.iterator = map.keySet().iterator();
+      forward();
+    }
   }
 
   private void forward() {
@@ -37,7 +41,8 @@ public class ExtensionIterator implements Iterator<Integer> {
 
   @Override
   public Integer next() {
-    if (done) throw new RuntimeException();
+    if (done)
+      throw new RuntimeException();
     int consumed = next;
     forward();
     return consumed;
