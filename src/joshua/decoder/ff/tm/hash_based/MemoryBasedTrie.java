@@ -2,6 +2,7 @@ package joshua.decoder.ff.tm.hash_based;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
@@ -12,7 +13,7 @@ import joshua.decoder.ff.tm.Trie;
 public class MemoryBasedTrie implements Trie {
   MemoryBasedRuleBin ruleBin = null;
   HashMap<Integer, MemoryBasedTrie> childrenTbl = null;
-  
+
   public MemoryBasedTrie() {
   }
 
@@ -22,7 +23,7 @@ public class MemoryBasedTrie implements Trie {
       return childrenTbl.get(wordID);
     return null;
   }
-  
+
   /* See Javadoc for Trie interface. */
   public boolean hasExtensions() {
     return (null != this.childrenTbl);
@@ -55,5 +56,15 @@ public class MemoryBasedTrie implements Trie {
     if (this.childrenTbl != null)
       return this.childrenTbl.values();
     return null;
+  }
+
+  @Override
+  public Iterator<Integer> getTerminalExtensionIterator() {
+    return new ExtensionIterator(childrenTbl, true);
+  }
+
+  @Override
+  public Iterator<Integer> getNonterminalExtensionIterator() {
+    return new ExtensionIterator(childrenTbl, false);
   }
 }
