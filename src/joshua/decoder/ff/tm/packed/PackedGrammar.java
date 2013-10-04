@@ -532,7 +532,7 @@ public class PackedGrammar extends BatchGrammar {
         PackedChildIterator(int position, boolean terminal) {
           this.terminal = terminal;
           int num_children = source[position];
-          done = (num_children > 0);
+          done = (num_children == 0);
           if (!done) {
             current = (terminal ? position + 1 : position - 1 + 2 * num_children);
             last = (terminal ? position - 1 + 2 * num_children : position + 1);
