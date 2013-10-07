@@ -134,10 +134,10 @@ public class JoshuaConfiguration {
   public float rescoreForestWeight = 10.0f;
 
   
-  /*Whether to use soft syntactic constraint decoding, which allows that any nonterminal may be substituted 
+  /*Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any nonterminal may be substituted 
    * for any other nonterminal (except for OOV and GOAL)*/ 
-  public boolean softSyntacticConstraintDecoding = false;
-  public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "softSyntacticConstraintDecoding";
+  public boolean fuzzy_matching = false;
+  public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -381,8 +381,8 @@ public class JoshuaConfiguration {
             maxlen = Integer.parseInt(fds[1]);
 
           } else if (parameter.equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
-            softSyntacticConstraintDecoding = Boolean.parseBoolean(fds[1]);
-            logger.finest(String.format(softSyntacticConstraintDecoding +": %s", softSyntacticConstraintDecoding));
+            fuzzy_matching = Boolean.parseBoolean(fds[1]);
+            logger.finest(String.format(fuzzy_matching +": %s", fuzzy_matching));
           }
           
           else {

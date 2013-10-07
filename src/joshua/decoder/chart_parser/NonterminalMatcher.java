@@ -79,7 +79,7 @@ public abstract class NonterminalMatcher {
 			    "Error: NonterminalMatcherFactory. createNonterminalMatcher -  empty nonterminal indices table");
 		}
 
-		if (joshuaConfiguration.softSyntacticConstraintDecoding) {
+		if (joshuaConfiguration.fuzzy_matching) {
 			return new StandardNonterminalMatcherSoftConstraints(logger, joshuaConfiguration,
 			    allNonterminalIndicesExceptForGoalAndOOV,
 			    useTargetdQuerying(allNonterminalIndicesExceptForGoalAndOOV));
