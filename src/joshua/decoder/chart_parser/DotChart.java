@@ -305,13 +305,15 @@ class DotChart {
   }
 
   /**
-   * Creates a dot item and adds it into the cell(i,j) of this dot chart.
+   * Creates a {@link DotNode} and adds it into the {@link DotChart} at the correct place. These
+   * are (possibly incomplete) rule applications. 
    * 
-   * @param tnode the trie node pointing to the "dot" in the grammar trie
+   * @param tnode the trie node pointing to the location ("dot") in the grammar trie
    * @param i
    * @param j
    * @param antSuperNodesIn the supernodes representing the rule's tail nodes
    * @param curSuperNode the lefthand side of the rule being created
+   * @param srcPath the path taken through the input lattice
    */
   private void addDotItem(Trie tnode, int i, int j, List<SuperNode> antSuperNodesIn,
       SuperNode curSuperNode, SourcePath srcPath) {

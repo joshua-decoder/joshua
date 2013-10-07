@@ -483,8 +483,10 @@ public class Chart {
   // ===============================================================
 
   private void logStatistics(Level level) {
-    logger.log(level, String.format("ADDED: %d; MERGED: %d; DOT-ITEMS ADDED: %d", this.nAdded,
-        this.nMerged, this.nDotitemAdded));
+    if (logger.isLoggable(level))
+      logger.log(level,
+          String.format("Sentence %d Chart: ADDED %d MERGED %d DOT-ITEMS ADDED: %d",
+              this.sentence.id(), this.nAdded, this.nMerged, this.nDotitemAdded));
   }
 
   /**
