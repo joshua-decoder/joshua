@@ -3,26 +3,30 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.packed.PackedGrammar.PackedRoot;
+import joshua.decoder.ff.tm.packed.PackedGrammar.PackedSlice.PackedTrie;
 
 /**
- * This abstract class and its implementations serve to refine the behavior of DotChart using
- * strategy. Basically there are different ways that nonterminals of rules can be matched, either
- * strict, or soft syntactic (nonterminals can all match each other). This interface defines a
- * method that produce matching nodes for the nonterminal level. The interface is then implemented
- * in different classes for the different types of matching (currently just strict or
- * soft-syntactic)
+ * This abstract class and its implementations serve to refine the behavior of
+ * DotChart using strategy. Basically there are different ways that nonterminals
+ * of rules can be matched, either strict, or soft syntactic (nonterminals can
+ * all match each other). This interface defines a method that produce matching
+ * nodes for the nonterminal level. The interface is then implemented in
+ * different classes for the different types of matching (currently just strict
+ * or soft-syntactic)
  * 
- * The factory method produces different flavors of NonterminalMatcher corresponding to strict
- * (basic) matching, Regular Expression matching and soft syntactic matching. Notice that regular
- * expression matching and soft constraint matching can in fact be combined, getting the 'loosest'
- * way of matching possible.
+ * The factory method produces different flavors of NonterminalMatcher
+ * corresponding to strict (basic) matching, Regular Expression matching and
+ * soft syntactic matching. Notice that regular expression matching and soft
+ * constraint matching can in fact be combined, getting the 'loosest' way of
+ * matching possible.
  * 
  * @author Gideon Maillette de Buy Wenniger <gemdbw AT gmail DOT com>
  * 
@@ -30,13 +34,14 @@ import joshua.decoder.ff.tm.Trie;
 public abstract class NonterminalMatcher {
 
 	/**
-	 * How much nonterminals there may be maximal to use targeted querying rather than matching to
-	 * find the alternate nonterminals from the children table when doing soft syntactic translation.
-	 * Note that there is a tradeoff here: looping over all children and matching is rather is
-	 * expensive if there are many children, which is typically the case for big grammars as there are
-	 * many possible words at each level in the Trie. Targeted querying is only cheap provided the
-	 * number of nonterminals is small, otherwise it may in fact become more expensive than just
-	 * looping and matching.
+	 * How much nonterminals there may be maximal to use targeted querying rather
+	 * than matching to find the alternate nonterminals from the children table
+	 * when doing soft syntactic translation. Note that there is a tradeoff here:
+	 * looping over all children and matching is rather is expensive if there are
+	 * many children, which is typically the case for big grammars as there are
+	 * many possible words at each level in the Trie. Targeted querying is only
+	 * cheap provided the number of nonterminals is small, otherwise it may in
+	 * fact become more expensive than just looping and matching.
 	 */
 	private static final int MAX_TOTAL_NON_TERMINALS_FOR_TARGETED_QUERYING = 1000;
 
@@ -54,7 +59,8 @@ public abstract class NonterminalMatcher {
 	}
 
 	/**
-	 * This method returns a list of all indices corresponding to Nonterminals in the Vocabulary
+	 * This method returns a list of all indices corresponding to Nonterminals in
+	 * the Vocabulary
 	 * 
 	 * @return
 	 */
@@ -90,7 +96,8 @@ public abstract class NonterminalMatcher {
 		}
 	}
 
-	// A list of nonTerminalIndices, to be used for faster retrieval of Nonterminals in
+	// A list of nonTerminalIndices, to be used for faster retrieval of
+	// Nonterminals in
 	// soft syntactic matching
 	private final List<Integer> nonterminalIndicesExceptForGoalAndOOV;
 
@@ -108,8 +115,9 @@ public abstract class NonterminalMatcher {
 	}
 
 	/**
-	 * This is the abstract method used to get the matching child nodes for the nonterminal 
-	 * level
+	 * This is the abstract method used to get the matching child nodes for the
+	 * nonterminal level
+	 * 
 	 * @param dotNode
 	 * @param superNode
 	 * @return
@@ -122,10 +130,11 @@ public abstract class NonterminalMatcher {
 	}
 
 	/**
-	 * This method finds Nonterminal entries from the children in the Children HashMap using a
-	 * targeted querying strategy, based on knowledge of what the Nonterminals are. Storing the
-	 * Nonterminals and Terminals in the Trie separately would be an even smarter strategy perhaps,
-	 * but requires a more thorough refactoring of the code
+	 * This method finds Nonterminal entries from the children in the Children
+	 * HashMap using a targeted querying strategy, based on knowledge of what the
+	 * Nonterminals are. Storing the Nonterminals and Terminals in the Trie
+	 * separately would be an even smarter strategy perhaps, but requires a more
+	 * thorough refactoring of the code
 	 * 
 	 * @param childrenTbl
 	 * @return
@@ -149,41 +158,24 @@ public abstract class NonterminalMatcher {
 
 	}
 
-	private List<Trie> getNonTerminalsListFromChildrenByMatching(
-	    HashMap<Integer, ? extends Trie> childrenTbl, int wordID) {
+	private List<Trie> getNonTerminalsListFromChildrenByTrieEnumeration(Trie trie, int wordID) {
+		HashMap<Integer, ? extends Trie> childrenTbl = trie.getChildren();
 		List<Trie> trieList = new ArrayList<Trie>();
 
-		if (childrenTbl != null) {
-			// get all the extensions, map to string, check for *, build regexp
-
-			// This has now been optimized.
-			// It is not a good idea to first get the keyset, and then do get for each
-			// entry See:
-			// http://stackoverflow.com/questions/5826384/java-iteration-through-a-hashmap-which-is-more-efficient
-			// Although if the set of nonterminals is small, it might not matter too much
-			for (Entry<Integer, ? extends Trie> entry : childrenTbl.entrySet()) {
-				// logger.info("Vocabulary.word(wordID), arcWord ||| " + Vocabulary.word(wordID) + " "+
-				// arcWord);
-				Integer arcID = entry.getKey();
-
-				String wordIdWord = Vocabulary.word(wordID);
-
-				if (isNonterminal(arcID) && !isOOVLabelOrGoalLabel(wordIdWord, joshuaConfiguration)) {
-					Trie value = entry.getValue();
-
-					// logger.info("Substituing : " + arcWord + " for " + wordIdWord);
-					trieList.add(value);
-				}
-				// logger.info("added node for arcWord: " + arcWord);
-			}
+		Iterator<Integer> nonterminalIterator = trie.getNonterminalExtensionIterator();
+		while (nonterminalIterator.hasNext()) {
+			trieList.add(childrenTbl.get(nonterminalIterator.next()));
 		}
-		// logger.info("trieList.size(): " + trieList.size());
+
 		return trieList;
 
 	}
 
+	private boolean isPackedTrieType(Trie trie) {
+		return (trie instanceof PackedTrie) || (trie instanceof PackedRoot);
+	}
+
 	protected List<Trie> matchAllEqualOrBothNonTerminalAndNotGoalOrOOV(DotNode dotNode, int wordID) {
-		HashMap<Integer, ? extends Trie> childrenTbl = dotNode.getTrieNode().getChildren();
 
 		// logger.info("wordID: " + wordID + " Vocabulary.word(Math.abs(wordID)) "
 		// + Vocabulary.word(Math.abs(wordID)));
@@ -193,10 +185,15 @@ public abstract class NonterminalMatcher {
 			    + "in matchAllEqualOrBothNonTerminalAndNotGoalOrOOV(DotNode dotNode, int wordID)");
 		}
 
-		if (useTargetQueryingToCollectAlternateNonterminals) {
-			return getNonTerminalsListFromChildrenByTargetedQuerying(childrenTbl);
+		// When we have a packed Trie or the boolean useTargetQueryingToCollectAlternateNonterminals
+		// is set to false, we will us the Trie children enumeration to retrieve nonterminals
+		// for packed tries this is efficient
+		if (isPackedTrieType(dotNode.getTrieNode())
+		    || (!useTargetQueryingToCollectAlternateNonterminals)) {
+			return getNonTerminalsListFromChildrenByTrieEnumeration(dotNode.getTrieNode(), wordID);
 		} else {
-			return getNonTerminalsListFromChildrenByMatching(childrenTbl, wordID);
+			HashMap<Integer, ? extends Trie> childrenTbl = dotNode.getTrieNode().getChildren();
+			return getNonTerminalsListFromChildrenByTargetedQuerying(childrenTbl);
 		}
 	}
 
@@ -251,9 +248,9 @@ public abstract class NonterminalMatcher {
 		}
 
 		/**
-		 * This method will perform strict matching if the target node superNode is a Goal Symbol.
-		 * Otherwise it will call a method that produces all available substitutions that correspond to
-		 * Nonterminals.
+		 * This method will perform strict matching if the target node superNode is
+		 * a Goal Symbol. Otherwise it will call a method that produces all
+		 * available substitutions that correspond to Nonterminals.
 		 * 
 		 * @param dotNode
 		 * @param superNode
@@ -261,15 +258,18 @@ public abstract class NonterminalMatcher {
 		public List<Trie> produceMatchingChildTNodesNonterminalLevel(DotNode dotNode,
 		    SuperNode superNode) {
 
-			// We do not allow substitution of other things for GOAL labels or OOV symbols
+			// We do not allow substitution of other things for GOAL labels or OOV
+			// symbols
 			if (isOOVLabelOrGoalLabel(Vocabulary.word(superNode.lhs), joshuaConfiguration)) {
-				// logger.info("BLAA - Vocabulary.word(superNode.lhs)" + Vocabulary.word(superNode.lhs));
+				// logger.info("BLAA - Vocabulary.word(superNode.lhs)" +
+				// Vocabulary.word(superNode.lhs));
 				Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
 				// logger.info("child_node.toString()" + child_node);
 				List<Trie> child_tnodes = Arrays.asList(child_node);
 				return child_tnodes;
 			} else {
-				// logger.info("Vocabulary.word(superNode.lhs): " + Vocabulary.word(superNode.lhs));
+				// logger.info("Vocabulary.word(superNode.lhs): " +
+				// Vocabulary.word(superNode.lhs));
 				return matchAllEqualOrBothNonTerminalAndNotGoalOrOOV(dotNode, superNode.lhs);
 			}
 		}
