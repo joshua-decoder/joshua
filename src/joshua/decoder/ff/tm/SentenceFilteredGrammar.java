@@ -2,7 +2,9 @@ package joshua.decoder.ff.tm;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
+import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -322,6 +324,16 @@ public class SentenceFilteredGrammar extends BatchGrammar {
         numRules += node.getNumRules();
 
       return numRules;
+    }
+
+    @Override
+    public Iterator<Integer> getTerminalExtensionIterator() {
+      return new ExtensionIterator(children, true);
+    }
+
+    @Override
+    public Iterator<Integer> getNonterminalExtensionIterator() {
+      return new ExtensionIterator(children, false);
     }
   }
 }
