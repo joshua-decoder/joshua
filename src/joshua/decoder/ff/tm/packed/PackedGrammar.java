@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -28,6 +29,7 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 
@@ -146,6 +148,16 @@ public class PackedGrammar extends BatchGrammar {
     @Override
     public RuleCollection getRuleCollection() {
       return new BasicRuleCollection(0, new int[0]);
+    }
+
+    @Override
+    public Iterator<Integer> getTerminalExtensionIterator() {
+      return new ExtensionIterator(lookup, true);
+    }
+
+    @Override
+    public Iterator<Integer> getNonterminalExtensionIterator() {
+      return new ExtensionIterator(lookup, false);
     }
   }
 
@@ -498,6 +510,63 @@ public class PackedGrammar extends BatchGrammar {
       @Override
       public int getArity() {
         return arity;
+      }
+
+      @Override
+      public Iterator<Integer> getTerminalExtensionIterator() {
+        return new PackedChildIterator(position, true);
+      }
+
+      @Override
+      public Iterator<Integer> getNonterminalExtensionIterator() {
+        return new PackedChildIterator(position, false);
+      }
+
+      public final class PackedChildIterator implements Iterator<Integer> {
+
+        private int current;
+        private boolean terminal;
+        private boolean done;
+        private int last;
+
+        PackedChildIterator(int position, boolean terminal) {
+          this.terminal = terminal;
+          int num_children = source[position];
+          done = (num_children == 0);
+          if (!done) {
+            current = (terminal ? position + 1 : position - 1 + 2 * num_children);
+            last = (terminal ? position - 1 + 2 * num_children : position + 1);
+          }
+        }
+
+        @Override
+        public boolean hasNext() {
+          if (done)
+            return false;
+          int next = (terminal ? current + 2 : current - 2);
+          if (next == last)
+            return false;
+          return (terminal ? source[next] > 0 : source[next] < 0);
+        }
+
+        @Override
+        public Integer next() {
+          if (done)
+            throw new RuntimeException("No more symbols!");
+          int symbol = source[current];
+          if (current == last)
+            done = true;
+          if (!done) {
+            current = (terminal ? current + 2 : current - 2);
+            done = (terminal ? source[current] < 0 : source[current] > 0);
+          }
+          return symbol;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
       }
 
       public final class PackedRule extends Rule {

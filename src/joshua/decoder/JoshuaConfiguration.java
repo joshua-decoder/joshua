@@ -132,6 +132,12 @@ public class JoshuaConfiguration {
   
   public boolean rescoreForest = false;
   public float rescoreForestWeight = 10.0f;
+
+  
+  /*Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any nonterminal may be substituted 
+   * for any other nonterminal (except for OOV and GOAL)*/ 
+  public boolean fuzzy_matching = false;
+  public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -370,7 +376,16 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             features.add("feature_function = " + fds[1]);
 
-          } else {
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // add the feature to the list of features for later processing
+            maxlen = Integer.parseInt(fds[1]);
+
+          } else if (parameter.equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
+            fuzzy_matching = Boolean.parseBoolean(fds[1]);
+            logger.finest(String.format(fuzzy_matching +": %s", fuzzy_matching));
+          }
+          
+          else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))

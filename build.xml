@@ -29,6 +29,7 @@
       <include name="jung-visualization-2.0.jar" />
       <include name="collections-generic-4.01.jar" />
       <include name="berkeleylm.jar" />
+      <include name="junit-4.10.jar" />
     </fileset>
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
