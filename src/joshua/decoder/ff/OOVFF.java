@@ -21,12 +21,18 @@ import joshua.decoder.chart_parser.SourcePath;
 public class OOVFF extends StatelessFF {
   private int ownerID = -1;
 
+  private static String OOV_FF_NAME =  "oovpenalty";
+  
   public OOVFF(FeatureVector weights) {
-    super(weights, "OOVPenalty");
+    super(weights, OOV_FF_NAME);
 
     ownerID = Vocabulary.id("oov");
   }
 
+  public static String getFeatureName(){
+    return OOV_FF_NAME;
+  }
+  
   /**
    * OOV rules cover exactly one word, and such rules belong to a grammar whose owner is "oov". Each
    * OOV fires the OOVPenalty feature with a value of 1, so the cost is simply the weight, which was

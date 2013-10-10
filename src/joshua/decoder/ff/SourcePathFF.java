@@ -16,11 +16,17 @@ import joshua.decoder.hypergraph.HGNode;
  */
 public final class SourcePathFF extends StatelessFF {
 
+  private static String SOURCE_PATH_FF_NAME = "sourcepath";
+  
   /*
    * This is a single-value feature template, so we cache the weight here.
    */
   public SourcePathFF(FeatureVector weights) {
-    super(weights, "SourcePath", ""); // this sets name
+    super(weights, SOURCE_PATH_FF_NAME, ""); // this sets name
+  }
+  
+  public String getFeatureName(){
+    return SOURCE_PATH_FF_NAME;
   }
   
   @Override

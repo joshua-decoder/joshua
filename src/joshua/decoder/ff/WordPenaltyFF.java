@@ -16,8 +16,14 @@ public final class WordPenaltyFF extends StatelessFF {
 
   private static final float OMEGA = -(float) Math.log10(Math.E); // -0.435
 
+  private static String WORD_PENALTY_FF_NAME = "wordpenalty";
+  
   public WordPenaltyFF(final FeatureVector weights) {
-    super(weights, "WordPenalty", "");
+    super(weights, WORD_PENALTY_FF_NAME, "");
+  }
+  
+  public static String getFeatureName(){
+    return WORD_PENALTY_FF_NAME;
   }
 
   @Override
