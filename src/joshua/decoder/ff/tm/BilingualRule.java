@@ -3,6 +3,7 @@ package joshua.decoder.ff.tm;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
@@ -168,11 +169,6 @@ public class BilingualRule extends Rule {
   @Override
   public final int[] getFrench() {
     return this.pFrench;
-  }
-
-  @Override
-  public String getFrenchWords() {
-    return Vocabulary.getWords(getFrench());
   }
 
   /*

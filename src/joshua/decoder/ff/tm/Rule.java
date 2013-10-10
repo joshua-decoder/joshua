@@ -2,10 +2,12 @@ package joshua.decoder.ff.tm;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class define the interface for Rule. Normally, the feature score in the rule should be
@@ -121,7 +123,9 @@ public abstract class Rule {
 
   public abstract int[] getFrench();
 
-  public abstract String getFrenchWords();
+  public final String getFrenchWords() {
+    return Vocabulary.getWords(getFrench());
+  }
 
   /**
    * This function returns the dense (phrasal) features discovered when the rule was loaded. Dense
@@ -167,6 +171,29 @@ public abstract class Rule {
    */
   public abstract float estimateRuleCost(List<FeatureFunction> models);
 
+  private static final String NT_REGEX = "\\[[^\\]]+?\\]";
+
+  private Pattern getPattern() {
+    String source = getFrenchWords();
+    String pattern = Pattern.quote(source);
+    pattern = pattern.replaceAll(NT_REGEX, "\\\\E.+\\\\Q");
+    pattern = pattern.replaceAll("\\\\Q\\\\E", "");
+    pattern = "(?:^|\\s)" + pattern + "(?:$|\\s)";
+    return Pattern.compile(pattern);
+  }
+  
+  /**
+   * Matches the string representation of the rule's source side against a sentence
+   * 
+   * @param sentence
+   * @return
+   */
+  public boolean matches(Sentence sentence) {
+    boolean match = getPattern().matcher(sentence.annotatedSource()).find();
+//    System.err.println(String.format("match(%s,%s) = %s", Pattern.quote(getFrenchWords()), sentence.annotatedSource(), match));
+    return match;
+  }
+  
   /**
    * This comparator is used for sorting during cube pruning. It sorts items in reverse.
    */

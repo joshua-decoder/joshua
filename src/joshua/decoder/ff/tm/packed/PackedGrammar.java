@@ -628,11 +628,6 @@ public class PackedGrammar extends BatchGrammar {
         }
 
         @Override
-        public String getFrenchWords() {
-          return Vocabulary.getWords(getFrench());
-        }
-
-        @Override
         public FeatureVector getFeatureVector() {
           if (features == null) {
             features = new FeatureVector(getFeatures(source[address + 2]), "");
