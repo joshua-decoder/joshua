@@ -189,7 +189,7 @@ my $MERGE_LMS = 0;
 my $TUNER = "mert";  # or "pro" or "mira"
 
 # The number of iterations of the mira to run
-my $MIRA_ITERATIONS = 8;
+my $MIRA_ITERATIONS = 15;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
