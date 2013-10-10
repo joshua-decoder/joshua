@@ -41,7 +41,7 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
   }
 
   public static String getFeatureName(){
-    return ARITY_PHRASE_PENALTY_NAME;
+    return ARITY_PHRASE_PENALTY_FF_NAME;
   }
   
   /**
