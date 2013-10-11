@@ -59,11 +59,9 @@ public class LanguageModelFF extends StatefulFF {
    */
   protected float weight;
 
-  // boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
-
   /**
-   * stateID is any integer exept -1
-   **/
+   *
+   */
   public LanguageModelFF(FeatureVector weights, String featureName, NGramLanguageModel lm) {
     super(weights, featureName);
     this.languageModel = lm;
@@ -71,14 +69,18 @@ public class LanguageModelFF extends StatefulFF {
     LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
     LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
 
-    if (!weights.containsKey(name))
-      System.err.println("* WARNING: no weight found for LanguageModelFF '" + name + "'");
-
     this.weight = weights.get(name);
   }
 
   public NGramLanguageModel getLM() {
     return this.languageModel;
+  }
+  
+  public String logString() {
+    if (languageModel != null)
+      return String.format("%s, order %d (weight %.3f)", name, languageModel.getOrder(), weight);
+    else
+      return "WHOA";
   }
 
   /**

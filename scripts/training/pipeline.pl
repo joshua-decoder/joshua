@@ -64,7 +64,8 @@ my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $DO_PACK_GRAMMARS = 1;
 my $SCRIPTDIR = "$JOSHUA/scripts";
-my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
+my $TOKENIZER_SOURCE = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
+my $TOKENIZER_TARGET = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
@@ -73,6 +74,10 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
 my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
+
+# Which GHKM extractor to use ("galley" or "moses")
+my $GHKM_EXTRACTOR = "moses";
+
 my $WITTEN_BELL = 0;
 
 my $JOSHUA_ARGS = "";
@@ -101,7 +106,7 @@ my %TUNEFILES = (
 my $DO_MBR = 0;
 
 # Which aligner to use. The options are "giza" or "berkeley".
-my $ALIGNER = "giza"; # "berkeley" or "giza"
+my $ALIGNER = "giza"; # "berkeley" or "giza" or "jacana"
 
 # Filter rules to the following maximum scope (Hopkins & Langmead, 2011).
 my $SCOPE = 3;
@@ -125,7 +130,7 @@ my $HADOOP_CONF = undef;
 my $PARSER_MEM = "2g";
 
 # memory available for building the language model
-my $BUILDLM_MEM = "2g";
+my $BUILDLM_MEM = "2G";
 
 # Memory available for packing the grammar.
 my $PACKER_MEM = "2g";
@@ -185,13 +190,19 @@ my $MERGE_LMS = 0;
 my $TUNER = "mert";  # or "pro" or "mira"
 
 # The number of iterations of the mira to run
-my $MIRA_ITERATIONS = 8;
+my $MIRA_ITERATIONS = 15;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
 
 # Allows the user to set a temp dir for various tasks
 my $TMPDIR = "/tmp";
+
+# Enable forest rescoring
+my $RESCORE_FOREST = 0;
+my $LM_STATE_MINIMIZATION = "true";
+
+my $NBEST = 300;
 
 my $retval = GetOptions(
   "readme=s"    => \$README,
@@ -225,10 +236,12 @@ my $retval = GetOptions(
   "maxspan=i"         => \$MAXSPAN,
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
+  "ghkm-extractor=s"  => \$GHKM_EXTRACTOR,
   "maxlen=i"        => \$MAXLEN,
   "maxlen-tune=i"        => \$MAXLEN_TUNE,
   "maxlen-test=i"        => \$MAXLEN_TEST,
-  "tokenizer=s"      => \$TOKENIZER,
+  "tokenizer-source=s"      => \$TOKENIZER_SOURCE,
+  "tokenizer-target=s"      => \$TOKENIZER_TARGET,
   "joshua-config=s"   => \$TUNEFILES{'joshua.config'},
   "joshua-args=s"      => \$JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
@@ -253,11 +266,18 @@ my $retval = GetOptions(
   "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
   "tmp=s"             => \$TMPDIR,
+  "rescore-forest!"  => \$RESCORE_FOREST,
+  "nbest=i"           => \$NBEST,
 );
 
 if (! $retval) {
   print "Invalid usage, quitting\n";
   exit 1;
+}
+
+# Forest rescoring doesn't work with LM state minimization
+if ($RESCORE_FOREST) {
+  $LM_STATE_MINIMIZATION = "false";
 }
 
 $RUNDIR = get_absolute_path($RUNDIR);
@@ -444,8 +464,8 @@ foreach my $corpus (@CORPORA) {
   }
 }
 
-if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
-  print "* FATAL: aligner must be one of 'giza', or 'berkeley'\n";
+if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley" and $ALIGNER ne "jacana") {
+  print "* FATAL: aligner must be one of 'giza', 'berkeley' or 'jacana' (only French-English)\n";
   exit 1;
 }
 
@@ -747,6 +767,8 @@ if (! defined $ALIGNMENT) {
     @aligned_files = map { "alignments/$_/model/aligned.$GIZA_MERGE" } (0..$lastchunk);
   } elsif ($ALIGNER eq "berkeley") {
     @aligned_files = map { "alignments/$_/training.align" } (0..$lastchunk);
+  } elsif ($ALIGNER eq "jacana") {
+    @aligned_files = map { "alignments/$_/training.align" } (0..$lastchunk);
   }
 	my $aligned_file_list = join(" ", @aligned_files);
 
@@ -892,10 +914,45 @@ if (! defined $GRAMMAR_FILE) {
   my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? $TRAIN{target} : $TRAIN{parsed};
 
   if ($GRAMMAR_TYPE eq "ghkm") {
-    $cachepipe->cmd("ghkm-extract",
-                    "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
-                    $ALIGNMENT,
-                    "grammar.gz");
+    if ($GHKM_EXTRACTOR eq "galley") {
+      $cachepipe->cmd("ghkm-extract",
+                      "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
+                      $ALIGNMENT,
+                      "grammar.gz");
+    } elsif ($GHKM_EXTRACTOR eq "moses") {
+      # XML-ize, also replacing unary chains with OOV at the bottom by removing their unary parents
+      $cachepipe->cmd("ghkm-moses-xmlize",
+                      "cat $target_file | perl -pe 's/\\(\\S+ \\(OOV (.*?)\\)\\)/(OOV \$1)/g' | $MOSES/scripts/training/wrappers/berkeleyparsed2mosesxml.perl > $DATA_DIRS{train}/corpus.xml",
+                      # "cat $target_file | perl -pe 's/\\(\\S+ \\(OOV (.*?)\\)\\)/(OOV \$1)/g' > $DATA_DIRS{train}/corpus.ptb",
+                      $target_file,
+                      "$DATA_DIRS{train}/corpus.xml");
+
+      if (! -e "$DATA_DIRS{train}/corpus.$SOURCE") {
+        system("ln -sf $TRAIN{source} $DATA_DIRS{train}/corpus.$SOURCE");
+      }
+
+      if ($ALIGNMENT ne "alignments/training.align") {
+        system("mkdir alignments") unless -d "alignments";
+        system("ln -sf $ALIGNMENT alignments/training.align");
+        $ALIGNMENT = "alignments/training.align";
+      }
+
+      system("mkdir model");
+      $cachepipe->cmd("ghkm-moses-extract",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm",
+                      "$DATA_DIRS{train}/corpus.xml",
+                      "glue-grammar.ghkm",
+                      "model/rule-table.gz");
+
+      $cachepipe->cmd("ghkm-moses-convert",
+                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
+                      "model/rule-table.gz",
+                      "grammar.gz");
+
+    } else {
+      print STDERR "* FATAL: no such GHKM extractor '$GHKM_EXTRACTOR'\n";
+      exit(1);
+    }
   } elsif (! -e "grammar.gz" && ! -z "grammar.gz") {
 
     # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
@@ -1043,8 +1100,10 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
       exit 1;
     }
 
+    # Needs to be capitalized
+    my $mem = uc $BUILDLM_MEM;
     $cachepipe->cmd("kenlm",
-                    "cat $TRAIN{target} | $JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR --verbose_header | gzip -9n > lm.gz",
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
                     $TRAIN{target},
                     $lmfile);
   }
@@ -1125,7 +1184,7 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
 # Pack the grammar, if requested (yes by default). This must be done after the glue grammar is
 # created, since we don't have a script (yet) to dump the rules from a packed grammar, which
 # information we need to create the glue grammar.
-if ($DO_PACK_GRAMMARS && !($TUNE_GRAMMAR =~ m/packed$/)) {
+if ($DO_PACK_GRAMMARS && ! is_packed($TUNE_GRAMMAR)) {
   my $packed_dir = "$DATA_DIRS{tune}/grammar.packed";
 
   $cachepipe->cmd("pack-tune",
@@ -1165,7 +1224,7 @@ my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER true false 100 $lmfile";
+  my $configstring = "lm = $LM_TYPE $LM_ORDER $LM_STATE_MINIMIZATION false 100 $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";
@@ -1298,11 +1357,13 @@ for my $run (1..$OPTIMIZER_RUNS) {
   } elsif ($TUNER eq "mira") {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
+
+    my $rescore_str = ($RESCORE_FOREST == 1) ? "--rescore-forest" : "--no-rescore-forest";
     
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest 300 --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest $NBEST --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" $rescore_str > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/joshua.config.final");
@@ -1344,7 +1405,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   }
 
 	# Pack the grammar.
-	if ($DO_PACK_GRAMMARS && !($TEST_GRAMMAR =~ m/packed$/)) {
+	if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
     my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
     $cachepipe->cmd("pack-test",
@@ -1557,7 +1618,7 @@ if ($TUNEFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
   exit 1;
 }
 
-if ($DO_PACK_GRAMMARS) {
+if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
 
   $cachepipe->cmd("pack-test",
@@ -1681,6 +1742,7 @@ sub prepare_data {
 			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			} else {
+        my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
 				$cachepipe->cmd("$label-tokenize-$lang",
 												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 												"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
@@ -1842,15 +1904,25 @@ sub is_lattice {
 sub count_num_features {
   my ($grammar) = @_;
 
-  open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
-  chomp(my $line = <GRAMMAR>);
-  close(GRAMMAR);
+  if (-d $grammar) {
+    chomp(my $line = `java -cp $JOSHUA/class joshua.util.encoding.EncoderConfiguration $grammar | grep num_features`);
+    my @tokens = split(' ', $line);
+    return $tokens[-1];
 
-  my @tokens = split(/ \|\|\| /, $line);
-  my @numfeatures = split(' ', $tokens[-1]);
-	my $num = scalar(@numfeatures);
+  } elsif (-e $grammar) {
+    open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
+    chomp(my $line = <GRAMMAR>);
+    close(GRAMMAR);
 
-  return scalar @numfeatures;
+    my @tokens = split(/ \|\|\| /, $line);
+    my @numfeatures = split(' ', $tokens[-1]);
+    my $num = scalar(@numfeatures);
+
+    return scalar @numfeatures;
+  } else {
+    print STDERR "* FATAL: count_num_features(): can't read grammar '$grammar'\n";
+    exit 1;
+  }
 }
 
 # File names reflecting relative paths need to be absolute-ized for --rundir to work.
@@ -1946,4 +2018,14 @@ sub compute_time_summary {
     printf(TIMES "%s / %d = %s\n", join(" + ", @times), scalar(@times), 1.0 * sum(@times) / scalar(@times));
     close(TIMES);
   }
+}
+
+sub is_packed {
+  my ($grammar) = @_;
+
+  if (-d $grammar && -e "$grammar/encoding") {
+    return 1;
+  }
+
+  return 0;
 }

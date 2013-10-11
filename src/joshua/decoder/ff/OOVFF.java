@@ -24,9 +24,6 @@ public class OOVFF extends StatelessFF {
   public OOVFF(FeatureVector weights) {
     super(weights, "OOVPenalty");
 
-    if (!weights.containsKey(name))
-      System.err.println("* WARNING: No weight for OOVPenalty found.");
-
     ownerID = Vocabulary.id("oov");
   }
 

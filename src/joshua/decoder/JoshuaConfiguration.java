@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import joshua.decoder.ff.StatefulFF;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -21,111 +22,169 @@ import joshua.util.io.LineReader;
  */
 public class JoshuaConfiguration {
   // List of language models to load
-  public static ArrayList<String> lms = new ArrayList<String>();
+  public ArrayList<String> lms = new ArrayList<String>();
 
   // List of grammar files to read
-  public static ArrayList<String> tms = new ArrayList<String>();
+  public ArrayList<String> tms = new ArrayList<String>();
 
   /*
    * The file to read the weights from (part of the sparse features implementation). Weights can
    * also just be listed in the main config file.
    */
-  public static String weights_file = "";
+  public String weights_file = "";
 
   // Default symbols. The symbol here should be enclosed in square brackets.
-  public static String default_non_terminal = "[X]";
-  public static String goal_symbol = "[GOAL]";
+  public String default_non_terminal = "[X]";
+  public String goal_symbol = "[GOAL]";
 
   /*
    * If false, sorting of the complete grammar is done at load time. If true, grammar tries are not
    * sorted till they are first accessed. Amortized sorting means you get your first translation
    * much, much quicker (good for debugging), but that per-sentence decoding is a bit slower.
    */
-  public static boolean amortized_sorting = true;
+  public boolean amortized_sorting = true;
 
   // syntax-constrained decoding
-  public static boolean constrain_parse = false;
-  public static boolean use_pos_labels = false;
+  public boolean constrain_parse = false;
+  public boolean use_pos_labels = false;
 
   // oov-specific
-  public static boolean true_oovs_only = false;
+  public boolean true_oovs_only = false;
 
   /* Dynamic sentence-level filtering. */
-  public static boolean filter_grammar = false;
+  public boolean filter_grammar = false;
 
   /* The cube pruning pop limit. Set to 0 for exhaustive pruning. */
-  public static int pop_limit = 100;
+  public int pop_limit = 100;
 
   /* Maximum sentence length. Sentences longer than this are truncated. */
-  public static int maxlen = 200;
+  public int maxlen = 200;
 
   /*
    * N-best configuration.
    */
   // Make sure output strings in the n-best list are unique.
-  public static boolean use_unique_nbest = false;
+  public boolean use_unique_nbest = false;
 
   /* Include the phrasal alignments in the output (not word-level alignmetns at the moment). */
-  public static boolean include_align_index = false;
+  public boolean include_align_index = false;
 
   /* The number of hypotheses to output by default. */
-  public static int topN = 1;
+  public int topN = 1;
 
-  /*
+  /**
    * This string describes the format of each line of output from the decoder (i.e., the
    * translations). The string can include arbitrary text and also variables. The following
    * variables are available:
    * 
-   * <pre> 
-   *   %i the 0-indexed sentence number 
-   *   %e the source string
-   *   %s the translated sentence 
-   *   %S the translated sentence with some basic capitalization and denormalization 
-   *   %t the synchronous derivation
-   *   %f the list of feature values (as name=value pairs) 
-   *   %c the model cost 
-   *   %w the weight vector 
-   *   %a the alignments between source and target words (currently unimplemented) 
-   *   %d a verbose, many-line version of the derivation 
-   * </pre>
+   * - %i the 0-indexed sentence number
+   * - %e the source string %s the translated sentence
+   * - %S the translated sentence with some basic capitalization and denormalization 
+   * - %t the synchronous derivation 
+   * - %f the list of feature values (as name=value pairs) 
+   * - %c the model cost
+   * - %w the weight vector 
+   * - %a the alignments between source and target words (currently unimplemented) 
+   * - %d a verbose, many-line version of the derivation
    */
-  public static String outputFormat = "%i ||| %s ||| %f ||| %c";
+  public String outputFormat = "%i ||| %s ||| %f ||| %c";
 
   /* The number of decoding threads to use (-threads). */
-  public static int num_parallel_decoders = 1;
+  public int num_parallel_decoders = 1;
 
   // disk hg
-  public static String hypergraphFilePattern = "";
+  public String hypergraphFilePattern = "";
 
   // hypergraph visualization
-  public static boolean visualize_hypergraph = false;
+  public boolean visualize_hypergraph = false;
 
   // use google linear corpus gain?
-  public static boolean useGoogleLinearCorpusGain = false;
-  public static double[] linearCorpusGainThetas = null;
+  public boolean useGoogleLinearCorpusGain = false;
+  public double[] linearCorpusGainThetas = null;
 
   /*
    * When true, _OOV is appended to all words that are passed through (useful for something like
    * transliteration on the target side
    */
-  public static boolean mark_oovs = true;
-
-  // used to extract oracle hypotheses from the forest
-  public static String oracleFile = null;
+  public boolean mark_oovs = true;
 
   /* Enables synchronous parsing. */
-  public static boolean parse = false; // perform synchronous parsing
+  public boolean parse = false; // perform synchronous parsing
 
-  private static final Logger logger = Logger.getLogger(JoshuaConfiguration.class.getName());
+  private final Logger logger = Logger.getLogger(JoshuaConfiguration.class.getName());
 
   /* A list of the feature functions. */
-  public static ArrayList<String> features = new ArrayList<String>();
-  
+  public ArrayList<String> features = new ArrayList<String>();
+
   /* A list of weights found in the main config file (instead of in a separate weights file) */
-  public static ArrayList<String> weights = new ArrayList<String>();
+  public ArrayList<String> weights = new ArrayList<String>();
 
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
-  public static int server_port = 0;
+  public int server_port = 0;
+
+  /* Whether to do forest rescoring. If set to true, the references are expected on STDIN along
+   * with the input sentences in the following format:
+   * 
+   *     input sentence |||  ||| reference1 ||| reference2 ...
+   * 
+   * (The second field is reserved for the output sentence for alignment and forced decoding). 
+   */
+  
+  public boolean rescoreForest = false;
+  public float rescoreForestWeight = 10.0f;
+
+  
+  /*Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any nonterminal may be substituted 
+   * for any other nonterminal (except for OOV and GOAL)*/ 
+  public boolean fuzzy_matching = false;
+  public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
+  
+
+  /**
+   * This method resets the state of JoshuaConfiguration back to the state after initialization.
+   * This is useful when for example making different calls to the decoder within the same java
+   * program, which otherwise leads to potential errors due to inconsistent state as a result of
+   * loading the configuration multiple times without resetting etc.
+   * 
+   * This leads to the insight that in fact it may be an even better idea to refactor the code and
+   * make JoshuaConfiguration an object that is is created and passed as an argument, rather than a
+   * shared static object. This is just a suggestion for the next step.
+   * 
+   */
+  public void reset() {
+    logger.info("Resetting the JoshuaConfiguration to its defaults ...");
+    logger.info("\n\tResetting the StatefullFF global state index ...");
+    logger.info("\n\t...done");
+    StatefulFF.resetGlobalStateIndex();
+    lms = new ArrayList<String>();
+    tms = new ArrayList<String>();
+    weights_file = "";
+    default_non_terminal = "[X]";
+    goal_symbol = "[GOAL]";
+    amortized_sorting = true;
+    constrain_parse = false;
+    use_pos_labels = false;
+    true_oovs_only = false;
+    filter_grammar = false;
+    pop_limit = 100;
+    maxlen = 200;
+    use_unique_nbest = false;
+    include_align_index = false;
+    topN = 1;
+    outputFormat = "%i ||| %s ||| %f ||| %c";
+    num_parallel_decoders = 1;
+    hypergraphFilePattern = "";
+    visualize_hypergraph = false;
+    useGoogleLinearCorpusGain = false;
+    linearCorpusGainThetas = null;
+    mark_oovs = true;
+    // oracleFile = null;
+    parse = false; // perform synchronous parsing
+    features = new ArrayList<String>();
+    weights = new ArrayList<String>();
+    server_port = 0;
+    logger.info("...done");
+  }
 
   // ===============================================================
   // Methods
@@ -136,7 +195,7 @@ public class JoshuaConfiguration {
    * then call readConfigFile() on it. It would be more general to define a class that sits on a
    * stream and knows how to chop it up, but this was quicker to implement.
    */
-  public static void processCommandLineOptions(String[] options) {
+  public void processCommandLineOptions(String[] options) {
     try {
       File tmpFile = File.createTempFile("options", null, null);
       PrintWriter out = new PrintWriter(new FileWriter(tmpFile));
@@ -156,7 +215,7 @@ public class JoshuaConfiguration {
         }
       }
       out.close();
-      JoshuaConfiguration.readConfigFile(tmpFile.getCanonicalPath());
+      this.readConfigFile(tmpFile.getCanonicalPath());
 
       tmpFile.delete();
 
@@ -166,9 +225,8 @@ public class JoshuaConfiguration {
     }
   }
 
-  // This is static instead of a constructor because all the fields
-  // are static.
-  public static void readConfigFile(String configFile) throws IOException {
+
+  public void readConfigFile(String configFile) throws IOException {
 
     LineReader configReader = new LineReader(configFile);
     try {
@@ -295,17 +353,21 @@ public class JoshuaConfiguration {
 
             logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));
 
-          } else if (parameter.equals(normalize_key("oracleFile"))) {
-            oracleFile = fds[1].trim();
-            logger.info(String.format("    oracle file: %s", oracleFile));
-            if (!new File(oracleFile).exists()) {
-              logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
-              System.exit(1);
-            }
-
           } else if (parameter.equals(normalize_key("server-port"))) {
             server_port = Integer.parseInt(fds[1]);
             logger.info(String.format("    server-port: %d", server_port));
+
+          } else if (parameter.equals(normalize_key("rescore-forest"))) {
+            rescoreForest = true;
+            logger.info(String.format("    rescore-forest: %s", rescoreForest));
+
+          } else if (parameter.equals(normalize_key("rescore-forest-weight"))) {
+            rescoreForestWeight = Float.parseFloat(fds[1]);
+            logger.info(String.format("    rescore-forest-weight: %f", rescoreForestWeight));
+
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // reset the maximum length
+            maxlen = Integer.parseInt(fds[1]);
 
           } else if (parameter.equals("c") || parameter.equals("config")) {
             // this was used to send in the config file, just ignore it
@@ -319,7 +381,12 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             maxlen = Integer.parseInt(fds[1]);
 
-          } else {
+          } else if (parameter.equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
+            fuzzy_matching = Boolean.parseBoolean(fds[1]);
+            logger.finest(String.format(fuzzy_matching +": %s", fuzzy_matching));
+          }
+          
+          else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))
@@ -341,7 +408,7 @@ public class JoshuaConfiguration {
         } else {
           /*
            * Lines that don't have an equals sign and are not blank lines, empty lines, or comments,
-           * are feature values, which can be present in this file 
+           * are feature values, which can be present in this file
            */
 
           weights.add(line);
@@ -366,7 +433,7 @@ public class JoshuaConfiguration {
   /**
    * Checks for invalid variable configurations
    */
-  public static void sanityCheck() {
+  public void sanityCheck() {
   }
 
   /**

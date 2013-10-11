@@ -29,6 +29,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.metrics.EvaluationMetric;
 import joshua.util.StreamGobbler;
 import joshua.corpus.Vocabulary;
@@ -38,6 +39,7 @@ import joshua.corpus.Vocabulary;
  */
 
 public class PROCore {
+  private final JoshuaConfiguration joshuaConfiguration;
   private TreeSet<Integer>[] indicesOfInterest_all;
 
   private final static DecimalFormat f4 = new DecimalFormat("###0.0000");
@@ -241,15 +243,19 @@ public class PROCore {
 
   // private int useDisk;
 
-  public PROCore() {}
+  public PROCore(JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
+  }
 
-  public PROCore(String[] args) {
+  public PROCore(String[] args, JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     EvaluationMetric.set_knownMetrics();
     processArgsArray(args);
     initialize(0);
   }
 
-  public PROCore(String configFileName) {
+  public PROCore(String configFileName, JoshuaConfiguration joshuaConfiguration) {
+    this.joshuaConfiguration = joshuaConfiguration;
     EvaluationMetric.set_knownMetrics();
     processArgsArray(cfgFileToArgsArray(configFileName));
     initialize(0);
@@ -282,7 +288,8 @@ public class PROCore {
     processDocInfo();
     // sets numDocuments and docOfSentence[]
 
-    if (numDocuments > 1) metricName_display = "doc-level " + metricName;
+    if (numDocuments > 1)
+      metricName_display = "doc-level " + metricName;
 
     // ??
     set_docSubsetInfo(docSubsetInfo);
@@ -290,7 +297,7 @@ public class PROCore {
     // COUNT THE NUMBER OF PARAMETERS
     numParamsInFile = countNonEmptyLines(paramsFileName) - 1;
 
-        // START TO READ IN PARAMETER DEFINITION AND INITIALIZATION INFO
+    // START TO READ IN PARAMETER DEFINITION AND INITIALIZATION INFO
     try {
       // read parameter names
       BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
@@ -326,8 +333,8 @@ public class PROCore {
             // READ DISC FEATURE WEIGHTS
             InputStream discFileInputStream;
             discFileInputStream = new FileInputStream(discDefFile);
-            BufferedReader discFeatFile =
-                new BufferedReader(new InputStreamReader(discFileInputStream, "utf8"));
+            BufferedReader discFeatFile = new BufferedReader(new InputStreamReader(
+                discFileInputStream, "utf8"));
 
             while ((discFeatFile.readLine()) != null)
               numSparseParams++;
@@ -395,7 +402,6 @@ public class PROCore {
         }
       }
 
-
       // read in decoder command, if any
       decoderCommand = null;
       if (decoderCommandFileName != null) {
@@ -412,7 +418,6 @@ public class PROCore {
       System.err.println("IOException in PROCore.initialize(int): " + e.getMessage());
       System.exit(99902);
     }
-
 
     // set static data members for the EvaluationMetric class
     EvaluationMetric.set_numSentences(numSentences);
@@ -441,17 +446,16 @@ public class PROCore {
       println("Optimizing " + metricName_display, 1);
 
       /*
-      print("docSubsetInfo: {", 1);
-      for (int f = 0; f < 6; ++f)
-        print(docSubsetInfo[f] + ", ", 1);
-      println(docSubsetInfo[6] + "}", 1);
-      */
+       * print("docSubsetInfo: {", 1); for (int f = 0; f < 6; ++f) print(docSubsetInfo[f] + ", ",
+       * 1); println(docSubsetInfo[6] + "}", 1);
+       */
 
       println("Number of features: " + numParams, 1);
       print("Feature names: {", 1);
       for (int c = 1; c <= numParamsInFile; ++c) {
         print("\"" + Vocabulary.word(c) + "\"", 1);
-        if (c < numParams) print(",", 1);
+        if (c < numParams)
+          print(",", 1);
       }
       println("}", 1);
       println("", 1);
@@ -487,8 +491,10 @@ public class PROCore {
       if (normalizationOptions[0] == 0) {
         println("none.", 1);
       } else if (normalizationOptions[0] == 1) {
-        println("weights will be scaled so that the \"" + Vocabulary.word((int) normalizationOptions[1])
-            + "\" weight has an absolute value of " + normalizationOptions[2] + ".", 1);
+        println(
+            "weights will be scaled so that the \""
+                + Vocabulary.word((int) normalizationOptions[1])
+                + "\" weight has an absolute value of " + normalizationOptions[2] + ".", 1);
       } else if (normalizationOptions[0] == 2) {
         println("weights will be scaled so that the maximum absolute value is "
             + normalizationOptions[1] + ".", 1);
@@ -516,7 +522,7 @@ public class PROCore {
     // BY DEFAULT, LOAD JOSHUA DECODER
     if (decoderCommand == null && fakeFileNameTemplate == null) {
       println("Loading Joshua decoder...", 1);
-      myDecoder = new Decoder(decoderConfigFileName + ".PRO.orig");
+      myDecoder = new Decoder(joshuaConfiguration, decoderConfigFileName + ".PRO.orig");
       println("...finished loading @ " + (new Date()), 1);
       println("");
     } else {
@@ -539,7 +545,7 @@ public class PROCore {
   }
 
   public void run_PRO(int minIts, int maxIts, int prevIts) {
-    //FIRST, CLEAN ALL PREVIOUS TEMP FILES
+    // FIRST, CLEAN ALL PREVIOUS TEMP FILES
     String dir;
     int k = tmpDirPrefix.lastIndexOf("/");
     if (k >= 0) {
@@ -587,7 +593,6 @@ public class PROCore {
     // suffStats_array[i] maps candidates of interest for sentence i to an array
     // storing the sufficient statistics for that candidate
 
-
     // SAVE THE SIZE OF N-BEST FOR EACH SENTENCE
     for (int i = 0; i < numSentences; ++i) {
       // lastUsedIndex[i] = -1;
@@ -613,7 +618,8 @@ public class PROCore {
       double[] A = run_single_iteration(iteration, minIts, maxIts, prevIts, earlyStop, maxIndex);
       if (A != null) {
         earlyStop = (int) A[1];
-        if (A[2] == 1) break;
+        if (A[2] == 1)
+          break;
       } else {
         break;
       }
@@ -675,7 +681,6 @@ public class PROCore {
     boolean done = false;
     retA[2] = 1; // will only be made 0 if we don't break from the following loop
 
-
     // FEATURE VALUE ARRAY FOR EACH HYP
     double[][][] featVal_array = new double[1 + numParams][][];
     // indexed by [param][sentence][candidate]
@@ -721,7 +726,6 @@ public class PROCore {
       } else {
         println("Redecoding using weight vector " + lambdaToString(lambda), 1);
       }
-
 
       // GENERATE THE N-BEST FILE AFTER DECODING
       String[] decRunResult = run_decoder(iteration); // iteration passed in case fake decoder will
@@ -815,15 +819,15 @@ public class PROCore {
         if (damianos_method == 0) {
           initialLambda[j] = randomLambda();
         } else {
-          initialLambda[j] =
-              randomPerturbation(initialLambda[1], iteration, damianos_method, damianos_param,
-                  damianos_mult);
+          initialLambda[j] = randomPerturbation(initialLambda[1], iteration, damianos_method,
+              damianos_param, damianos_mult);
         }
       }
 
       // SCORES CORRESPONDING TO EACH WEIGHT VECTOR CANDIDATE
-      //double[] initialScore = new double[1 + initsPerIt]; // BLEU SCORE
-      //double[] finalScore = new double[1 + initsPerIt]; // COMPUTED BY "IntermediateOptimizer.java"
+      // double[] initialScore = new double[1 + initsPerIt]; // BLEU SCORE
+      // double[] finalScore = new double[1 + initsPerIt]; // COMPUTED BY
+      // "IntermediateOptimizer.java"
 
       double[][] best1Score = new double[1 + initsPerIt][numSentences]; // MODEL SCORE
       int[][][] best1Cand_suffStats = new int[1 + initsPerIt][numSentences][suffStatsCount]; // SUFF
@@ -845,7 +849,6 @@ public class PROCore {
       // UPDATED
       // }
       // }
-
 
       // Those two arrays are used to calculate initialScore[]
       // (the "score" in best1Score refers to that assigned by the
@@ -889,15 +892,12 @@ public class PROCore {
             inStream_feats = new FileInputStream(tmpDirPrefix + "temp.feats.it" + it);
             inStream_stats = new FileInputStream(tmpDirPrefix + "temp.stats.it" + it);
           } else {
-            inStream_sents =
-                new GZIPInputStream(
-                    new FileInputStream(tmpDirPrefix + "temp.sents.it" + it + ".gz"));
-            inStream_feats =
-                new GZIPInputStream(
-                    new FileInputStream(tmpDirPrefix + "temp.feats.it" + it + ".gz"));
-            inStream_stats =
-                new GZIPInputStream(
-                    new FileInputStream(tmpDirPrefix + "temp.stats.it" + it + ".gz"));
+            inStream_sents = new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.sents.it"
+                + it + ".gz"));
+            inStream_feats = new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.feats.it"
+                + it + ".gz"));
+            inStream_stats = new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.stats.it"
+                + it + ".gz"));
           }
 
           inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
@@ -905,25 +905,22 @@ public class PROCore {
           inFile_stats[it] = new BufferedReader(new InputStreamReader(inStream_stats, "utf8"));
         }
 
-
         InputStream inStream_sentsCurrIt, inStream_featsCurrIt, inStream_statsCurrIt;
         // TEMP FILE FOR CURRENT ITERATION!
         if (compressFiles == 0) {
           inStream_sentsCurrIt = new FileInputStream(tmpDirPrefix + "temp.sents.it" + iteration);
           inStream_featsCurrIt = new FileInputStream(tmpDirPrefix + "temp.feats.it" + iteration);
         } else {
-          inStream_sentsCurrIt =
-              new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.sents.it" + iteration
-                  + ".gz"));
-          inStream_featsCurrIt =
-              new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.feats.it" + iteration
-                  + ".gz"));
+          inStream_sentsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix
+              + "temp.sents.it" + iteration + ".gz"));
+          inStream_featsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix
+              + "temp.feats.it" + iteration + ".gz"));
         }
 
-        BufferedReader inFile_sentsCurrIt =
-            new BufferedReader(new InputStreamReader(inStream_sentsCurrIt, "utf8"));
-        BufferedReader inFile_featsCurrIt =
-            new BufferedReader(new InputStreamReader(inStream_featsCurrIt, "utf8"));
+        BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(
+            inStream_sentsCurrIt, "utf8"));
+        BufferedReader inFile_featsCurrIt = new BufferedReader(new InputStreamReader(
+            inStream_featsCurrIt, "utf8"));
 
         BufferedReader inFile_statsCurrIt = null; // will only be used if statsCurrIt_exists below
                                                   // is set to true
@@ -935,17 +932,16 @@ public class PROCore {
 
         if (fileExists(tmpDirPrefix + "temp.stats.it" + iteration)) {
           inStream_statsCurrIt = new FileInputStream(tmpDirPrefix + "temp.stats.it" + iteration);
-          inFile_statsCurrIt =
-              new BufferedReader(new InputStreamReader(inStream_statsCurrIt, "utf8"));
+          inFile_statsCurrIt = new BufferedReader(new InputStreamReader(inStream_statsCurrIt,
+              "utf8"));
           statsCurrIt_exists = true;
           copyFile(tmpDirPrefix + "temp.stats.it" + iteration, tmpDirPrefix + "temp.stats.it"
               + iteration + ".copy");
         } else if (fileExists(tmpDirPrefix + "temp.stats.it" + iteration + ".gz")) {
-          inStream_statsCurrIt =
-              new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.stats.it" + iteration
-                  + ".gz"));
-          inFile_statsCurrIt =
-              new BufferedReader(new InputStreamReader(inStream_statsCurrIt, "utf8"));
+          inStream_statsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix
+              + "temp.stats.it" + iteration + ".gz"));
+          inFile_statsCurrIt = new BufferedReader(new InputStreamReader(inStream_statsCurrIt,
+              "utf8"));
           statsCurrIt_exists = true;
           copyFile(tmpDirPrefix + "temp.stats.it" + iteration + ".gz", tmpDirPrefix
               + "temp.stats.it" + iteration + ".copy.gz");
@@ -957,20 +953,20 @@ public class PROCore {
         PrintWriter outFile_statsMerged = new PrintWriter(tmpDirPrefix + "temp.stats.merged");
         // write sufficient statistics from all the sentences
         // from the output files into a single file
-        PrintWriter outFile_statsMergedKnown =
-            new PrintWriter(tmpDirPrefix + "temp.stats.mergedKnown");
+        PrintWriter outFile_statsMergedKnown = new PrintWriter(tmpDirPrefix
+            + "temp.stats.mergedKnown");
         // write sufficient statistics from all the sentences
         // from the output files into a single file
 
         // OUTPUT THE 5^TH 6^TH TEMP FILE, BUT WILL BE DELETED AT THE END OF THE FUNCTION
-        FileOutputStream outStream_unknownCands =
-            new FileOutputStream(tmpDirPrefix + "temp.currIt.unknownCands", false);
-        OutputStreamWriter outStreamWriter_unknownCands =
-            new OutputStreamWriter(outStream_unknownCands, "utf8");
+        FileOutputStream outStream_unknownCands = new FileOutputStream(tmpDirPrefix
+            + "temp.currIt.unknownCands", false);
+        OutputStreamWriter outStreamWriter_unknownCands = new OutputStreamWriter(
+            outStream_unknownCands, "utf8");
         BufferedWriter outFile_unknownCands = new BufferedWriter(outStreamWriter_unknownCands);
 
-        PrintWriter outFile_unknownIndices =
-            new PrintWriter(tmpDirPrefix + "temp.currIt.unknownIndices");
+        PrintWriter outFile_unknownIndices = new PrintWriter(tmpDirPrefix
+            + "temp.currIt.unknownIndices");
 
         String sents_str, feats_str, stats_str;
 
@@ -999,10 +995,8 @@ public class PROCore {
 
         int totalCandidateCount = 0;
 
-
         // NEW CANDIDATE SIZE FOR EACH SENTENCE
         int[] sizeUnknown_currIt = new int[numSentences];
-
 
         for (int i = 0; i < numSentences; ++i) {
 
@@ -1032,7 +1026,6 @@ public class PROCore {
 
               // for the nth candidate for the ith sentence, read the sentence, feature values,
               // and sufficient statistics from the various temp files
-
 
               // READ IN ONE LINE OF temp.sent, temp.feat, temp.stats FROM ITERATION it
               sents_str = inFile_sents[it].readLine();
@@ -1089,8 +1082,8 @@ public class PROCore {
                   if (!trainingMode.equals("4")) {
                     for (int c = 0; c < featVal_str.length; c++) {
                       feat_info = featVal_str[c].split("[:=]");
-                      currFeatVal[Integer.parseInt(feat_info[0])] =
-                          Double.parseDouble(feat_info[1]); // INDEX STARTS FROM 1
+                      currFeatVal[Integer.parseInt(feat_info[0])] = Double
+                          .parseDouble(feat_info[1]); // INDEX STARTS FROM 1
                     }
                   } else // FOR MODE 4, NEED TO COMPUTE THE SUMMARY FEATURE VAL
                   {
@@ -1108,9 +1101,8 @@ public class PROCore {
                         updated_feat_str += (featId + ":" + feat_info[1] + " "); // FEATURE ID ORDER
                                                                                  // DOESN'T MATTER
                       } else
-                        sumFeatVal +=
-                            Double.parseDouble(feat_info[1])
-                                * sparseFeatWeights[featId - numParamsInFile];
+                        sumFeatVal += Double.parseDouble(feat_info[1])
+                            * sparseFeatWeights[featId - numParamsInFile];
                     }
 
                     currFeatVal[numParamsInFile] = sumFeatVal;
@@ -1231,7 +1223,6 @@ public class PROCore {
         outFile_unknownCands.close();
         outFile_unknownIndices.close();
 
-
         // WANT TO RE-OPEN ALL TEMP FILES TO GO FROM START AGAIN?
         for (int it = firstIt; it < iteration; ++it) // PREVIOUS ITERATIONS TEMP FILES
         {
@@ -1243,12 +1234,10 @@ public class PROCore {
             inStream_sents = new FileInputStream(tmpDirPrefix + "temp.sents.it" + it);
             inStream_stats = new FileInputStream(tmpDirPrefix + "temp.stats.it" + it);
           } else {
-            inStream_sents =
-                new GZIPInputStream(
-                    new FileInputStream(tmpDirPrefix + "temp.sents.it" + it + ".gz"));
-            inStream_stats =
-                new GZIPInputStream(
-                    new FileInputStream(tmpDirPrefix + "temp.stats.it" + it + ".gz"));
+            inStream_sents = new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.sents.it"
+                + it + ".gz"));
+            inStream_stats = new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.stats.it"
+                + it + ".gz"));
           }
 
           inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
@@ -1260,13 +1249,10 @@ public class PROCore {
         if (compressFiles == 0) {
           inStream_sentsCurrIt = new FileInputStream(tmpDirPrefix + "temp.sents.it" + iteration);
         } else {
-          inStream_sentsCurrIt =
-              new GZIPInputStream(new FileInputStream(tmpDirPrefix + "temp.sents.it" + iteration
-                  + ".gz"));
+          inStream_sentsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix
+              + "temp.sents.it" + iteration + ".gz"));
         }
-        inFile_sentsCurrIt =
-            new BufferedReader(new InputStreamReader(inStream_sentsCurrIt, "utf8"));
-
+        inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt, "utf8"));
 
         // calculate SS for unseen candidates and write them to file
         FileInputStream inStream_statsCurrIt_unknown = null;
@@ -1279,16 +1265,16 @@ public class PROCore {
 
           // ...and open it
           inStream_statsCurrIt_unknown = new FileInputStream(tmpDirPrefix + "temp.stats.unknown");
-          inFile_statsCurrIt_unknown =
-              new BufferedReader(new InputStreamReader(inStream_statsCurrIt_unknown, "utf8"));
+          inFile_statsCurrIt_unknown = new BufferedReader(new InputStreamReader(
+              inStream_statsCurrIt_unknown, "utf8"));
         }
 
         // OPEN mergedKnown file
         // NEWLY CREATED BY THE BIG LOOP ABOVE
-        FileInputStream instream_statsMergedKnown =
-            new FileInputStream(tmpDirPrefix + "temp.stats.mergedKnown");
-        BufferedReader inFile_statsMergedKnown =
-            new BufferedReader(new InputStreamReader(instream_statsMergedKnown, "utf8"));
+        FileInputStream instream_statsMergedKnown = new FileInputStream(tmpDirPrefix
+            + "temp.stats.mergedKnown");
+        BufferedReader inFile_statsMergedKnown = new BufferedReader(new InputStreamReader(
+            instream_statsMergedKnown, "utf8"));
 
         for (int i = 0; i < numSentences; ++i) {
           // reprocess candidates from previous iterations
@@ -1399,9 +1385,8 @@ public class PROCore {
                       updated_feat_str += (featId + ":" + feat_info[1] + " "); // FEATURE ID ORDER
                                                                                // DOESN'T MATTER
                     } else
-                      sumFeatVal +=
-                          Double.parseDouble(feat_info[1])
-                              * sparseFeatWeights[featId - numParamsInFile];
+                      sumFeatVal += Double.parseDouble(feat_info[1])
+                          * sparseFeatWeights[featId - numParamsInFile];
                   }
 
                   currFeatVal[numParamsInFile] = sumFeatVal;
@@ -1457,7 +1442,6 @@ public class PROCore {
 
           existingCandStats.clear();
           totalCandidateCount += candCount[i];
-
 
           // OUTPUT SENTENCE PROGRESS
           if ((i + 1) % 500 == 0) {
@@ -1529,7 +1513,6 @@ public class PROCore {
         System.exit(99902);
       }
 
-
       // N-BEST LIST CONVERGE
       if (newCandidatesAdded[iteration] == 0) {
         if (!oneModificationPerIteration) {
@@ -1557,11 +1540,10 @@ public class PROCore {
       Vector<String> output = new Vector<String>();
       double score = 0;
 
-      Optimizer opt =
-          new Optimizer(seed + iteration, numSentences, output, initialLambda[1], feat_hash,
-              stats_hash, score, evalMetric, Tau, Xi, metricDiff, normalizationOptions,
-              classifierAlg, classifierParams, trainingMode, numSparseParams, numParamsInFile,
-              nbestFormat);
+      Optimizer opt = new Optimizer(seed + iteration, numSentences, output, initialLambda[1],
+          feat_hash, stats_hash, score, evalMetric, Tau, Xi, metricDiff, normalizationOptions,
+          classifierAlg, classifierParams, trainingMode, numSparseParams, numParamsInFile,
+          nbestFormat);
 
       finalLambda[1] = opt.run_Optimizer(); // FOR MODE 3, THE REGULAR WEIGHTS ARE NOT UPDATED
 
@@ -1586,7 +1568,6 @@ public class PROCore {
        * 
        * FINAL_score = bestFinalScore;
        */
-
 
       // CHECK IF ANY PARAMETER HAS BEEN UPDATED
       boolean anyParamChanged = false;
@@ -1674,7 +1655,6 @@ public class PROCore {
 
     } // while (!done) // NOTE: this "loop" will only be carried out once
 
-
     // delete .temp.stats.merged file, since it is not needed in the next
     // iteration (it will be recreated from scratch)
     deleteFile(tmpDirPrefix + "temp.stats.merged");
@@ -1696,9 +1676,8 @@ public class PROCore {
       retStr += "" + lambdaA[numParams] + "}";
     } else {
       if (trainingMode.equals("2")) {
-        retStr +=
-            "(Mode " + trainingMode
-                + ": listing all regular feature weights + first 5 sparse feature weights)";
+        retStr += "(Mode " + trainingMode
+            + ": listing all regular feature weights + first 5 sparse feature weights)";
         for (int c = 1; c < numParamsInFile - 1; ++c) {
           retStr += "" + lambdaA[c] + ", ";
         }
@@ -1765,7 +1744,7 @@ public class PROCore {
         // this merges the error and output streams of the subprocess
         pb.redirectErrorStream(true);
         Process p = pb.start();
- 
+
         // capture the sub-command's output
         new StreamGobbler(p.getInputStream(), decVerbosity).start();
 
@@ -1802,15 +1781,14 @@ public class PROCore {
 
       PrintWriter outFile_feats = new PrintWriter(featsFileName);
 
-
       InputStream inStream_nbest = null;
       if (nbestFileName.endsWith(".gz")) {
         inStream_nbest = new GZIPInputStream(new FileInputStream(nbestFileName));
       } else {
         inStream_nbest = new FileInputStream(nbestFileName);
       }
-      BufferedReader inFile_nbest =
-          new BufferedReader(new InputStreamReader(inStream_nbest, "utf8"));
+      BufferedReader inFile_nbest = new BufferedReader(
+          new InputStreamReader(inStream_nbest, "utf8"));
 
       String line; // , prevLine;
       String candidate_str = "";
@@ -2022,8 +2000,8 @@ public class PROCore {
           try {
             InputStream discFileInputStream;
             discFileInputStream = new FileInputStream(discDefFile);
-            BufferedReader discFeatFile =
-                new BufferedReader(new InputStreamReader(discFileInputStream, "utf8"));
+            BufferedReader discFeatFile = new BufferedReader(new InputStreamReader(
+                discFileInputStream, "utf8"));
 
             String line2;
             String[] lineArray;
@@ -2178,7 +2156,6 @@ public class PROCore {
       origLine = inFile_init.nextLine();
     }
 
-
     // How should a lambda[] vector be normalized (before decoding)?
     // nO[0] = 0: no normalization
     // nO[0] = 1: scale so that parameter nO[2] has absolute value nO[1]
@@ -2204,7 +2181,8 @@ public class PROCore {
       for (int i = 3; i < dummyA.length; ++i) { // in case parameter name has multiple words
         pName = pName + " " + dummyA[i];
       }
-      normalizationOptions[2] = Vocabulary.id(pName);;
+      normalizationOptions[2] = Vocabulary.id(pName);
+      ;
 
       if (normalizationOptions[1] <= 0) {
         println("Value for the absval normalization method must be positive.");
@@ -2280,7 +2258,8 @@ public class PROCore {
 
           for (int doc = 0; doc < numDocuments; ++doc) {
 
-            if (doc != 0) line = inFile.readLine();
+            if (doc != 0)
+              line = inFile.readLine();
 
             int docSize = 0;
             if (format1) {
@@ -2309,7 +2288,8 @@ public class PROCore {
           for (int i = 0; i < numSentences; ++i) {
             // set format3 = true if a duplicate is found
             String line = inFile.readLine();
-            if (seenStrings.contains(line)) format3 = true;
+            if (seenStrings.contains(line))
+              format3 = true;
             seenStrings.add(line);
           }
 
@@ -2527,10 +2507,12 @@ public class PROCore {
             } else
               arg.append(line.charAt(i));
           }
-          if (arg.length() > 0) argList.add(arg.toString());
+          if (arg.length() > 0)
+            argList.add(arg.toString());
           // Create paramA
           String[] paramA = new String[argList.size()];
-          for (int i = 0; i < paramA.length; paramA[i] = argList.get(i++));
+          for (int i = 0; i < paramA.length; paramA[i] = argList.get(i++))
+            ;
           // END CMU MODIFICATION
 
           if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
@@ -2844,7 +2826,7 @@ public class PROCore {
       else if (option.equals("-cmd")) {
         decoderCommandFileName = args[i + 1];
       } else if (option.equals("-passIt")) {
-        int val = Integer.parseInt(args[i+1]);
+        int val = Integer.parseInt(args[i + 1]);
         if (val < 0 || val > 1) {
           println("passIterationToDecoder should be either 0 or 1");
           System.exit(10);
@@ -3005,8 +2987,6 @@ public class PROCore {
 
     }
 
-
-
     if (refsPerSen > 1) {
       // the provided refFileName might be a prefix
       File dummy = new File(refFileName);
@@ -3016,7 +2996,6 @@ public class PROCore {
     } else {
       checkFile(refFileName);
     }
-
 
     if (firstTime) {
       println("Processed the following args array:", 1);
@@ -3097,7 +3076,8 @@ public class PROCore {
   }
 
   private boolean fileExists(String fileName) {
-    if (fileName == null) return false;
+    if (fileName == null)
+      return false;
     File checker = new File(fileName);
     return checker.exists();
   }
@@ -3244,7 +3224,8 @@ public class PROCore {
   } // createUnifiedRefFile(String prefix, int numFiles)
 
   private String normalize(String str, int normMethod) {
-    if (normMethod == 0) return str;
+    if (normMethod == 0)
+      return str;
 
     // replace HTML/SGML
     str = str.replaceAll("&quot;", "\"");
@@ -3252,8 +3233,6 @@ public class PROCore {
     str = str.replaceAll("&lt;", "<");
     str = str.replaceAll("&gt;", ">");
     str = str.replaceAll("&apos;", "'");
-
-
 
     // split on these characters:
     // ! " # $ % & ( ) * + / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
@@ -3273,8 +3252,6 @@ public class PROCore {
       }
       str = str.replaceAll(regex, " " + regex + " ");
     }
-
-
 
     // split on "." and "," and "-", conditioned on proper context
 
@@ -3312,8 +3289,6 @@ public class PROCore {
       }
     }
 
-
-
     // rejoin i'm, we're, *'s, won't, don't, etc
 
     str = " " + str + " ";
@@ -3326,8 +3301,6 @@ public class PROCore {
     str = str.replaceAll(" 'll ", "'ll ");
     str = str.replaceAll(" 'd ", "'d ");
     str = str.replaceAll(" n't ", "n't ");
-
-
 
     // remove spaces around dashes
     if (normMethod == 2 || normMethod == 4) {
@@ -3357,8 +3330,6 @@ public class PROCore {
         }
       }
     }
-
-
 
     // drop non-ASCII characters
     if (normMethod == 3 || normMethod == 4) {
@@ -3390,7 +3361,8 @@ public class PROCore {
       String line;
       do {
         line = inFile.readLine();
-        if (line != null) ++count;
+        if (line != null)
+          ++count;
       } while (line != null);
 
       inFile.close();
@@ -3411,7 +3383,8 @@ public class PROCore {
       String line;
       do {
         line = inFile.readLine();
-        if (line != null && line.length() > 0) ++count;
+        if (line != null && line.length() > 0)
+          ++count;
       } while (line != null);
 
       inFile.close();
@@ -3446,7 +3419,6 @@ public class PROCore {
     long freeMemBefore = myRuntime.freeMemory();
     long usedMemBefore = totalMemBefore - freeMemBefore;
 
-
     long usedCurr = usedMemBefore;
     long usedPrev = usedCurr;
 
@@ -3460,9 +3432,9 @@ public class PROCore {
       usedPrev = usedCurr;
       usedCurr = myRuntime.totalMemory() - myRuntime.freeMemory();
 
-      if (usedCurr == usedPrev) break;
+      if (usedCurr == usedPrev)
+        break;
     }
-
 
     if (!silent) {
       long totalMemAfter = myRuntime.totalMemory();
@@ -3486,11 +3458,13 @@ public class PROCore {
   }
 
   private void println(Object obj, int priority) {
-    if (priority <= verbosity) println(obj);
+    if (priority <= verbosity)
+      println(obj);
   }
 
   private void print(Object obj, int priority) {
-    if (priority <= verbosity) print(obj);
+    if (priority <= verbosity)
+      print(obj);
   }
 
   private void println(Object obj) {
@@ -3503,7 +3477,8 @@ public class PROCore {
 
   private void showProgress() {
     ++progress;
-    if (progress % 100000 == 0) print(".", 2);
+    if (progress % 100000 == 0)
+      print(".", 2);
   }
 
   private double[] randomLambda() {
@@ -3613,7 +3588,6 @@ public class PROCore {
       }
     }
 
-
     // old way of doing it; takes quadratic time (vs. linear time above)
     /*
      * for (int k1 = 0; k1 < numCandidates; ++k1) { for (int k2 = 0; k2 < numCandidates; ++k2) { if
@@ -3627,14 +3601,14 @@ public class PROCore {
 
   public static void main(String[] args) {
 
-    PROCore DMC = new PROCore(); // dummy PROCore object
+    JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
+    PROCore DMC = new PROCore(joshuaConfiguration); // dummy PROCore object
 
     // if bad args[], System.exit(80)
 
     String configFileName = args[0];
     String stateFileName = args[1];
     int currIteration = Integer.parseInt(args[2]);
-
 
     int randsToSkip = 0;
     int earlyStop = 0;
@@ -3734,17 +3708,14 @@ public class PROCore {
       }
     }
 
-
-    double[] A =
-        DMC.run_single_iteration(currIteration, DMC.minMERTIterations, DMC.maxMERTIterations,
-            DMC.prevMERTIterations, earlyStop, maxIndex);
+    double[] A = DMC.run_single_iteration(currIteration, DMC.minMERTIterations,
+        DMC.maxMERTIterations, DMC.prevMERTIterations, earlyStop, maxIndex);
 
     if (A != null) {
       FINAL_score = A[0];
       earlyStop = (int) A[1];
       randsToSkip = DMC.generatedRands;
     }
-
 
     if (A != null && A[2] != 1) {
 
@@ -3818,7 +3789,6 @@ public class PROCore {
           }
         }
       }
-
 
       DMC.finish();
 

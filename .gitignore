@@ -79,3 +79,14 @@ test/decoder/n-ary/log
 test/decoder/n-ary/output
 test/decoder/n-ary/output.scores
 debug.txt
+
+scripts/training/MGIZA/
+
+/test/bn-en/hiero/log.filter
+/test/bn-en/hiero/output.filter
+/test/bn-en/packed/output.scores
+/test/decoder/left-state/diff
+/test/decoder/left-state/log
+/test/decoder/left-state/output
+/test/decoder/left-state/output.scores
+/test/thrax/extraction/.grammar.gz.crc

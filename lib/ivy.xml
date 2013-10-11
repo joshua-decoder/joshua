@@ -15,5 +15,6 @@
     <dependency org="org.testng" name="testng" rev="6.7"/>
     <dependency org="org.mockito" name="mockito-all" rev="1.9.5"/>
     <dependency org="pmd" name="pmd" rev="4.2.5"/>
+    <dependency org="junit"  name="junit" rev="4.10" />
   </dependencies>
 </ivy-module>

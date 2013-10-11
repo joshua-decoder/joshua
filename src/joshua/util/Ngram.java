@@ -5,6 +5,10 @@ import java.util.Map;
 
 import joshua.corpus.Vocabulary;
 
+/**
+ * Provides convenience functions for extracting all ngrams from a sentence, represented as an array
+ * of words.
+ */
 public class Ngram {
 
   public static void getNgrams(Map<String, Integer> tbl, int startOrder, int endOrder,
@@ -16,13 +20,13 @@ public class Ngram {
         for (int k = i; k <= i + j; k++) {
           int t_wrd = wrds[k];
           ngram.append(Vocabulary.word(t_wrd));
-          if (k < i + j) ngram.append(" ");
+          if (k < i + j)
+            ngram.append(" ");
         }
         String ngramStr = ngram.toString();
         increaseCount(tbl, ngramStr, 1);
       }
   }
-
 
   /** if symbolTbl!=null, then convert interger to String */
   public static void getNgrams(Map<String, Integer> tbl, int startOrder, int endOrder,
@@ -34,7 +38,8 @@ public class Ngram {
         for (int k = i; k <= i + j; k++) {
           int t_wrd = wrds.get(k);
           ngram.append(Vocabulary.word(t_wrd));
-          if (k < i + j) ngram.append(" ");
+          if (k < i + j)
+            ngram.append(" ");
         }
         String ngramStr = ngram.toString();
         increaseCount(tbl, ngramStr, 1);
@@ -50,8 +55,9 @@ public class Ngram {
         StringBuffer ngram = new StringBuffer();
         for (int k = i; k <= i + j; k++) {
           String t_wrd = wrds[k];
-          ngram.append(Vocabulary.id(t_wrd));
-          if (k < i + j) ngram.append(" ");
+          ngram.append(t_wrd);
+          if (k < i + j)
+            ngram.append(" ");
         }
         String ngramStr = ngram.toString();
         increaseCount(tbl, ngramStr, 1);
@@ -65,7 +71,5 @@ public class Ngram {
     else
       tbl.put(feat, increment);
   }
-
-
 
 }

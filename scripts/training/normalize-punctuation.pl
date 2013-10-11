@@ -6,6 +6,7 @@
 
 use strict;
 use warnings;
+use utf8;
 
 binmode(STDIN, ":utf8");
 binmode(STDOUT, ":utf8");
@@ -25,13 +26,14 @@ while(<STDIN>) {
   s/ :/:/g;
   s/ ;/;/g;
   # normalize unicode punctuation
-  s/﷓/-/g;
   s/„/\"/g;
   s/“/\"/g;
   s/”/\"/g;
   s/–/-/g;
-  s/—/ - /g; s/ +/ /g;
+  s/—/ - /g;
+  s/ +/ /g;
   s/´/\'/g;
+  s/’/\'/g;
   s/([a-z])‘([a-z])/$1\'$2/gi;
   s/([a-z])’([a-z])/$1\'$2/gi;
   s/‘/\"/g;
@@ -59,7 +61,7 @@ while(<STDIN>) {
   s/\xA0\!/\!/g;
   s/\xA0;/;/g;
   s/,\xA0/, /g; s/ +/ /g;
-
+  
   # English "quotation," followed by comma, style
   if ($language eq "en") {
     s/\"([,\.]+)/$1\"/g;

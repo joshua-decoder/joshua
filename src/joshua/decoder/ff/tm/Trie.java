@@ -2,6 +2,7 @@ package joshua.decoder.ff.tm;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * An interface for trie-like data structures.
@@ -46,6 +47,20 @@ public interface Trie {
    * @return
    */
   HashMap<Integer,? extends Trie> getChildren();
+
+  /**
+   * Returns an iterator over the trie node's extensions with terminal labels.
+   * 
+   * @return
+   */
+  Iterator<Integer> getTerminalExtensionIterator();
+  
+  /**
+   * Returns an iterator over the trie node's extensions with nonterminal labels.
+   * 
+   * @return
+   */
+  Iterator<Integer> getNonterminalExtensionIterator();
   
   
   /**

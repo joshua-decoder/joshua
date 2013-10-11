@@ -75,11 +75,11 @@ class Cell {
 
     for (HGNode antNode : bin.getSortedNodes()) {
       if (antNode.lhs == this.goalSymID) {
-        double logP = antNode.bestHyperedge.bestDerivationLogP;
+        float logP = antNode.bestHyperedge.getBestDerivationScore();
         List<HGNode> antNodes = new ArrayList<HGNode>();
         antNodes.add(antNode);
 
-        double finalTransitionLogP = ComputeNodeResult.computeFinalCost(featureFunctions, antNodes,
+        float finalTransitionLogP = ComputeNodeResult.computeFinalCost(featureFunctions, antNodes,
             0, sentenceLength, null, this.chart.segmentID);
 
         List<HGNode> previousItems = new ArrayList<HGNode>();
@@ -104,7 +104,7 @@ class Cell {
         return false;
       } else {
         logger.info(String.format("Sentence id=" + this.chart.segmentID + "; BestlogP=%.3f",
-            goalItem.bestHyperedge.bestDerivationLogP));
+            goalItem.bestHyperedge.getBestDerivationScore()));
       }
     }
     ensureSorted();
@@ -143,9 +143,9 @@ class Cell {
     // System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
 
     List<DPState> dpStates = result.getDPStates();
-    double pruningEstimate = result.getPruningEstimate();
-    double transitionLogP = result.getTransitionCost();
-    double finalizedTotalLogP = result.getViterbiCost();
+    float pruningEstimate = result.getPruningEstimate();
+    float transitionLogP = result.getTransitionCost();
+    float finalizedTotalLogP = result.getViterbiCost();
 
     /**
      * Here, the edge has passed pre-pruning. The edge will be added to the chart in one of three
@@ -173,7 +173,7 @@ class Cell {
        * the position of oldItem in this.heapItems may change, basically, we should remove the
        * oldItem, and re-insert it (linear time), this is too expense)
        **/
-      if (newNode.getPruneLogP() > oldNode.getPruneLogP()) { // merge old to new: semiring plus
+      if (newNode.getScore() > oldNode.getScore()) { // merge old to new: semiring plus
 
         newNode.addHyperedgesInNode(oldNode.hyperedges);
         // This will update the HashMap, so that the oldNode is destroyed.

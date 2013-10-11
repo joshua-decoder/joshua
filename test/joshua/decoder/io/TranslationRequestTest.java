@@ -2,6 +2,9 @@ package joshua.decoder.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+
+import joshua.decoder.JoshuaConfiguration;
+
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 import static org.mockito.Mockito.*;
@@ -19,6 +22,7 @@ import static org.mockito.Mockito.*;
  */
 public class TranslationRequestTest {
 
+  private final JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
   @BeforeMethod
   public void createTranslationRequest() throws Exception {
   }
@@ -51,7 +55,7 @@ public class TranslationRequestTest {
   @Test(enabled = true)
   public void testSize_uponConstruction() {
     InputStream in = mock(InputStream.class);
-    TranslationRequest request = new TranslationRequest(in);
+    TranslationRequest request = new TranslationRequest(in, joshuaConfiguration);
     assertEquals(request.size(), 0);
   }
 
@@ -63,7 +67,7 @@ public class TranslationRequestTest {
   public void testSize_1() throws Exception {
     byte[] data = "1".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
-    TranslationRequest request = new TranslationRequest(input);
+    TranslationRequest request = new TranslationRequest(input, joshuaConfiguration);
     request.next();
     assertEquals(request.size(), 1);
   }
@@ -76,7 +80,7 @@ public class TranslationRequestTest {
   public void testSize_newline() throws Exception {
     byte[] data = "\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
-    TranslationRequest request = new TranslationRequest(input);
+    TranslationRequest request = new TranslationRequest(input, joshuaConfiguration);
     request.next();
     assertEquals(request.size(), 1);
   }
@@ -89,7 +93,7 @@ public class TranslationRequestTest {
   public void testSize_2newlines() throws Exception {
     byte[] data = "\n\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
-    TranslationRequest request = new TranslationRequest(input);
+    TranslationRequest request = new TranslationRequest(input, joshuaConfiguration);
     request.next();
     request.next();
     assertEquals(request.size(), 2);
@@ -103,7 +107,7 @@ public class TranslationRequestTest {
   public void testNext_2Newlines() throws Exception {
     byte[] data = "\n\n".getBytes();
     ByteArrayInputStream input = new ByteArrayInputStream(data);
-    TranslationRequest request = new TranslationRequest(input);
+    TranslationRequest request = new TranslationRequest(input, joshuaConfiguration);
     assertEquals(request.next().source(), "");
     assertEquals(request.next().source(), "");
   }

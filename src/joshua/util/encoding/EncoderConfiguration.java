@@ -28,6 +28,10 @@ public class EncoderConfiguration {
     this.outerToInner = new HashMap<Integer, Integer>();
   }
 
+  public int getNumFeatures() {
+    return encoders.length;
+  }
+  
   public void load(String file_name) throws IOException {
     File encoding_file = new File(file_name);
     BufferedInputStream buf_stream = new BufferedInputStream(new FileInputStream(encoding_file));
@@ -93,5 +97,28 @@ public class EncoderConfiguration {
   
   public boolean isLabeled() {
     return labeled;
+  }
+
+  /**
+   * For now, this just loads a configuration and prints out the number of features.
+   * 
+   * @param args
+   */
+  public static void main(String[] args) {
+    String grammar_dir = null;
+    try {
+      grammar_dir = args[0];
+    
+      EncoderConfiguration encoding = new EncoderConfiguration();
+      encoding.load(grammar_dir + File.separator + "encoding");
+      
+      System.out.println(String.format("num_features = %d", encoding.getNumFeatures()));
+    } catch (ArrayIndexOutOfBoundsException e) {
+      System.err.println("Usage: EncoderConfiguration <packed_directory>");
+      System.exit(1);
+    } catch (IOException e) {
+      System.err.println(String.format("* FATAL: can't find file %s/encoding", grammar_dir));
+      System.exit(1);
+    }
   }
 }

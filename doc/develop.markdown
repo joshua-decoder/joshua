@@ -7,7 +7,6 @@ Information for Developers				{#develop}
 
 The Joshua source code repository is located at 
 [http://github.com/joshua-decoder/joshua](http://github.com/joshua-decoder/joshua).
-Active development is being done in the `devel` branch.
 
 ## Development tools required
 
@@ -24,6 +23,17 @@ Active development is being done in the `devel` branch.
   In Eclipse preferences, go to *Java* -> *Code Style* -> *Formatter*. Then click 
   on *Import...* and choose `eclipse-java-google-style.xml`.
 
+## Getting started
+
+You can download Joshua and compile it with the following commands. 
+
+    git clone https://github.com/joshua-decoder/joshua.git
+    cd joshua
+    export JOSHUA=$(pwd)
+    ant devel
+    
+The `devel` target downloads a number of dependencies using Ivy, along with the Thrax submodule, and
+then compiles everything, include support tools like KenLM and GIZA++ (which are included).
 
 ## Discussion list
 
@@ -41,11 +51,15 @@ page.
 
 ## Style guide
 
-### Naming conventions
+<!-- ### Naming conventions -->
 
-TBD
+<!-- TBD -->
 
 ### Format
+
+If you are using Eclipse, the project settings can be loaded automatically by pointing
+Eclipse to the $JOSHUA/.settings/ directory. If you are using another tool, please follow
+these conventions:
 
 * 100 characters maximum line width
 * Indent with 2 spaces
@@ -58,7 +72,6 @@ TBD
 * Use spaces only for tabbing
 * Open brace on same line
 * Keep `else if` on one line
-* TBD
 
 ## Building a new release
 

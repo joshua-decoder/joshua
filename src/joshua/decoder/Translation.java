@@ -7,7 +7,6 @@ import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.KenLMFF;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
@@ -29,40 +28,45 @@ public class Translation {
    */
   private String output = null;
 
-  public Translation(Sentence source, HyperGraph hypergraph, List<FeatureFunction> featureFunctions) {
+  public Translation(Sentence source, HyperGraph hypergraph,
+      List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
 
     StringWriter sw = new StringWriter();
     BufferedWriter out = new BufferedWriter(sw);
 
-    /*
-     * this.featureFunctions = new ArrayList<FeatureFunction>(); for (FeatureFunction ff :
-     * featureFunctions) { if (ff instanceof SourceDependentFF) { SourceDependentFF sdff =
-     * (SourceDependentFF) ((SourceDependentFF) ff).clone(); sdff.setSource(source);
-     * this.featureFunctions.add((FeatureFunction) sdff); } else { this.featureFunctions.add(ff); }
-     */
-
     try {
       if (hypergraph != null) {
-        if (!JoshuaConfiguration.hypergraphFilePattern.equals("")) {
-          hypergraph.dump(String.format(JoshuaConfiguration.hypergraphFilePattern, source.id()));
+        if (!joshuaConfiguration.hypergraphFilePattern.equals("")) {
+          hypergraph.dump(String.format(joshuaConfiguration.hypergraphFilePattern, source.id()));
         }
 
         long startTime = System.currentTimeMillis();
-        KBestExtractor kBestExtractor = new KBestExtractor(Decoder.weights,
-            JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.include_align_index, false);
 
-        kBestExtractor.lazyKBestExtractOnHG(hypergraph, featureFunctions,
-            JoshuaConfiguration.topN, id(), out);
+        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions,
+            Decoder.weights, false, joshuaConfiguration);
+
+        // We must put this weight as zero, otherwise we get an error when we try to retrieve it
+        // without checking
+        Decoder.weights.put("BLEU", 0);
+        kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+
+        if (joshuaConfiguration.rescoreForest) {
+          Decoder.weights.put("BLEU", joshuaConfiguration.rescoreForestWeight);
+          kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+
+          Decoder.weights.put("BLEU", -joshuaConfiguration.rescoreForestWeight);
+          kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+        }
 
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
         System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
-            JoshuaConfiguration.topN, seconds));
+            joshuaConfiguration.topN, seconds));
 
       } else {
 
         // There is no output for the given input (e.g. blank line)
-        String outputString = JoshuaConfiguration.outputFormat.replace("%s", "").replace("%e", "")
+        String outputString = joshuaConfiguration.outputFormat.replace("%s", "").replace("%e", "")
             .replace("%S", "").replace("%t", "").replace("%i", Integer.toString(source.id()))
             .replace("%f", "").replace("%c", "0.000");
 
@@ -75,19 +79,18 @@ public class Translation {
       e.printStackTrace();
       System.exit(1);
     }
-    
 
     /*
      * KenLM hack. If using KenLMFF, we need to tell KenLM to delete the pool used to create chart
      * objects for this sentence.
      */
-    for (FeatureFunction feature: featureFunctions) {
+    for (FeatureFunction feature : featureFunctions) {
       if (feature instanceof KenLMFF) {
-        ((KenLMFF)feature).destroyPool(getSourceSentence().id());
+        ((KenLMFF) feature).destroyPool(getSourceSentence().id());
         break;
       }
     }
-    
+
     this.output = sw.toString();
   }
 
