@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -201,6 +202,28 @@ public class Vocabulary {
       sb.append(word(id)).append(" ");
     return sb.deleteCharAt(sb.length() - 1).toString();
   }
+  
+  private static boolean isNonterminal(String word) {
+    return (word.substring(0,1).equals("[") && (word.substring(word.length() - 1,word.length()).equals("]")));
+  }
+  
+  /**
+   * This method returns a list of all indices corresponding to Nonterminals in the Vocabulary
+   * @return
+   */
+  public static List<Integer> getNonterminalIndices()
+  {
+    List<Integer> result = new ArrayList<Integer>();
+    for(int i = 0; i < idToString.size(); i++)
+    {
+      String word = idToString.get(i);
+      if(isNonterminal(word)){  
+        result.add(i);
+      }
+    } 
+    return result;
+  }
+  
 
   public static int getUnknownId() {
     return UNKNOWN_ID;

@@ -132,7 +132,7 @@ public class Chart {
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
       this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
-          this.grammars[i].isRegexpGrammar());
+          NonterminalMatcher.createNonterminalMatcher(logger,joshuaConfiguration),this.grammars[i].isRegexpGrammar());
 
     // Begin to do initialization work
 
@@ -483,8 +483,10 @@ public class Chart {
   // ===============================================================
 
   private void logStatistics(Level level) {
-    logger.log(level, String.format("ADDED: %d; MERGED: %d; DOT-ITEMS ADDED: %d", this.nAdded,
-        this.nMerged, this.nDotitemAdded));
+    if (logger.isLoggable(level))
+      logger.log(level,
+          String.format("Sentence %d Chart: ADDED %d MERGED %d DOT-ITEMS ADDED: %d",
+              this.sentence.id(), this.nAdded, this.nMerged, this.nDotitemAdded));
   }
 
   /**

@@ -1,7 +1,6 @@
 package joshua.decoder.ff;
 
 import java.util.List;
-import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -19,16 +18,12 @@ public class LabelCombinationFF extends StatelessFF {
     return LABEL_COMINATION_FEATURE_FUNCTION_NAME.toLowerCase();
   }
 
-  private static final String getLHSAsString(Rule rule) {
-    return Vocabulary.word(rule.getLHS());
-  }
-
   private static final String computeRuleLabelCombinationDescriptor(Rule rule) {
     String result = getLowerCasedFeatureName() + "_";
-    result += getLHSAsString(rule);
-    //System.out.println("Rule: " + rule);
-    for (int nonTerminalIndex : rule.getForeignNonTerminals()) {
-      result += "_" + Vocabulary.word(nonTerminalIndex);
+    result += RulePropertiesQuerying.getLHSAsString(rule);
+    // System.out.println("Rule: " + rule);
+    for (String foreignNonterminalString : RulePropertiesQuerying.getRuleSourceNonterminalStrings(rule)) {
+      result += "_" + foreignNonterminalString;
     }
     return result;
   }

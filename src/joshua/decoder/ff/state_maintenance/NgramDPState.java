@@ -58,14 +58,12 @@ public class NgramDPState extends DPState {
   public boolean equals(Object other) {
     if (other instanceof NgramDPState) {
       NgramDPState that = (NgramDPState) other;
-      if (this.left.length != that.left.length)
-        return false;
-      if (this.right.length != that.right.length)
-        return false;
-      for (int i = 0; i < left.length; ++i)
-        if (this.left[i] != that.left[i] || this.right[i] != that.right[i])
-          return false;
-      return true;
+      if (this.left.length == that.left.length && this.right.length == that.right.length) {
+        for (int i = 0; i < left.length; ++i)
+          if (this.left[i] != that.left[i] || this.right[i] != that.right[i])
+            return false;
+        return true;
+      }
     }
     return false;
   }

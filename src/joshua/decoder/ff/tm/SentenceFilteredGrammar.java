@@ -1,8 +1,10 @@
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
 import joshua.decoder.segment_file.Sentence;
@@ -18,6 +20,7 @@ public class SentenceFilteredGrammar extends BatchGrammar {
   private BatchGrammar baseGrammar;
   private SentenceFilteredTrie filteredTrie;
   private int[] tokens;
+  private Sentence sentence;
 
   /**
    * Construct a new sentence-filtered grammar. The main work is done in the enclosed trie (obtained
@@ -29,20 +32,23 @@ public class SentenceFilteredGrammar extends BatchGrammar {
   SentenceFilteredGrammar(BatchGrammar baseGrammar, Sentence sentence) {
     super(baseGrammar.joshuaConfiguration);
     this.baseGrammar = baseGrammar;
+    this.sentence = sentence;
     this.tokens = sentence.intSentence();
 
     int origCount = getNumRules(baseGrammar.getTrieRoot());
     long startTime = System.currentTimeMillis();
 
-    // First pass filter
-    this.filteredTrie = filter();
+    /* Filter the rules */
+    this.filteredTrie = filter(baseGrammar.getTrieRoot());
+    if (filteredTrie == null)
+      filteredTrie = new SentenceFilteredTrie(baseGrammar.getTrieRoot());
     int filteredCount = getNumRules();
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
 
     System.err.println(String.format(
-        "Sentence-level filtering of sentence %d (%d -> %d rules) in %.3f seconds",
-        sentence.id(), origCount, filteredCount, seconds));
+        "Sentence-level filtering of sentence %d (%d -> %d rules) in %.3f seconds", sentence.id(),
+        origCount, filteredCount, seconds));
   }
 
   @Override
@@ -124,10 +130,9 @@ public class SentenceFilteredGrammar extends BatchGrammar {
    * 
    * @return the root of the filtered trie
    */
-  private SentenceFilteredTrie filter() {
-    Trie unfilteredTrieRoot = baseGrammar.getTrieRoot();
+  private SentenceFilteredTrie filter(Trie unfilteredTrieRoot) {
     SentenceFilteredTrie filteredTrieRoot = new SentenceFilteredTrie(unfilteredTrieRoot);
-    
+
     // System.err.println(String.format("FILTERING TO SENTENCE\n  %s\n",
     // Vocabulary.getWords(tokens)));
 
@@ -138,7 +143,7 @@ public class SentenceFilteredGrammar extends BatchGrammar {
     for (int i = 0; i < tokens.length; i++) {
       filter(i, filteredTrieRoot, false);
     }
-    
+
     return filteredTrieRoot;
   }
 
@@ -150,14 +155,16 @@ public class SentenceFilteredGrammar extends BatchGrammar {
    * @param trie the trie node to match against
    * @param lastWasNT true if the match that brought us here was against a nonterminal
    */
-  private void filter(int i, SentenceFilteredTrie filteredTrieNode, boolean lastWasNT) {
+  private void filter(int i, SentenceFilteredTrie trieNode, boolean lastWasNT) {
     if (i >= tokens.length)
       return;
 
     /* Make sure the underlying unfiltered node has children. */
-    Trie unfilteredTrieNode = filteredTrieNode.unfilteredTrieNode;
-    if (unfilteredTrieNode.getChildren() == null)
+    Trie unfilteredTrieNode = trieNode.unfilteredTrieNode;
+    if (unfilteredTrieNode.getChildren() == null) {
+      // trieNode.path.retreat();
       return;
+    }
 
     /* Match a word */
     Trie trie = unfilteredTrieNode.match(tokens[i]);
@@ -166,10 +173,10 @@ public class SentenceFilteredGrammar extends BatchGrammar {
        * The current filtered node might already have an arc for this label. If so, retrieve it
        * (since we still need to follow it); if not, create it.
        */
-      SentenceFilteredTrie nextFilteredTrie = filteredTrieNode.match(tokens[i]);
+      SentenceFilteredTrie nextFilteredTrie = trieNode.match(tokens[i]);
       if (nextFilteredTrie == null) {
         nextFilteredTrie = new SentenceFilteredTrie(trie);
-        filteredTrieNode.children.put(tokens[i], nextFilteredTrie);
+        trieNode.children.put(tokens[i], nextFilteredTrie);
       }
 
       /*
@@ -195,10 +202,10 @@ public class SentenceFilteredGrammar extends BatchGrammar {
     if (children != null) {
       for (int label : children.keySet()) {
         if (label < 0) {
-          SentenceFilteredTrie nextFilteredTrie = filteredTrieNode.match(label);
+          SentenceFilteredTrie nextFilteredTrie = trieNode.match(label);
           if (nextFilteredTrie == null) {
             nextFilteredTrie = new SentenceFilteredTrie(unfilteredTrieNode.match(label));
-            filteredTrieNode.children.put(label, nextFilteredTrie);
+            trieNode.children.put(label, nextFilteredTrie);
           }
 
           /*
@@ -217,22 +224,43 @@ public class SentenceFilteredGrammar extends BatchGrammar {
       }
     }
   }
-  
-//  private void removeDeadPaths(SentenceFilteredTrie trie) {
-//    
-//    if (trie.hasExtensions()) {
-//      for (Map.Entry<Integer, SentenceFilteredTrie> entry: trie.getChildren().entrySet()) {
-//        SentenceFilteredTrie childTrie = entry.getValue();
-//        removeDeadPaths(childTrie);
-//        if (childTrie.isDead()) 
-//          childTrie.remove(entry.getKey());
-//          
-//      }
-//    } else {
-//      if (! trie.hasRules())
-//        trie.setDead();
-//    }
-//  }
+
+  /**
+   * Alternate filter that uses regular expressions, walking the grammar trie and matching the
+   * source side of each rule collection against the input sentence. Failed matches are discarded,
+   * and trie nodes extending from that position need not be explored.
+   * 
+   * @return the root of the filtered trie if any rules were retained, otherwise null
+   */
+  private SentenceFilteredTrie filter_regexp(Trie unfilteredTrie) {
+    SentenceFilteredTrie trie = null;
+
+    /* Case 1: keep the trie node if it has a rule collection that matches the sentence */
+    if (unfilteredTrie.hasRules())
+      if (matchesSentence(unfilteredTrie))
+        trie = new SentenceFilteredTrie(unfilteredTrie);
+      else
+        return null;
+
+    /* Case 2: keep the trie node if it has children who have valid rule collections */
+    if (unfilteredTrie.hasExtensions())
+      for (Entry<Integer, ? extends Trie> arc : unfilteredTrie.getChildren().entrySet()) {
+        Trie unfilteredChildTrie = arc.getValue();
+        SentenceFilteredTrie nextTrie = filter_regexp(unfilteredChildTrie);
+        if (nextTrie != null) {
+          if (trie == null)
+            trie = new SentenceFilteredTrie(unfilteredTrie);
+          trie.children.put(arc.getKey(), nextTrie);
+        }
+      }
+
+    return trie;
+  }
+
+  private boolean matchesSentence(Trie childTrie) {
+    Rule rule = childTrie.getRuleCollection().getRules().get(0);
+    return rule.matches(sentence);
+  }
 
   /**
    * Implements a filtered trie, by sitting on top of a base trie and annotating nodes that match
@@ -247,10 +275,7 @@ public class SentenceFilteredGrammar extends BatchGrammar {
     private Trie unfilteredTrieNode;
 
     /* The child nodes in the filtered trie. */
-    HashMap<Integer, SentenceFilteredTrie> children = null;
-    
-    /* Whether this arc is on a dead path. */
-    boolean dead = false;
+    private HashMap<Integer, SentenceFilteredTrie> children = null;
 
     /**
      * Constructor.
@@ -263,14 +288,6 @@ public class SentenceFilteredGrammar extends BatchGrammar {
       this.children = new HashMap<Integer, SentenceFilteredTrie>();
     }
 
-    public boolean isDead() {
-      return this.dead;
-    }
-    
-    public void setDead() {
-      this.dead = true;
-    }
-    
     @Override
     public SentenceFilteredTrie match(int wordID) {
       if (children != null)

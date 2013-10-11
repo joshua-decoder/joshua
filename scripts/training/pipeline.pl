@@ -64,7 +64,8 @@ my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $DO_PACK_GRAMMARS = 1;
 my $SCRIPTDIR = "$JOSHUA/scripts";
-my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
+my $TOKENIZER_SOURCE = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
+my $TOKENIZER_TARGET = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
@@ -189,7 +190,7 @@ my $MERGE_LMS = 0;
 my $TUNER = "mert";  # or "pro" or "mira"
 
 # The number of iterations of the mira to run
-my $MIRA_ITERATIONS = 8;
+my $MIRA_ITERATIONS = 15;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
@@ -239,7 +240,8 @@ my $retval = GetOptions(
   "maxlen=i"        => \$MAXLEN,
   "maxlen-tune=i"        => \$MAXLEN_TUNE,
   "maxlen-test=i"        => \$MAXLEN_TEST,
-  "tokenizer=s"      => \$TOKENIZER,
+  "tokenizer-source=s"      => \$TOKENIZER_SOURCE,
+  "tokenizer-target=s"      => \$TOKENIZER_TARGET,
   "joshua-config=s"   => \$TUNEFILES{'joshua.config'},
   "joshua-args=s"      => \$JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
@@ -937,7 +939,7 @@ if (! defined $GRAMMAR_FILE) {
 
       system("mkdir model");
       $cachepipe->cmd("ghkm-moses-extract",
-                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --glue-grammar --glue-grammar-file glue-grammar.ghkm",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm",
                       "$DATA_DIRS{train}/corpus.xml",
                       "glue-grammar.ghkm",
                       "model/rule-table.gz");
@@ -1098,8 +1100,10 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
       exit 1;
     }
 
+    # Needs to be capitalized
+    my $mem = uc $BUILDLM_MEM;
     $cachepipe->cmd("kenlm",
-                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $BUILDLM_MEM --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
                     $TRAIN{target},
                     $lmfile);
   }
@@ -1738,6 +1742,7 @@ sub prepare_data {
 			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			} else {
+        my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
 				$cachepipe->cmd("$label-tokenize-$lang",
 												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 												"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");

@@ -1,18 +1,3 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.oracle;
 
 import java.util.ArrayList;
@@ -24,22 +9,20 @@ import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 
 /**
- * This class implements general ways of spliting the hypergraph based on coarse-to-fine idea input
+ * This class implements general ways of splitting the hypergraph based on coarse-to-fine idea input
  * is a hypergraph output is another hypergraph that has changed state structures.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com> (Johns Hopkins University)
- * @version $LastChangedDate$
  */
 public abstract class SplitHg {
 
-  HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items =
-      new HashMap<HGNode, ArrayList<VirtualItem>>();
+  HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items = new HashMap<HGNode, ArrayList<VirtualItem>>();
 
   // number of items or deductions after splitting the hypergraph
   public int g_num_virtual_items = 0;
   public int g_num_virtual_deductions = 0;
 
-  // Note: the implementaion of the folowing two functions should call add_deduction
+  // Note: the implementation of the following two functions should call add_deduction
   protected abstract void process_one_combination_axiom(HGNode parent_item,
       HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt);
 
@@ -51,13 +34,10 @@ public abstract class SplitHg {
   // g_tbl_split_virtual_items
   public double get_best_goal_cost(HyperGraph hg,
       HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items) {
-    double res =
-        get_virtual_goal_item(hg, g_tbl_split_virtual_items).best_virtual_deduction.best_cost;
+    double res = get_virtual_goal_item(hg, g_tbl_split_virtual_items).best_virtual_deduction.best_cost;
     // System.out.println("best bleu is " +res);
     return res;
   }
-
-
 
   public VirtualItem get_virtual_goal_item(HyperGraph original_hg,
       HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items) {
@@ -70,18 +50,17 @@ public abstract class SplitHg {
     return l_virtual_items.get(0);
   }
 
-
   // get the 1best tree hg, the 1-best is ranked by the split hypergraph, but the return hypergraph
   // is in the form of the original hg
   public HyperGraph get_1best_tree_hg(HyperGraph original_hg,
       HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items) {
     VirtualItem virutal_goal_item = get_virtual_goal_item(original_hg, g_tbl_split_virtual_items);
     HGNode onebest_goal_item = clone_item_with_best_deduction(virutal_goal_item);
-    HyperGraph res =
-        new HyperGraph(onebest_goal_item, -1, -1, original_hg.sentID, original_hg.sentLen);// TODO:
-                                                                                           // number
-                                                                                           // of
-                                                                                           // items/deductions
+    HyperGraph res = new HyperGraph(onebest_goal_item, -1, -1, original_hg.sentID,
+        original_hg.sentLen);// TODO:
+                             // number
+                             // of
+                             // items/deductions
     get_1best_tree_item(virutal_goal_item, onebest_goal_item);
     return res;
   }
@@ -107,20 +86,16 @@ public abstract class SplitHg {
         original_it.getDPStates());
   }
 
-
   private static HyperEdge clone_deduction(VirtualDeduction virtual_dt) {
     HyperEdge original_dt = virtual_dt.p_dt;
     ArrayList<HGNode> l_ant_items = null;
     // l_ant_items will be changed in get_1best_tree_item
     if (original_dt.getTailNodes() != null)
       l_ant_items = new ArrayList<HGNode>(original_dt.getTailNodes());
-    HyperEdge res =
-        new HyperEdge(original_dt.getRule(), original_dt.getBestDerivationScore(),
-            original_dt.getTransitionLogP(false), l_ant_items, original_dt.getSourcePath());
+    HyperEdge res = new HyperEdge(original_dt.getRule(), original_dt.getBestDerivationScore(),
+        original_dt.getTransitionLogP(false), l_ant_items, original_dt.getSourcePath());
     return res;
   }
-
-
 
   // ############### split hg #####
   public void split_hg(HyperGraph hg) {
@@ -133,7 +108,8 @@ public abstract class SplitHg {
 
   // for each original Item, get a list of VirtualItem
   private void split_item(HGNode it) {
-    if (g_tbl_split_virtual_items.containsKey(it)) return;// already processed
+    if (g_tbl_split_virtual_items.containsKey(it))
+      return;// already processed
     HashMap<String, VirtualItem> virtual_item_sigs = new HashMap<String, VirtualItem>();
     // ### recursive call on each deduction
     if (speed_up_item(it)) {
@@ -155,11 +131,13 @@ public abstract class SplitHg {
 
   private void split_deduction(HyperEdge cur_dt, HashMap<String, VirtualItem> virtual_item_sigs,
       HGNode parent_item) {
-    if (speed_up_deduction(cur_dt) == false) return;// no need to continue
+    if (speed_up_deduction(cur_dt) == false)
+      return;// no need to continue
 
     // ### recursively split all my ant items, get a l_split_items for each original item
-    if (cur_dt.getTailNodes() != null) for (HGNode ant_it : cur_dt.getTailNodes())
-      split_item(ant_it);
+    if (cur_dt.getTailNodes() != null)
+      for (HGNode ant_it : cur_dt.getTailNodes())
+        split_item(ant_it);
 
     // ### recombine the deduction
     redo_combine(cur_dt, virtual_item_sigs, parent_item);
@@ -238,7 +216,6 @@ public abstract class SplitHg {
     protected abstract String get_signature();
   };
 
-
   /*
    * In general, variables of items (1) list of hyperedges (2) best hyperedge (3) DP state (4)
    * signature (operated on part/full of DP state)
@@ -257,10 +234,11 @@ public abstract class SplitHg {
       add_deduction(fdt, dstate, maintain_onebest_only);
     }
 
-
     public void add_deduction(VirtualDeduction fdt, DPState dstate, boolean maintain_onebest_only) {
       if (maintain_onebest_only == false) {
-        if (l_virtual_deductions == null) l_virtual_deductions = new ArrayList<VirtualDeduction>();;
+        if (l_virtual_deductions == null)
+          l_virtual_deductions = new ArrayList<VirtualDeduction>();
+        ;
         l_virtual_deductions.add(fdt);
       }
       if (best_virtual_deduction == null || fdt.best_cost < best_virtual_deduction.best_cost) {
@@ -298,10 +276,10 @@ public abstract class SplitHg {
 
     public double get_transition_cost() {// note: transition_cost is already linearly interpolated
       double res = best_cost;
-      if (l_ant_virtual_items != null) for (VirtualItem ant_it : l_ant_virtual_items)
-        res -= ant_it.best_virtual_deduction.best_cost;
+      if (l_ant_virtual_items != null)
+        for (VirtualItem ant_it : l_ant_virtual_items)
+          res -= ant_it.best_virtual_deduction.best_cost;
       return res;
     }
   }
-
 }

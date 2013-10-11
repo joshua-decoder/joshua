@@ -28,18 +28,12 @@ public class Translation {
    */
   private String output = null;
 
-  public Translation(Sentence source, HyperGraph hypergraph, List<FeatureFunction> featureFunctions,JoshuaConfiguration joshuaConfiguration) {
+  public Translation(Sentence source, HyperGraph hypergraph,
+      List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
 
     StringWriter sw = new StringWriter();
     BufferedWriter out = new BufferedWriter(sw);
-
-    /*
-     * this.featureFunctions = new ArrayList<FeatureFunction>(); for (FeatureFunction ff :
-     * featureFunctions) { if (ff instanceof SourceDependentFF) { SourceDependentFF sdff =
-     * (SourceDependentFF) ((SourceDependentFF) ff).clone(); sdff.setSource(source);
-     * this.featureFunctions.add((FeatureFunction) sdff); } else { this.featureFunctions.add(ff); }
-     */
 
     try {
       if (hypergraph != null) {
@@ -49,22 +43,22 @@ public class Translation {
 
         long startTime = System.currentTimeMillis();
 
-        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, 
-            joshuaConfiguration.use_unique_nbest, joshuaConfiguration.include_align_index, false,joshuaConfiguration);
+        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions,
+            Decoder.weights, false, joshuaConfiguration);
 
-        // We must put this weight as zero, otherwise we get an error when we try to retrieve it 
+        // We must put this weight as zero, otherwise we get an error when we try to retrieve it
         // without checking
         Decoder.weights.put("BLEU", 0);
-        
         kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
-        if (JoshuaConfiguration.rescoreForest) {
-          Decoder.weights.put("BLEU", 100);
+
+        if (joshuaConfiguration.rescoreForest) {
+          Decoder.weights.put("BLEU", joshuaConfiguration.rescoreForestWeight);
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
-          
-          Decoder.weights.put("BLEU", -100);
+
+          Decoder.weights.put("BLEU", -joshuaConfiguration.rescoreForestWeight);
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
         }
- 
+
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
         System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
             joshuaConfiguration.topN, seconds));
@@ -85,19 +79,18 @@ public class Translation {
       e.printStackTrace();
       System.exit(1);
     }
-    
 
     /*
      * KenLM hack. If using KenLMFF, we need to tell KenLM to delete the pool used to create chart
      * objects for this sentence.
      */
-    for (FeatureFunction feature: featureFunctions) {
+    for (FeatureFunction feature : featureFunctions) {
       if (feature instanceof KenLMFF) {
-        ((KenLMFF)feature).destroyPool(getSourceSentence().id());
+        ((KenLMFF) feature).destroyPool(getSourceSentence().id());
         break;
       }
     }
-    
+
     this.output = sw.toString();
   }
 

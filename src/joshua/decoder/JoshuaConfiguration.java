@@ -122,8 +122,24 @@ public class JoshuaConfiguration {
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
   public int server_port = 0;
 
-  /* Whether to do forest rescoring. If set to true, requires an oracle file. */
-  public static boolean rescoreForest = false;
+  /* Whether to do forest rescoring. If set to true, the references are expected on STDIN along
+   * with the input sentences in the following format:
+   * 
+   *     input sentence |||  ||| reference1 ||| reference2 ...
+   * 
+   * (The second field is reserved for the output sentence for alignment and forced decoding). 
+   */
+  
+  public boolean rescoreForest = false;
+  public float rescoreForestWeight = 10.0f;
+
+  
+  /*Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any nonterminal may be substituted 
+   * for any other nonterminal (except for OOV and GOAL)*/ 
+  public boolean fuzzy_matching = false;
+  public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
+  
+
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
    * This is useful when for example making different calls to the decoder within the same java
@@ -345,6 +361,10 @@ public class JoshuaConfiguration {
             rescoreForest = true;
             logger.info(String.format("    rescore-forest: %s", rescoreForest));
 
+          } else if (parameter.equals(normalize_key("rescore-forest-weight"))) {
+            rescoreForestWeight = Float.parseFloat(fds[1]);
+            logger.info(String.format("    rescore-forest-weight: %f", rescoreForestWeight));
+
           } else if (parameter.equals(normalize_key("maxlen"))) {
             // reset the maximum length
             maxlen = Integer.parseInt(fds[1]);
@@ -357,7 +377,16 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             features.add("feature_function = " + fds[1]);
 
-          } else {
+          } else if (parameter.equals(normalize_key("maxlen"))) {
+            // add the feature to the list of features for later processing
+            maxlen = Integer.parseInt(fds[1]);
+
+          } else if (parameter.equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
+            fuzzy_matching = Boolean.parseBoolean(fds[1]);
+            logger.finest(String.format(fuzzy_matching +": %s", fuzzy_matching));
+          }
+          
+          else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))
