@@ -1100,8 +1100,10 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
       exit 1;
     }
 
+    # Needs to be capitalized
+    my $mem = uc $BUILDLM_MEM;
     $cachepipe->cmd("kenlm",
-                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $BUILDLM_MEM --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
                     $TRAIN{target},
                     $lmfile);
   }
