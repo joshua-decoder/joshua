@@ -53,7 +53,7 @@ public abstract class Rule {
       if (index >= 0)
         sb.append(Vocabulary.word(index) + " ");
       else
-        sb.append(Vocabulary.word(foreignNTs[-index - 1]) + "," + Math.abs(index) + " ");
+        sb.append(Vocabulary.word(foreignNTs[-index - 1]).replace("]", String.format(",%d] ", Math.abs(index))));
     }
 
     return sb.toString().trim();
