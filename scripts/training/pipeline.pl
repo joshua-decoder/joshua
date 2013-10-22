@@ -133,7 +133,7 @@ my $PARSER_MEM = "2g";
 my $BUILDLM_MEM = "2G";
 
 # Memory available for packing the grammar.
-my $PACKER_MEM = "2g";
+my $PACKER_MEM = "8g";
 
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";

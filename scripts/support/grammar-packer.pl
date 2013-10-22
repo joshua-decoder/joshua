@@ -18,7 +18,7 @@ use warnings;
 use Getopt::Std;
 
 my %opts = (
-  m => '4g',    # amount of memory to give the packer
+  m => '8g',    # amount of memory to give the packer
   T => '/state/partition1',
 );
 getopts("m:T:", \%opts);
