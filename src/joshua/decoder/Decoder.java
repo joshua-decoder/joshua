@@ -19,8 +19,10 @@ import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.RuleFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.fragmentlm.FragmentLMFF;
 import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
@@ -673,17 +675,22 @@ public class Decoder {
         Float weight = Float.parseFloat(fields[3]);
 
         weights.put(String.format("tm_%s_%s", owner, index), weight);
-      }
 
-      else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
+      } else if (feature.equals("fragmentlm")) {
+//        logger.info(String.format("FEATURE: FragmentLMFF %s", featureLine));
+        this.featureFunctions.add(new FragmentLMFF(Decoder.weights, featureLine));
+
+      } else if (feature.equals("rule")) {
+//        logger.info(String.format("FEATURE: RuleFF %s", featureLine));
+        this.featureFunctions.add(new RuleFF(Decoder.weights, featureLine));
+        
+      } else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelCombinationFF(weights));
-      }
       
-      else if (feature.equals(LabelSubstitutionFF.getLowerCasedFeatureName())) {
+      } else if (feature.equals(LabelSubstitutionFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelSubstitutionFF(weights));
-      }
 
-      else {
+      } else {
         System.err.println("* WARNING: invalid feature '" + featureLine + "'");
       }
     }

@@ -45,6 +45,7 @@ public class LineReader implements Reader<String> {
   private String buffer;
   private IOException error;
 
+  private int lineno = 0;
 
   // ===============================================================
   // Constructors and destructors
@@ -245,13 +246,18 @@ public class LineReader implements Reader<String> {
   public String next() throws NoSuchElementException {
     if (this.hasNext()) {
       String line = this.buffer;
+      this.lineno++;
       this.buffer = null;
       return line;
     } else {
       throw new NoSuchElementException();
     }
   }
-
+  
+  /* Get the line number of the last line that was returned */
+  public int lineno() {
+    return this.lineno;
+  }
 
   /** Unsupported. */
   public void remove() throws UnsupportedOperationException {
