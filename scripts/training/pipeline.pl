@@ -941,10 +941,12 @@ if (! defined $GRAMMAR_FILE) {
 
       system("mkdir model");
       $cachepipe->cmd("ghkm-moses-extract",
-                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm --extract-options \"$EXTRACT_OPTIONS\"",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm --extract-options \"$EXTRACT_OPTIONS --UnknownWordLabel oov-labels.txt\"",
                       "$DATA_DIRS{train}/corpus.xml",
                       "glue-grammar.ghkm",
                       "model/rule-table.gz");
+
+      $JOSHUA_ARGS .= " -oov-list <(cat oov-labels.txt | perl -pe 's/\n/ /mg; END { print $/ })'";
 
       $cachepipe->cmd("ghkm-moses-convert",
                       "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",

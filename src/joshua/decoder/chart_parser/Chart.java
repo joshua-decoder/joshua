@@ -132,7 +132,8 @@ public class Chart {
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
       this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
-          NonterminalMatcher.createNonterminalMatcher(logger,joshuaConfiguration),this.grammars[i].isRegexpGrammar());
+          NonterminalMatcher.createNonterminalMatcher(logger, joshuaConfiguration),
+          this.grammars[i].isRegexpGrammar());
 
     // Begin to do initialization work
 
@@ -173,9 +174,6 @@ public class Chart {
           targetWord = sourceWord;
         }
 
-        int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
-            "\\[\\]", ""));
-
         List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
         int[] sourceWords = { sourceWord };
         int[] targetWords = { targetWord };
@@ -191,11 +189,29 @@ public class Chart {
           }
 
         }
+
         // Always add default OOV rule, as parse labels might not match with glue grammar.
-        BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
-        oovRules.add(oovRule);
-        oovGrammar.addRule(oovRule);
-        oovRule.estimateRuleCost(featureFunctions);
+        int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
+            "\\[\\]", ""));
+        {
+          BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
+          oovRules.add(oovRule);
+          oovGrammar.addRule(oovRule);
+          oovRule.estimateRuleCost(featureFunctions);
+        }
+
+        if (joshuaConfiguration.oov_list.length != 0) {
+          for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
+            if (joshuaConfiguration.oov_list[i] != defaultNTIndex) {
+              BilingualRule oovRule = new BilingualRule(joshuaConfiguration.oov_list[i], sourceWords,
+                  targetWords, "", 0);
+              oovRules.add(oovRule);
+              oovGrammar.addRule(oovRule);
+              oovRule.estimateRuleCost(featureFunctions);
+//              System.err.println(String.format("ADDING OOV RULE %s -> %s", Vocabulary.word(joshuaConfiguration.oov_list[i]), Vocabulary.word(sourceWord)));
+            }
+          }
+        }
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()
             .getNumber())) {
@@ -484,7 +500,8 @@ public class Chart {
 
   private void logStatistics(Level level) {
     if (logger.isLoggable(level))
-      logger.log(level,
+      logger.log(
+          level,
           String.format("Sentence %d Chart: ADDED %d MERGED %d DOT-ITEMS ADDED: %d",
               this.sentence.id(), this.nAdded, this.nMerged, this.nDotitemAdded));
   }
