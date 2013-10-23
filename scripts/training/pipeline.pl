@@ -941,7 +941,7 @@ if (! defined $GRAMMAR_FILE) {
 
       system("mkdir model");
       $cachepipe->cmd("ghkm-moses-extract",
-                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm $EXTRACT_OPTIONS",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm --extract-options \"$EXTRACT_OPTIONS\"",
                       "$DATA_DIRS{train}/corpus.xml",
                       "glue-grammar.ghkm",
                       "model/rule-table.gz");
