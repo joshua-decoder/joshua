@@ -200,7 +200,7 @@ public class Chart {
           oovRule.estimateRuleCost(featureFunctions);
         }
 
-        if (joshuaConfiguration.oov_list.length != 0) {
+        if (joshuaConfiguration.oov_list != null) {
           for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
             if (joshuaConfiguration.oov_list[i] != defaultNTIndex) {
               BilingualRule oovRule = new BilingualRule(joshuaConfiguration.oov_list[i], sourceWords,
