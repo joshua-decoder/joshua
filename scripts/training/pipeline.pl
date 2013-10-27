@@ -1674,7 +1674,7 @@ if ($DO_MBR) {
 									"$testrun/test.output.1best");
 } else {
   $cachepipe->cmd("test-$NAME-extract-onebest",
-									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $testrun/test.output.1best",
 									"$testrun/test.output.nbest.noOOV", 
 									"$testrun/test.output.1best");
 }
