@@ -96,9 +96,8 @@ public class DecoderThread extends Thread {
     for (int i = 0; i < grammarFactories.size(); i++)
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
     
-    if (joshuaConfiguration.segment_oovs) {
+    if (joshuaConfiguration.segment_oovs)
       sentence.segmentOOVs(grammars);
-    }
 
     /* Seeding: the chart only sees the grammars, not the factories */
     Chart chart = new Chart(sentence, this.featureFunctions, grammars,

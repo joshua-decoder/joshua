@@ -22,13 +22,13 @@ public class Node<Label> {
    * Numeric integer identifier of this node. Package-private scope so that Lattice can quickly
    * access this variable.
    */
-  private final Integer id;
+  private Integer id;
 
   /**
    * Arcs which begin at this node. Package-private scope so that Lattice can quickly access this
    * variable.
    */
-  private final List<Arc<Label>> outgoingArcs;
+  private List<Arc<Label>> outgoingArcs;
 
 
   // ===============================================================
@@ -55,11 +55,16 @@ public class Node<Label> {
    */
   public int getNumber() {
     return id;
+    
   }
+  
   public int id() {
     return id;
   }
-
+  
+  public void setID(int i) {
+    this.id = i;
+  }
 
   /**
    * Gets the arcs that begin at this node.
@@ -70,6 +75,9 @@ public class Node<Label> {
     return outgoingArcs;
   }
 
+  public void setOutgoingArcs(List<Arc<Label>> arcs) {
+    outgoingArcs = arcs;
+  }
 
   /**
    * Gets an iterable object capable of iterating over all nodes directly reachable from this node.
@@ -124,7 +132,7 @@ public class Node<Label> {
     return outgoingArcs.size();
   }
 
-
+  @Override
   public String toString() {
     return "Node-" + id;
   }

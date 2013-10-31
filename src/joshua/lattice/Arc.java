@@ -12,30 +12,25 @@ package joshua.lattice;
 public class Arc<Label> {
 
   /**
-   * Weight of this arc. Package-private scope so that Node and Lattice can quickly access this
-   * variable.
+   * Weight of this arc.
    */
-  // TODO should be a vector of costs
-  private final float cost;
+  private float cost;
 
   /**
-   * Node where this arc ends. Package-private scope so that Node and Lattice can quickly access
-   * this variable.
+   * Node where this arc ends. 
    */
-  private final Node<Label> head;
+  private Node<Label> head;
 
   /**
-   * Node where this arc begins. Package-private scope so that Node and Lattice can quickly access
-   * this variable.
+   * Node where this arc begins.
    */
-  private final Node<Label> tail;
+  private Node<Label> tail;
 
   /**
-   * Label associated with this arc. Package-private scope so that Node and Lattice can quickly
-   * access this variable.
+   * Label associated with this arc.
    */
-  private final Label label;
-
+  private Label label;
+  
   /**
    * Creates an arc with the specified head, tail, cost, and label.
    * 
@@ -56,7 +51,6 @@ public class Arc<Label> {
    * 
    * @return The cost of this arc.
    */
-  // TODO should support indexing for multiple costs associated with each arc
   public float getCost() {
     return cost;
   }
