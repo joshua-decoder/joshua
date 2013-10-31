@@ -87,7 +87,7 @@ public class DecoderThread extends Thread {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
       return new Translation(sentence, null, featureFunctions, joshuaConfiguration);
     }
-
+    
     long startTime = System.currentTimeMillis();
 
     int numGrammars = grammarFactories.size();
@@ -95,10 +95,14 @@ public class DecoderThread extends Thread {
 
     for (int i = 0; i < grammarFactories.size(); i++)
       grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
+    
+    if (joshuaConfiguration.segment_oovs) {
+      sentence.segmentOOVs(grammars);
+    }
 
     /* Seeding: the chart only sees the grammars, not the factories */
     Chart chart = new Chart(sentence, this.featureFunctions, grammars,
-        joshuaConfiguration.goal_symbol,joshuaConfiguration);
+        joshuaConfiguration.goal_symbol, joshuaConfiguration);
 
     /* Parsing */
     HyperGraph hypergraph = null;

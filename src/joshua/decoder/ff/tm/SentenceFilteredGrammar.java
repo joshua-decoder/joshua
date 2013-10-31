@@ -1,6 +1,5 @@
 package joshua.decoder.ff.tm;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
