@@ -130,8 +130,8 @@ public class Sentence {
       if (oldNodes.get(nodeid).getOutgoingArcs().size() == 1) {
         Arc<Integer> arc = oldNodes.get(nodeid).getOutgoingArcs().get(0);
         String word = Vocabulary.word(arc.getLabel());
-//        System.err.println(String.format("REPL: '%s'", word));
-        if (!vocabulary.contains(word)) {
+        if (!vocabulary.contains(arc.getLabel())) {
+          // System.err.println(String.format("REPL: '%s'", word));
           List<Arc<Integer>> savedArcs = oldNodes.get(nodeid).getOutgoingArcs();
 
           char[] chars = word.toCharArray();
