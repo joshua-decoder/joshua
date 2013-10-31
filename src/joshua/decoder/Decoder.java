@@ -274,7 +274,7 @@ public class Decoder {
             .println("* WARNING: I encountered an error trying to return the decoder thread.");
         e.printStackTrace();
       } catch (RuntimeException e) {
-        System.err.println(String.format("* FATAL: Thread %d: %s", getId(), e.getMessage()));
+        System.err.println(String.format("* FATAL: sentence %d: %s", sentence.id(), e.getMessage()));
         e.printStackTrace();
         System.exit(1);
       }
