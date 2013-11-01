@@ -1747,8 +1747,9 @@ sub prepare_data {
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			} else {
         my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
+	my $ext = $lang; $ext =~ s/\.\d//;
 				$cachepipe->cmd("$label-tokenize-$lang",
-												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
+												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $ext | $TOKENIZER -l $ext 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 												"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			}
 
