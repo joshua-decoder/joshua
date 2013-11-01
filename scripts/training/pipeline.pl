@@ -1175,7 +1175,7 @@ my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
 		? $TUNE_GRAMMAR_FILE
 		: $GRAMMAR_FILE;
 
-if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
+if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
@@ -1397,7 +1397,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     # otherwise, use the main grammar, and filter it if requested
     $TEST_GRAMMAR = $GRAMMAR_FILE;
     
-    if ($DO_FILTER_TM) {
+    if ($DO_FILTER_TM and ! $DOING_LATTICES) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
@@ -1597,7 +1597,7 @@ if ($TEST_GRAMMAR_FILE) {
   # otherwise, use the main grammar, and filter it if requested
   $TEST_GRAMMAR = $GRAMMAR_FILE;
   
-  if ($DO_FILTER_TM) {
+  if ($DO_FILTER_TM and ! $DOING_LATTICES) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test-$NAME",
