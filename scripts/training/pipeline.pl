@@ -946,7 +946,11 @@ if (! defined $GRAMMAR_FILE) {
                       "glue-grammar.ghkm",
                       "model/rule-table.gz");
 
-      $JOSHUA_ARGS .= " -oov-list <(cat oov-labels.txt | perl -pe 's/\n/ /mg; END { print $/ })'";
+      open LABELS, "oov-labels.txt";
+      chomp(my @labels = <LABELS>);
+      close LABELS;
+      my $oov_list = "\"" . join(" ", @labels) . "\"";
+      $JOSHUA_ARGS .= " -oov-list $oov_list";
 
       $cachepipe->cmd("ghkm-moses-convert",
                       "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
