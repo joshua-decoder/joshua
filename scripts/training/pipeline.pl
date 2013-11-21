@@ -77,6 +77,7 @@ my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
 
 # Which GHKM extractor to use ("galley" or "moses")
 my $GHKM_EXTRACTOR = "moses";
+my $EXTRACT_OPTIONS = "";
 
 my $WITTEN_BELL = 0;
 
@@ -133,7 +134,7 @@ my $PARSER_MEM = "2g";
 my $BUILDLM_MEM = "2G";
 
 # Memory available for packing the grammar.
-my $PACKER_MEM = "2g";
+my $PACKER_MEM = "8g";
 
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";
@@ -237,6 +238,7 @@ my $retval = GetOptions(
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
   "ghkm-extractor=s"  => \$GHKM_EXTRACTOR,
+  "extract-options=s" => \$EXTRACT_OPTIONS,
   "maxlen=i"        => \$MAXLEN,
   "maxlen-tune=i"        => \$MAXLEN_TUNE,
   "maxlen-test=i"        => \$MAXLEN_TEST,
@@ -939,10 +941,12 @@ if (! defined $GRAMMAR_FILE) {
 
       system("mkdir model");
       $cachepipe->cmd("ghkm-moses-extract",
-                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm",
+                      "$MOSES/scripts/training/train-model.perl --first-step 4 --last-step 6 --corpus $DATA_DIRS{train}/corpus --ghkm --f $SOURCE --e xml --alignment-file alignments/training --alignment align --target-syntax --cores $NUM_THREADS --pcfg --alt-direct-rule-score-1 --ghkm-tree-fragments --glue-grammar --glue-grammar-file glue-grammar.ghkm --extract-options \"$EXTRACT_OPTIONS --UnknownWordLabel oov-labels.txt\"",
                       "$DATA_DIRS{train}/corpus.xml",
                       "glue-grammar.ghkm",
                       "model/rule-table.gz");
+
+      $JOSHUA_ARGS .= " -oov-list <(cat oov-labels.txt | perl -pe 's/\n/ /mg; END { print $/ })'";
 
       $cachepipe->cmd("ghkm-moses-convert",
                       "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
@@ -1171,7 +1175,7 @@ my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
 		? $TUNE_GRAMMAR_FILE
 		: $GRAMMAR_FILE;
 
-if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
+if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
@@ -1393,7 +1397,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     # otherwise, use the main grammar, and filter it if requested
     $TEST_GRAMMAR = $GRAMMAR_FILE;
     
-    if ($DO_FILTER_TM) {
+    if ($DO_FILTER_TM and ! $DOING_LATTICES) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
@@ -1593,7 +1597,7 @@ if ($TEST_GRAMMAR_FILE) {
   # otherwise, use the main grammar, and filter it if requested
   $TEST_GRAMMAR = $GRAMMAR_FILE;
   
-  if ($DO_FILTER_TM) {
+  if ($DO_FILTER_TM and ! $DOING_LATTICES) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test-$NAME",
@@ -1670,7 +1674,7 @@ if ($DO_MBR) {
 									"$testrun/test.output.1best");
 } else {
   $cachepipe->cmd("test-$NAME-extract-onebest",
-									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $testrun/test.output.1best",
 									"$testrun/test.output.nbest.noOOV", 
 									"$testrun/test.output.1best");
 }
@@ -1743,8 +1747,9 @@ sub prepare_data {
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			} else {
         my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
+	my $ext = $lang; $ext =~ s/\.\d//;
 				$cachepipe->cmd("$label-tokenize-$lang",
-												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
+												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $ext | $TOKENIZER -l $ext 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 												"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			}
 

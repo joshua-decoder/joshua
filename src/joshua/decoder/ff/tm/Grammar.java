@@ -9,7 +9,6 @@ import joshua.decoder.ff.FeatureFunction;
  * 
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public interface Grammar {
 

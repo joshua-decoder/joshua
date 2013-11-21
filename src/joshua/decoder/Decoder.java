@@ -259,9 +259,10 @@ public class Decoder {
        * Use the thread to translate the sentence. Then record the translation with the
        * corresponding Translations object, and return the thread to the pool.
        */
-      Translation translation = decoderThread.translate(this.sentence);
-      translations.record(translation);
       try {
+        Translation translation = decoderThread.translate(this.sentence);
+        translations.record(translation);
+
         /*
          * This is crucial! It's what makes the thread available for the next sentence to be
          * translated.
@@ -272,6 +273,10 @@ public class Decoder {
         System.err
             .println("* WARNING: I encountered an error trying to return the decoder thread.");
         e.printStackTrace();
+      } catch (RuntimeException e) {
+        System.err.println(String.format("* FATAL: sentence %d: %s", sentence.id(), e.getMessage()));
+        e.printStackTrace();
+        System.exit(1);
       }
     }
   }

@@ -1,31 +1,14 @@
-/*
- * This file is part of the Joshua Machine Translation System.
- * 
- * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
 package joshua.lattice;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
 /**
  * A node in a directed graph.
  * 
  * @author Lane Schwartz
  * @since 2008-07-08
- * @version $LastChangedDate$
  * 
  * @param <Label> Type of label associated with an arc.
  */
@@ -39,13 +22,13 @@ public class Node<Label> {
    * Numeric integer identifier of this node. Package-private scope so that Lattice can quickly
    * access this variable.
    */
-  private final Integer id;
+  private Integer id;
 
   /**
    * Arcs which begin at this node. Package-private scope so that Lattice can quickly access this
    * variable.
    */
-  private final List<Arc<Label>> outgoingArcs;
+  private List<Arc<Label>> outgoingArcs;
 
 
   // ===============================================================
@@ -72,11 +55,16 @@ public class Node<Label> {
    */
   public int getNumber() {
     return id;
+    
   }
+  
   public int id() {
     return id;
   }
-
+  
+  public void setID(int i) {
+    this.id = i;
+  }
 
   /**
    * Gets the arcs that begin at this node.
@@ -87,6 +75,9 @@ public class Node<Label> {
     return outgoingArcs;
   }
 
+  public void setOutgoingArcs(List<Arc<Label>> arcs) {
+    outgoingArcs = arcs;
+  }
 
   /**
    * Gets an iterable object capable of iterating over all nodes directly reachable from this node.
@@ -141,7 +132,7 @@ public class Node<Label> {
     return outgoingArcs.size();
   }
 
-
+  @Override
   public String toString() {
     return "Node-" + id;
   }

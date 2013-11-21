@@ -210,10 +210,7 @@ class DotChart {
           // List<Trie> child_tnodes = ruleMatcher.produceMatchingChildTNodesTerminalevel(dotNode,
           // last_word);
 
-
           List<Trie> child_tnodes = null;
-
-
 
           if (this.regexpMatching) {
             child_tnodes = matchAll(dotNode, last_word);
@@ -222,20 +219,16 @@ class DotChart {
             child_tnodes = Arrays.asList(child_node);
           }
 
-
           if (!(child_tnodes == null || child_tnodes.isEmpty())) {
             for (Trie child_tnode : child_tnodes) {
               if (null != child_tnode) {
                 addDotItem(child_tnode, i, j - 1 + arc_len, dotNode.antSuperNodes, null,
                     dotNode.srcPath.extend(arc));
-
-
               }
             }
           }
         }
       }
-
     }
   }
 

@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.StatefulFF;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
@@ -36,6 +37,26 @@ public class JoshuaConfiguration {
   // Default symbols. The symbol here should be enclosed in square brackets.
   public String default_non_terminal = "[X]";
   public String goal_symbol = "[GOAL]";
+
+  /*
+   * A list of OOV symbols in the form
+   * 
+   * [X1] weight [X2] weight [X3] weight ...
+   * 
+   * where the [X] symbols are nonterminals and the weights are weights. For each OOV word w in the
+   * input sentence, Joshua will create rules of the form
+   * 
+   * X1 -> w (weight)
+   * 
+   * If this is empty, an unweighted default_non_terminal is used.
+   */
+  public int[] oov_list = null;
+  public float[] oov_weights = null;
+  
+  /* 
+   * Whether to segment OOVs into a lattice 
+   */
+  public boolean segment_oovs = false;
 
   /*
    * If false, sorting of the complete grammar is done at load time. If true, grammar tries are not
@@ -77,8 +98,9 @@ public class JoshuaConfiguration {
    * translations). The string can include arbitrary text and also variables. The following
    * variables are available:
    * 
-   * - %i the 0-indexed sentence number
-   * - %e the source string %s the translated sentence
+   * <pre>
+   * - %i the 0-indexed sentence number 
+   * - %e the source string %s the translated sentence 
    * - %S the translated sentence with some basic capitalization and denormalization 
    * - %t the synchronous derivation 
    * - %f the list of feature values (as name=value pairs) 
@@ -86,6 +108,7 @@ public class JoshuaConfiguration {
    * - %w the weight vector 
    * - %a the alignments between source and target words (currently unimplemented) 
    * - %d a verbose, many-line version of the derivation
+   * </pre>
    */
   public String outputFormat = "%i ||| %s ||| %f ||| %c";
 
@@ -122,23 +145,24 @@ public class JoshuaConfiguration {
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
   public int server_port = 0;
 
-  /* Whether to do forest rescoring. If set to true, the references are expected on STDIN along
-   * with the input sentences in the following format:
+  /*
+   * Whether to do forest rescoring. If set to true, the references are expected on STDIN along with
+   * the input sentences in the following format:
    * 
-   *     input sentence |||  ||| reference1 ||| reference2 ...
+   * input sentence ||| ||| reference1 ||| reference2 ...
    * 
-   * (The second field is reserved for the output sentence for alignment and forced decoding). 
+   * (The second field is reserved for the output sentence for alignment and forced decoding).
    */
-  
+
   public boolean rescoreForest = false;
   public float rescoreForestWeight = 10.0f;
 
-  
-  /*Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any nonterminal may be substituted 
-   * for any other nonterminal (except for OOV and GOAL)*/ 
+  /*
+   * Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any
+   * nonterminal may be substituted for any other nonterminal (except for OOV and GOAL)
+   */
   public boolean fuzzy_matching = false;
   public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
-  
 
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -160,6 +184,8 @@ public class JoshuaConfiguration {
     tms = new ArrayList<String>();
     weights_file = "";
     default_non_terminal = "[X]";
+    oov_list = null;
+    oov_weights = null;
     goal_symbol = "[GOAL]";
     amortized_sorting = true;
     constrain_parse = false;
@@ -225,7 +251,6 @@ public class JoshuaConfiguration {
     }
   }
 
-
   public void readConfigFile(String configFile) throws IOException {
 
     LineReader configReader = new LineReader(configFile);
@@ -266,6 +291,24 @@ public class JoshuaConfiguration {
             hypergraphFilePattern = fds[1].trim();
             logger
                 .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
+
+          } else if (parameter.equals(normalize_key("oov-list"))) {
+            String[] oovs = fds[1].trim().split("\\s+");
+            if (oovs.length % 2 != 0) {
+              System.err.println(String.format("* FATAL: invalid format for '%s'", fds[0]));
+              System.exit(1);
+            }
+
+            oov_list = new int[oovs.length / 2];
+            oov_weights = new float[oovs.length / 2];
+
+            for (int i = 0; i < oovs.length; i += 2) {
+              oov_list[i / 2] = Vocabulary.id(String.format("[%s]", oovs[i]));
+              oov_weights[i / 2] = Float.parseFloat(oovs[i + 1]);
+            }
+            
+          } else if (parameter.equals(normalize_key("segment-oovs"))) {
+            segment_oovs = true;
 
           } else if (parameter.equals(normalize_key("default-non-terminal"))) {
             default_non_terminal = "[" + fds[1].trim() + "]";
@@ -381,11 +424,12 @@ public class JoshuaConfiguration {
             // add the feature to the list of features for later processing
             maxlen = Integer.parseInt(fds[1]);
 
-          } else if (parameter.equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
+          } else if (parameter
+              .equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
             fuzzy_matching = Boolean.parseBoolean(fds[1]);
-            logger.finest(String.format(fuzzy_matching +": %s", fuzzy_matching));
+            logger.finest(String.format(fuzzy_matching + ": %s", fuzzy_matching));
           }
-          
+
           else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
