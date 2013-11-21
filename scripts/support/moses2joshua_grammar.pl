@@ -24,17 +24,24 @@ use File::Basename;
 use Getopt::Std;
 
 my %opts;
-getopts("i:d:x",\%opts);
+getopts("m:",\%opts);
 
 sub usage {
-  print "Usage: cat moses.grammar | moses2joshua_grammar.pl > joshua.grammar\n";
+  print "Usage: cat moses.grammar | moses2joshua_grammar.pl [-m TREE_MAP_FILE] > joshua.grammar\n";
+  print "where TREE_MAP_FILE maps rule target-sides to internal trees\n";
+
   exit;
 }
 
-  # Rules look like these:
-  # <s> [X] ||| <s> [S] ||| 1 ||| ||| 0
+  # Rules look like the following, with many of the fields optional
+  #
+  # <s> [X] ||| <s> [S] ||| [weights] ||| [alignments] ||| [counts] ||| [tree]
   # [X][S] </s> [X] ||| [X][S] </s> [S] ||| 1 ||| 0-0 ||| 0
   # [X][S] [X][X] [X] ||| [X][S] [X][X] [S] ||| 2.718 ||| 0-0 1-1 ||| 0
+
+if ($opts{m}) {
+  open MAP, ">$opts{m}" or die "can't write map to file '$opts{m}'";
+}
 
 while (my $rule = <>) {
   chomp($rule);
@@ -48,7 +55,7 @@ while (my $rule = <>) {
   # nonterminal. This also simplifies later processing.
   $rule =~ s/ \[\S+?\](\[\S+?\])/ $1/g;
 
-  my ($l1, $l2, $probs, $alignment, $counts) = split(/\|\|\|/, $rule);
+  my ($l1, $l2, $probs, $alignment, $counts, $tree) = split(/\|\|\|/, $rule);
 
   # The source-side nonterminals (of each pair) have been removed. Here we push all the for the
   # source and target sides into arrays. We grab the LHS from the target side list.
@@ -123,10 +130,23 @@ while (my $rule = <>) {
   my @probs = map { transform($_) } (split(' ',$probs));
   my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
+#  $new_rule .= " ||| $scores ||| $alignment ||| $counts";
   $new_rule .= " ||| $scores";
 
   # print STDERR "  NEW_RULE: $new_rule$/";
   print "$new_rule\n";
+
+  if (defined $tree) {
+    $tree =~ s/.*{{Tree\s+(.*)}}.*/$1/;
+    $tree =~ s/\[/(/g;
+    $tree =~ s/\]/)/g;
+
+    print MAP "$target ||| $tree\n";
+  }
+}
+
+if ($opts{m}) {
+  close(MAP);
 }
 
 sub transform {

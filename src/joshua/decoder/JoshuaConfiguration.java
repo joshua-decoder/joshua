@@ -52,6 +52,11 @@ public class JoshuaConfiguration {
    */
   public int[] oov_list = null;
   public float[] oov_weights = null;
+  
+  /* 
+   * Whether to segment OOVs into a lattice 
+   */
+  public boolean segment_oovs = false;
 
   /*
    * If false, sorting of the complete grammar is done at load time. If true, grammar tries are not
@@ -301,6 +306,9 @@ public class JoshuaConfiguration {
               oov_list[i / 2] = Vocabulary.id(String.format("[%s]", oovs[i]));
               oov_weights[i / 2] = Float.parseFloat(oovs[i + 1]);
             }
+            
+          } else if (parameter.equals(normalize_key("segment-oovs"))) {
+            segment_oovs = true;
 
           } else if (parameter.equals(normalize_key("default-non-terminal"))) {
             default_non_terminal = "[" + fds[1].trim() + "]";

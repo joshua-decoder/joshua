@@ -1175,7 +1175,7 @@ my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
 		? $TUNE_GRAMMAR_FILE
 		: $GRAMMAR_FILE;
 
-if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
+if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
@@ -1397,7 +1397,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     # otherwise, use the main grammar, and filter it if requested
     $TEST_GRAMMAR = $GRAMMAR_FILE;
     
-    if ($DO_FILTER_TM) {
+    if ($DO_FILTER_TM and ! $DOING_LATTICES) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
@@ -1597,7 +1597,7 @@ if ($TEST_GRAMMAR_FILE) {
   # otherwise, use the main grammar, and filter it if requested
   $TEST_GRAMMAR = $GRAMMAR_FILE;
   
-  if ($DO_FILTER_TM) {
+  if ($DO_FILTER_TM and ! $DOING_LATTICES) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test-$NAME",
@@ -1674,7 +1674,7 @@ if ($DO_MBR) {
 									"$testrun/test.output.1best");
 } else {
   $cachepipe->cmd("test-$NAME-extract-onebest",
-									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+									"java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $testrun/test.output.1best",
 									"$testrun/test.output.nbest.noOOV", 
 									"$testrun/test.output.1best");
 }
@@ -1747,8 +1747,9 @@ sub prepare_data {
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			} else {
         my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
+	my $ext = $lang; $ext =~ s/\.\d//;
 				$cachepipe->cmd("$label-tokenize-$lang",
-												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
+												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $ext | $TOKENIZER -l $ext 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 												"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 			}
 

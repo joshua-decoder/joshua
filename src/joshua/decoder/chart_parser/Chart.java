@@ -190,27 +190,22 @@ public class Chart {
 
         }
 
-        // Always add default OOV rule, as parse labels might not match with glue grammar.
-        int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
-            "\\[\\]", ""));
-        {
+        if (joshuaConfiguration.oov_list != null && joshuaConfiguration.oov_list.length != 0) {
+          for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
+            BilingualRule oovRule = new BilingualRule(joshuaConfiguration.oov_list[i], sourceWords,
+                targetWords, "", 0);
+            oovRules.add(oovRule);
+            oovGrammar.addRule(oovRule);
+            oovRule.estimateRuleCost(featureFunctions);
+//            System.err.println(String.format("ADDING OOV RULE %s -> %s", Vocabulary.word(joshuaConfiguration.oov_list[i]), Vocabulary.word(sourceWord)));
+          }
+        } else {
+          int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
+              "\\[\\]", ""));
           BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
           oovRules.add(oovRule);
           oovGrammar.addRule(oovRule);
           oovRule.estimateRuleCost(featureFunctions);
-        }
-
-        if (joshuaConfiguration.oov_list != null) {
-          for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
-            if (joshuaConfiguration.oov_list[i] != defaultNTIndex) {
-              BilingualRule oovRule = new BilingualRule(joshuaConfiguration.oov_list[i], sourceWords,
-                  targetWords, "", 0);
-              oovRules.add(oovRule);
-              oovGrammar.addRule(oovRule);
-              oovRule.estimateRuleCost(featureFunctions);
-//              System.err.println(String.format("ADDING OOV RULE %s -> %s", Vocabulary.word(joshuaConfiguration.oov_list[i]), Vocabulary.word(sourceWord)));
-            }
-          }
         }
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()

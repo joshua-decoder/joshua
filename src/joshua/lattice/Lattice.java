@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,17 +28,17 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   /**
    * True if there is more than one path through the lattice.
    */
-  private final boolean latticeHasAmbiguity;
+  private boolean latticeHasAmbiguity;
 
   /**
    * Costs of the best path between each pair of nodes in the lattice.
    */
-  private final ChartSpan<Float> costs;
-  
+  private ChartSpan<Integer> distances = null;
+
   /**
    * List of all nodes in the lattice. Nodes are assumed to be in topological order.
    */
-  private final List<Node<Value>> nodes;
+  private List<Node<Value>> nodes;
 
   /**
    * Records the shortest distance through the lattice.
@@ -57,7 +58,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   public Lattice(List<Node<Value>> nodes) {
     this.nodes = nodes;
-    this.costs = calculateAllPairsShortestPath();
+//    this.distances = calculateAllPairsShortestPath();
     this.latticeHasAmbiguity = true;
   }
 
@@ -65,7 +66,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     // Node<Value> sink = new Node<Value>(nodes.size());
     // nodes.add(sink);
     this.nodes = nodes;
-    this.costs = calculateAllPairsShortestPath();
+//    this.distances = calculateAllPairsShortestPath();
     this.latticeHasAmbiguity = isAmbiguous;
   }
 
@@ -91,7 +92,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       i++;
     }
 
-    this.costs = calculateAllPairsShortestPath();
+//    this.distances = calculateAllPairsShortestPath();
   }
 
   public final boolean hasMoreThanOnePath() {
@@ -99,21 +100,20 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   }
 
   /**
-   * Computes the shortest distance between two nodes, which is used (perhaps among other
-   * places) in computing which rules can apply over which spans of the input
+   * Computes the shortest distance between two nodes, which is used (perhaps among other places) in
+   * computing which rules can apply over which spans of the input
    * 
    * @param tail
    * @param head
    * @return
    */
   public int distance(Arc<Value> arc) {
-    return (int) this.getShortestPath(arc.getTail().getNumber(), arc.getHead().getNumber());
+    return this.getShortestPath(arc.getTail().getNumber(), arc.getHead().getNumber());
   }
-  
+
   public int distance(int i, int j) {
-    return (int) this.getShortestPath(i, j);
+    return this.getShortestPath(i, j);
   }
-    
 
   /**
    * Convenience method to get a lattice from an int[].
@@ -303,9 +303,12 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param to ID of the ending node.
    * @return The cost of the shortest path between the two nodes.
    */
-  public float getShortestPath(int from, int to) {
-//    System.err.println(String.format("DISTANCE(%d,%d) = %f", from, to, costs[from][to]));
-    return costs.get(from,to);
+  public int getShortestPath(int from, int to) {
+    // System.err.println(String.format("DISTANCE(%d,%d) = %f", from, to, costs[from][to]));
+    if (distances == null)
+      this.distances = calculateAllPairsShortestPath();
+    
+    return distances.get(from, to);
   }
 
   /**
@@ -317,13 +320,22 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   }
 
   /**
-   * Gets the node with a specified integer identifier.
+   * Gets the node with a specified integer identifier. If the identifier is negative, we count
+   * backwards from the end of the array, Perl-style (-1 is the last element, -2 the penultimate,
+   * etc).
    * 
    * @param index Integer identifier for a node.
    * @return The node with the specified integer identifier
    */
   public Node<Value> getNode(int index) {
-    return nodes.get(index);
+    if (index >= 0)
+      return nodes.get(index);
+    else
+      return nodes.get(size() + index);
+  }
+
+  public List<Node<Value>> getNodes() {
+    return nodes;
   }
 
   /**
@@ -353,33 +365,20 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param nodes A list of nodes which must be in topological order.
    * @return The all-pairs shortest path for all pairs of nodes.
    */
-  private ChartSpan<Float> calculateAllPairsShortestPath() {
+  private ChartSpan<Integer> calculateAllPairsShortestPath() {
 
-    int size = nodes.size();
-    ChartSpan<Float> costs = new ChartSpan<Float>(size, Float.POSITIVE_INFINITY);
-    costs.setDiagonal(0.0f);
-    
-    // Loop over all pairs of immediate neighbors and
-    // record the actual costs.
+    ChartSpan<Integer> distance = new ChartSpan<Integer>(nodes.size(), Integer.MAX_VALUE);
+    distance.setDiagonal(0);
+
+    /* Mark reachability between immediate neighbors */
     for (Node<Value> tail : nodes) {
       for (Arc<Value> arc : tail.getOutgoingArcs()) {
         Node<Value> head = arc.getHead();
-
-        int from = tail.id();
-        int to = head.id();
-        // this is slightly different
-        // than it was defined in Dyer et al 2008
-        float cost = arc.getCost();
-        // minimally, cost should be weighted by
-        // the feature weight assigned, so we just
-        // set this to 1.0 for now
-        cost = 1.0f;
-
-        if (cost < costs.get(from, to)) {
-          costs.set(from, to, cost);
-        }
+        distance.set(tail.id(), head.id(), 1);
       }
     }
+
+    int size = nodes.size();
 
     // Loop over every possible starting node (the last node is assumed to not be a starting node)
     for (int i = 0; i < size - 2; i++) {
@@ -394,15 +393,15 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
           // The best cost is the minimum of the previously recorded cost and the sum of costs in
           // the currently considered path
-          costs.set(i, j, Math.min(costs.get(i,j), costs.get(i,k) + costs.get(k,j)));
+          distance.set(i, j, Math.min(distance.get(i, j), distance.get(i, k) + distance.get(k, j)));
 
-          if (i == 0 && j == size - 1 && costs.get(i,j) < shortestDistance)
-            shortestDistance = (int)costs.get(i,j).floatValue();
+          if (i == 0 && j == size - 1 && distance.get(i, j) < shortestDistance)
+            shortestDistance = distance.get(i, j);
         }
       }
     }
 
-    return costs;
+    return distance;
   }
 
   @Override
@@ -435,5 +434,79 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     Lattice<String> graph = new Lattice<String>(nodes);
 
     System.out.println("Shortest path from 0 to 3: " + graph.getShortestPath(0, 3));
+  }
+
+  /**
+   * Replaced the arc from node i to j with the supplied lattice. This is used to do OOV
+   * segmentation of words in a lattice.
+   * 
+   * @param i
+   * @param j
+   * @param lattice
+   */
+  public void insert(int i, int j, List<Node<Value>> newNodes) {
+    
+    nodes.get(i).setOutgoingArcs(newNodes.get(0).getOutgoingArcs());
+    
+    newNodes.remove(0);
+    nodes.remove(j);
+    Collections.reverse(newNodes);
+    
+    for (Node<Value> node: newNodes)
+      nodes.add(j, node);
+  
+    this.latticeHasAmbiguity = false;
+    for (int x = 0; x < nodes.size(); x++) {
+      nodes.get(x).setID(x);
+      this.latticeHasAmbiguity |= (nodes.get(x).getOutgoingArcs().size() > 1);
+    }
+    
+    this.distances = null;
+  }
+
+  /**
+   * Topologically sorts the nodes and reassigns their numbers. Assumes that the first node is the
+   * source, but otherwise assumes nothing about the input.
+   * 
+   * Probably correct, but untested.
+   */
+  @SuppressWarnings("unused")
+  private void topologicalSort() {
+    HashMap<Node<Value>, List<Arc<Value>>> outgraph = new HashMap<Node<Value>, List<Arc<Value>>>();
+    HashMap<Node<Value>, List<Arc<Value>>> ingraph = new HashMap<Node<Value>, List<Arc<Value>>>();
+    for (Node<Value> node: nodes) {
+      ArrayList<Arc<Value>> arcs = new ArrayList<Arc<Value>>();
+      for (Arc<Value> arc: node.getOutgoingArcs()) {
+        arcs.add(arc);
+        
+        if (! ingraph.containsKey(arc.getHead()))
+          ingraph.put(arc.getHead(), new ArrayList<Arc<Value>>());
+        ingraph.get(arc.getHead()).add(arc);
+        
+        outgraph.put(node, arcs);
+      }
+    }
+    
+    ArrayList<Node<Value>> sortedNodes = new ArrayList<Node<Value>>();
+    Stack<Node<Value>> stack = new Stack<Node<Value>>();
+    stack.push(nodes.get(0));
+    
+    while (! stack.empty()) {
+      Node<Value> node = stack.pop();
+      sortedNodes.add(node);
+      for (Arc<Value> arc: outgraph.get(node)) {
+        outgraph.get(node).remove(arc);
+        ingraph.get(arc.getHead()).remove(arc);
+        
+        if (ingraph.get(arc.getHead()).size() == 0)
+          sortedNodes.add(arc.getHead());
+      }
+    }
+    
+    int id = 0;
+    for (Node<Value> node : sortedNodes)
+      node.setID(id++);
+    
+    this.nodes = sortedNodes;
   }
 }

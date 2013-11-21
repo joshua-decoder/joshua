@@ -1,5 +1,8 @@
 package joshua.decoder.segment_file;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -36,8 +39,8 @@ public class Sentence {
    */
   protected String sentence;
   protected String target = null;
-  protected String[] references = null; 
-  
+  protected String[] references = null;
+
   /* Lattice representation of the source sentence. */
   protected Lattice<Integer> sourceLattice = null;
 
@@ -88,7 +91,7 @@ public class Sentence {
     }
 
     // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
-    if (joshuaConfiguration.maxlen != 0 && ! this.intLattice().hasMoreThanOnePath())
+    if (joshuaConfiguration.maxlen != 0 && !this.intLattice().hasMoreThanOnePath())
       adjustForLength(joshuaConfiguration.maxlen);
   }
 
@@ -101,46 +104,107 @@ public class Sentence {
   }
 
   /**
-   * This function uses the supplied grammars to find OOVs in its input and create "detours" around
-   * them by splitting the OOVs on internal word boundaries. The idea is to break apart noun
-   * compounds in languages like German (such as the word "golfloch" = "golf" (golf) + "loch" (hole)
-   * that artificially inflate the vocabulary with OOVs.
+   * This function computes the intersection of \sigma^+ (where \sigma is the terminal vocabulary)
+   * with all character-level segmentations of each OOV in the input sentence.
+   * 
+   * The idea is to break apart noun compounds in languages like German (such as the word "golfloch"
+   * = "golf" (golf) + "loch" (hole)), allowing them to be translated.
    * 
    * @param grammars a list of grammars to consult to find in- and out-of-vocabulary items
    */
-  public void addOOVDetours(List<Grammar> grammars) {
-    Lattice<Integer> lattice = this.intLattice();
-    
-    Node<Integer> node = lattice.getNode(0);
-    for (Arc<Integer> arc : node.getOutgoingArcs()) {
-      int label = arc.getLabel();
-      boolean isOOV = true;
-      for (Grammar grammar: grammars) {
-        if (grammar.getTrieRoot().match(label) != null) {
-          isOOV = false;
-          break;
-        }
-      }
+  public void segmentOOVs(Grammar[] grammars) {
+    Lattice<Integer> oldLattice = this.intLattice();
 
-      /* If the word is an OOV, we now parse it at the character-level, with cells in the dynamic programming
-       * chart recording whether each span represents a valid decomposition of in-vocabulary sequences of words.
-       */
-      if (isOOV) {
-        String word = Vocabulary.word(label);
-        ChartSpan<Boolean> chart = new ChartSpan<Boolean>(word.length(), false);
+    /* Build a list of terminals across all grammars */
+    HashSet<Integer> vocabulary = new HashSet<Integer>();
+    for (Grammar grammar : grammars) {
+      Iterator<Integer> iterator = grammar.getTrieRoot().getTerminalExtensionIterator();
+      while (iterator.hasNext())
+        vocabulary.add(iterator.next());
+    }
 
-        for (int width = 1; width <= word.length(); width++) {
-          for (int i = 0; i <= word.length() - width; i++) {
-            int j = i + width;
-            
-            // TODO: finish this
-            chart.set(i, j, true);
+    List<Node<Integer>> oldNodes = oldLattice.getNodes();
+
+    /* Find all the subwords that appear in the vocabulary, and create the lattice */
+    for (int nodeid = oldNodes.size() - 3; nodeid >= 1; nodeid -= 1) {
+      if (oldNodes.get(nodeid).getOutgoingArcs().size() == 1) {
+        Arc<Integer> arc = oldNodes.get(nodeid).getOutgoingArcs().get(0);
+        String word = Vocabulary.word(arc.getLabel());
+        if (!vocabulary.contains(arc.getLabel())) {
+          // System.err.println(String.format("REPL: '%s'", word));
+          List<Arc<Integer>> savedArcs = oldNodes.get(nodeid).getOutgoingArcs();
+
+          char[] chars = word.toCharArray();
+          ChartSpan<Boolean> wordChart = new ChartSpan<Boolean>(chars.length + 1, false);
+          ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(chars.length + 1);
+          nodes.add(oldNodes.get(nodeid));
+          for (int i = 1; i < chars.length; i++)
+            nodes.add(new Node<Integer>(i));
+          nodes.add(oldNodes.get(nodeid + 1));
+          for (int width = 1; width <= chars.length; width++) {
+            for (int i = 0; i <= chars.length - width; i++) {
+              int j = i + width;
+              if (width != chars.length) {
+                Integer id = Vocabulary.id(word.substring(i, j));
+                if (vocabulary.contains(id)) {
+                  nodes.get(i).addArc(nodes.get(j), 0.0f, id);
+                  wordChart.set(i, j, true);
+//                  System.err.println(String.format("  FOUND '%s' at (%d,%d)", word.substring(i, j),
+//                      i, j));
+                }
+              }
+
+              for (int k = i + 1; k < j; k++) {
+                if (wordChart.get(i, k) && wordChart.get(k, j)) {
+                  wordChart.set(i, j, true);
+//                  System.err.println(String.format("    PATH FROM %d-%d-%d", i, k, j));
+                }
+              }
+            }
+          }
+
+          /* If there's a path from beginning to end */
+          if (wordChart.get(0, chars.length)) {
+//            System.err.println(String.format("  THERE IS A PATH"));
+//
+            // Remove nodes not part of a complete path
+            HashSet<Node<Integer>> deletedNodes = new HashSet<Node<Integer>>();
+            for (int k = 1; k < nodes.size() - 1; k++)
+              if (!(wordChart.get(0, k) && wordChart.get(k, chars.length)))
+                nodes.set(k, null);
+
+            int delIndex = 1;
+            while (delIndex < nodes.size())
+              if (nodes.get(delIndex) == null) {
+                deletedNodes.add(nodes.get(delIndex));
+                nodes.remove(delIndex);
+              } else
+                delIndex++;
+
+//            System.err.println("  REMAINING NODES:");
+            for (Node<Integer> node : nodes) {
+//              System.err.println("    NODE: " + node.id());
+              int arcno = 0;
+              while (arcno != node.getOutgoingArcs().size()) {
+                Arc<Integer> delArc = node.getOutgoingArcs().get(arcno);
+                if (deletedNodes.contains(delArc.getHead()))
+                  node.getOutgoingArcs().remove(arcno);
+                else {
+                  arcno++;
+//                  System.err.println("           ARC: " + Vocabulary.word(delArc.getLabel()));
+                }
+              }
+            }
+
+            // Insert into the main lattice
+            this.intLattice().insert(nodeid, nodeid + 1, nodes);
+          } else {
+//            System.err.println(String.format("  NO PATH from %d-%d", 0, chars.length));
+
+            nodes.get(0).setOutgoingArcs(savedArcs);
           }
         }
-        
       }
-      
-      // Node<Integer> head = arc.getHead();
     }
   }
 
@@ -150,7 +214,8 @@ public class Sentence {
    * 
    * Note that this code assumes the underlying representation is a sentence, and not a lattice. Its
    * behavior is undefined for lattices.
-   * @param length 
+   * 
+   * @param length
    */
   private void adjustForLength(int length) {
     int size = this.intLattice().size() - 2; // subtract off the start- and end-of-sentence tokens
@@ -200,7 +265,7 @@ public class Sentence {
   public String target() {
     return target;
   }
-  
+
   public String[] references() {
     return references;
   }

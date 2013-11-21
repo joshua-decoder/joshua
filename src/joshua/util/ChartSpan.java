@@ -53,8 +53,7 @@ public class ChartSpan<Type> {
    */
   private int offset(int i, int j) {
     if (i < 0 || j > max || i > j) {
-      System.err.println(String.format("* FATAL: Invalid span (%d,%d | %d)", i, j, max));
-      System.exit(31);
+      throw new RuntimeException(String.format("Invalid span (%d,%d | %d)", i, j, max));
     }
 
     return i * (max + 1) - i * (i + 1) / 2 + j;
