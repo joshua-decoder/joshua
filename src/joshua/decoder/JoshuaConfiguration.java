@@ -303,7 +303,7 @@ public class JoshuaConfiguration {
             oov_weights = new float[oovs.length / 2];
 
             for (int i = 0; i < oovs.length; i += 2) {
-              oov_list[i / 2] = Vocabulary.id(String.format("[%s]", oovs[i]));
+              oov_list[i / 2] = Vocabulary.id(String.format("%s", oovs[i]));
               oov_weights[i / 2] = Float.parseFloat(oovs[i + 1]);
             }
             
