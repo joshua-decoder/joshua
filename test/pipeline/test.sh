@@ -11,6 +11,7 @@ $JOSHUA/scripts/training/pipeline.pl \
     --corpus input/train       \
     --tune input/tune          \
     --test input/devtest       \
+    --lm-order 3               \
     --aligner berkeley > pipeline.log 2>&1
 
 #diff -u 1/test/final-bleu final-bleu.gold
