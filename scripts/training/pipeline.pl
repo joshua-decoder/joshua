@@ -1090,16 +1090,23 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
   }
 
   my $lmfile = "lm.gz";
+
+  # sort and uniq the training data
+  $cachepipe->cmd("lm-sort-uniq",
+                  "$CAT $TRAIN{target} | sort -u -T $TMPDIR -S $BUILDLM_MEM | gzip -9n > $TRAIN{target}.uniq",
+                  $TRAIN{target},
+                  "$TRAIN{target}.uniq");
+
   if ($LM_GEN eq "srilm") {
 		my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 		$cachepipe->cmd("srilm",
-										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target} -lm lm.gz",
-                    $TRAIN{target},
+										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target}.uniq -lm lm.gz",
+                    "$TRAIN{target}.uniq",
 										$lmfile);
   } elsif ($LM_GEN eq "berkeleylm") {
 		$cachepipe->cmd("berkeleylm",
-										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
-                    $TRAIN{target},
+										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}.uniq",
+                    "$TRAIN{target}.uniq",
 										$lmfile);
   } else {
     # Make sure it exists (doesn't build for OS X)
@@ -1114,8 +1121,8 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
     # Needs to be capitalized
     my $mem = uc $BUILDLM_MEM;
     $cachepipe->cmd("kenlm",
-                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
-                    $TRAIN{target},
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target}.uniq | gzip -9n > lm.gz",
+                    "$TRAIN{target}.uniq",
                     $lmfile);
   }
 
