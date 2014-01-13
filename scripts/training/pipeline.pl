@@ -1917,6 +1917,7 @@ sub is_lattice {
   close(READ);
   if ($line =~ /^\(\(\(/) {
 		$DOING_LATTICES = 1;
+		$FILTERING = "-l";
 		return 1;
   } else {
 		return 0;
