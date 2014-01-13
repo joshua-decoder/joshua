@@ -33,6 +33,17 @@ public class TestSetFilter {
     acceptedLastSourceSide = false;
     lastSourceSide = null;
   }
+  
+  public String getFilterName() {
+    if (filter != null)
+      if (filter instanceof FastFilter)
+        return "fast";
+      else if (filter instanceof LooseFilter)
+        return "loose";
+      else
+        return "exact";
+    return "null";
+  }
 
   public void setVerbose(boolean value) {
     verbose = value;
@@ -116,7 +127,8 @@ public class TestSetFilter {
     public FastFilter() {
       ngrams = new HashSet<String>();
     }
-
+    
+    @Override
     public boolean permits(String source) {
       for (String chunk : source.split(NT_REGEX)) {
         chunk = chunk.trim();
@@ -127,6 +139,7 @@ public class TestSetFilter {
       return true;
     }
 
+    @Override
     public void addSentence(String sentence) {
       String[] tokens = sentence.trim().split("\\s+");
       int maxOrder = RULE_LENGTH < tokens.length ? RULE_LENGTH : tokens.length;
@@ -153,7 +166,7 @@ public class TestSetFilter {
     public LooseFilter() {
       testSentences = new ArrayList<String>();
     }
-
+    
     @Override
     public void addSentence(String source) {
       testSentences.add(source);
@@ -293,8 +306,8 @@ public class TestSetFilter {
     int rulesIn = 0;
     int rulesOut = 0;
     if (filter.verbose) {
-      System.err.println("Filtering rules...");
-      System.err.println("Using at max " + filter.RULE_LENGTH + " n-grams...");
+      System.err.println(String.format("Filtering rules with the %s filter...", filter.getFilterName()));
+//      System.err.println("Using at max " + filter.RULE_LENGTH + " n-grams...");
     }
     while (scanner.hasNextLine()) {
       if (filter.verbose) {
