@@ -1258,7 +1258,7 @@ while (my $line = <CONFIG>) {
 
     if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
       
-      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR_FILE : $GLUE_GRAMMAR_FILE;
+      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
 
       # Add the weights for the tuning grammar.
       my $num_tm_features = count_num_features($grammar_file);
@@ -1432,6 +1432,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
     # The actual grammar used for decoding is the packed directory.
     $TEST_GRAMMAR = $packed_dir;
+  } else {
+    $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
   }
   	
   # Create the glue file.
@@ -1645,6 +1647,8 @@ if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
 
   # The actual grammar used for decoding is the packed directory.
   $TEST_GRAMMAR = $packed_dir;
+} else {
+  $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
 }
 
 # this needs to be in a function since it is done all over the place
