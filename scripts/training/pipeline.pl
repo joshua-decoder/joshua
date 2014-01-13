@@ -251,6 +251,7 @@ my $retval = GetOptions(
   "parser-mem=s"      => \$PARSER_MEM,
   "buildlm-mem=s"     => \$BUILDLM_MEM,
   "packer-mem=s"      => \$PACKER_MEM,
+  "pack!"             => \$DO_PACK_GRAMMARS,
   "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
   "mira-iterations=i" => \$MIRA_ITERATIONS,
