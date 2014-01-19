@@ -14,6 +14,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.ff.fragmentlm.Tree;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.io.DeNormalize;
@@ -150,8 +151,17 @@ public class KBestExtractor {
           .replace("%c", String.format("%.3f", -derivationState.getModelCost()));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
-        outputString = outputString.replace("%t",
-            derivationState.getHypothesis(true, null, models, Side.TARGET));
+        HyperEdge topEdge = derivationState.edge.getTailNodes().get(0).bestHyperedge.getTailNodes().get(0).bestHyperedge;
+        Rule rootRule = topEdge.getRule();
+        String englishSide = rootRule.getEnglishWords();
+        List<HGNode> rootTails = topEdge.getTailNodes();
+        if (Tree.rulesToFragments.containsKey(englishSide)) {
+          outputString = outputString.replace("%t",
+              Tree.buildTree(rootRule, rootTails, Integer.MAX_VALUE).toString());
+        } else {
+          outputString = outputString.replace("%t",
+              derivationState.getHypothesis(true, null, models, Side.TARGET));
+        }
       }
 
       if (joshuaConfiguration.outputFormat.contains("%e"))

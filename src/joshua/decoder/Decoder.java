@@ -20,6 +20,7 @@ import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.RuleFF;
+import joshua.decoder.ff.RuleLengthFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.fragmentlm.FragmentLMFF;
@@ -653,14 +654,15 @@ public class Decoder {
 
         this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
             owner, startArity, endArity)));
-      }
 
-      else if (feature.equals("wordpenalty")) {
+      } else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
-      }
 
-      else if (feature.equals("oovpenalty")) {
+      } else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights));
+        
+      } else if (feature.equals("rulelength")) {
+        this.featureFunctions.add(new RuleLengthFF(weights));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();

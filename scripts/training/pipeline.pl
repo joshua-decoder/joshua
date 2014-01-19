@@ -251,6 +251,7 @@ my $retval = GetOptions(
   "parser-mem=s"      => \$PARSER_MEM,
   "buildlm-mem=s"     => \$BUILDLM_MEM,
   "packer-mem=s"      => \$PACKER_MEM,
+  "pack!"             => \$DO_PACK_GRAMMARS,
   "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
   "mira-iterations=i" => \$MIRA_ITERATIONS,
@@ -497,9 +498,11 @@ $FILTERING = lc $FILTERING;
 if ($FILTERING eq "fast") {
   $FILTERING = "-f"
 } elsif ($FILTERING eq "exact") {
-  $FILTERING = "";
+  $FILTERING = "-e";
+} elsif ($FILTERING eq "loose") {
+  $FILTERING = "-l";
 } else {
-  print "* FATAL: --filtering must be one of 'fast' (default) or 'exact'\n";
+  print "* FATAL: --filtering must be one of 'fast' (default) or 'exact' or 'loose'\n";
   exit 1;
 }
 
@@ -1087,16 +1090,23 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
   }
 
   my $lmfile = "lm.gz";
+
+  # sort and uniq the training data
+  $cachepipe->cmd("lm-sort-uniq",
+                  "$CAT $TRAIN{target} | sort -u -T $TMPDIR -S $BUILDLM_MEM | gzip -9n > $TRAIN{target}.uniq",
+                  $TRAIN{target},
+                  "$TRAIN{target}.uniq");
+
   if ($LM_GEN eq "srilm") {
 		my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 		$cachepipe->cmd("srilm",
-										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target} -lm lm.gz",
-                    $TRAIN{target},
+										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target}.uniq -lm lm.gz",
+                    "$TRAIN{target}.uniq",
 										$lmfile);
   } elsif ($LM_GEN eq "berkeleylm") {
 		$cachepipe->cmd("berkeleylm",
-										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
-                    $TRAIN{target},
+										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}.uniq",
+                    "$TRAIN{target}.uniq",
 										$lmfile);
   } else {
     # Make sure it exists (doesn't build for OS X)
@@ -1111,8 +1121,8 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
     # Needs to be capitalized
     my $mem = uc $BUILDLM_MEM;
     $cachepipe->cmd("kenlm",
-                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target} | gzip -9n > lm.gz",
-                    $TRAIN{target},
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target}.uniq | gzip -9n > lm.gz",
+                    "$TRAIN{target}.uniq",
                     $lmfile);
   }
 
@@ -1183,7 +1193,7 @@ if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
-									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
+									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
 									$GRAMMAR_FILE,
 									$TUNE{source},
 									$TUNE_GRAMMAR);
@@ -1256,7 +1266,7 @@ while (my $line = <CONFIG>) {
 
     if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
       
-      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR_FILE : $GLUE_GRAMMAR_FILE;
+      my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
 
       # Add the weights for the tuning grammar.
       my $num_tm_features = count_num_features($grammar_file);
@@ -1405,7 +1415,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
-                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
+                      "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
                       $GRAMMAR_FILE,
                       $TEST{source},
                       $TEST_GRAMMAR);
@@ -1430,6 +1440,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
     # The actual grammar used for decoding is the packed directory.
     $TEST_GRAMMAR = $packed_dir;
+  } else {
+    $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
   }
   	
   # Create the glue file.
@@ -1605,7 +1617,7 @@ if ($TEST_GRAMMAR_FILE) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 		$cachepipe->cmd("filter-test-$NAME",
-										"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
+										"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
 										$GRAMMAR_FILE,
 										$TEST{source},
 										$TEST_GRAMMAR);
@@ -1643,6 +1655,8 @@ if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
 
   # The actual grammar used for decoding is the packed directory.
   $TEST_GRAMMAR = $packed_dir;
+} else {
+  $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
 }
 
 # this needs to be in a function since it is done all over the place
@@ -1903,6 +1917,7 @@ sub is_lattice {
   close(READ);
   if ($line =~ /^\(\(\(/) {
 		$DOING_LATTICES = 1;
+		$FILTERING = "-l";
 		return 1;
   } else {
 		return 0;

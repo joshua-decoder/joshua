@@ -62,7 +62,7 @@ public class PennTreebankReader {
 
     public int size() {
       int size = 0;
-      Iterator i = iterator();
+      Iterator<Tree> i = iterator();
       while (i.hasNext()) {
         size++;
         i.next();
@@ -70,6 +70,7 @@ public class PennTreebankReader {
       return size;
     }
 
+    @SuppressWarnings("unused")
     private List<File> getFilesUnder(String path, FileFilter fileFilter) {
       File root = new File(path);
       List<File> files = new ArrayList<File>();

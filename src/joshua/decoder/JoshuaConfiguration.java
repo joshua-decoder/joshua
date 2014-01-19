@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.StatefulFF;
+import joshua.decoder.ff.fragmentlm.Tree;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -52,9 +53,9 @@ public class JoshuaConfiguration {
    */
   public int[] oov_list = null;
   public float[] oov_weights = null;
-  
-  /* 
-   * Whether to segment OOVs into a lattice 
+
+  /*
+   * Whether to segment OOVs into a lattice
    */
   public boolean segment_oovs = false;
 
@@ -156,6 +157,12 @@ public class JoshuaConfiguration {
 
   public boolean rescoreForest = false;
   public float rescoreForestWeight = 10.0f;
+
+  /*
+   * Location of fragment mapping file, which maps flattened SCFG rules to their internal
+   * representation.
+   */
+  public String fragmentMapFile = null;
 
   /*
    * Whether to use soft syntactic constraint decoding /fuzzy matching, which allows that any
@@ -306,7 +313,7 @@ public class JoshuaConfiguration {
               oov_list[i / 2] = Vocabulary.id(String.format("%s", oovs[i]));
               oov_weights[i / 2] = Float.parseFloat(oovs[i + 1]);
             }
-            
+
           } else if (parameter.equals(normalize_key("segment-oovs"))) {
             segment_oovs = true;
 
@@ -428,6 +435,9 @@ public class JoshuaConfiguration {
               .equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
             fuzzy_matching = Boolean.parseBoolean(fds[1]);
             logger.finest(String.format(fuzzy_matching + ": %s", fuzzy_matching));
+          } else if (parameter.equals(normalize_key("fragment-map"))) {
+            fragmentMapFile = fds[1];
+            Tree.readMapping(fragmentMapFile);
           }
 
           else {

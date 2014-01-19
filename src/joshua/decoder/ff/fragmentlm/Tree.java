@@ -1,11 +1,15 @@
 package joshua.decoder.ff.fragmentlm;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.*;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.fragmentlm.Trees.PennTreeReader;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 import joshua.util.io.LineReader;
 
 /**
@@ -42,7 +46,26 @@ public class Tree implements Serializable {
 
   /* The number of lexicalized items among the tree's frontier. */
   private int numLexicalItems = -1;
+  
 
+  /*
+   * This maps the flat right-hand sides of Joshua rules to the tree fragments they were derived
+   * from. It is used to lookup the fragment that language model fragments should be match against.
+   * For example, if the target (English) side of your rule is
+   * 
+   * [NP,1] said [SBAR,2]
+   * 
+   * we will retrieve the unflattened fragment
+   * 
+   * (S NP (VP (VBD said) SBAR))
+   * 
+   * which presumably was the fronter fragment used to derive the translation rule. With this in
+   * hand, we can iterate through our store of language model fragments to match them against this,
+   * following tail nodes if necessary.
+   */
+  public static HashMap<String, Tree> rulesToFragments = new HashMap<String, Tree>();
+
+  
   public Tree(String label, List<Tree> children) {
     setLabel(label);
     this.children = children;
@@ -444,6 +467,110 @@ public class Tree implements Serializable {
     PennTreeReader reader = new PennTreeReader(new StringReader(ptbStr));
     Tree fragment = reader.next();
     return fragment;
+  }
+  
+  public static Tree buildFragment(String fragmentString) {
+    PennTreeReader reader = new PennTreeReader(new StringReader(fragmentString));
+    Tree fragment = reader.next();
+    return fragment;
+  }
+
+  public static void readMapping(String fragmentMappingFile) {
+    /* Read in the rule / fragments mapping */
+    try {
+      LineReader reader = new LineReader(fragmentMappingFile);
+      for (String line : reader) {
+        String[] fields = line.split("\\s+\\|{3}\\s+");
+        if (fields.length != 2 || !fields[0].startsWith("(")) {
+          System.err.println(String.format("* WARNING: malformed line %d: %s", reader.lineno(),
+              line));
+          continue;
+        }
+
+        addRuleMapping(fields[1], buildFragment(fields[0]));
+      }
+    } catch (IOException e) {
+      System.err.println(String.format("* WARNING: couldn't read fragment mapping file '%s'",
+          fragmentMappingFile));
+      System.exit(1);
+    }
+    System.err.println(String.format("FragmentLMFF: Read %d mappings from '%s'",
+        rulesToFragments.size(), fragmentMappingFile));
+  }
+
+  public static void addRuleMapping(String english, Tree fragment) {
+    // System.err.println(String.format("MAPPING: %s <> %s", english, fragment));
+    if (rulesToFragments != null)
+      rulesToFragments.put(english, fragment);
+  }
+  
+  /**
+   * Takes a rule and its tail pointers and recursively constructs a tree (up to maxDepth).
+   * 
+   * @param rule
+   * @param tailNodes
+   * @return
+   */
+  public static Tree buildTree(Rule rule, List<HGNode> tailNodes, int maxDepth) {
+    Tree tree = rulesToFragments.get(rule.getEnglishWords());
+    
+    if (tree == null) {
+//      System.err.println("COULDN'T FIND " + rule.getEnglishWords());
+//      System.err.println("RULE " + rule);
+//      for (Entry<String, Tree> pair: rulesToFragments.entrySet())
+//        System.err.println("  FOUND " + pair.getKey());
+      
+      return null;
+    }
+
+    tree = tree.shallowClone();
+
+    if (tree != null && tailNodes != null && tailNodes.size() > 0 && maxDepth > 0) {
+      List<Tree> frontier = tree.getNonterminalYield();
+
+      ArrayList<Integer> tailIndices = new ArrayList<Integer>();
+      int[] englishInts = rule.getEnglish();
+      for (int i = 0; i < englishInts.length; i++)
+        if (englishInts[i] < 0)
+          tailIndices.add(-1 * englishInts[i] - 1);
+
+      /*
+       * We now have the tree's yield. The substitution points on the yield should match the
+       * nonterminals of the tail nodes. Since we don't know which of the tree's frontier items are
+       * terminals and which are nonterminals, we walk through the tail nodes, and then match the
+       * label of each against the frontier node labels until we have a match.
+       */
+      // System.err.println(String.format("WORDS: %s\nTREE: %s", rule.getEnglishWords(), tree));
+      for (int i = 0; i < tailNodes.size(); i++) {
+
+        // String lhs = tailNodes.get(i).getLHS().replaceAll("[\\[\\]]", "");
+        // System.err.println(String.format("  %d: %s", i, lhs));
+        try {
+          Tree frontierTree = frontier.get(tailIndices.get(i).intValue());
+          frontierTree.setBoundary(true);
+
+          HyperEdge edge = tailNodes.get(i).bestHyperedge;
+          if (edge != null) {
+            Tree childTree = buildTree(edge.getRule(), edge.getTailNodes(), maxDepth - 1);
+            /* This can be null if there is no entry for the rule in the map */
+            if (childTree != null)
+              frontierTree.children = childTree.children;
+          } else {
+            frontierTree.children = tree.children;
+          }
+        } catch (IndexOutOfBoundsException e) {
+          System.err.println(String.format("ERROR at index %d", i));
+          System.err.println(String.format("RULE: %s  TREE: %s", rule.getEnglishWords(), tree));
+          System.err.println("  FRONTIER:");
+          for (Tree kid : frontier)
+            System.err.println("    " + kid);
+          e.printStackTrace();
+          System.exit(1);
+        }
+      }
+    }
+
+    return tree;
   }
 
   public static void main(String[] args) {
