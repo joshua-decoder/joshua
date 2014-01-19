@@ -42,6 +42,7 @@ public class GrammarPacker {
   private boolean labeled;
 
   private boolean packAlignments;
+  private boolean grammarAlignments;
   private String alignments;
 
   private FeatureTypeAnalyzer types;
@@ -56,20 +57,22 @@ public class GrammarPacker {
   }
 
   public GrammarPacker(String grammar_filename, String config_filename, String output_filename,
-      String alignments_filename, String featuredump_filename) throws IOException {
+      String alignments_filename, String featuredump_filename, boolean grammar_alignments)
+      throws IOException {
     this.labeled = true;
     this.grammar = grammar_filename;
     this.output = output_filename;
     this.dump = featuredump_filename;
+    this.grammarAlignments = grammar_alignments;
 
     // TODO: Always open encoder config? This is debatable.
     this.types = new FeatureTypeAnalyzer(true);
 
     this.alignments = alignments_filename;
-    packAlignments = (alignments != null);
+    packAlignments = grammarAlignments || (alignments != null);
     if (!packAlignments) {
-      logger.info("No alignments file specified, skipping.");
-    } else if (!new File(alignments_filename).exists()) {
+      logger.info("No alignments file or grammar specified, skipping.");
+    } else if (alignments != null && !new File(alignments_filename).exists()) {
       logger.severe("Alignments file does not exist: " + alignments);
       System.exit(0);
     }
@@ -159,7 +162,7 @@ public class GrammarPacker {
     // Actual binarization pass. Slice and pack source, target and data.
     grammar_reader = new LineReader(grammar);
 
-    if (packAlignments)
+    if (packAlignments && !grammarAlignments)
       alignment_reader = new LineReader(alignments);
     binarize(grammar_reader, alignment_reader, slices);
     logger.info("Packing complete.");
@@ -170,11 +173,13 @@ public class GrammarPacker {
 
   private void explore(LineReader grammar) {
     int counter = 0;
-    boolean first_line = true;
+    // We always assume a labeled grammar. Unlabeled features are assumed to be dense and to always
+    // appear in the same order. They are assigned numeric names in order of appearance.
+    this.types.setLabeled(true);
+
     while (grammar.hasNext()) {
       String line = grammar.next().trim();
       counter++;
-
       String[] fields = line.split("\\s\\|{3}\\s");
       if (fields.length < 4) {
         logger.warning("Incomplete grammar line at line " + counter);
@@ -201,26 +206,18 @@ public class GrammarPacker {
           Vocabulary.id(target_word);
       }
 
-      // Test features for labeling.
-      if (first_line && features.length != 0) {
-        if (!features[0].contains("=")) {
-          // We assume that if there is one unlabeled feature the entire grammar is unlabeled.
-          labeled = false;
-        }
-        this.types.setLabeled(labeled);
-        first_line = false;
-      }
-
       // Add feature names to vocabulary and pass the value through the
       // appropriate encoder.
+      int feature_counter = 0;
       for (int f = 0; f < features.length; ++f) {
-        if (labeled) {
+        if (features[f].contains("=")) {
           String[] fe = features[f].split("=");
           if (fe[0].equals("Alignment"))
             continue;
           types.observe(Vocabulary.id(fe[0]), Float.parseFloat(fe[1]));
         } else {
-          types.observe(f, Float.parseFloat(features[f]));
+          types.observe(Vocabulary.id(String.valueOf(++feature_counter)),
+              Float.parseFloat(features[f]));
         }
       }
     }
@@ -283,43 +280,49 @@ public class GrammarPacker {
       int alignment_index = -1;
       // If present, process alignments.
       if (packAlignments) {
-        if (!alignment_reader.hasNext()) {
-          logger.severe("No more alignments starting in line " + counter);
-          throw new RuntimeException("No more alignments starting in line " + counter);
+        String alignment_line;
+        if (grammarAlignments) {
+          alignment_line = fields[4];
         } else {
-          String alignment_line = alignment_reader.next().trim();
-          String[] alignment_entries = alignment_line.split("\\s");
-          byte[] alignments = new byte[alignment_entries.length * 2];
-          if (alignment_entries.length != 0) {
-            for (int i = 0; i < alignment_entries.length; i++) {
-              String[] parts = alignment_entries[i].split("-");
-              alignments[2 * i] = Byte.parseByte(parts[0]);
-              alignments[2 * i + 1] = Byte.parseByte(parts[1]);
-            }
+          if (!alignment_reader.hasNext()) {
+            logger.severe("No more alignments starting in line " + counter);
+            throw new RuntimeException("No more alignments starting in line " + counter);
           }
-          alignment_index = alignment_buffer.add(alignments);
+          alignment_line = alignment_reader.next().trim();
         }
+        String[] alignment_entries = alignment_line.split("\\s");
+        byte[] alignments = new byte[alignment_entries.length * 2];
+        if (alignment_entries.length != 0) {
+          for (int i = 0; i < alignment_entries.length; i++) {
+            String[] parts = alignment_entries[i].split("-");
+            alignments[2 * i] = Byte.parseByte(parts[0]);
+            alignments[2 * i + 1] = Byte.parseByte(parts[1]);
+          }
+        }
+        alignment_index = alignment_buffer.add(alignments);
       }
 
       // Process features.
       // Implicitly sort via TreeMap, write to data buffer, remember position
       // to pass on to the source trie node.
       features.clear();
+      int feature_count = 0;
       for (int f = 0; f < feature_entries.length; ++f) {
         String feature_entry = feature_entries[f];
-        if (this.labeled) {
+        int feature_id;
+        float feature_value; 
+        if (feature_entry.contains("=")) {
           String[] parts = feature_entry.split("=");
           if (parts[0].equals("Alignment"))
             continue;
-          int feature_id = Vocabulary.id(parts[0]);
-          float feature_value = Float.parseFloat(parts[1]);
-          if (feature_value != 0)
-            features.put(encoderConfig.innerId(feature_id), feature_value);
+          feature_id = Vocabulary.id(parts[0]);
+          feature_value = Float.parseFloat(parts[1]);
         } else {
-          float feature_value = Float.parseFloat(feature_entry);
-          if (feature_value != 0)
-            features.put(f, feature_value);
+          feature_id = Vocabulary.id(String.valueOf(++feature_count));
+          feature_value = Float.parseFloat(feature_entry);
         }
+        if (feature_value != 0)
+          features.put(encoderConfig.innerId(feature_id), feature_value);
       }
       int features_index = feature_buffer.add(features);
 
@@ -505,13 +508,15 @@ public class GrammarPacker {
     String output_prefix = null;
     String alignments_filename = null;
     String featuredump_filename = null;
+    boolean grammar_alignments = false;
 
     if (args.length < 1 || args[0].equals("-h")) {
       System.err.println("Usage: " + GrammarPacker.class.toString());
       System.err.println("    -g grammar_file     translation grammar to process");
       System.err.println("    -p packed_name      prefix for *.packed output directory");
       System.err.println("   [-c config_file      packing configuration file]");
-      System.err.println("   [-a alignment_file   alignment_file]");
+      System.err.println("   [-fa alignment_file  alignment_file]");
+      System.err.println("   [-ga                 alignments in grammar]");
       System.err.println("   [-d dump_file        dump feature stats]");
       System.err.println();
       System.exit(-1);
@@ -524,8 +529,10 @@ public class GrammarPacker {
         output_prefix = args[++i];
       } else if ("-c".equals(args[i]) && (i < args.length - 1)) {
         config_filename = args[++i];
-      } else if ("-a".equals(args[i]) && (i < args.length - 1)) {
+      } else if ("-fa".equals(args[i]) && (i < args.length - 1)) {
         alignments_filename = args[++i];
+      } else if ("-ga".equals(args[i])) {
+        grammar_alignments = true;
       } else if ("-d".equals(args[i]) && (i < args.length - 1)) {
         featuredump_filename = args[++i];
       }
@@ -564,7 +571,7 @@ public class GrammarPacker {
     }
 
     GrammarPacker packer = new GrammarPacker(grammar_filename, config_filename, output_filename,
-        alignments_filename, featuredump_filename);
+        alignments_filename, featuredump_filename, grammar_alignments);
     packer.pack();
   }
 
