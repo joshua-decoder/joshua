@@ -30,9 +30,11 @@ while(<STDIN>) {
   s/“/\"/g;
   s/”/\"/g;
   s/–/-/g;
+  s/−/-/g;
   s/—/ - /g;
   s/ +/ /g;
   s/´/\'/g;
+  s/′/\'/g;
   s/’/\'/g;
   s/([a-z])‘([a-z])/$1\'$2/gi;
   s/([a-z])’([a-z])/$1\'$2/gi;
@@ -42,6 +44,7 @@ while(<STDIN>) {
   s/''/\"/g;
   s/´´/\"/g;
   s/…/.../g;
+  s/°/º/g;
   # Replace non-breaking spaces (which are surprisingly prevalent, and don't
   # count as whitespace) with spaces.
   # French quotes

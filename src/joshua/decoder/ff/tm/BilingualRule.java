@@ -294,4 +294,8 @@ public class BilingualRule extends Rule {
   public final String getFeatureString() {
     return sparseFeatures;
   }
+  
+  public byte[] getAlignment() {
+    return null;
+  }
 }

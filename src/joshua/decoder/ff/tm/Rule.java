@@ -210,4 +210,6 @@ public abstract class Rule {
       }
     }
   };
+
+  public abstract byte[] getAlignment();
 }

@@ -176,6 +176,10 @@ public class PackedGrammar extends BatchGrammar {
 
     private float[] estimated;
     private float[] precomputable;
+    
+    private RandomAccessFile alignmentFile;
+    private MappedByteBuffer alignments;
+    private int[] alignmentLookup;
 
     private HashMap<Integer, PackedTrie> tries;
 
@@ -186,6 +190,7 @@ public class PackedGrammar extends BatchGrammar {
       File target_file = new File(prefix + ".target");
       File target_lookup_file = new File(prefix + ".target.lookup");
       File feature_file = new File(prefix + ".features");
+      File alignment_file = new File(prefix + ".alignments");
 
       // Get the channels etc.
       FileInputStream source_fis = new FileInputStream(source_file);
@@ -212,6 +217,24 @@ public class PackedGrammar extends BatchGrammar {
 
       features = feature_channel.map(MapMode.READ_ONLY, 0, feature_size);
       features.load();
+      
+      if (alignment_file.exists()) {
+        alignmentFile = new RandomAccessFile(alignment_file, "r");
+        FileChannel alignment_channel = alignmentFile.getChannel();
+        int alignment_size = (int) alignment_channel.size();
+        alignments = alignment_channel.map(MapMode.READ_ONLY, 0, alignment_size);
+        alignments.load();
+        
+        int num_blocks = alignments.getInt(0);
+        alignmentLookup = new int[num_blocks];
+        int header_pos = 8;
+        for (int i = 0; i < num_blocks; i++) {
+          alignmentLookup[i] = alignments.getInt(header_pos);
+          header_pos += 4;
+        }
+      } else {
+        alignments = null;
+      }
 
       int num_blocks = features.getInt(0);
       featureLookup = new int[num_blocks];
@@ -323,6 +346,18 @@ public class PackedGrammar extends BatchGrammar {
       return sb.toString().trim();
     }
 
+    private final byte[] getAlignmentArray(int block_id) {
+      if (alignments == null)
+        throw new RuntimeException("No alignments available.");
+      int alignment_position = alignmentLookup[block_id];
+      int num_points = (int) alignments.get(alignment_position);
+      byte[] alignment = new byte[num_points * 2];
+      
+      alignments.position(alignment_position + 1);
+      alignments.get(alignment, 0, num_points * 2);
+      return alignment;
+    }
+    
     private final PackedTrie root() {
       return getTrie(0);
     }
@@ -635,6 +670,11 @@ public class PackedGrammar extends BatchGrammar {
           }
 
           return features;
+        }
+        
+        @Override
+        public byte[] getAlignment() {
+          return getAlignmentArray(source[address + 2]);
         }
 
         @Override
