@@ -12,7 +12,7 @@ import joshua.decoder.hypergraph.HGNode;
  */
 public class RuleShapeFF extends StatelessFF {
 
-  public RuleShapeFF(FeatureVector weights) {
+  public RuleShapeFF(FeatureVector weights, String[] args) {
     super(weights, "RuleShape");
   }
 

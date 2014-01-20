@@ -702,8 +702,8 @@ public class Decoder {
       } else {
         try {
           Class<?> clas = Class.forName(String.format("joshua.decoder.ff.%sFF", featureName));
-          Constructor<?> constructor = clas.getConstructor(FeatureVector.class);
-          this.featureFunctions.add((FeatureFunction) constructor.newInstance(weights));
+          Constructor<?> constructor = clas.getConstructor(FeatureVector.class, String[].class);
+          this.featureFunctions.add((FeatureFunction) constructor.newInstance(weights, fields));
         } catch (Exception e) {
           e.printStackTrace();
           System.err.println("* WARNING: invalid feature '" + featureLine + "'");
