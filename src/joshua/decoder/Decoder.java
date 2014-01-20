@@ -20,7 +20,6 @@ import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
-import joshua.decoder.ff.RuleCountBinFF;
 import joshua.decoder.ff.RuleFF;
 import joshua.decoder.ff.RuleLengthFF;
 import joshua.decoder.ff.SourcePathFF;
@@ -666,9 +665,6 @@ public class Decoder {
         
       } else if (feature.equals("rulelength")) {
         this.featureFunctions.add(new RuleLengthFF(weights));
-
-      } else if (feature.equals("rulecountbin")) {
-        this.featureFunctions.add(new RuleCountBinFF(weights, fields));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();

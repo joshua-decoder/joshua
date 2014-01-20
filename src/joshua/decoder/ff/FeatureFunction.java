@@ -1,9 +1,7 @@
 package joshua.decoder.ff;
 
 import java.util.List;
-import java.util.logging.Logger;
 
-import joshua.decoder.Decoder;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
