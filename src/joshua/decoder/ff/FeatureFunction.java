@@ -41,8 +41,6 @@ public abstract class FeatureFunction {
   // The weight vector used by the decoder, passed it when the feature is instantiated.
   protected FeatureVector weights;
 
-  private static final Logger logger = Logger.getLogger(Decoder.class.getName());
-
   // Accessor functions
   public String getName() {
     return name;

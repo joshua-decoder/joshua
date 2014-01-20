@@ -110,28 +110,28 @@ public class FeatureVector {
   }
 
   /**
-   * This method returns the weight of a feature if it exists and otherwise 
-   * throws a runtime error. It is the duty of the programmer to check 
-   * using the method containsKey if a feature with a certain name exists.
-   * Previously this method would return 0 if the key did not exists, but 
-   * this lead to bugs in other parts of the code because Feature Names 
-   * are often specified in capitals but then lowercased, but 
-   * in using the get method the lowercase form is not used consistently.
-   * It is therefore good defensive programming to just throw an error when 
-   * someone tries to get a feature that does not exist - this will automatically 
-   * eliminate such hard to debug errors.
-   * This is what is now implemented.
+   * This method returns the weight of a feature if it exists and otherwise throws a runtime error.
+   * It is the duty of the programmer to check using the method containsKey if a feature with a
+   * certain name exists. Previously this method would return 0 if the key did not exists, but this
+   * lead to bugs in other parts of the code because Feature Names are often specified in capitals
+   * but then lowercased, but in using the get method the lowercase form is not used consistently.
+   * It is therefore good defensive programming to just throw an error when someone tries to get a
+   * feature that does not exist - this will automatically eliminate such hard to debug errors. This
+   * is what is now implemented.
+   * 
    * @param feature
    * @return
    */
   public float get(String feature) {
     if (features.containsKey(feature))
-    {  
       return features.get(feature);
-    }  
-    throw new RuntimeException("Error : unknown feature " + feature + " Beware: The behavior has been changed.\n" +
-   "This method no longer returns 0 for non-present features. Instead it is the responsibility of the querying function to make " +
-   "sure the value exists before requesting it");
+
+    throw new RuntimeException(
+        "Error : unknown feature "
+            + feature
+            + " Beware: The behavior has been changed.\n"
+            + "This method no longer returns 0 for non-present features. Instead it is the responsibility of the querying function to make "
+            + "sure the value exists before requesting it");
   }
 
   public void put(String feature, float value) {

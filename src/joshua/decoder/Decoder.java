@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +20,7 @@ import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.RuleCountBinFF;
 import joshua.decoder.ff.RuleFF;
 import joshua.decoder.ff.RuleLengthFF;
 import joshua.decoder.ff.SourcePathFF;
@@ -641,7 +643,8 @@ public class Decoder {
       featureLine = featureLine.replaceFirst("^feature_function\\s*=\\s*", "");
 
       String fields[] = featureLine.split("\\s+");
-      String feature = fields[0].toLowerCase();
+      String featureName = fields[0];
+      String feature = featureName.toLowerCase();
 
       if (feature.equals("latticecost") || feature.equals("sourcepath")) {
         this.featureFunctions.add(new SourcePathFF(Decoder.weights));
@@ -663,6 +666,9 @@ public class Decoder {
         
       } else if (feature.equals("rulelength")) {
         this.featureFunctions.add(new RuleLengthFF(weights));
+
+      } else if (feature.equals("rulecountbin")) {
+        this.featureFunctions.add(new RuleCountBinFF(weights, fields));
 
       } else if (feature.equals("edgephrasesimilarity")) {
         String host = fields[1].trim();
@@ -698,7 +704,15 @@ public class Decoder {
         this.featureFunctions.add(new LabelSubstitutionFF(weights));
 
       } else {
-        System.err.println("* WARNING: invalid feature '" + featureLine + "'");
+        try {
+          Class<?> clas = Class.forName(String.format("joshua.decoder.ff.%sFF", featureName));
+          Constructor<?> constructor = clas.getConstructor(FeatureVector.class);
+          this.featureFunctions.add((FeatureFunction) constructor.newInstance(weights));
+        } catch (Exception e) {
+          e.printStackTrace();
+          System.err.println("* WARNING: invalid feature '" + featureLine + "'");
+          System.exit(1);
+        }
       }
     }
 
