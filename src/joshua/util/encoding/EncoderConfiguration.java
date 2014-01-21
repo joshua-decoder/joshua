@@ -113,6 +113,10 @@ public class EncoderConfiguration {
       encoding.load(grammar_dir + File.separator + "encoding");
       
       System.out.println(String.format("num_features = %d", encoding.getNumFeatures()));
+
+      for (int i = 1; i <= encoding.getNumFeatures(); i++) {
+        System.out.println(String.format("feature: %s", Vocabulary.word(i)));
+      }
     } catch (ArrayIndexOutOfBoundsException e) {
       System.err.println("Usage: EncoderConfiguration <packed_directory>");
       System.exit(1);

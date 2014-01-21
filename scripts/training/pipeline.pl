@@ -1269,19 +1269,29 @@ while (my $line = <CONFIG>) {
       my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
 
       # Add the weights for the tuning grammar.
-      my $num_tm_features = count_num_features($grammar_file);
-      for my $i (0..($num_tm_features-1)) {
-        push (@tmparamstrings, "tm_${owner}_$i ||| 1.0 Opt -Inf +Inf -1 +1");
-        push (@tmweightstrings, "tm_${owner}_$i 1.0");
+      my @features = get_features($grammar_file);
+      foreach my $feature (@features) {
+        if ($feature =~ /^\d+$/) {
+          push (@tmparamstrings, "tm_${owner}_$feature ||| 1.0 Opt -Inf +Inf -1 +1");
+          push (@tmweightstrings, "tm_${owner}_$feature 1.0");
+        } else {
+          push (@tmparamstrings, "$feature ||| 1.0 Opt -Inf +Inf -1 +1");
+          push (@tmweightstrings, "$feature 1.0");
+        }
       }
 
     } else {
       # Add weights for any pre-supplied grammars.
 
-      my $num_tm_features = count_num_features($grammar);
-      for my $i (0..($num_tm_features-1)) {
-        push (@tmparamstrings, "tm_${owner}_${i} ||| 1.0 Opt -Inf +Inf -1 +1");
-        push (@tmweightstrings, "tm_${owner}_${i} 1.0");
+      my @features = get_features($grammar);
+      foreach my $feature (@features) {
+        if ($feature =~ /^\d+$/) {
+          push (@tmparamstrings, "tm_${owner}_$feature ||| 1.0 Opt -Inf +Inf -1 +1");
+          push (@tmweightstrings, "tm_${owner}_$feature 1.0");
+        } else {
+          push (@tmparamstrings, "$feature ||| 1.0 Opt -Inf +Inf -1 +1");
+          push (@tmweightstrings, "$feature 1.0");
+        }
       }
 		}
 	}
@@ -1924,28 +1934,39 @@ sub is_lattice {
   }
 }
 
-# This counts the number of TM features present in a grammar
-sub count_num_features {
+# This function retrieves the names of all the features in the grammar. Dense features
+# are named with consecutive integers starting at 1, while sparse features can have any name.
+# To get the feature names from an unpacked grammar, we have to read through the whole grammar,
+# since sparse features can be anywhere. For packed grammars, this can be read directly from
+# the encoding.
+sub get_features {
   my ($grammar) = @_;
 
   if (-d $grammar) {
-    chomp(my $line = `java -cp $JOSHUA/class joshua.util.encoding.EncoderConfiguration $grammar | grep num_features`);
-    my @tokens = split(' ', $line);
-    return $tokens[-1];
+    chomp(my @features = `java -cp $JOSHUA/class joshua.util.encoding.EncoderConfiguration $grammar | grep ^feature: | awk '{print \$NF}'`);
+    return @features;
 
   } elsif (-e $grammar) {
+    my %features;
     open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
-    chomp(my $line = <GRAMMAR>);
+    while (my $line = <GRAMMAR>) {
+      chomp($line);
+      my @tokens = split(/ \|\|\| /, $line);
+      my $feature_str = $tokens[3];
+      my @features = split(' ', $feature_str);
+      my $feature_no = 0;
+      foreach my $feature (@features) {
+        if ($feature =~ /=/) {
+          my ($name) = split(/=/, $feature);
+          $features{$name} = 1;
+        } else {
+          $feature_no++;
+          $features{$feature_no} = 1;
+        }
+      } 
+    }
     close(GRAMMAR);
-
-    my @tokens = split(/ \|\|\| /, $line);
-    my @numfeatures = split(' ', $tokens[-1]);
-    my $num = scalar(@numfeatures);
-
-    return scalar @numfeatures;
-  } else {
-    print STDERR "* FATAL: count_num_features(): can't read grammar '$grammar'\n";
-    exit 1;
+    return keys(%features);
   }
 }
 
