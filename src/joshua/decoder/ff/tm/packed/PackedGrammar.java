@@ -330,11 +330,10 @@ public class PackedGrammar extends BatchGrammar {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < num_features; i++) {
         int feature_id = encoding.readId(features, feature_position);
-
         FloatEncoder encoder = encoding.encoder(feature_id);
-        String name = Vocabulary.word(encoding.outerId(feature_id));
 
         try {
+          String name = Vocabulary.word(encoding.outerId(feature_id));
           int index = Integer.parseInt(name);
           sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
               encoder.read(features, feature_position)));

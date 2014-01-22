@@ -115,8 +115,12 @@ public class EncoderConfiguration {
       System.out.println(String.format("num_features = %d", encoding.getNumFeatures()));
 
       for (int feature_id = 0; feature_id < num_features; feature_id++) {
-        String name = Vocabulary.word(encoding.outerId(feature_id));
-        System.out.println(String.format("feature: %s", name));
+        if (Vocabulary.size() == 1) {
+          System.out.println(String.format("feature: %d", feature_id));
+        } else {
+          String name = Vocabulary.word(encoding.outerId(feature_id));
+          System.out.println(String.format("feature: %s", name));
+        }
       }
 
     } catch (ArrayIndexOutOfBoundsException e) {
