@@ -216,7 +216,7 @@ public class GrammarPacker {
             continue;
           types.observe(Vocabulary.id(fe[0]), Float.parseFloat(fe[1]));
         } else {
-          types.observe(Vocabulary.id(String.valueOf(++feature_counter)),
+          types.observe(Vocabulary.id(String.valueOf(feature_counter++)),
               Float.parseFloat(features[f]));
         }
       }
@@ -318,7 +318,7 @@ public class GrammarPacker {
           feature_id = Vocabulary.id(parts[0]);
           feature_value = Float.parseFloat(parts[1]);
         } else {
-          feature_id = Vocabulary.id(String.valueOf(++feature_count));
+          feature_id = Vocabulary.id(String.valueOf(feature_count++));
           feature_value = Float.parseFloat(feature_entry);
         }
         if (feature_value != 0)
