@@ -332,15 +332,16 @@ public class PackedGrammar extends BatchGrammar {
         int feature_id = encoding.readId(features, feature_position);
 
         FloatEncoder encoder = encoding.encoder(feature_id);
-        if (encoding.isLabeled()) {
-          String name = Vocabulary.word(encoding.outerId(feature_id));
-          sb.append(String.format(" tm_%s_%s=%.5f", Vocabulary.word(owner), name,
-              encoder.read(features, feature_position)));
-        } else {
-          int index = encoding.outerId(feature_id);
+        String name = Vocabulary.word(encoding.outerId(feature_id));
+
+        try {
+          int index = Integer.parseInt(name);
           sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
               encoder.read(features, feature_position)));
+        } catch (NumberFormatException e) {
+          sb.append(String.format(" %s=%.5f", name, encoder.read(features, feature_position)));
         }
+
         feature_position += EncoderConfiguration.ID_SIZE + encoder.size();
       }
       return sb.toString().trim();
