@@ -37,7 +37,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
   @Override
   public BilingualRule parseLine(String line) {
     String[] fields = line.split(fieldDelimiter);
-    if (fields.length != 4) {
+    if (fields.length < 4) {
       logger.severe("Rule line does not have four fields: " + line);
     }
 

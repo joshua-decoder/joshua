@@ -116,10 +116,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
       } else if ("samt".equals(format)) {
         return new SamtFormatReader(grammarFile);
       } else {
-        // TODO: throw something?
-        // TODO: add special warning if "heiro" mispelling is used
-
         System.err.println("* FATAL: unknown grammar format '" + format + "'");
+        System.exit(1);
       }
     }
 
