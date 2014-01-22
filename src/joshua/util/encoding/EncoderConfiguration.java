@@ -111,12 +111,14 @@ public class EncoderConfiguration {
     
       EncoderConfiguration encoding = new EncoderConfiguration();
       encoding.load(grammar_dir + File.separator + "encoding");
-      
+      int num_features = encoding.getNumFeatures();
       System.out.println(String.format("num_features = %d", encoding.getNumFeatures()));
 
-      for (int i = 1; i <= encoding.getNumFeatures(); i++) {
-        System.out.println(String.format("feature: %s", Vocabulary.word(i)));
+      for (int feature_id = 0; feature_id < num_features; feature_id++) {
+        String name = Vocabulary.word(encoding.outerId(feature_id));
+        System.out.println(String.format("feature: %s", name));
       }
+
     } catch (ArrayIndexOutOfBoundsException e) {
       System.err.println("Usage: EncoderConfiguration <packed_directory>");
       System.exit(1);
