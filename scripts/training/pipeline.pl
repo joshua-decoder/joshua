@@ -1271,12 +1271,12 @@ while (my $line = <CONFIG>) {
       # Add the weights for the tuning grammar.
       my @features = get_features($grammar_file);
       foreach my $feature (@features) {
-        if ($feature =~ /^\d+$/) {
+        if ($feature =~ /^\d+$/) {  # dense feature
           push (@tmparamstrings, "tm_${owner}_$feature ||| 1.0 Opt -Inf +Inf -1 +1");
           push (@tmweightstrings, "tm_${owner}_$feature 1.0");
-        } else {
-          push (@tmparamstrings, "$feature ||| 1.0 Opt -Inf +Inf -1 +1");
-          push (@tmweightstrings, "$feature 1.0");
+        } else {  # sparse feature
+          push (@tmparamstrings, "$feature ||| 0.0 Opt -Inf +Inf -1 +1");
+          push (@tmweightstrings, "$feature 0.0");
         }
       }
 
@@ -1285,12 +1285,12 @@ while (my $line = <CONFIG>) {
 
       my @features = get_features($grammar);
       foreach my $feature (@features) {
-        if ($feature =~ /^\d+$/) {
+        if ($feature =~ /^\d+$/) {  # dense feature
           push (@tmparamstrings, "tm_${owner}_$feature ||| 1.0 Opt -Inf +Inf -1 +1");
           push (@tmweightstrings, "tm_${owner}_$feature 1.0");
-        } else {
-          push (@tmparamstrings, "$feature ||| 1.0 Opt -Inf +Inf -1 +1");
-          push (@tmweightstrings, "$feature 1.0");
+        } else {  # sparse feature
+          push (@tmparamstrings, "$feature ||| 0.0 Opt -Inf +Inf -1 +1");
+          push (@tmweightstrings, "$feature 0.0");
         }
       }
 		}
