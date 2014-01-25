@@ -140,13 +140,14 @@ public class FeatureTypeAnalyzer {
     BufferedOutputStream buf_stream = new BufferedOutputStream(new FileOutputStream(out_file));
     DataOutputStream out_stream = new DataOutputStream(buf_stream);
 
+    buildFeatureMap();
+    
     getIdEncoder().writeState(out_stream);
     out_stream.writeBoolean(labeled);
     out_stream.writeInt(types.size());
     for (int index = 0; index < types.size(); index++)
       types.get(index).encoder.writeState(out_stream);
 
-    buildFeatureMap();
     out_stream.writeInt(featureToType.size());
     for (int feature_id : featureToType.keySet()) {
       if (labeled)
