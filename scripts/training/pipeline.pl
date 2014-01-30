@@ -1962,8 +1962,8 @@ sub get_features {
           my ($name) = split(/=/, $feature);
           $features{$name} = 1;
         } else {
-          $feature_no++;
           $features{$feature_no} = 1;
+          $feature_no++;
         }
       } 
     }
