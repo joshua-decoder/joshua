@@ -1935,7 +1935,7 @@ sub is_lattice {
 }
 
 # This function retrieves the names of all the features in the grammar. Dense features
-# are named with consecutive integers starting at 1, while sparse features can have any name.
+# are named with consecutive integers starting at 0, while sparse features can have any name.
 # To get the feature names from an unpacked grammar, we have to read through the whole grammar,
 # since sparse features can be anywhere. For packed grammars, this can be read directly from
 # the encoding.
