@@ -246,6 +246,7 @@ my $retval = GetOptions(
   "tokenizer-target=s"      => \$TOKENIZER_TARGET,
   "joshua-config=s"   => \$TUNEFILES{'joshua.config'},
   "pro-config=s"   => \$TUNEFILES{'pro.config'},
+  "params-txt=s"   => \$TUNEFILES{'params.txt'},
   "joshua-args=s"      => \$JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
   "hadoop-mem=s"      => \$HADOOP_MEM,
@@ -297,6 +298,7 @@ if ($JOSHUA_ARGS ne "" and $JOSHUA_ARGS !~ /^\s/) {
 
 $TUNEFILES{'joshua.config'} = get_absolute_path($TUNEFILES{'joshua.config'});
 $TUNEFILES{'pro.config'} = get_absolute_path($TUNEFILES{'pro.config'});
+$TUNEFILES{'params.txt'} = get_absolute_path($TUNEFILES{'params.txt'});
 $TUNEFILES{'decoder_command'} = get_absolute_path($TUNEFILES{'decoder_command'});
 
 my %DATA_DIRS = (
