@@ -1368,7 +1368,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # tune
   if ($TUNER eq "mert") {
 		$cachepipe->cmd("mert-$run",
-										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4500 $tunedir/mert.config > $tunedir/mert.log 2>&1",
+										"java -d64 -Xmx4g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4000 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
 										"$tunedir/joshua.config.ZMERT.final",
 										"$tunedir/decoder_command",
@@ -1377,7 +1377,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
-										"java -d64 -Xmx2g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4500 $tunedir/pro.config > $tunedir/pro.log 2>&1",
+										"java -d64 -Xmx4g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4000 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
 										"$tunedir/joshua.config.PRO.final",
 										"$tunedir/decoder_command",
