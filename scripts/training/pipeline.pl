@@ -956,7 +956,7 @@ if (! defined $GRAMMAR_FILE) {
       $JOSHUA_ARGS .= " -oov-list $oov_list";
 
       $cachepipe->cmd("ghkm-moses-convert",
-                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
+                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl -m rule-fragment-map.txt | gzip -9n > grammar.gz",
                       "model/rule-table.gz",
                       "grammar.gz");
 
