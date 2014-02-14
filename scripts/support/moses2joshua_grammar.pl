@@ -131,6 +131,9 @@ while (my $rule = <>) {
   $new_rule .= " " . $target;
 
   my @probs = map { transform($_) } (split(' ',$probs));
+  # Moses no longer uses exp(1) as its phrase penalty feature, so we can't
+  # rely on the uniform transform above...
+  $probs[-1] = 1.0;
   my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
 #  $new_rule .= " ||| $scores ||| $alignment ||| $counts";
