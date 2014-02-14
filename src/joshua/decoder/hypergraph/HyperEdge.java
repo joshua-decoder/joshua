@@ -66,7 +66,7 @@ public class HyperEdge {
       float res = bestDerivationScore;
       sb.append(String.format("Best derivation = %.5f", res));
       if (tailNodes != null) for (HGNode tailNode : tailNodes) {
-        res -= tailNode.bestHyperedge.bestDerivationScore;
+        res += tailNode.bestHyperedge.bestDerivationScore;
         sb.append(String.format(", tail = %.5f", tailNode.bestHyperedge.bestDerivationScore));
       }
       transitionScore = res;

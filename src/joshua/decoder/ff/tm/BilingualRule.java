@@ -273,7 +273,6 @@ public class BilingualRule extends Rule {
     }
 
     FeatureVector features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
-    features.times(-1);
 
     return features;
   }

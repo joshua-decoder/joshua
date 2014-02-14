@@ -148,7 +148,7 @@ public class KBestExtractor {
       outputString = joshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
           .replace("%i", Integer.toString(sentence.id())).replace("%f", features.toString())
-          .replace("%c", String.format("%.3f", -derivationState.getModelCost()));
+          .replace("%c", String.format("%.3f", derivationState.getModelCost()));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
         HyperEdge topEdge = derivationState.edge.getTailNodes().get(0).bestHyperedge.getTailNodes().get(0).bestHyperedge;
@@ -500,7 +500,7 @@ public class KBestExtractor {
           childVirtualNode.lazyKBestExtractOnNode(kbestExtractor, ranks[i]);
         }
       }
-      cost = (float) -hyperEdge.getBestDerivationScore();
+      cost = (float) hyperEdge.getBestDerivationScore();
 
       DerivationState state = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos);
       if (joshuaConfiguration.rescoreForest)
@@ -685,7 +685,7 @@ public class KBestExtractor {
 
         sb.append(Vocabulary.word(rootID)).append(
             " ||| " + transitionFeatures + " ||| " + features + " ||| "
-                + -weights.innerProduct(features));
+                + weights.innerProduct(features));
         sb.append("\n");
         sb.append(childString);
 
@@ -709,7 +709,7 @@ public class KBestExtractor {
           sb.append(" " + state);
         }
         sb.append(" ||| " + transitionFeatures);
-        sb.append(" ||| " + -weights.innerProduct(transitionFeatures));
+        sb.append(" ||| " + weights.innerProduct(transitionFeatures));
         sb.append("\n");
         sb.append(childStrings);
       }
@@ -870,12 +870,12 @@ public class KBestExtractor {
       FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
           parentNode.i, parentNode.j, sentence.id());
 
-      features.subtract(transitionCosts);
+      features.add(transitionCosts);
     }
 
     // natural order by cost
     public int compareTo(DerivationState another) {
-      if (this.getCost() < another.getCost()) {
+      if (this.getCost() > another.getCost()) {
         return -1;
       } else if (this.getCost() == another.getCost()) {
         return 0;

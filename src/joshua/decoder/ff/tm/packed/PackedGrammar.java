@@ -336,7 +336,7 @@ public class PackedGrammar extends BatchGrammar {
         try {
           int index = Integer.parseInt(feature_name);
           sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
-              encoder.read(features, feature_position)));
+              -encoder.read(features, feature_position)));
         } catch (NumberFormatException e) {
           sb.append(String.format(" %s=%.5f", feature_name, encoder.read(features, feature_position)));
         }
@@ -666,7 +666,6 @@ public class PackedGrammar extends BatchGrammar {
         public FeatureVector getFeatureVector() {
           if (features == null) {
             features = new FeatureVector(getFeatures(source[address + 2]), "");
-            features.times(-1);
           }
 
           return features;
