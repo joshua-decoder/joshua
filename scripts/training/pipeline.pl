@@ -964,7 +964,7 @@ if (! defined $GRAMMAR_FILE) {
       $JOSHUA_ARGS .= " -oov-list $oov_list";
 
       $cachepipe->cmd("ghkm-moses-convert",
-                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl | gzip -9n > grammar.gz",
+                      "gzip -cd model/rule-table.gz | /home/hltcoe/mpost/code/joshua/scripts/support/moses2joshua_grammar.pl -m rule-fragment-map.txt | gzip -9n > grammar.gz",
                       "model/rule-table.gz",
                       "grammar.gz");
 
@@ -1198,7 +1198,7 @@ my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
 		: $GRAMMAR_FILE;
 
 if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $TUNE_GRAMMAR_FILE) {
-  $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
+  $TUNE_GRAMMAR = $TUNE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
 									"$CAT $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
@@ -1427,7 +1427,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
   } else {
     # otherwise, use the main grammar, and filter it if requested
-    $TEST_GRAMMAR = $GRAMMAR_FILE;
+    $TEST_GRAMMAR = $TEST_GRAMMAR_FILE = $GRAMMAR_FILE;
     
     if ($DO_FILTER_TM and ! $DOING_LATTICES) {
       $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
@@ -1629,7 +1629,7 @@ if ($TEST_GRAMMAR_FILE) {
   $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
 } else {
   # otherwise, use the main grammar, and filter it if requested
-  $TEST_GRAMMAR = $GRAMMAR_FILE;
+  $TEST_GRAMMAR = $TEST_GRAMMAR_FILE = $GRAMMAR_FILE;
   
   if ($DO_FILTER_TM and ! $DOING_LATTICES) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";

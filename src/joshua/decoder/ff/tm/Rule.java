@@ -53,7 +53,8 @@ public abstract class Rule {
       if (index >= 0)
         sb.append(Vocabulary.word(index) + " ");
       else
-        sb.append(Vocabulary.word(foreignNTs[-index - 1]).replace("]", String.format(",%d] ", Math.abs(index))));
+        sb.append(Vocabulary.word(foreignNTs[-index - 1]).replace("]",
+            String.format(",%d] ", Math.abs(index))));
     }
 
     return sb.toString().trim();
@@ -63,25 +64,27 @@ public abstract class Rule {
     for (int i = 0; i < getEnglish().length; i++)
       if (getEnglish()[i] < 0)
         return false;
-    
+
     return true;
   }
-  
+
   /**
    * Return the French (source) nonterminals as list of Strings
+   * 
    * @return
    */
   public int[] getForeignNonTerminals() {
     int[] nts = new int[getArity()];
     int index = 0;
-    for (int id: getFrench())
+    for (int id : getFrench())
       if (id < 0)
         nts[index++] = -id;
     return nts;
   }
-  
+
   /**
    * Return the English (target) nonterminals as list of Strings
+   * 
    * @return
    */
   public int[] getEnglishNonTerminals() {
@@ -89,14 +92,14 @@ public abstract class Rule {
     int[] foreignNTs = getForeignNonTerminals();
     int index = 0;
 
-    for (int i: getEnglish()) {
+    for (int i : getEnglish()) {
       if (i < 0)
         nts[index++] = foreignNTs[Math.abs(getEnglish()[i]) - 1];
     }
 
     return nts;
   }
-  
+
   private int[] getNormalizedEnglishNonterminalIndices() {
     int[] result = new int[getArity()];
 
@@ -108,7 +111,7 @@ public abstract class Rule {
 
     return result;
   }
-  
+
   public boolean isInverting() {
     int[] normalizedEnglishNonTerminalIndices = getNormalizedEnglishNonterminalIndices();
     if (normalizedEnglishNonTerminalIndices.length == 2) {
@@ -181,7 +184,7 @@ public abstract class Rule {
     pattern = "(?:^|\\s)" + pattern + "(?:$|\\s)";
     return Pattern.compile(pattern);
   }
-  
+
   /**
    * Matches the string representation of the rule's source side against a sentence
    * 
@@ -190,12 +193,14 @@ public abstract class Rule {
    */
   public boolean matches(Sentence sentence) {
     boolean match = getPattern().matcher(sentence.annotatedSource()).find();
-//    System.err.println(String.format("match(%s,%s) = %s", Pattern.quote(getFrenchWords()), sentence.annotatedSource(), match));
+    // System.err.println(String.format("match(%s,%s) = %s", Pattern.quote(getFrenchWords()),
+    // sentence.annotatedSource(), match));
     return match;
   }
-  
+
   /**
-   * This comparator is used for sorting during cube pruning. It sorts items in reverse.
+   * This comparator is used for sorting during cube pruning. It sorts items in reverse (i.e.,
+   * highest-scoring first).
    */
   public static Comparator<Rule> NegativeCostComparator = new Comparator<Rule>() {
     public int compare(Rule rule1, Rule rule2) {

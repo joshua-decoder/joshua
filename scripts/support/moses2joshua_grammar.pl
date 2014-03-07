@@ -55,7 +55,7 @@ while (my $rule = <>) {
   # nonterminal. This also simplifies later processing.
   $rule =~ s/ \[\S+?\](\[\S+?\])/ $1/g;
 
-  my ($l1, $l2, $probs, $alignment, $counts, $tree) = split(/\|\|\|/, $rule);
+  my ($l1, $l2, $probs, $alignment, $counts, undef, $tree) = split(/\s*\|\|\|\s*/, $rule);
 
   # The source-side nonterminals (of each pair) have been removed. Here we push all the for the
   # source and target sides into arrays. We grab the LHS from the target side list.
@@ -119,15 +119,21 @@ while (my $rule = <>) {
   $new_rule .= " |||";
 
   $num_lhs_seen = 0;
+  my $target = "";
   foreach my $token (@l2tokens) {
     if ($token =~ /\[(\S+?)\]/g) {
-      $new_rule .= " [$1," . $permutation[$num_lhs_seen++] . "]";
+      $target .= " [$1," . $permutation[$num_lhs_seen++] . "]";
     } else {
-      $new_rule .= " $token";
+      $target .= " $token";
     }
   }
+  $target =~ s/^\s+//;
+  $new_rule .= " " . $target;
 
   my @probs = map { transform($_) } (split(' ',$probs));
+  # Moses no longer uses exp(1) as its phrase penalty feature, so we can't
+  # rely on the uniform transform above...
+  $probs[-1] = 1.0;
   my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
 #  $new_rule .= " ||| $scores ||| $alignment ||| $counts";
@@ -136,18 +142,20 @@ while (my $rule = <>) {
   # print STDERR "  NEW_RULE: $new_rule$/";
   print "$new_rule\n";
 
-  if (defined $tree) {
+  if ($opts{m} and defined $tree) {
     $tree =~ s/.*{{Tree\s+(.*)}}.*/$1/;
+    # Remove brackets around substitution points
+    $tree =~ s/\[([^\[\]\s]+)\]/$1/g;
+    # Add quotes around terminals
+    $tree =~ s/\[([^\[\]]+) ([^\[\]]+)\]/[$1 "$2"]/g;
     $tree =~ s/\[/(/g;
     $tree =~ s/\]/)/g;
 
-    print MAP "$target ||| $tree\n";
+    print MAP "$tree ||| $target\n";
   }
 }
 
-if ($opts{m}) {
-  close(MAP);
-}
+close(MAP) if ($opts{m});
 
 sub transform {
   my ($weight) = @_;

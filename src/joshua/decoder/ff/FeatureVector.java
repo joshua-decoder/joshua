@@ -54,7 +54,7 @@ public class FeatureVector {
     if (!featureString.trim().equals("")) {
       for (String token : featureString.split("\\s+")) {
         if (token.indexOf('=') == -1) {
-          features.put(String.format("%s%d", prefix, denseFeatureIndex), Float.parseFloat(token));
+          features.put(String.format("%s%d", prefix, denseFeatureIndex), -Float.parseFloat(token));
           denseFeatureIndex++;
         } else {
           int splitPoint = token.indexOf('=');
@@ -166,7 +166,7 @@ public class FeatureVector {
     for (String key : sortedKeys)
       if (features.get(key) != 0.0f)
         outputString += String.format("%s%s=%.3f", (outputString.length() > 0) ? " " : "", key,
-            -features.get(key));
+            features.get(key));
     return outputString;
   }
 }

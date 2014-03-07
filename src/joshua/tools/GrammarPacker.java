@@ -192,18 +192,23 @@ public class GrammarPacker {
       String[] features = fields[3].split("\\s");
 
       Vocabulary.id(lhs);
-      // Add symbols to vocabulary.
-      for (String source_word : source) {
-        if (FormatUtils.isNonterminal(source_word))
-          Vocabulary.id(FormatUtils.stripNt(source_word));
-        else
-          Vocabulary.id(source_word);
-      }
-      for (String target_word : target) {
-        if (FormatUtils.isNonterminal(target_word))
-          Vocabulary.id(FormatUtils.stripNt(target_word));
-        else
-          Vocabulary.id(target_word);
+      try {
+        // Add symbols to vocabulary.
+        for (String source_word : source) {
+          if (FormatUtils.isNonterminal(source_word))
+            Vocabulary.id(FormatUtils.stripNt(source_word));
+          else
+            Vocabulary.id(source_word);
+        }
+        for (String target_word : target) {
+          if (FormatUtils.isNonterminal(target_word))
+            Vocabulary.id(FormatUtils.stripNt(target_word));
+          else
+            Vocabulary.id(target_word);
+        }
+      } catch (java.lang.StringIndexOutOfBoundsException e) {
+        System.err.println(String.format("* Skipping bad grammar line '%s'", line));
+        continue;
       }
 
       // Add feature names to vocabulary and pass the value through the
