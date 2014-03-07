@@ -312,7 +312,7 @@ public class PROCore {
           // SAVE THE PARAMETER NAMES
           String paramName = (line.substring(0, line.indexOf("|||"))).trim();
           int id = Vocabulary.id(paramName);
-          System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
+//          System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
         }
       } else if (trainingMode.equals("2") || trainingMode.equals("3") || trainingMode.equals("4")) {
         for (int c = 1; c <= numParamsInFile; ++c) // REGULAR FEATURES + DISC
@@ -335,9 +335,9 @@ public class PROCore {
             discFileInputStream = new FileInputStream(discDefFile);
             BufferedReader discFeatFile = new BufferedReader(new InputStreamReader(
                 discFileInputStream, "utf8"));
-
             while ((discFeatFile.readLine()) != null)
               numSparseParams++;
+            discFeatFile.close();
           }
         }
       }
@@ -2011,6 +2011,7 @@ public class PROCore {
               sparseFeatWeights[featCount] = Double.parseDouble(lineArray[lineArray.length - 1]);
               featCount++;
             }
+            discFeatFile.close();
           } catch (FileNotFoundException e) {
             System.err.println("FileNotFoundException in processParamFile(): " + e.getMessage());
             System.exit(99901);
@@ -3111,6 +3112,7 @@ public class PROCore {
     }
   }
 
+  @SuppressWarnings("unused")
   private void gunzipFile(String gzippedFileName) {
     if (gzippedFileName.endsWith(".gz")) {
       gunzipFile(gzippedFileName, gzippedFileName.substring(0, gzippedFileName.length() - 3));
@@ -3475,6 +3477,7 @@ public class PROCore {
     System.out.print(obj);
   }
 
+  @SuppressWarnings("unused")
   private void showProgress() {
     ++progress;
     if (progress % 100000 == 0)

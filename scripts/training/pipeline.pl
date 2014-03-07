@@ -136,6 +136,9 @@ my $BUILDLM_MEM = "2G";
 # Memory available for packing the grammar.
 my $PACKER_MEM = "8g";
 
+# Memory available for MERT/PRO.
+my $TUNER_MEM = "8g";
+
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";
 
@@ -256,6 +259,7 @@ my $retval = GetOptions(
   "pack!"             => \$DO_PACK_GRAMMARS,
   "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
+  "tuner-mem=s"       => \$TUNER_MEM,
   "mira-iterations=i" => \$MIRA_ITERATIONS,
   "thrax=s"           => \$THRAX,
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
@@ -1370,7 +1374,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # tune
   if ($TUNER eq "mert") {
 		$cachepipe->cmd("mert-$run",
-										"java -d64 -Xmx4g -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4000 $tunedir/mert.config > $tunedir/mert.log 2>&1",
+										"java -d64 -Xmx$TUNER_MEM -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4000 $tunedir/mert.config > $tunedir/mert.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
 										"$tunedir/joshua.config.ZMERT.final",
 										"$tunedir/decoder_command",
@@ -1379,7 +1383,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
   } elsif ($TUNER eq "pro") {
 		$cachepipe->cmd("pro-$run",
-										"java -d64 -Xmx4g -cp $JOSHUA/class joshua.pro.PRO -maxMem 4000 $tunedir/pro.config > $tunedir/pro.log 2>&1",
+										"java -d64 -Xmx$TUNER_MEM -cp $JOSHUA/class joshua.pro.PRO -maxMem 4000 $tunedir/pro.config > $tunedir/pro.log 2>&1",
 										$TUNE_GRAMMAR_FILE,
 										"$tunedir/joshua.config.PRO.final",
 										"$tunedir/decoder_command",
