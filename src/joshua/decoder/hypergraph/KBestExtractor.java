@@ -3,6 +3,7 @@ package joshua.decoder.hypergraph;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -710,6 +711,7 @@ public class KBestExtractor {
         }
         sb.append(" ||| " + transitionFeatures);
         sb.append(" ||| " + weights.innerProduct(transitionFeatures));
+				sb.append(" ||| " + Arrays.toString(rule.getAlignment()));
         sb.append("\n");
         sb.append(childStrings);
       }
