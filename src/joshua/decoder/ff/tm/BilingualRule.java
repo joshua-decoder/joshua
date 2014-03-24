@@ -52,6 +52,8 @@ public class BilingualRule extends Rule {
 
   private int[] english;
 
+	private byte [] alignment;
+
   // ===============================================================
   // Constructors
   // ===============================================================
@@ -88,6 +90,11 @@ public class BilingualRule extends Rule {
     this.owner = -1;
     this.english = targetRhs;
   }
+
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, byte [] alignment) {
+		this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
+		this.alignment = alignment;
+	}
 
   // ===============================================================
   // Attributes
@@ -295,6 +302,6 @@ public class BilingualRule extends Rule {
   }
   
   public byte[] getAlignment() {
-    return null;
+    return alignment;
   }
 }
