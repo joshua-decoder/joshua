@@ -45,8 +45,14 @@ public class FormatUtils {
     return Integer.parseInt(nt.substring(nt.length() - 2, nt.length() - 1));
   }
 
+  /**
+   * Ensures that a string looks like what the system considers a nonterminal to be.
+   * 
+   * @param nt the nonterminal string
+   * @return the nonterminal string surrounded in square brackets (if not already)
+   */
   public static String markup(String nt) {
-    return "[" + nt + "]";
+    return (isNonterminal(nt)) ? nt : "[" + nt + "]";
   }
 
   public static String markup(String nt, int index) {
