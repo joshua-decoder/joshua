@@ -161,7 +161,8 @@ sub transform {
   my ($weight) = @_;
 
   # Moses defines the log_e() of non-positive weights as -100
-  return "-100" if ($weight <= 0.0);
+  # Return -1 times this, since Joshua negates all feature weights from the grammar
+  return "100" if ($weight <= 0.0);
   
   # if ($weight eq "2.718") {
   # 	return $weight;
