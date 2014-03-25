@@ -145,6 +145,7 @@ public class Chart {
     /*
      * Add OOV rules; This should be called after the manual constraints have been set up.
      */
+		final byte [] oovAlignment = { 0, 0 };
     for (Node<Integer> node : inputLattice) {
       for (Arc<Integer> arc : node.getOutgoingArcs()) {
         // create a rule, but do not add into the grammar trie
@@ -183,7 +184,7 @@ public class Chart {
           Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber() - 1,
               node.getNumber());
           for (int label : labels) {
-            BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0);
+            BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0, oovAlignment);
             oovRules.add(oovRule);
             oovGrammar.addRule(oovRule);
             oovRule.estimateRuleCost(featureFunctions);
@@ -194,7 +195,7 @@ public class Chart {
         if (joshuaConfiguration.oov_list != null && joshuaConfiguration.oov_list.length != 0) {
           for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
             BilingualRule oovRule = new BilingualRule(
-                Vocabulary.id(joshuaConfiguration.oov_list[i]), sourceWords, targetWords, "", 0);
+                Vocabulary.id(joshuaConfiguration.oov_list[i]), sourceWords, targetWords, "", 0, oovAlignment);
             oovRules.add(oovRule);
             oovGrammar.addRule(oovRule);
             oovRule.estimateRuleCost(featureFunctions);
@@ -202,7 +203,7 @@ public class Chart {
           }
         } else {
           int nt_i = Vocabulary.id(joshuaConfiguration.default_non_terminal);
-          BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0);
+          BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0, oovAlignment);
           oovRules.add(oovRule);
           oovGrammar.addRule(oovRule);
           oovRule.estimateRuleCost(featureFunctions);
