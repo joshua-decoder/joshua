@@ -66,9 +66,16 @@ public class Translation {
       } else {
 
         // There is no output for the given input (e.g. blank line)
-        String outputString = joshuaConfiguration.outputFormat.replace("%s", "").replace("%e", "")
-            .replace("%S", "").replace("%t", "").replace("%i", Integer.toString(source.id()))
-            .replace("%f", "").replace("%c", "0.000");
+        // @formatter:off
+        String outputString = joshuaConfiguration.outputFormat
+            .replace("%s", source.source())
+            .replace("%e", "")
+            .replace("%S", "")
+            .replace("%t", "")
+            .replace("%i", Integer.toString(source.id()))
+            .replace("%f", "")
+            .replace("%c", "0.000");
+        // @formatter:on
 
         out.write(outputString);
         out.newLine();
