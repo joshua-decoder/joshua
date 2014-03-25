@@ -126,14 +126,24 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
 
   public abstract String toWordsWithoutFeatureScores(R rule);
 
+  /**
+   * Removes square brackets (and index, if present) from nonterminal id 
+   * @param tokenID
+   * @return cleaned ID
+   */
   public int cleanNonTerminal(int tokenID) {
     // cleans NT of any markup, e.g., [X,1] may becomes [X], depending
     return Vocabulary.id(cleanNonTerminal(Vocabulary.word(tokenID)));
   }
 
-  public String cleanNonTerminal(String word) {
+  /**
+   * Removes square brackets (and index, if present) from nonterminal id 
+   * @param token
+   * @return cleaned token
+   */
+  public String cleanNonTerminal(String token) {
     // cleans NT of any markup, e.g., [X,1] may becomes [X], depending on nonTerminalCleanRegEx
-    return word.replaceAll(nonTerminalCleanRegEx, "");
+    return token.replaceAll(nonTerminalCleanRegEx, "");
   }
 
   public static boolean isNonTerminal(final String word) {

@@ -67,12 +67,12 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
     String sparse_features = fields[3];
 
-		byte [] alignment = null;
-		if (fields.length > 4) { // alignments are included
-			alignment = readAlignment(fields[4]);
-		} else {
-			alignment = null;
-		}
+    byte[] alignment = null;
+    if (fields.length > 4) { // alignments are included
+      alignment = readAlignment(fields[4]);
+    } else {
+      alignment = null;
+    }
 
     return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
   }

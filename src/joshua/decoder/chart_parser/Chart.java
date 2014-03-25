@@ -29,6 +29,7 @@ import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
 import joshua.util.ChartSpan;
+import joshua.util.FormatUtils;
 
 /**
  * Chart class this class implements chart-parsing: (1) seeding the chart (2) cky main loop over
@@ -192,20 +193,20 @@ public class Chart {
 
         if (joshuaConfiguration.oov_list != null && joshuaConfiguration.oov_list.length != 0) {
           for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
-            BilingualRule oovRule = new BilingualRule(joshuaConfiguration.oov_list[i], sourceWords,
-                targetWords, "", 0);
+            BilingualRule oovRule = new BilingualRule(
+                Vocabulary.id(joshuaConfiguration.oov_list[i]), sourceWords, targetWords, "", 0);
             oovRules.add(oovRule);
             oovGrammar.addRule(oovRule);
             oovRule.estimateRuleCost(featureFunctions);
-//            System.err.println(String.format("ADDING OOV RULE %s -> %s", Vocabulary.word(joshuaConfiguration.oov_list[i]), Vocabulary.word(sourceWord)));
+//            System.err.println(String.format("ADDING OOV RULE %s", oovRule));
           }
         } else {
-          int defaultNTIndex = Vocabulary.id(joshuaConfiguration.default_non_terminal.replaceAll(
-              "\\[\\]", ""));
-          BilingualRule oovRule = new BilingualRule(defaultNTIndex, sourceWords, targetWords, "", 0);
+          int nt_i = Vocabulary.id(joshuaConfiguration.default_non_terminal);
+          BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0);
           oovRules.add(oovRule);
           oovGrammar.addRule(oovRule);
           oovRule.estimateRuleCost(featureFunctions);
+//          System.err.println(String.format("ADDING OOV RULE %s", oovRule));
         }
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()

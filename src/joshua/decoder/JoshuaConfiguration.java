@@ -37,8 +37,8 @@ public class JoshuaConfiguration {
   public String weights_file = "";
 
   // Default symbols. The symbol here should be enclosed in square brackets.
-  public String default_non_terminal = "[X]";
-  public String goal_symbol = "[GOAL]";
+  public String default_non_terminal = FormatUtils.markup("X");
+  public String goal_symbol = FormatUtils.markup("GOAL");
 
   /*
    * A list of OOV symbols in the form
@@ -52,7 +52,7 @@ public class JoshuaConfiguration {
    * 
    * If this is empty, an unweighted default_non_terminal is used.
    */
-  public int[] oov_list = null;
+  public String[] oov_list = null;
   public float[] oov_weights = null;
 
   /*
@@ -307,11 +307,11 @@ public class JoshuaConfiguration {
               System.exit(1);
             }
 
-            oov_list = new int[oovs.length / 2];
+            oov_list = new String[oovs.length / 2];
             oov_weights = new float[oovs.length / 2];
 
             for (int i = 0; i < oovs.length; i += 2) {
-              oov_list[i / 2] = Vocabulary.id(FormatUtils.markup(oovs[i]));
+              oov_list[i / 2] = FormatUtils.markup(oovs[i]);
               oov_weights[i / 2] = Float.parseFloat(oovs[i + 1]);
             }
 

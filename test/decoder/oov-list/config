@@ -14,7 +14,6 @@ pop-limit = 100
 #nbest config
 use_unique_nbest = true
 use_tree_nbest = false
-add_combined_cost = true
 top_n = 1
 
 oov-list = CD 0.0488752 JJ 0.186114 NN 0.291795 NNS 0.0894967 NP 0.117171 OOV 0.033015 VB 0.0313967 VBG 0.0404596 VBN 0.0317203 

@@ -25,7 +25,9 @@ public class FormatUtils {
   }
 
   public static String cleanNonterminal(String nt) {
-    return nt.substring(1, nt.length() - 1);
+    if (isNonterminal(nt))
+      return nt.substring(1, nt.length() - 1);
+    return nt;
   }
 
   public static String cleanIndexedNonterminal(String nt) {
@@ -52,7 +54,10 @@ public class FormatUtils {
    * @return the nonterminal string surrounded in square brackets (if not already)
    */
   public static String markup(String nt) {
-    return (isNonterminal(nt)) ? nt : "[" + nt + "]";
+    if (isNonterminal(nt)) 
+      return nt;
+    else 
+      return "[" + nt + "]";
   }
 
   public static String markup(String nt, int index) {
