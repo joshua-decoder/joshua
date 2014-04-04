@@ -25,7 +25,7 @@ You might also find it helpful to set these:
 Then, compile Joshua by typing:
 
     cd $JOSHUA
-    ant
+    ant all
 
 The basic method for invoking the decoder looks like this:
 
