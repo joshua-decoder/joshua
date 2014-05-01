@@ -1,32 +1,32 @@
-0 ||| this house ||| SourcePath=-1.000 WordPenalty=-1.303 lm_0=-1.748 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -1.456
-0 ||| a house ||| SourcePath=-0.900 WordPenalty=-1.303 lm_0=-1.809 tm_glue_0=1.000 tm_pt_1=-0.228 tm_pt_2=-0.021 ||| -1.531
-0 ||| house ||| SourcePath=-0.500 WordPenalty=-0.869 lm_0=-2.437 tm_glue_0=1.000 tm_pt_0=-0.022 tm_pt_2=-0.021 ||| -2.101
-0 ||| a small house ||| SourcePath=-0.900 WordPenalty=-1.737 lm_0=-1.957 tm_glue_0=1.000 tm_pt_0=-0.778 tm_pt_1=-0.228 tm_pt_2=-1.343 ||| -2.684
-0 ||| this small house ||| SourcePath=-1.000 WordPenalty=-1.737 lm_0=-2.844 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.080
-0 ||| small house ||| SourcePath=-0.500 WordPenalty=-1.303 lm_0=-3.555 tm_glue_0=1.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.724
-0 ||| haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.500 WordPenalty=-0.869 lm_0=-100.000 tm_glue_0=1.000 ||| -199.631
-0 ||| ein_OOV house ||| OOVPenalty=1.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.600
-0 ||| dieses_OOV house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.700
-0 ||| this haus_OOV ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=2.000 ||| -200.843
-0 ||| a haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -200.857
-0 ||| ein_OOV small house ||| OOVPenalty=1.000 SourcePath=-0.900 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.246
-0 ||| dieses_OOV small house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.346
-0 ||| ein_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.597
-0 ||| dieses_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.697
-1 ||| a ||| WordPenalty=-1.303 lm_0=-3.040 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -1.851
-1 ||| ein_OOV ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 ||| -199.378
-2 ||| a house ||| SourcePath=-0.700 WordPenalty=-1.303 lm_0=-1.809 tm_glue_0=1.000 tm_pt_1=-0.228 tm_pt_2=-0.021 ||| -1.331
-2 ||| this house ||| SourcePath=-1.000 WordPenalty=-1.303 lm_0=-1.748 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -1.456
-2 ||| house ||| SourcePath=-0.500 WordPenalty=-0.869 lm_0=-2.437 tm_glue_0=1.000 tm_pt_0=-0.022 tm_pt_2=-0.021 ||| -2.101
-2 ||| a small house ||| SourcePath=-0.700 WordPenalty=-1.737 lm_0=-1.957 tm_glue_0=1.000 tm_pt_0=-0.778 tm_pt_1=-0.228 tm_pt_2=-1.343 ||| -2.484
-2 ||| this small house ||| SourcePath=-1.000 WordPenalty=-1.737 lm_0=-2.844 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.080
-2 ||| small house ||| SourcePath=-0.500 WordPenalty=-1.303 lm_0=-3.555 tm_glue_0=1.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.724
-2 ||| haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.500 WordPenalty=-0.869 lm_0=-100.000 tm_glue_0=1.000 ||| -199.631
-2 ||| ein_OOV house ||| OOVPenalty=1.000 SourcePath=-0.700 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.400
-2 ||| a haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.700 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -200.657
-2 ||| dieses_OOV house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.700
-2 ||| this haus_OOV ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=1.000 ||| -200.843
-2 ||| ein_OOV small house ||| OOVPenalty=1.000 SourcePath=-0.700 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.046
-2 ||| dieses_OOV small house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.346
-2 ||| ein_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-0.700 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.397
-2 ||| dieses_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.697
+0 ||| dieses haus ||| this house ||| SourcePath=-1.000 WordPenalty=-1.303 lm_0=-1.748 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -1.456
+0 ||| ein haus ||| a house ||| SourcePath=-0.900 WordPenalty=-1.303 lm_0=-1.809 tm_glue_0=1.000 tm_pt_1=-0.228 tm_pt_2=-0.021 ||| -1.531
+0 ||| haus ||| house ||| SourcePath=-0.500 WordPenalty=-0.869 lm_0=-2.437 tm_glue_0=1.000 tm_pt_0=-0.022 tm_pt_2=-0.021 ||| -2.101
+0 ||| ein haus ||| a small house ||| SourcePath=-0.900 WordPenalty=-1.737 lm_0=-1.957 tm_glue_0=1.000 tm_pt_0=-0.778 tm_pt_1=-0.228 tm_pt_2=-1.343 ||| -2.684
+0 ||| dieses haus ||| this small house ||| SourcePath=-1.000 WordPenalty=-1.737 lm_0=-2.844 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.080
+0 ||| haus ||| small house ||| SourcePath=-0.500 WordPenalty=-1.303 lm_0=-3.555 tm_glue_0=1.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.724
+0 ||| haus ||| haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.500 WordPenalty=-0.869 lm_0=-100.000 tm_glue_0=1.000 ||| -199.631
+0 ||| ein haus ||| ein_OOV house ||| OOVPenalty=1.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.600
+0 ||| dieses haus ||| dieses_OOV house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.700
+0 ||| dieses haus ||| this haus_OOV ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=2.000 ||| -200.843
+0 ||| ein haus ||| a haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -200.857
+0 ||| ein haus ||| ein_OOV small house ||| OOVPenalty=1.000 SourcePath=-0.900 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.246
+0 ||| dieses haus ||| dieses_OOV small house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.346
+0 ||| ein haus ||| ein_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-0.900 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.597
+0 ||| dieses haus ||| dieses_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.697
+1 ||| ein ||| a ||| WordPenalty=-1.303 lm_0=-3.040 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -1.851
+1 ||| ein ||| ein_OOV ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 ||| -199.378
+2 ||| ein haus ||| a house ||| SourcePath=-0.700 WordPenalty=-1.303 lm_0=-1.809 tm_glue_0=1.000 tm_pt_1=-0.228 tm_pt_2=-0.021 ||| -1.331
+2 ||| dieses haus ||| this house ||| SourcePath=-1.000 WordPenalty=-1.303 lm_0=-1.748 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -1.456
+2 ||| haus ||| house ||| SourcePath=-0.500 WordPenalty=-0.869 lm_0=-2.437 tm_glue_0=1.000 tm_pt_0=-0.022 tm_pt_2=-0.021 ||| -2.101
+2 ||| ein haus ||| a small house ||| SourcePath=-0.700 WordPenalty=-1.737 lm_0=-1.957 tm_glue_0=1.000 tm_pt_0=-0.778 tm_pt_1=-0.228 tm_pt_2=-1.343 ||| -2.484
+2 ||| dieses haus ||| this small house ||| SourcePath=-1.000 WordPenalty=-1.737 lm_0=-2.844 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.080
+2 ||| haus ||| small house ||| SourcePath=-0.500 WordPenalty=-1.303 lm_0=-3.555 tm_glue_0=1.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -4.724
+2 ||| haus ||| haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.500 WordPenalty=-0.869 lm_0=-100.000 tm_glue_0=1.000 ||| -199.631
+2 ||| ein haus ||| ein_OOV house ||| OOVPenalty=1.000 SourcePath=-0.700 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.400
+2 ||| ein haus ||| a haus_OOV ||| OOVPenalty=1.000 SourcePath=-0.700 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=1.000 tm_pt_1=-0.228 ||| -200.657
+2 ||| dieses haus ||| dieses_OOV house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-100.992 tm_glue_0=1.000 tm_pt_2=-0.021 ||| -200.700
+2 ||| dieses haus ||| this haus_OOV ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=1.000 ||| -200.843
+2 ||| ein haus ||| ein_OOV small house ||| OOVPenalty=1.000 SourcePath=-0.700 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.046
+2 ||| dieses haus ||| dieses_OOV small house ||| OOVPenalty=1.000 SourcePath=-1.000 WordPenalty=-1.737 lm_0=-102.110 tm_glue_0=2.000 tm_pt_0=-1.301 tm_pt_2=-1.343 ||| -203.346
+2 ||| ein haus ||| ein_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-0.700 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.397
+2 ||| dieses haus ||| dieses_OOV haus_OOV ||| OOVPenalty=2.000 SourcePath=-1.000 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 ||| -399.697

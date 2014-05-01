@@ -174,7 +174,7 @@ public abstract class Rule {
    */
   public abstract float estimateRuleCost(List<FeatureFunction> models);
 
-  private static final String NT_REGEX = "\\[[^\\]]+?\\]";
+  public static final String NT_REGEX = "\\[[^\\]]+?\\]";
 
   private Pattern getPattern() {
     String source = getFrenchWords();

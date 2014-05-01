@@ -29,7 +29,6 @@ import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
 import joshua.util.ChartSpan;
-import joshua.util.FormatUtils;
 
 /**
  * Chart class this class implements chart-parsing: (1) seeding the chart (2) cky main loop over

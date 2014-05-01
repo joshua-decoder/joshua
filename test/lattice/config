@@ -19,6 +19,8 @@ top_n = 300
 # this shouldn't apply to the lattice
 maxlen = 1
 
+output-format = %i ||| %e ||| %s ||| %f ||| %c
+
 feature-function = OOVPenalty
 feature-function = WordPenalty
 feature-function = SourcePath

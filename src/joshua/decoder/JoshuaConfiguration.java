@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.fragmentlm.Tree;
 import joshua.util.FormatUtils;

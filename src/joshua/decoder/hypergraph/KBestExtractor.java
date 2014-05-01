@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Stack;
+import java.util.regex.Matcher;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.BLEU;
 import joshua.decoder.JoshuaConfiguration;
@@ -138,13 +141,16 @@ public class KBestExtractor {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
 
-      /* Don't extract the features (expensive) if they're not requested */
+      /*
+       * To save space, the decoder only stores the model cost, no the individual feature values. If
+       * you want to output them, you have to replay them.
+       */
       String hypothesis = null;
       if (joshuaConfiguration.outputFormat.contains("%f")
           || joshuaConfiguration.outputFormat.contains("%d"))
-        hypothesis = derivationState.getHypothesis(false, features, models, Side.TARGET);
-      else
-        hypothesis = derivationState.getHypothesis(false, null, models, Side.TARGET);
+        features = derivationState.replayFeatures();
+
+      hypothesis = derivationState.getHypothesis();
 
       outputString = joshuaConfiguration.outputFormat.replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
@@ -152,7 +158,8 @@ public class KBestExtractor {
           .replace("%c", String.format("%.3f", derivationState.getModelCost()));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
-        HyperEdge topEdge = derivationState.edge.getTailNodes().get(0).bestHyperedge.getTailNodes().get(0).bestHyperedge;
+        HyperEdge topEdge = derivationState.edge.getTailNodes().get(0).bestHyperedge.getTailNodes()
+            .get(0).bestHyperedge;
         Rule rootRule = topEdge.getRule();
         String englishSide = rootRule.getEnglishWords();
         List<HGNode> rootTails = topEdge.getTailNodes();
@@ -160,19 +167,17 @@ public class KBestExtractor {
           outputString = outputString.replace("%t",
               Tree.buildTree(rootRule, rootTails, Integer.MAX_VALUE).toString());
         } else {
-          outputString = outputString.replace("%t",
-              derivationState.getHypothesis(true, null, models, Side.TARGET));
+          // TODO: add functionality to HypothesisExtractor
+          outputString = outputString.replace("%t", "NOT IMPLEMENTED");
         }
       }
 
       if (joshuaConfiguration.outputFormat.contains("%e"))
-        outputString = outputString.replace("%e",
-            derivationState.getHypothesis(false, null, models, Side.SOURCE));
+        outputString = outputString.replace("%e", derivationState.getHypothesis(Side.SOURCE));
 
       /* %d causes a derivation with rules one per line to be output */
       if (joshuaConfiguration.outputFormat.contains("%d")) {
-        outputString = outputString.replace("%d",
-            derivationState.getDerivation(new FeatureVector(), models, 0));
+        outputString = outputString.replace("%d", derivationState.getDerivation());
       }
     }
 
@@ -311,8 +316,7 @@ public class KBestExtractor {
           if (extractUniqueNbest) {
             // We pass false for extract_nbest_tree because we want; to check that the hypothesis
             // *strings* are unique, not the trees.
-            boolean useTreeFormat = false;
-            String res_str = derivationState.getHypothesis(useTreeFormat, null, null, defaultSide);
+            String res_str = derivationState.getHypothesis();
             if (!uniqueStringsTable.contains(res_str)) {
               nbests.add(derivationState);
               uniqueStringsTable.add(res_str);
@@ -655,67 +659,35 @@ public class KBestExtractor {
     }
 
     /**
-     * Returns a string representing the derivation of a hypothesis, with each rule application
-     * listed one per line in an indented fashion.
-     * 
-     * @param kbestExtractor
-     * @param useTreeFormat
-     * @param features
-     * @param models
-     * @return a string representation of the derivation
+     * Visits every state in the derivation in a depth-first order.
      */
-    private String getDerivation(FeatureVector features, List<FeatureFunction> models, int indent) {
+    private DerivationVisitor visit(DerivationVisitor visitor) {
+      return visit(visitor, 0);
+    }
 
-      StringBuffer sb = new StringBuffer();
+    private DerivationVisitor visit(DerivationVisitor visitor, int indent) {
+
+      visitor.before(this, indent);
+
       Rule rule = edge.getRule();
 
-      FeatureVector transitionFeatures = new FeatureVector();
-      if (null != features) {
-        computeCost(parentNode, edge, transitionFeatures, models);
-        features.add(transitionFeatures);
-      }
-
-      for (int i = 0; i < indent; i++)
-        sb.append(" ");
-
-      /* The top-level item. */
       if (null == rule) {
-        StringBuilder childString = new StringBuilder();
-        childString.append(getChildDerivationState(edge, 0).getDerivation(features, models,
-            indent + 2));
-
-        sb.append(Vocabulary.word(rootID)).append(
-            " ||| " + transitionFeatures + " ||| " + features + " ||| "
-                + weights.innerProduct(features));
-        sb.append("\n");
-        sb.append(childString);
-
+        getChildDerivationState(edge, 0).visit(visitor, indent + 1);
       } else {
-
-        StringBuilder childStrings = new StringBuilder();
         if (edge.getTailNodes() != null) {
-          for (int id = 0; id < edge.getTailNodes().size(); id++) {
-            childStrings.append(getChildDerivationState(edge, id).getDerivation(features, models,
-                indent + 2));
+          int[] english = rule.getEnglish();
+          for (int c = 0; c < english.length; c++) {
+            if (Vocabulary.idx(english[c])) {
+              int index = -(english[c] + 1);
+              getChildDerivationState(edge, index).visit(visitor, indent + 1);
+            }
           }
         }
-
-        // sb.append(rule).append(" ||| " + features + " ||| " +
-        // KBestExtractor.this.weights.innerProduct(features));
-        sb.append(String.format("%d-%d", parentNode.i, parentNode.j));
-        sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> "
-            + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglishWords());
-        sb.append(" |||");
-        for (DPState state : parentNode.getDPStates()) {
-          sb.append(" " + state);
-        }
-        sb.append(" ||| " + transitionFeatures);
-        sb.append(" ||| " + weights.innerProduct(transitionFeatures));
-				sb.append(" ||| " + Arrays.toString(rule.getAlignment()));
-        sb.append("\n");
-        sb.append(childStrings);
       }
-      return sb.toString();
+
+      visitor.after(this, indent);
+
+      return visitor;
     }
 
     /**
@@ -735,106 +707,23 @@ public class KBestExtractor {
      * @param side
      * @return
      */
-    private String getHypothesis(boolean useTreeFormat, FeatureVector features,
-        List<FeatureFunction> models, Side side) {
-      // ### accumulate cost of p_edge into model_cost if necessary
-      if (null != features) {
-        computeCost(parentNode, edge, features, models);
-      }
-
-      // ### get hyp string recursively
-      StringBuffer sb = new StringBuffer();
-      Rule rule = edge.getRule();
-
-      if (null == rule) { // Hyperedges under the "goal item" have a null rule
-        if (useTreeFormat) {
-          // res.append("(ROOT ");
-          sb.append('(');
-          sb.append(Vocabulary.word(rootID));
-          if (includeAlign) {
-            // append "{i-j}"
-            sb.append('{');
-            sb.append(parentNode.i);
-            sb.append('-');
-            sb.append(parentNode.j);
-            sb.append('}');
-          }
-          sb.append(' ');
-        }
-        for (int id = 0; id < edge.getTailNodes().size(); id++) {
-          sb.append(getChildDerivationState(edge, id).getHypothesis(useTreeFormat,
-              features, models, side));
-          if (id < edge.getTailNodes().size() - 1)
-            sb.append(' ');
-        }
-        if (useTreeFormat)
-          sb.append(')');
-      } else {
-        if (useTreeFormat) {
-          sb.append('(');
-          int lhs = rule.getLHS();
-          if (lhs > 0) {
-            System.err.printf("k-best: WARNING: rule LHS is greater than 0: %d\n", lhs);
-          }
-          sb.append(Vocabulary.word(lhs));
-          if (includeAlign) {
-            // append "{i-j}"
-            sb.append('{');
-            sb.append(parentNode.i);
-            sb.append('-');
-            sb.append(parentNode.j);
-            sb.append('}');
-          }
-          sb.append(' ');
-        }
-        if (side == Side.TARGET) {
-          int[] english = rule.getEnglish();
-          for (int c = 0; c < english.length; c++) {
-            if (Vocabulary.idx(english[c])) {
-              int index = -(english[c] + 1);
-              sb.append(getChildDerivationState(edge, index).getHypothesis(useTreeFormat, features, 
-                  models, side));
-            } else {
-              if (joshuaConfiguration.parse
-                  || useTreeFormat
-                  || (english[c] != Vocabulary.id(Vocabulary.START_SYM) && english[c] != Vocabulary
-                      .id(Vocabulary.STOP_SYM)))
-                sb.append(Vocabulary.word(english[c]));
-            }
-            if (c < english.length - 1)
-              sb.append(' ');
-          }
-        } else if (side == Side.SOURCE) {
-          int[] french = rule.getFrench();
-          int nonTerminalID = 0;// the position of the non-terminal in the rule
-          for (int c = 0; c < french.length; c++) {
-            if (Vocabulary.nt(french[c])) {
-              sb.append(getChildDerivationState(edge, nonTerminalID).getHypothesis(useTreeFormat, 
-                  features, models, side));
-              nonTerminalID++;
-            } else {
-              sb.append(Vocabulary.word(french[c]));
-            }
-            if (c < french.length - 1)
-              sb.append(' ');
-          }
-        }
-        if (useTreeFormat)
-          sb.append(')');
-      }
-      return sb.toString().trim();
+    private String getHypothesis() {
+      return getHypothesis(defaultSide);
     }
 
-    // private void getNumNodesAndEdges(KBestExtractor kbestExtractor, int[] numNodesAndEdges) {
-    // if(edge.getAntNodes()!=null) {
-    // for (int id = 0; id < edge.getAntNodes().size(); id++) {
-    // getChildDerivationState(kbestExtractor, edge, id).getNumNodesAndEdges(kbestExtractor,
-    // numNodesAndEdges) ;
-    // }
-    // }
-    // numNodesAndEdges[0]++;
-    // numNodesAndEdges[1]++;
-    // }
+    private String getHypothesis(Side side) {
+      return visit(new HypothesisExtractor(side)).toString();
+    }
+
+    private FeatureVector replayFeatures() {
+      FeatureReplayer fp = new FeatureReplayer();
+      visit(fp);
+      return fp.getFeatures();
+    }
+
+    private String getDerivation() {
+      return visit(new DerivationExtractor()).toString();
+    }
 
     /**
      * Helper function for navigating the hierarchical list of DerivationState objects. This
@@ -852,29 +741,6 @@ public class KBestExtractor {
       return virtualChild.nbests.get(ranks[tailNodeIndex] - 1);
     }
 
-    /**
-     * Replay the feature functions in order to record the actual feature values, since only the
-     * inner product is stored during decoding. Note that if features is null, we short-circuit this
-     * computation, since it's expensive. We only need the feature values if the k-best extractor
-     * asked for them.
-     * 
-     * @param parentNode
-     * @param edge
-     * @param features
-     * @param models
-     */
-    private void computeCost(HGNode parentNode, HyperEdge edge, FeatureVector features,
-        List<FeatureFunction> models) {
-
-      if (null == features)
-        return;
-
-      FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
-          parentNode.i, parentNode.j, sentence.id());
-
-      features.add(transitionCosts);
-    }
-
     // natural order by cost
     public int compareTo(DerivationState another) {
       if (this.getCost() > another.getCost()) {
@@ -886,4 +752,175 @@ public class KBestExtractor {
       }
     }
   } // end of Class DerivationState
+
+  /**
+   * This interface provides a generic way to do things at each stage of a derivation. The
+   * DerivationState::visit() function visits every node in a derivation and calls the
+   * DerivationVisitor functions both before and after it visits each node. This provides a common
+   * way to do different things to the tree (e.g., extract its words, assemble a derivation, and so
+   * on) without having to rewrite the node-visiting code.
+   * 
+   * @author Matt Post <post@cs.jhu.edu>
+   */
+  public interface DerivationVisitor {
+    void before(DerivationState state, int level);
+
+    void after(DerivationState state, int level);
+  }
+  
+  /**
+   * Extracts the hypothesis from the leaves of the tree using the generic (depth-first) visitor.
+   * Since we're using the visitor, and rules anywhere on the tree can contribute terminal symbols,
+   * we add each rule to a stack. When we reach the base case (a rule with only words), we can
+   * recursively merge it with its parents.
+   * 
+   */
+  public class HypothesisExtractor implements DerivationVisitor {
+
+    private Side side;
+    private Stack<String> outputs;
+
+    public HypothesisExtractor(Side side) {
+      this.side = side;
+      outputs = new Stack<String>();
+    }
+
+    String ntMatcher = ".*" + Rule.NT_REGEX + ".*";
+    void merge(String words) {
+      if (!words.matches(ntMatcher) && outputs.size() > 0 && outputs.peek().matches(ntMatcher)) {
+        String parentWords = outputs.pop();
+        String replaced = parentWords.replaceFirst(Rule.NT_REGEX, Matcher.quoteReplacement(words));
+
+        merge(replaced);
+      } else {
+        outputs.add(words);
+      }
+    }
+
+    @Override
+    /**
+     * Whenever we reach a rule in the depth-first derivaiton, we add it to the stack
+     * via a call to the merge() function.
+     */
+    public void before(DerivationState state, int level) {
+      Rule rule = state.edge.getRule();
+      if (rule != null)
+        if (side == Side.TARGET)
+          merge(state.edge.getRule().getEnglishWords());
+        else
+          merge(state.edge.getRule().getFrenchWords());
+
+    }
+
+    @Override
+    public void after(DerivationState state, int level) {
+    }
+
+    /**
+     * After all rules in the grammar have been merged, there should be one item on the stack, which
+     * is the complete target (or source) string.
+     */
+    public String toString() {
+      return outputs.pop().replaceAll("<s> ", "").replace(" </s>", "");
+    }
+  }
+
+  /**
+   * Assembles an informative version of the derivation. Currently unimplemented. When completed,
+   * will replace DerivationState::getDerivation(...).
+   * 
+   * @author Matt Post <post@cs.jhu.edu
+   */
+  public class DerivationExtractor implements DerivationVisitor {
+
+    StringBuffer sb;
+
+    public DerivationExtractor() {
+      sb = new StringBuffer();
+    }
+
+    @Override
+    public void before(DerivationState state, int indent) {
+
+      HyperEdge edge = state.edge;
+      Rule rule = edge.getRule();
+
+      if (rule != null) {
+
+        for (int i = 0; i < indent * 2; i++)
+          sb.append(" ");
+
+        FeatureReplayer replayer = new FeatureReplayer();
+        replayer.before(state, indent);
+        FeatureVector transitionFeatures = replayer.getFeatures();
+
+        // sb.append(rule).append(" ||| " + features + " ||| " +
+        // KBestExtractor.this.weights.innerProduct(features));
+        sb.append(String.format("%d-%d", state.parentNode.i, state.parentNode.j));
+        sb.append(" ||| " + Vocabulary.word(rule.getLHS()) + " -> "
+            + Vocabulary.getWords(rule.getFrench()) + " /// " + rule.getEnglishWords());
+        sb.append(" |||");
+        for (DPState dpState : state.parentNode.getDPStates()) {
+          sb.append(" " + dpState);
+        }
+        sb.append(" ||| " + transitionFeatures);
+        sb.append(" ||| " + weights.innerProduct(transitionFeatures));
+        if (rule.getAlignment() != null)
+          sb.append(" ||| " + Arrays.toString(rule.getAlignment()));
+        sb.append("\n");
+      }
+    }
+
+    public String toString() {
+      return sb.toString();
+    }
+
+    @Override
+    public void after(DerivationState state, int level) {
+      // TODO Auto-generated method stub
+    }
+  }
+
+  /**
+   * During decoding, individual features values are not stored, only the model score on each edge.
+   * This saves space. If you want to print the actual feature values, they have to be assembled
+   * from the edges of the derivation, which means replaying the feature funtions. This visitor does
+   * just that.
+   */
+  public class FeatureReplayer implements DerivationVisitor {
+
+    private FeatureVector features;
+
+    public FeatureReplayer() {
+      features = new FeatureVector();
+    }
+
+    public FeatureReplayer(FeatureVector useThese) {
+      features = useThese;
+    }
+
+    public FeatureVector getFeatures() {
+      return features;
+    }
+
+    /**
+     * We could do this in either before() or after().
+     */
+    @Override
+    public void before(DerivationState state, int level) {
+      if (features != null) {
+        HGNode parentNode = state.parentNode;
+        HyperEdge edge = state.edge;
+
+        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
+            parentNode.i, parentNode.j, sentence.id());
+        features.add(transitionCosts);
+      }
+    }
+
+    @Override
+    public void after(DerivationState state, int level) {
+      // Nothing to do
+    }
+  }
 }
