@@ -1,14 +1,18 @@
 package joshua.decoder.hypergraph;
 
 import java.io.IOException;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.PrintWriter;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Stack;
+import java.util.List;
 import java.util.logging.Logger;
+
+import joshua.corpus.Vocabulary;
+import joshua.decoder.chart_parser.ComputeNodeResult;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.hypergraph.ForestWalker.TRAVERSAL;
 
 /**
  * this class implement (1) HyperGraph-related data structures (Item and Hyper-edges)
@@ -37,59 +41,99 @@ public class HyperGraph {
     this.sentID = sentID;
     this.sentLen = sentLen;
   }
+  
+  public void count() {
+    new ForestWalker().walk(this.goalNode, new HyperGraphCounter(this));
+  }
+  
+  private class HyperGraphCounter implements WalkerFunction {
 
+    private HyperGraph hg = null;
+    private HashSet<HGNode> nodesVisited = null;
+    
+    public HyperGraphCounter(HyperGraph hg) {
+      this.hg = hg;
+      this.hg.numNodes = 0;
+      this.hg.numEdges = 0;
+      this.nodesVisited = new HashSet<HGNode>();
+    }
+    
+    @Override
+    public void apply(HGNode node) {
+      if (! nodesVisited.contains(node)) {
+        if (node.bestHyperedge.getRule() != null) {
+          hg.numNodes++;
+          if (node.hyperedges != null)
+            hg.numEdges += node.hyperedges.size();
+        }
+      }
+    }
+  }
+
+  private class HyperGraphDumper implements WalkerFunction {
+
+    private int node_number = 1;
+    private int sentID = -1;
+    private List<FeatureFunction> model = null;
+    private PrintWriter out = null;
+    
+    private HashMap<HGNode, Integer> nodeMap;
+    
+    public HyperGraphDumper(PrintWriter out, int sentID, List<FeatureFunction> model) {
+      this.out = out;
+      this.sentID = sentID;
+      this.model = model;
+      this.nodeMap = new HashMap<HGNode, Integer>();
+    }
+    
+    @Override
+    public void apply(HGNode node) {
+      if (! nodeMap.containsKey(node)) { // Make sure each node is listed only once
+        nodeMap.put(node,  this.node_number);
+
+        if (node.hyperedges.size() != 0 && node.bestHyperedge.getRule() != null) {
+          out.println(this.node_number);
+          for (HyperEdge e: node.hyperedges) {
+            if (e.getRule() != null) {
+              for (int id: e.getRule().getEnglish()) {
+                if (id < 0) {
+                  out.print(String.format("[%d] ", nodeMap.get(e.getTailNodes().get(-id-1))));
+                } else {
+                  out.print(String.format("%s ", Vocabulary.word(id)));
+                }
+              }
+
+              FeatureVector edgeFeatures = ComputeNodeResult.computeTransitionFeatures(
+                  model, e, node.i, node.j, sentID);
+              out.println(String.format("||| %s", edgeFeatures));
+            }
+          }
+        }
+        
+        this.node_number++;
+      }
+    }
+  }
+  
   /**
    * Dump the hypergraph to the specified file.
    * 
    * @param fileName
    */
-  public void dump(String fileName) {
-    BufferedWriter out = null;
+  public void dump(String fileName, List<FeatureFunction> model) {
+    PrintWriter out = null;
     try {
-      out = new BufferedWriter(new FileWriter(fileName));
+      out = new PrintWriter(fileName, "UTF-8");
     } catch (IOException e) {
       System.err.println("* Can't dump hypergraph to file '" + fileName + "'");
       e.printStackTrace();
     }
-
-    HashSet<HGNode> allNodes = new HashSet<HGNode>();
-    Stack<HGNode> nodesToVisit = new Stack<HGNode>();
-    nodesToVisit.push(this.goalNode);
-    while (!nodesToVisit.empty()) {
-      HGNode node = nodesToVisit.pop();
-      allNodes.add(node);
-      if (node.getHyperEdges() != null)
-        for (HyperEdge edge : node.getHyperEdges())
-          if (edge.getTailNodes() != null)
-            for (HGNode tailNode : edge.getTailNodes()) {
-              if (!allNodes.contains(tailNode))
-                nodesToVisit.push(tailNode);
-            }
-    }
-
-    ArrayList<HGNode> list = new ArrayList<HGNode>();
-    for (HGNode node : allNodes)
-      list.add(node);
-
-    Collections.sort(list, HGNode.spanComparator);
-    try {
-      for (HGNode node : list) {
-
-        out.write(String.format("%s %s\n", Integer.toHexString(node.hashCode()), node));
-        if (node.getHyperEdges() != null)
-          for (HyperEdge edge : node.getHyperEdges()) {
-            out.write(String.format("  %s", edge));
-            if (edge.getTailNodes() != null)
-              for (HGNode tailNode : edge.getTailNodes())
-                out.write(String.format(" ||| %s", Integer.toHexString(tailNode.hashCode())));
-            out.write("\n");
-          }
-      }
-      out.close();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    
+    count();
+    out.println("# target ||| features");
+    out.println(String.format("%d %d", numNodes, numEdges));
+    new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, sentID, model));
+    out.close();
   }
 
   public float bestScore() {

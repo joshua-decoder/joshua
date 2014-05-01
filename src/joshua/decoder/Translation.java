@@ -38,7 +38,7 @@ public class Translation {
     try {
       if (hypergraph != null) {
         if (!joshuaConfiguration.hypergraphFilePattern.equals("")) {
-          hypergraph.dump(String.format(joshuaConfiguration.hypergraphFilePattern, source.id()));
+          hypergraph.dump(String.format(joshuaConfiguration.hypergraphFilePattern, source.id()), featureFunctions);
         }
 
         long startTime = System.currentTimeMillis();
