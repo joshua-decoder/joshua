@@ -25,7 +25,6 @@ $JOSHUA/scripts/support/run_bundler.py \\
     -output-format %S \\
     -mark-oovs false \\
     -server-port 5674 \\
-    -weights-file test/1/weights.final \\
     -tm/pt "thrax pt 20 /path/to/origin/directory/grammar.gz"'
 
 note: The options included in the value string for the --copy-config-options
@@ -102,7 +101,7 @@ vocabulary will have '_OOV' appended to it.
 """
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
-FILE_TYPE_TOKENS = set(['lm', 'lmfile', 'tmfile', 'tm', 'weights-file'])
+FILE_TYPE_TOKENS = set(['lm', 'lmfile', 'tmfile', 'tm'])
 OUTPUT_CONFIG_FILE_NAME = 'joshua.config'
 BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
 BUNDLE_RUNNER_TEXT = """#!/bin/bash
@@ -118,7 +117,7 @@ fi
 
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
-$JOSHUA/joshua-decoder -m ${mem} -c joshua.config $*
+$JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
 """ % BUNDLE_RUNNER_FILE_NAME
 
 
