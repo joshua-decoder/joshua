@@ -163,6 +163,7 @@ public class KBestExtractor {
         Rule rootRule = topEdge.getRule();
         String englishSide = rootRule.getEnglishWords();
         List<HGNode> rootTails = topEdge.getTailNodes();
+
         if (Tree.rulesToFragments.containsKey(englishSide)) {
           outputString = outputString.replace("%t",
               Tree.buildTree(rootRule, rootTails, Integer.MAX_VALUE).toString());
@@ -767,12 +768,13 @@ public class KBestExtractor {
 
     void after(DerivationState state, int level);
   }
-  
+
   /**
    * Extracts the hypothesis from the leaves of the tree using the generic (depth-first) visitor.
-   * Since we're using the visitor, and rules anywhere on the tree can contribute terminal symbols,
-   * we add each rule to a stack. When we reach the base case (a rule with only words), we can
-   * recursively merge it with its parents.
+   * Since we're using the visitor, we can't just print out the words as we see them. We have to
+   * print the words to the left of the nonterminal, then recursively print that nonterminal, then
+   * the words after it, and so on. To accomplish this, we add rules to a stack, merging the words
+   * from terminal productions into the most recent nonterminal in the stack.
    * 
    */
   public class HypothesisExtractor implements DerivationVisitor {
@@ -786,6 +788,7 @@ public class KBestExtractor {
     }
 
     String ntMatcher = ".*" + Rule.NT_REGEX + ".*";
+
     void merge(String words) {
       if (!words.matches(ntMatcher) && outputs.size() > 0 && outputs.peek().matches(ntMatcher)) {
         String parentWords = outputs.pop();
@@ -826,8 +829,8 @@ public class KBestExtractor {
   }
 
   /**
-   * Assembles an informative version of the derivation. Currently unimplemented. When completed,
-   * will replace DerivationState::getDerivation(...).
+   * Assembles an informative version of the derivation. Each rule is printed as it is encountered.
+   * Don't try to parse this output; make something that writes out JSON or something, instead.
    * 
    * @author Matt Post <post@cs.jhu.edu
    */
@@ -884,8 +887,8 @@ public class KBestExtractor {
   /**
    * During decoding, individual features values are not stored, only the model score on each edge.
    * This saves space. If you want to print the actual feature values, they have to be assembled
-   * from the edges of the derivation, which means replaying the feature funtions. This visitor does
-   * just that.
+   * from the edges of the derivation, which means replaying the feature functions. This visitor
+   * does just that, using the generic derivation visitor.
    */
   public class FeatureReplayer implements DerivationVisitor {
 
