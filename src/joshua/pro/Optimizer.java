@@ -270,6 +270,9 @@ public class Optimizer {
         // accept or not?
         scoreDiff = Math.abs(candScore.get(candMap.get(j1)) - candScore.get(candMap.get(j2)));
         probAccept = Alpha(scoreDiff);
+        
+//        System.err.println("Diff: " + scoreDiff + " = " + candScore.get(candMap.get(j1)) + " - " 
+//            + candScore.get(candMap.get(j2)));
 
         accept = randgen.nextDouble() <= probAccept ? true : false;
 
@@ -291,8 +294,8 @@ public class Optimizer {
       }
     }
 
-    // System.out.println("Tau="+Tau+"\nAll possible pair number: "+candCount*(candCount-1));
-    // System.out.println("Number of accepted pairs after random selection: "+acceptedNum);
+     System.out.println("Tau="+Tau+"\nAll possible pair number: "+candCount*(candCount-1));
+     System.out.println("Number of accepted pairs after random selection: "+acceptedPair.size());
 
     // sort sampled pairs according to "scoreDiff"
     ValueComparator comp = new ValueComparator(acceptedPair);
@@ -430,6 +433,8 @@ public class Optimizer {
       for (int j = 0; j < evalMetric.get_suffStatsCount(); j++)
         statVal[j] = Integer.parseInt(statVal_str[j]);
 
+//      System.err.println("Score: " + evalMetric.score(statVal));
+      
       candScore.put(cands[i], evalMetric.score(statVal));
     }
 
