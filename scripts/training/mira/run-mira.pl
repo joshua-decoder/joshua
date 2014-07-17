@@ -299,7 +299,7 @@ $moses_parallel_cmd = File::Spec->catfile($SCRIPTS_ROOTDIR, "generic", "moses-pa
   if !defined $moses_parallel_cmd;
 
 if (!defined $mertdir) {
-  $mertdir = File::Spec->catfile(File::Basename::dirname($SCRIPTS_ROOTDIR), "bin");
+  $mertdir = File::Spec->catfile(File::Basename::dirname($JOSHUA), "bin");
   die "mertdir does not exist: $mertdir" if ! -x $mertdir;
   print STDERR "Assuming --mertdir=$mertdir\n";
 }
@@ -616,9 +616,12 @@ while (1) {
   $cmd = &create_extractor_script($cmd, $___WORKING_DIR);
   &submit_or_exec($cmd, "extract.out","extract.err");
 
-  # Remove the trailing underscores from feature labels, which were introduced to trick the Moses'
-  # extractor into treating everything as a sparse feature.
-  system("perl -pi~ -e 's/(\\S+)_=(\\S+)/\$1=\$2/g' $feature_file");
+  # (1) Remove the trailing underscores from feature labels, which were introduced to trick the
+  # Moses' extractor into treating everything as a sparse feature. (2) Also restore names of dense
+  # features
+  system("perl -pi -e 's/(\\S+)_=(\\S+)/\$1=\$2/g; s/tm-(\\w+)-(\\d+)_0/tm_\$1_\$2/g' $feature_file");
+  system("perl -pi -e 's/lm-(\\d+)_0/lm_\$1/g' $feature_file");
+  system("perl -pi -e 's/WordPenalty_0/WordPenalty/g' $feature_file");
 
   # We also need to rename features that contain a colon in them, since that causes MIRA to
   # barf. This could be addressed by having MIRA split the feature name on the *last* colon it

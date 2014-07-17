@@ -80,6 +80,8 @@ public class Decoder {
 
   /* The feature weights. */
   public static FeatureVector weights;
+  /* A shortcut holding the dense weights */
+  public static String[] dense_weights;
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Decoder.class.getName());
@@ -430,6 +432,16 @@ public class Decoder {
 
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
+
+      ArrayList<String> dense_keys = new ArrayList<String>();
+      for (String key: weights.keySet())
+        if (key.startsWith("tm_"))
+          dense_keys.add(key);
+      dense_weights = new String[dense_keys.size()];
+      for (int i = 0; i < dense_keys.size(); i++)
+        dense_weights[i] = dense_keys.get(i);
+
+      System.err.println(String.format("Read %d sparse and %d dense weights", weights.size() - dense_keys.size(), dense_keys.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();

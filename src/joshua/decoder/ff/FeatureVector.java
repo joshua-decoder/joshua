@@ -1,5 +1,7 @@
 package joshua.decoder.ff;
 
+import joshua.decoder.Decoder;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,6 +65,10 @@ public class FeatureVector {
         }
       }
     }
+
+    for (String key: Decoder.dense_weights)
+      if (! features.containsKey(key))
+        features.put(key, 0.0f);
   }
 
   public Set<String> keySet() {
@@ -164,7 +170,7 @@ public class FeatureVector {
     List<String> sortedKeys = new ArrayList<String>(features.keySet());
     Collections.sort(sortedKeys);
     for (String key : sortedKeys)
-      if (features.get(key) != 0.0f)
+      if (features.get(key) != 0.0f || key.startsWith("tm_"))
         outputString += String.format("%s%s=%.3f", (outputString.length() > 0) ? " " : "", key,
             features.get(key));
     return outputString;

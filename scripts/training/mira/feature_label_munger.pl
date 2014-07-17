@@ -10,6 +10,14 @@ use warnings;
 
 while (my $line = <>) {
   my @tokens = split(/ \|\|\| /, $line);
+
+  # Add an underscore to every feature
   $tokens[2] =~ s/=/_= /g;
+
+  # Remove underscores from dense features so they'll get translated as dense
+  $tokens[2] =~ s/tm_(\w+)_(\d+)_=/tm-$1-$2=/g;
+  $tokens[2] =~ s/lm_(\d+)_=/lm-$1=/g;
+  $tokens[2] =~ s/WordPenalty_=/WordPenalty=/g;
+
   print join(" ||| ", @tokens);
 }
