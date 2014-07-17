@@ -90,3 +90,5 @@ scripts/training/MGIZA/
 /test/decoder/left-state/output
 /test/decoder/left-state/output.scores
 /test/thrax/extraction/.grammar.gz.crc
+
+*~
