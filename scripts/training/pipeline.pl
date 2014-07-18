@@ -177,6 +177,7 @@ my $OPTIMIZER_RUNS = 1;
 
 # what to use to create language models ("berkeleylm" or "srilm")
 my $LM_GEN = "kenlm";
+my $LM_OPTIONS = "";
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -230,6 +231,7 @@ my $retval = GetOptions(
   "lmfile=s"        => \@LMFILES,
   "merge-lms!"        => \$MERGE_LMS,
   "lm-gen=s"          => \$LM_GEN,
+  "lm-gen-options=s"          => \$LM_OPTIONS,
   "lm-order=i"        => \$LM_ORDER,
   "corpus-lm!"        => \$DO_BUILD_LM_FROM_CORPUS,
   "witten-bell!"     => \$WITTEN_BELL,
@@ -1108,7 +1110,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
   if ($LM_GEN eq "srilm") {
 		my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 		$cachepipe->cmd("srilm",
-										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target}.uniq -lm lm.gz",
+										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target}.uniq $LM_OPTIONS -lm lm.gz",
                     "$TRAIN{target}.uniq",
 										$lmfile);
   } elsif ($LM_GEN eq "berkeleylm") {
@@ -1129,7 +1131,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
     # Needs to be capitalized
     my $mem = uc $BUILDLM_MEM;
     $cachepipe->cmd("kenlm",
-                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target}.uniq | gzip -9n > lm.gz",
+                    "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --verbose_header --text $TRAIN{target}.uniq $LM_OPTIONS | gzip -9n > lm.gz",
                     "$TRAIN{target}.uniq",
                     $lmfile);
   }
