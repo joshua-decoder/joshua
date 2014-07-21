@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.corpus.syntax.SyntaxTree;
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
@@ -23,6 +24,7 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
@@ -75,6 +77,8 @@ public class Chart {
   private Cell goalBin;
   private int goalSymbolID = -1;
   private Lattice<Integer> inputLattice;
+  
+  public KBestExtractor kBestExtractor;
 
   private Sentence sentence = null;
   private SyntaxTree parseTree;
@@ -120,6 +124,9 @@ public class Chart {
     this.segmentID = sentence.id();
     this.goalSymbolID = Vocabulary.id(goalSymbol);
     this.goalBin = new Cell(this, this.goalSymbolID);
+    
+    /* Create the kbest extractor. This is only actually used in the chart if we are decoding with non-local features. */
+    this.kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false, joshuaConfiguration);
 
     /* Create the grammars, leaving space for the OOV grammar. */
     this.grammars = new Grammar[grammars.length + 1];
@@ -144,7 +151,7 @@ public class Chart {
     /*
      * Add OOV rules; This should be called after the manual constraints have been set up.
      */
-		final byte [] oovAlignment = { 0, 0 };
+    final byte [] oovAlignment = { 0, 0 };
     for (Node<Integer> node : inputLattice) {
       for (Arc<Integer> arc : node.getOutgoingArcs()) {
         // create a rule, but do not add into the grammar trie
@@ -482,8 +489,7 @@ public class Chart {
     }
 
     logger.fine("Finished expand");
-    return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID,
-        sourceLength);
+    return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.sentence);
   }
 
   public Cell getCell(int i, int j) {

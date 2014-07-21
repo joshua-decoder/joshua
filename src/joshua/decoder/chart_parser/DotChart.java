@@ -272,13 +272,10 @@ class DotChart {
       /* For every completed nonterminal in the main chart */
       for (SuperNode superNode : superNodes) {
 
-
         // String arcWord = Vocabulary.word(superNode.lhs);
         // logger.info("DotChart.extendDotItemsWithProvedItems: " + arcWord);
         // Assert.assertTrue(arcWord.endsWith("]"));
         // Assert.assertTrue(arcWord.startsWith("["));
-
-
 
         /*
          * Regular Expression matching allows for a regular-expression style rules in the grammar,
@@ -289,10 +286,7 @@ class DotChart {
         List<Trie> child_tnodes = nonTerminalMatcher.produceMatchingChildTNodesNonterminalLevel(
             dotNode, superNode);
 
-
         if (!child_tnodes.isEmpty()) {
-
-
           for (Trie child_tnode : child_tnodes) {
             if (child_tnode != null) {
               if ((!skipUnary) || (child_tnode.hasExtensions())) {

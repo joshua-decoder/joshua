@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 
+import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -28,7 +29,7 @@ public class Translation {
    */
   private String output = null;
 
-  public Translation(Sentence source, HyperGraph hypergraph,
+  public Translation(Sentence source, HyperGraph hypergraph, Chart chart,
       List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
 
@@ -43,8 +44,7 @@ public class Translation {
 
         long startTime = System.currentTimeMillis();
 
-        KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions,
-            Decoder.weights, false, joshuaConfiguration);
+        KBestExtractor kBestExtractor = chart.kBestExtractor;
 
         // We must put this weight as zero, otherwise we get an error when we try to retrieve it
         // without checking

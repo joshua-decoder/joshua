@@ -13,6 +13,7 @@ import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.hypergraph.ForestWalker.TRAVERSAL;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * this class implement (1) HyperGraph-related data structures (Item and Hyper-edges)
@@ -29,21 +30,27 @@ public class HyperGraph {
 
   public int numNodes = -1;
   public int numEdges = -1;
-  public int sentID = -1;
-  public int sentLen = -1;
+  public Sentence sentence = null;
 
   static final Logger logger = Logger.getLogger(HyperGraph.class.getName());
 
-  public HyperGraph(HGNode goalNode, int numNodes, int numEdges, int sentID, int sentLen) {
+  public HyperGraph(HGNode goalNode, int numNodes, int numEdges, Sentence sentence) {
     this.goalNode = goalNode;
     this.numNodes = numNodes;
     this.numEdges = numEdges;
-    this.sentID = sentID;
-    this.sentLen = sentLen;
+    this.sentence = sentence;
   }
   
   public void count() {
     new ForestWalker().walk(this.goalNode, new HyperGraphCounter(this));
+  }
+  
+  public int sentID() {
+    return sentence.id();
+  }
+  
+  public int sentLen() {
+    return sentence.length();
   }
   
   private class HyperGraphCounter implements WalkerFunction {
@@ -132,7 +139,7 @@ public class HyperGraph {
     count();
     out.println("# target ||| features");
     out.println(String.format("%d %d", numNodes, numEdges));
-    new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, sentID, model));
+    new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, sentence.id(), model));
     out.close();
   }
 

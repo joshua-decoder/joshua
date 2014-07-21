@@ -159,7 +159,7 @@ public class OracleExtractionHG extends SplitHg {
         orc_sent = (String) res[0];
         orc_bleu = (Double) res[1];
       } else {
-        HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sentLen, lm_order, ref_sent);
+        HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sentLen(), lm_order, ref_sent);
         orc_sent = ViterbiExtractor.extractViterbiString(hg_oracle.goalNode);
         orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
 

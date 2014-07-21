@@ -85,7 +85,7 @@ public class DecoderThread extends Thread {
     // skip blank sentences
     if (sentence.isEmpty()) {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
-      return new Translation(sentence, null, featureFunctions, joshuaConfiguration);
+      return new Translation(sentence, null, null, featureFunctions, joshuaConfiguration);
     }
     
     long startTime = System.currentTimeMillis();
@@ -120,7 +120,7 @@ public class DecoderThread extends Thread {
 
     /* Return the translation unless we're doing synchronous parsing. */
     if (!joshuaConfiguration.parse || hypergraph == null) {
-      return new Translation(sentence, hypergraph, featureFunctions, joshuaConfiguration);
+      return new Translation(sentence, hypergraph, chart, featureFunctions, joshuaConfiguration);
     }
 
     /*****************************************************************************************/
@@ -156,7 +156,7 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
-    return new Translation(sentence, englishParse, featureFunctions, joshuaConfiguration); // or do something else
+    return new Translation(sentence, englishParse, chart, featureFunctions, joshuaConfiguration); // or do something else
   }
 
   private Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {

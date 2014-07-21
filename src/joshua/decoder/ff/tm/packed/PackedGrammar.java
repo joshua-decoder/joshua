@@ -1,5 +1,18 @@
 package joshua.decoder.ff.tm.packed;
 
+/***
+ * This package implements Joshua's packed grammar structure, which enables the efficient loading
+ * and accessing of grammars. It is described in the paper:
+ * 
+ * @article{ganitkevitch2012joshua,
+ *   Author = {Ganitkevitch, J. and Cao, Y. and Weese, J. and Post, M. and Callison-Burch, C.},
+ *   Journal = {Proceedings of WMT12},
+ *   Title = {Joshua 4.0: Packing, PRO, and paraphrases},
+ *   Year = {2012}}
+ *   
+ *
+ */
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;

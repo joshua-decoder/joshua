@@ -32,7 +32,7 @@ public class OracleExtractor {
    */
   public HyperGraph getOracle(HyperGraph forest, int lmOrder, String reference) {
     if (reference != null)
-      return extractor.oracle_extract_hg(forest, forest.sentLen, lmOrder, reference);
+      return extractor.oracle_extract_hg(forest, forest.sentLen(), lmOrder, reference);
 
     return null;
   }

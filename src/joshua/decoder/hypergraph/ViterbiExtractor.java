@@ -43,8 +43,8 @@ public class ViterbiExtractor {
   // ######## find 1best hypergraph#############
   public static HyperGraph getViterbiTreeHG(HyperGraph hg_in) {
     HyperGraph res =
-        new HyperGraph(cloneNodeWithBestHyperedge(hg_in.goalNode), -1, -1, hg_in.sentID,
-            hg_in.sentLen); // TODO: number of items/deductions
+        new HyperGraph(cloneNodeWithBestHyperedge(hg_in.goalNode), -1, -1, null); 
+    // TODO: number of items/deductions
     get1bestTreeNode(res.goalNode);
     return res;
   }

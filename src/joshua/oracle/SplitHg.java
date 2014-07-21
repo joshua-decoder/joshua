@@ -56,11 +56,8 @@ public abstract class SplitHg {
       HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items) {
     VirtualItem virutal_goal_item = get_virtual_goal_item(original_hg, g_tbl_split_virtual_items);
     HGNode onebest_goal_item = clone_item_with_best_deduction(virutal_goal_item);
-    HyperGraph res = new HyperGraph(onebest_goal_item, -1, -1, original_hg.sentID,
-        original_hg.sentLen);// TODO:
-                             // number
-                             // of
-                             // items/deductions
+    HyperGraph res = new HyperGraph(onebest_goal_item, -1, -1, null);
+    // TODO: number of items/deductions
     get_1best_tree_item(virutal_goal_item, onebest_goal_item);
     return res;
   }
