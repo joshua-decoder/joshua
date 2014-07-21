@@ -1,15 +1,15 @@
 0 ||| A ||| WordPenalty=-1.303 lm_0=-3.040 tm_glue_0=1.000 tm_pt_0=-1.000 ||| -2.737
-0 ||| a ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 ||| -199.378
+0 ||| a ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 tm_pt_0=0.000 ||| -199.378
 1 ||| A X ||| WordPenalty=-1.737 lm_0=-101.827 tm_glue_0=2.000 tm_pt_0=-4.000 ||| -104.090
 1 ||| A x ||| OOVPenalty=1.000 WordPenalty=-1.737 lm_0=-101.827 tm_glue_0=2.000 tm_pt_0=-1.000 ||| -201.090
 1 ||| a X ||| OOVPenalty=1.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 tm_pt_0=-3.000 ||| -301.944
-1 ||| a x ||| OOVPenalty=2.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 ||| -398.944
+1 ||| a x ||| OOVPenalty=2.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 tm_pt_0=0.000 ||| -398.944
 2 ||| B ||| WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 tm_pt_0=-2.000 ||| -101.378
-2 ||| b ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 ||| -199.378
+2 ||| b ||| OOVPenalty=1.000 WordPenalty=-1.303 lm_0=-100.681 tm_glue_0=1.000 tm_pt_0=0.000 ||| -199.378
 3 ||| B X ||| WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 tm_pt_0=-5.000 ||| -203.944
 3 ||| B x ||| OOVPenalty=1.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 tm_pt_0=-2.000 ||| -300.944
 3 ||| b X ||| OOVPenalty=1.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 tm_pt_0=-3.000 ||| -301.944
-3 ||| b x ||| OOVPenalty=2.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 ||| -398.944
+3 ||| b x ||| OOVPenalty=2.000 WordPenalty=-1.737 lm_0=-200.681 tm_glue_0=2.000 tm_pt_0=0.000 ||| -398.944
 4 ||| A X ||| SourcePath=2.000 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=2.000 tm_pt_0=-4.000 ||| -101.843
 4 ||| A x ||| OOVPenalty=1.000 SourcePath=2.000 WordPenalty=-1.303 lm_0=-101.146 tm_glue_0=2.000 tm_pt_0=-1.000 ||| -198.843
 4 ||| B X ||| SourcePath=2.000 WordPenalty=-1.303 lm_0=-200.000 tm_glue_0=2.000 tm_pt_0=-5.000 ||| -201.697
