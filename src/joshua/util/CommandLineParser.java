@@ -1,18 +1,3 @@
-/*
- * Java Command Line Parser Library Copyright (C) 2007 Lane O.B. Schwartz
- * 
- * This library is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation; either version
- * 2.1 of the License, or (at your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA
- */
 package joshua.util;
 
 import java.util.Collection;
@@ -32,7 +17,6 @@ import java.util.Set;
  * Support is not included for options which take a list of values.
  * 
  * @author Lane O.B. Schwartz
- * @version $LastChangedDate$
  */
 @SuppressWarnings("rawtypes")
 public class CommandLineParser {
@@ -503,12 +487,14 @@ public class CommandLineParser {
     System.out.println(parser.getValue(n));
   }
 
+  @SuppressWarnings("serial")
   public static class CommandLineParserException extends RuntimeException {
     public CommandLineParserException(String message) {
       super(message);
     }
   }
 
+  @SuppressWarnings("serial")
   public static class DuplicateOptionException extends RuntimeException {
     public DuplicateOptionException(String message) {
       super(message);

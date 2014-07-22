@@ -37,6 +37,7 @@ import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
+@SuppressWarnings("serial")
 public class DerivationViewer extends VisualizationViewer<Node, DerivationTreeEdge> {
   public static final int DEFAULT_HEIGHT = 500;
   public static final int DEFAULT_WIDTH = 500;

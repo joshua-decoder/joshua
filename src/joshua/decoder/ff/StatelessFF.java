@@ -8,9 +8,8 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 /**
- * Stateless feature functions do not contribute any state, and can access any portion of the input
- * that is fixed at access time (e.g., the input sentence, or the portion of the hypergraph that has
- * already been built).
+ * Stateless feature functions do not contribute any state. You need not implement this class to
+ * create a stateless feature function, but it provides a few convenience functions.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevich <juri@cs.jhu.edu>

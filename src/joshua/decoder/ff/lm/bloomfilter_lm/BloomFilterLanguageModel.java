@@ -1,7 +1,6 @@
 package joshua.decoder.ff.lm.bloomfilter_lm;
 
 import java.io.Externalizable;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -336,24 +335,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
       System.err.println(e.getMessage());
     }
   }
-
-  private int numLines(String filename) {
-    try {
-      Scanner s = new Scanner(new File(filename));
-      int ret = 0;
-      while (s.hasNextLine()) {
-        ret++;
-        // String trash =
-        s.nextLine();
-      }
-      s.close();
-      return ret;
-    } catch (FileNotFoundException e) {
-      // BUG: don't swallow errors
-    }
-    return 0;
-  }
-
+  
   /**
    * Adds ngram counts and counts of distinct types after ngrams, read from a file, to the Bloom
    * filter.

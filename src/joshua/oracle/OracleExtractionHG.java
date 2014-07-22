@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
@@ -457,14 +456,6 @@ public class OracleExtractionHG extends SplitHg {
     return new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);
   }
 
-  private int[] intListToArray(List<Integer> words) {
-    int[] res = new int[words.size()];
-    int i = 0;
-    for (int wrd : words)
-      res[i++] = wrd;
-    return res;
-  }
-
   private int[] get_left_equiv_state(ArrayList<Integer> left_state_sequence,
       HashMap<String, Boolean> tbl_suffix) {
     int l_size = (left_state_sequence.size() < g_bleu_order - 1) ? left_state_sequence.size()
@@ -504,19 +495,6 @@ public class OracleExtractionHG extends SplitHg {
         suffix.append(' ');
     }
     return (Boolean) tbl_suffix.containsKey(suffix.toString());
-  }
-
-  // TODO: never called. remove?
-  private boolean is_a_suffix_in_grammar(ArrayList<Integer> left_state_sequence, int start_pos,
-      int end_pos, PrefixGrammar grammar_suffix) {
-    if ((Integer) left_state_sequence.get(end_pos) == this.NULL_LEFT_LM_STATE_SYM_ID) {
-      return false;
-    }
-    ArrayList<Integer> suffix = new ArrayList<Integer>();
-    for (int i = end_pos; i >= start_pos; i--) { // right-most first
-      suffix.add(left_state_sequence.get(i));
-    }
-    return grammar_suffix.contain_ngram(suffix, 0, suffix.size() - 1);
   }
 
   private int[] get_right_equiv_state(ArrayList<Integer> right_state_sequence,
@@ -562,15 +540,6 @@ public class OracleExtractionHG extends SplitHg {
         prefix.append(' ');
     }
     return (Boolean) tbl_prefix.containsKey(prefix.toString());
-  }
-
-  // TODO: never called. remove?
-  private boolean isAPrefixInGrammar(ArrayList<Integer> right_state_sequence, int start_pos,
-      int end_pos, PrefixGrammar gr_prefix) {
-    if (right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID) {
-      return false;
-    }
-    return gr_prefix.contain_ngram(right_state_sequence, start_pos, end_pos);
   }
 
   public static void compare_two_int_arrays(int[] a, int[] b) {
@@ -714,15 +683,6 @@ public class OracleExtractionHG extends SplitHg {
     return res_bleu;
   }
 
-  // TODO: never called, remove?
-  private static void printState(Object[] state) {
-    System.out.println("State is");
-    for (int i = 0; i < state.length; i++) {
-      System.out.print(state[i] + " ---- ");
-    }
-    System.out.println();
-  }
-
   // #### equivalent lm stuff ############
   public static void setup_prefix_suffix_tbl(int[] wrds, int order,
       HashMap<String, Boolean> prefix_tbl, HashMap<String, Boolean> suffix_tbl) {
@@ -796,6 +756,8 @@ public class OracleExtractionHG extends SplitHg {
       }
     }
 
+    
+    @SuppressWarnings("unused")
     public boolean contain_ngram(ArrayList<Integer> wrds, int start_pos, int end_pos) {
       if (end_pos < start_pos)
         return false;

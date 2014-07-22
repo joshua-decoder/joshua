@@ -412,21 +412,6 @@ public class JoshuaEval {
 
   } // processArgsAndInitialize(String[] args)
 
-
-  private static void checkFile(String fileName) {
-    if (!fileExists(fileName)) {
-      println("The file " + fileName + " was not found!");
-      System.exit(40);
-    }
-  }
-
-
-  private static boolean fileExists(String fileName) {
-    File checker = new File(fileName);
-    return checker.exists();
-  }
-
-
   private static String normalize(String str, int normMethod) {
     if (normMethod == 0) return str;
 

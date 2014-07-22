@@ -84,9 +84,6 @@ public class FragmentLMFF extends StatelessFF {
   /* The location of the file containing the language model fragments */
   private String fragmentLMFile = "";
 
-  /* The location of the file containing the mapping between Joshua target-side rules and fragments */
-  private String fragmentMappingFile = "";
-
   /**
    * @param weights
    * @param name
@@ -106,8 +103,6 @@ public class FragmentLMFF extends StatelessFF {
           String key = args[i].substring(1);
           if (key.equals("lm")) {
             fragmentLMFile = args[i + 1];
-          } else if (key.equals("map")) {
-            fragmentMappingFile = args[i + 1];
           } else if (key.equals("build-depth") || key.equals("depth")) {
             BUILD_DEPTH = Integer.parseInt(args[i + 1]);
           } else if (key.equals("max-depth")) {
@@ -304,8 +299,6 @@ public class FragmentLMFF extends StatelessFF {
 
     ArrayList<HGNode> tailNodes = new ArrayList<HGNode>();
     Collections.addAll(tailNodes, nodeVP, nodePERIOD);
-    HyperEdge edgeS = new HyperEdge(ruleS, 0.0f, 0.0f, tailNodes, (SourcePath) null);
-    HGNode nodeS = new HGNode(0, 8, ruleS.getLHS(), null, edgeS, 0.0f);
 
     Tree tree = Tree.buildTree(ruleS, tailNodes, 1);
     boolean matched = fragmentLMFF.match(fragment, tree);

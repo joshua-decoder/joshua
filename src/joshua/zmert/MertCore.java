@@ -54,8 +54,6 @@ public class MertCore {
   private final static double PosInf = (+1.0 / 0.0);
   private final static double epsilon = 1.0 / 1000000;
 
-  private int progress;
-
   private int verbosity; // anything of priority <= verbosity will be printed
                          // (lower value for priority means more important)
 
@@ -2609,39 +2607,6 @@ public class MertCore {
     }
   }
 
-  private void gunzipFile(String gzippedFileName) {
-    if (gzippedFileName.endsWith(".gz")) {
-      gunzipFile(gzippedFileName, gzippedFileName.substring(0, gzippedFileName.length() - 3));
-    } else {
-      gunzipFile(gzippedFileName, gzippedFileName + ".dec");
-    }
-  }
-
-  private void gunzipFile(String gzippedFileName, String outputFileName) {
-    // NOTE: this will delete the original file
-
-    try {
-      GZIPInputStream in = new GZIPInputStream(new FileInputStream(gzippedFileName));
-      FileOutputStream out = new FileOutputStream(outputFileName);
-
-      byte[] buffer = new byte[4096];
-      int len;
-      while ((len = in.read(buffer)) > 0) {
-        out.write(buffer, 0, len);
-      }
-
-      in.close();
-      out.close();
-
-      deleteFile(gzippedFileName);
-
-    } catch (IOException e) {
-      System.err.println("IOException in MertCore.gunzipFile(String,String): " + e.getMessage());
-      System.exit(99902);
-    }
-  }
-
-
   private String normalize(String str, int normMethod) {
     if (normMethod == 0) return str;
 
@@ -2900,11 +2865,6 @@ public class MertCore {
 
   private void print(Object obj) {
     System.out.print(obj);
-  }
-
-  private void showProgress() {
-    ++progress;
-    if (progress % 100000 == 0) print(".", 2);
   }
 
   private double[] randomLambda() {

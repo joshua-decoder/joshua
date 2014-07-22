@@ -310,8 +310,8 @@ public class PROCore {
           }
 
           // SAVE THE PARAMETER NAMES
-          String paramName = (line.substring(0, line.indexOf("|||"))).trim();
-          int id = Vocabulary.id(paramName);
+//          String paramName = (line.substring(0, line.indexOf("|||"))).trim();
+//          int id = Vocabulary.id(paramName);
 //          System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
         }
       } else if (trainingMode.equals("2") || trainingMode.equals("3") || trainingMode.equals("4")) {

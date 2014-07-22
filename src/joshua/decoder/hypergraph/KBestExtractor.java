@@ -89,6 +89,7 @@ public class KBestExtractor {
   private boolean extractUniqueNbest = true;
 
   /* Whether to include the alignment information in the output */
+  @SuppressWarnings("unused")
   private boolean includeAlign = false;
 
   /* Which side to output (source or target) */

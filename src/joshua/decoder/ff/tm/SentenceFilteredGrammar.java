@@ -231,6 +231,7 @@ public class SentenceFilteredGrammar extends BatchGrammar {
    * 
    * @return the root of the filtered trie if any rules were retained, otherwise null
    */
+  @SuppressWarnings("unused")
   private SentenceFilteredTrie filter_regexp(Trie unfilteredTrie) {
     SentenceFilteredTrie trie = null;
 
