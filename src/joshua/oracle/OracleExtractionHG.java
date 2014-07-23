@@ -755,7 +755,6 @@ public class OracleExtractionHG extends SplitHg {
         }
       }
     }
-
     
     @SuppressWarnings("unused")
     public boolean contain_ngram(ArrayList<Integer> wrds, int start_pos, int end_pos) {
