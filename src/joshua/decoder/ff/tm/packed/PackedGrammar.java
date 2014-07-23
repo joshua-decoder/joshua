@@ -10,7 +10,24 @@ package joshua.decoder.ff.tm.packed;
  *   Title = {Joshua 4.0: Packing, PRO, and paraphrases},
  *   Year = {2012}}
  *   
- *
+ * The packed grammar works by compiling out the grammar tries into a compact format that is loaded
+ * and parsed directly from Java arrays. A fundamental problem is that Java arrays are indexed
+ * by ints and not longs, meaning the maximum size of the packed grammar is about 2 GB. This forces
+ * the use of packed grammar slices, which together constitute the grammar. The figure in the
+ * paper above shows what each slice looks like. 
+ * 
+ * The division across slices is done in a depth-first manner. Consider the entire grammar organized
+ * into a single source-side trie. The splits across tries are done by grouping the root-level
+ * outgoing trie arcs --- and the entire trie beneath them --- across slices. 
+ * 
+ * This presents a problem: if the subtree rooted beneath a single top-level arc is too big for a 
+ * slice, the grammar can't be packed. This happens with very large Hiero grammars, for example,
+ * where there are a *lot* of rules that start with [X].
+ * 
+ * A solution being worked on is to split that symbol and pack them into separate grammars with a
+ * shared vocabulary, and then rely on Joshua's ability to query multiple grammars for rules to
+ * solve this problem. This is not currently implemented but could be done directly in the
+ * Grammar Packer.
  */
 
 import java.io.BufferedInputStream;
