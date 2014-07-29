@@ -78,15 +78,18 @@ public class Decoder {
   private ArrayList<FeatureFunction> featureFunctions;
   private ArrayList<NGramLanguageModel> languageModels;
 
+  /* A sorted list of the feature names (so they can be output in the order they were read in) */
+  public static ArrayList<String> feature_names = new ArrayList<String>();
+
   /* The feature weights. */
   public static FeatureVector weights;
-  /* A shortcut holding the dense weights */
-  public static String[] dense_weights;
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Decoder.class.getName());
 
   private BlockingQueue<DecoderThread> threadPool = null;
+  
+  public static boolean usingNonlocalFeatures = false;
 
   // ===============================================================
   // Constructors
@@ -430,18 +433,19 @@ public class Decoder {
           System.exit(17);
         }
 
+        feature_names.add(pair[0]);
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
+      
+      if (! weights.containsKey("BLEU"))
+        Decoder.weights.put("BLEU", 0.0f);
 
-      ArrayList<String> dense_keys = new ArrayList<String>();
-      for (String key: weights.keySet())
-        if (key.startsWith("tm_"))
-          dense_keys.add(key);
-      dense_weights = new String[dense_keys.size()];
-      for (int i = 0; i < dense_keys.size(); i++)
-        dense_weights[i] = dense_keys.get(i);
-
-      System.err.println(String.format("Read %d sparse and %d dense weights", weights.size() - dense_keys.size(), dense_keys.size()));
+      int num_dense = 0;
+      for (String feature: feature_names)
+        if (FeatureVector.isDense(feature))
+            num_dense++;
+      
+      System.err.println(String.format("Read %d sparse and %d dense weights", weights.size() - num_dense, num_dense));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -621,6 +625,7 @@ public class Decoder {
         Float value = Float.parseFloat(tokens[1]);
 
         weights.put(feature, value);
+        feature_names.add(feature);
       }
     } catch (FileNotFoundException ioe) {
       System.err.println("* FATAL: Can't find weights-file '" + fileName + "'");
