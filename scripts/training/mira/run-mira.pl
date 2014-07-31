@@ -45,7 +45,6 @@ $SCRIPTS_ROOTDIR = $ENV{"SCRIPTS_ROOTDIR"} if defined($ENV{"SCRIPTS_ROOTDIR"});
 my @ABBR_FULL_MAP = qw(d=weight-d lm=weight-l tm=weight-t w=weight-w
   g=weight-generation lex=weight-lex I=weight-i dlm=weight-dlm pp=weight-pp wt=weight-wt pb=weight-pb lex=weight-lex glm=weight-glm);
 my %ABBR2FULL = map { split /=/, $_, 2 } @ABBR_FULL_MAP;
-my %FULL2ABBR = map { my ($a, $b) = split /=/, $_, 2; ($b, $a); } @ABBR_FULL_MAP;
 
 my $minimum_required_change_in_weights = 0.00001;
     # stop if no lambda changes more than this
@@ -845,7 +844,8 @@ sub get_weights_from_mert {
     my $sum = 0.0;
     while (<$fh>) {
       /^(.+) ([\-\.\de]+)/;
-      $bestpoint{$1} = $2;
+      my $feature_name = (exists $ABBR2FULL{$1}) ? $ABBR2FULL{$1} : $1;
+      $bestpoint{$feature_name} = $2;
       $sum += abs($2);
     }
     close $fh;
@@ -974,16 +974,21 @@ sub get_featlist_from_file {
   open my $fh, '<', $featlistfn or die "Can't read '$featlistfn': $!";
   my $nr = 0;
   my @errs = ();
+  my $num_features = 0;
   while (<$fh>) {
     $nr++;
     chomp;
     next if (/^#/ || /^\s*$/);   # skip blank lines and comments
     next if /=/;                 # skip lines not containing features
-    /^(\S+) (\S+)$/ || die "invalid feature: $_";
+    /^(\S+) (\S+)$/ || die "invalid feature: '$_' on file '$featlistfn'";
     my ($feature, $value) = ($1, $2);
     push @errs, "$featlistfn:$nr:Bad initial value of $feature: $value\n"
       if $value !~ /^[+-]?[0-9.\-e]+$/;
+
+    # map the F features output by Moses to their real names in Joshua
+    $ABBR2FULL{"F${num_features}"} = $feature;
     $featlist{$feature}{value} = $value;
+    $num_features++;
   }
   close $fh;
 
@@ -1072,7 +1077,7 @@ sub create_config {
   # Convert weights to elements in P
   foreach my $name (keys(%$featlist)) {
     my $val = $featlist->{$name}{value};
-    $name = defined $ABBR2FULL{$name} ? $ABBR2FULL{$name} : $name;
+    # $name = defined $ABBR2FULL{$name} ? $ABBR2FULL{$name} : $name;
     # ensure long name
     push @{$P{$name}}, $val;
   }
