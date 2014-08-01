@@ -10,13 +10,15 @@ import joshua.decoder.ff.fragmentlm.Trees.PennTreeReader;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 import joshua.util.io.LineReader;
 
 /**
- * Represent linguistic trees, with each node consisting of a label and a list of children. Borrowed
- * from the Berkeley Parser, and extended to allow the representation of tree fragments in addition
- * to complete trees. To distinguish terminals from nonterminals in fragments, the former must be
- * enclosed in double-quotes.
+ * Represent phrase-structure trees, with each node consisting of a label and a list of children.
+ * Borrowed from the Berkeley Parser, and extended to allow the representation of tree fragments in
+ * addition to complete trees (the BP requires terminals to be immediately governed by a
+ * preterminal). To distinguish terminals from nonterminals in fragments, the former must be
+ * enclosed in double-quotes when read in.
  * 
  * @author Dan Klein
  * @author Matt Post <post@cs.jhu.edu>
@@ -46,7 +48,6 @@ public class Tree implements Serializable {
 
   /* The number of lexicalized items among the tree's frontier. */
   private int numLexicalItems = -1;
-  
 
   /*
    * This maps the flat right-hand sides of Joshua rules to the tree fragments they were derived
@@ -65,7 +66,6 @@ public class Tree implements Serializable {
    */
   public static HashMap<String, Tree> rulesToFragments = new HashMap<String, Tree>();
 
-  
   public Tree(String label, List<Tree> children) {
     setLabel(label);
     this.children = children;
@@ -468,7 +468,7 @@ public class Tree implements Serializable {
     Tree fragment = reader.next();
     return fragment;
   }
-  
+
   public static Tree buildFragment(String fragmentString) {
     PennTreeReader reader = new PennTreeReader(new StringReader(fragmentString));
     Tree fragment = reader.next();
@@ -503,9 +503,162 @@ public class Tree implements Serializable {
     if (rulesToFragments != null)
       rulesToFragments.put(english, fragment);
   }
+
+  /**
+   * Builds a tree from the kth-best derivation state. This is done by initializing the tree with
+   * the internal fragment corresponding to the rule; this will be the top of the tree. We then
+   * recursively visit the derivation state objects, following the route through the hypergraph
+   * defined by them.
+   * 
+   * This function is like the other buildTree() function, but that one simply follows the best
+   * incoming hyperedge for each node.
+   * 
+   * @param rule
+   * @param tailNodes
+   * @param derivation
+   * @param maxDepth
+   * @return
+   */
+  public static Tree buildTree(Rule rule, DerivationState[] derivationStates, int maxDepth) {
+    Tree tree = rulesToFragments.get(rule.getEnglishWords());
+
+    if (tree == null) {
+      return null;
+    }
+
+    tree = tree.shallowClone();
+    
+    System.err.println(String.format("buildTree(%s)", tree));
+    if (derivationStates != null) {
+      for (int i = 0; i < derivationStates.length; i++) {
+        System.err.println(String.format("  -> %d: %s", i, derivationStates[i]));
+      }
+    }
+
+    /* Match the nonterminals in the tree's yield to the derivation states */
+    if (derivationStates != null && derivationStates.length > 0 && maxDepth > 0) {
+      List<Tree> frontier = tree.getNonterminalYield();
+
+      /* The English side of a rule is a sequence of integers. Nonnegative integers are word
+       * indices in the Vocabulary, while negative indices are used to nonterminals. These negative
+       * indices are a *permutation* of the source side nonterminals, which contain the actual
+       * nonterminal Vocabulary indices for the nonterminal names. Here, we convert this permutation
+       * to a nonnegative 0-based permutation and store it in tailIndices. This is used to index 
+       * the incoming DerivationState items, which are ordered by the source side.
+       */
+      ArrayList<Integer> tailIndices = new ArrayList<Integer>();
+      int[] englishInts = rule.getEnglish();
+      for (int i = 0; i < englishInts.length; i++)
+        if (englishInts[i] < 0)
+          tailIndices.add(-(englishInts[i] + 1));
+
+      /*
+       * We now have the tree's yield. The substitution points on the yield should match the
+       * nonterminals of the heads of the derivation states. Since we don't know which of the tree's
+       * frontier items are terminals and which are nonterminals, we walk through the tail nodes,
+       * and then match the label of each against the frontier node labels until we have a match.
+       */
+      // System.err.println(String.format("WORDS: %s\nTREE: %s", rule.getEnglishWords(), tree));
+      for (int i = 0; i < derivationStates.length; i++) {
+
+        Tree frontierTree = frontier.get(tailIndices.get(i));
+        frontierTree.setBoundary(true);
+
+        HyperEdge nextEdge = derivationStates[i].edge;
+        if (nextEdge != null) {
+          DerivationState[] nextStates = null;
+          if (nextEdge.getTailNodes() != null && nextEdge.getTailNodes().size() > 0) {
+            nextStates = new DerivationState[nextEdge.getTailNodes().size()];
+            for (int j = 0; j < nextStates.length; j++)
+              nextStates[j] = derivationStates[i].getChildDerivationState(nextEdge, j);
+          }
+          Tree childTree = buildTree(nextEdge.getRule(), nextStates, maxDepth - 1);
+
+          /* This can be null if there is no entry for the rule in the map */
+          if (childTree != null)
+            frontierTree.children = childTree.children;
+        } else {
+          frontierTree.children = tree.children;
+        }
+      }
+    }
+      
+    return tree;
+  }
   
   /**
+   * Builds a tree from the kth-best derivation state. This is done by initializing the tree with
+   * the internal fragment corresponding to the rule; this will be the top of the tree. We then
+   * recursively visit the derivation state objects, following the route through the hypergraph
+   * defined by them.
+   * 
+   * This function is like the other buildTree() function, but that one simply follows the best
+   * incoming hyperedge for each node.
+   * 
+   * @param rule
+   * @param tailNodes
+   * @param derivation
+   * @param maxDepth
+   * @return
+   */
+  public static Tree buildTree(DerivationState derivationState, int maxDepth) {
+    Rule rule = derivationState.edge.getRule();
+    
+    Tree tree = rulesToFragments.get(rule.getEnglishWords());
+
+    if (tree == null) {
+      return null;
+    }
+
+    tree = tree.shallowClone();
+    
+    System.err.println(String.format("buildTree(%s)", tree));
+
+    if (rule.getArity() > 0 && maxDepth > 0) {
+      List<Tree> frontier = tree.getNonterminalYield();
+
+      /* The English side of a rule is a sequence of integers. Nonnegative integers are word
+       * indices in the Vocabulary, while negative indices are used to nonterminals. These negative
+       * indices are a *permutation* of the source side nonterminals, which contain the actual
+       * nonterminal Vocabulary indices for the nonterminal names. Here, we convert this permutation
+       * to a nonnegative 0-based permutation and store it in tailIndices. This is used to index 
+       * the incoming DerivationState items, which are ordered by the source side.
+       */
+      ArrayList<Integer> tailIndices = new ArrayList<Integer>();
+      int[] englishInts = rule.getEnglish();
+      for (int i = 0; i < englishInts.length; i++)
+        if (englishInts[i] < 0)
+          tailIndices.add(-(englishInts[i] + 1));
+
+      /*
+       * We now have the tree's yield. The substitution points on the yield should match the
+       * nonterminals of the heads of the derivation states. Since we don't know which of the tree's
+       * frontier items are terminals and which are nonterminals, we walk through the tail nodes,
+       * and then match the label of each against the frontier node labels until we have a match.
+       */
+      // System.err.println(String.format("WORDS: %s\nTREE: %s", rule.getEnglishWords(), tree));
+      for (int i = 0; i < rule.getArity(); i++) {
+
+        Tree frontierTree = frontier.get(tailIndices.get(i));
+        frontierTree.setBoundary(true);
+
+        DerivationState childState = derivationState.getChildDerivationState(derivationState.edge, i);
+        Tree childTree = buildTree(childState, maxDepth - 1);
+
+        /* This can be null if there is no entry for the rule in the map */
+        if (childTree != null)
+          frontierTree.children = childTree.children;
+      }
+    }
+    
+    return tree;
+  }
+
+  /**
    * Takes a rule and its tail pointers and recursively constructs a tree (up to maxDepth).
+   * 
+   * This could be implemented by using the other buildTree() function and using the 1-best
+   * DerivationState.
    * 
    * @param rule
    * @param tailNodes
@@ -513,13 +666,13 @@ public class Tree implements Serializable {
    */
   public static Tree buildTree(Rule rule, List<HGNode> tailNodes, int maxDepth) {
     Tree tree = rulesToFragments.get(rule.getEnglishWords());
-    
+
     if (tree == null) {
-//      System.err.println("COULDN'T FIND " + rule.getEnglishWords());
-//      System.err.println("RULE " + rule);
-//      for (Entry<String, Tree> pair: rulesToFragments.entrySet())
-//        System.err.println("  FOUND " + pair.getKey());
-      
+      // System.err.println("COULDN'T FIND " + rule.getEnglishWords());
+      // System.err.println("RULE " + rule);
+      // for (Entry<String, Tree> pair: rulesToFragments.entrySet())
+      // System.err.println("  FOUND " + pair.getKey());
+
       return null;
     }
 

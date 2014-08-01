@@ -10,13 +10,14 @@ import java.util.Stack;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.StatelessFF;
+import joshua.decoder.ff.NonLocalFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 
 /**
  * Feature function that reads in a list of language model fragments and matches them against the
@@ -47,7 +48,7 @@ import joshua.decoder.hypergraph.HyperEdge;
  * 
  * @author Matt Post <post@cs.jhu.edu>
  */
-public class FragmentLMFF extends StatelessFF {
+public class FragmentLMFF extends NonLocalFF {
 
   /*
    * When building a fragment from a rule rooted in the hypergraph, this parameter determines how
@@ -84,6 +85,13 @@ public class FragmentLMFF extends StatelessFF {
   /* The location of the file containing the language model fragments */
   private String fragmentLMFile = "";
 
+  /* The ranks to apply to the tail node derivation states */
+  private DerivationState[] ranks = null;
+  
+  public void setRanks(DerivationState[] ranks) {
+    this.ranks = ranks;
+  }
+  
   /**
    * @param weights
    * @param name
@@ -142,8 +150,7 @@ public class FragmentLMFF extends StatelessFF {
   }
 
   /**
-   * Add the provided fragment to the set of language model fragments if it passes through any
-   * provided constraints.
+   * Add the provided fragment to the language model, subject to some filtering.
    * 
    * @param fragment
    */
@@ -173,23 +180,30 @@ public class FragmentLMFF extends StatelessFF {
 
   /*
    * This function computes the features that fire when the current rule is applied. The features
-   * that fire are any LM fragments that match the fragment associated with the current rule. LM
-   * fragments may recurse over the tail nodes, following 1-best backpointers until the fragment
-   * either matches or fails.
+   * that fire are any LM fragments that match the tree fragment that is defined by the current
+   * rule, its tail nodes, and a DerivationState object denoting the k-best deconstruction of the
+   * tree to explore. The fragments are matched against the root of this tree, and also against any
+   * internal nodes.
    */
   @Override
-  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, 
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
-
+    
+    System.err.println(String.format("RULE: %s  RANKS: %s", rule, ranks));
+    
+    if (rule == null)
+      return null;
+    
     /*
-     * Get the fragment associated with the target side of this rule.
+     * Compute the tree from applying the current rule to the list of tail nodes over the
+     * kth-best derivation over the hyperforest.
      * 
-     * This could be done more efficiently. For example, just build the tree fragment once and then
+     * (This could be done more efficiently. For example, just build the tree fragment once and then
      * pattern match against it. This would circumvent having to build the tree possibly once every
-     * time you try to apply a rule.
+     * time you try to apply a rule.)
      */
-    Tree baseTree = Tree.buildTree(rule, tailNodes, BUILD_DEPTH);
-
+    Tree baseTree = Tree.buildTree(rule, this.ranks, BUILD_DEPTH);
+    
     Stack<Tree> nodeStack = new Stack<Tree>();
     nodeStack.add(baseTree);
     while (!nodeStack.empty()) {
@@ -199,11 +213,11 @@ public class FragmentLMFF extends StatelessFF {
 
       if (lmFragments.get(tree.getRule()) != null) {
         for (Tree fragment : lmFragments.get(tree.getRule())) {
-//           System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree,
-//           match(fragment, tree)));
+          // System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree,
+          // match(fragment, tree)));
 
           if (fragment.getLabel() == tree.getLabel() && match(fragment, tree)) {
-//             System.err.println(String.format("  FIRING: matched %s against %s", fragment, tree));
+            // System.err.println(String.format("  FIRING: matched %s against %s", fragment, tree));
             acc.add(fragment.escapedString(), 1);
             if (OPTS_DEPTH)
               if (fragment.isLexicalized())
@@ -215,8 +229,7 @@ public class FragmentLMFF extends StatelessFF {
       }
 
       // We also need to try matching rules against internal nodes of the fragment corresponding to
-      // this
-      // rule
+      // this rule
       if (tree.getChildren() != null)
         for (Tree childNode : tree.getChildren()) {
           if (!childNode.isBoundary())
@@ -235,7 +248,7 @@ public class FragmentLMFF extends StatelessFF {
    * @return
    */
   private boolean match(Tree fragment, Tree tree) {
-//    System.err.println(String.format("MATCH(%s,%s)", fragment, tree));
+    // System.err.println(String.format("MATCH(%s,%s)", fragment, tree));
 
     /* Make sure the root labels match. */
     if (fragment.getLabel() != tree.getLabel()) {
@@ -268,7 +281,7 @@ public class FragmentLMFF extends StatelessFF {
   public static void main(String[] args) {
     /* Add an LM fragment, then create a dummy multi-level hypergraph to match the fragment against. */
     // FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(), (StateComputer) null, "");
-    FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(), 
+    FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(),
         "-lm test/fragments.txt -map test/mapping.txt");
 
     Tree fragment = Tree.fromString("(S NP (VP (VBD \"said\") SBAR) (. \".\"))");

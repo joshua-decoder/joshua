@@ -126,18 +126,31 @@ public class KBestExtractor {
   }
 
   /**
-   * k starts from 1.
+   * Returns the kth derivation.
+   * 
+   * You may need to reset_state() before you call this function for the first time.
+   * 
+   * @param node the node to start at
+   * @param k the kth best derivation (indexed from 1)
+   * @return the derivation object
+   */
+  public DerivationState getKthDerivation(HGNode node, int k) {
+    VirtualNode virtualNode = getVirtualNode(node);
+    return virtualNode.lazyKBestExtractOnNode(this, k);
+  }
+  
+  /**
+   * Compute the string that is output from the decoder, using the "output-format" config file
+   * parameter as a template.
    * 
    * You may need to reset_state() before you call this function for the first time.
    */
   public String getKthHyp(HGNode node, int k) {
 
-    VirtualNode virtualNode = getVirtualNode(node);
-
     String outputString = null;
 
     // Determine the k-best hypotheses at each HGNode
-    DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
+    DerivationState derivationState = getKthDerivation(node, k);
     if (derivationState != null) {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
@@ -159,6 +172,7 @@ public class KBestExtractor {
           .replace("%c", String.format("%.3f", derivationState.getModelCost()));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
+        // TODO: this always outputs the Viterbi tree
         HyperEdge topEdge = derivationState.edge.getTailNodes().get(0).bestHyperedge.getTailNodes()
             .get(0).bestHyperedge;
         Rule rootRule = topEdge.getRule();
@@ -170,7 +184,7 @@ public class KBestExtractor {
               Tree.buildTree(rootRule, rootTails, Integer.MAX_VALUE).toString());
         } else {
           // TODO: add functionality to HypothesisExtractor
-          outputString = outputString.replace("%t", "NOT IMPLEMENTED");
+          outputString = outputString.replace("%t", "Outputting the target-side tree structure only works if you specify a -fragment-map");
         }
       }
 
@@ -197,7 +211,9 @@ public class KBestExtractor {
   }
 
   /**
-   * This is the entry point for extracting k-best hypotheses.
+   * This is the entry point for extracting k-best hypotheses. It computes all of them, writing
+   * the results to the BufferedWriter passed in. If you want intermediate access to the k-best
+   * derivations, you'll want to call getKthHyp() or getKthDerivation() directly.
    * 
    * @param hg the hypergraph to extract from
    * @param featureFunctions the feature functions to use
@@ -249,14 +265,13 @@ public class KBestExtractor {
     return virtualNode;
   }
 
-  // =========================== class VirtualNode ===========================
+
   /**
    * This class is essentially a wrapper around an HGNode, annotating it with information needed to
-   * record which hypotheses have been explored from this point.
-   * 
-   * to seed the kbest extraction, it only needs that each hyperedge should have the best_cost
-   * properly set, and it does not require any list being sortedinstead, the priority queue
-   * heap_cands will do internal sorting
+   * record which hypotheses have been explored from this point. There is one virtual node for
+   * each HGNode in the underlying hypergraph. This VirtualNode maintains information about the
+   * k-best derivations from that point on, retaining the derivations computed so far and a priority 
+   * queue of candidates.
    */
 
   private class VirtualNode {
@@ -270,8 +285,9 @@ public class KBestExtractor {
     // remember frontier states, best-first; in the paper, it is called cand[v]
     private PriorityQueue<DerivationState> candHeap = null;
 
-    // remember which DerivationState has been explored; why duplicate,
-    // e.g., 1 2 + 1 0 == 2 1 + 0 1
+    // Remember which DerivationState has been explored (positions in the hypercube). This allows
+    // us to avoid duplicated states that are reached from different places of expansion, e.g.,
+    // position (2,2) can be reached be extending (1,2) and (2,1).
     private HashSet<DerivationState> derivationTable = null;
 
     // This records unique *strings* at each item, used for unique-nbest-string extraction.
@@ -517,32 +533,34 @@ public class KBestExtractor {
     }
   };
 
-  // ===============================================
-  // class DerivationState
-  // ===============================================
-  /*
-   * each Node will maintain a list of this, each of which corresponds to a hyperedge and its
-   * children's ranks. remember the ranks of a hyperedge node used for kbest extraction
+  /**
+   * A DerivationState describes which path to follow through the hypergraph. For example, it
+   * might say to use the 1-best from the first tail node, the 9th-best from the second tail node,
+   * and so on. This information is represented recursively through a chain of DerivationState
+   * objects. This function follows that chain, extracting the information according to a number
+   * of parameters, and returning results to a string, and also (optionally) accumulating the
+   * feature values into the passed-in FeatureVector.
    */
 
   // each DerivationState roughly corresponds to a hypothesis
-  private class DerivationState implements Comparable<DerivationState> {
+  public class DerivationState implements Comparable<DerivationState> {
     /* The edge ("e" in the paper) */
-    HyperEdge edge;
+    public HyperEdge edge;
 
     /* The edge's parent node */
-    HGNode parentNode;
+    public HGNode parentNode;
 
     /*
-     * This state's position in its parent's Item.l_hyperedges (used for signature calculation).
+     * This state's position in its parent node's list of incoming hyperedges (used in signature
+     * calculation)
      */
-    int edgePos;
+    public int edgePos;
 
     /*
      * The rank item to select from each of the incoming tail nodes ("j" in the paper, an ArrayList
      * of size |e|)
      */
-    int[] ranks;
+    public int[] ranks;
 
     /*
      * The cost of the hypothesis, including a weighted BLEU score, if any.
@@ -692,23 +710,6 @@ public class KBestExtractor {
       return visitor;
     }
 
-    /**
-     * A DerivationState describes which path to follow through the hypergraph. For example, it
-     * might say to use the 1-best from the first tail node, the 9th-best from the second tail node,
-     * and so on. This information is represented recursively through a chain of DerivationState
-     * objects. This function follows that chain, extracting the information according to a number
-     * of parameters, and returning results to a string, and also (optionally) accumulating the
-     * feature values into the passed-in FeatureVector.
-     * 
-     * If "features" is null, then no replaying of feature functions is necessary.
-     * 
-     * @param kbestExtractor
-     * @param useTreeFormat
-     * @param features
-     * @param models
-     * @param side
-     * @return
-     */
     private String getHypothesis() {
       return getHypothesis(defaultSide);
     }
@@ -732,12 +733,11 @@ public class KBestExtractor {
      * function looks up the VirtualNode corresponding to the HGNode pointed to by the edge's
      * {tailNodeIndex}th tail node.
      * 
-     * @param kbestExtractor
      * @param edge
      * @param tailNodeIndex
      * @return
      */
-    private DerivationState getChildDerivationState(HyperEdge edge, int tailNodeIndex) {
+    public DerivationState getChildDerivationState(HyperEdge edge, int tailNodeIndex) {
       HGNode child = edge.getTailNodes().get(tailNodeIndex);
       VirtualNode virtualChild = getVirtualNode(child);
       return virtualChild.nbests.get(ranks[tailNodeIndex] - 1);

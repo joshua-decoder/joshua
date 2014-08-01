@@ -1,6 +1,7 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
@@ -62,10 +64,13 @@ public class Chart {
   int nMerged = 0;
   int nAdded = 0;
   int nDotitemAdded = 0; // note: there is no pruning in dot-item
-  int nCalledComputeNode = 0;
 
-  int segmentID;
-
+  public int sentenceID() {
+    if (sentence != null)
+      return sentence.id();
+    return -1;
+  }
+  
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================
@@ -121,7 +126,6 @@ public class Chart {
 
     this.cells = new ChartSpan<Cell>(sourceLength, null);
 
-    this.segmentID = sentence.id();
     this.goalSymbolID = Vocabulary.id(goalSymbol);
     this.goalBin = new Cell(this, this.goalSymbolID);
     
@@ -257,14 +261,19 @@ public class Chart {
   // ===============================================================
 
   /**
-   * Construct the hypergraph with the help from DotChart.
+   * Construct the hypergraph with the help from DotChart using cube pruning. Cube pruning occurs
+   * at the span level, with all completed rules from the dot chart competing against each other;
+   * that is, rules with different source sides *and* rules sharing a source side but with different
+   * target sides are all in competition with each other. 
+   * 
+   * Terminal rules are added to the chart directly.
+   * 
+   * Rules with nonterminals are added to the list of candidates. The candidates list is seeded
+   * with the list of all rules and, for each nonterminal in the rule, the 1-best tail node
+   * for that nonterminal and subspan. If the maximum arity of a rule is R, then the dimension of the
+   * hypercube is R + 1, since the first dimension is used to record the rule.
    */
   private void completeSpan(int i, int j) {
-
-    // System.err.println("[" + segmentID + "] SPAN(" + i + "," + j + ")");
-
-    // StateConstraint stateConstraint = sentence.target() != null ? new StateConstraint(
-    // Vocabulary.START_SYM + " " + sentence.target() + " " + Vocabulary.STOP_SYM) : null;
 
     StateConstraint stateConstraint = null;
     if (sentence.target() != null)
@@ -272,46 +281,27 @@ public class Chart {
       stateConstraint = new StateConstraint(Vocabulary.START_SYM + " " + sentence.target() + " "
           + Vocabulary.STOP_SYM);
 
-    /*
-     * We want to implement proper cube-pruning at the span level, with pruning controlled with the
-     * specification of a single parameter, a pop-limit on the number of items. This pruning would
-     * be across all DotCharts (that is, across all grammars) and across all items in the span,
-     * regardless of other state (such as language model state or the lefthand side).
-     * 
-     * The existing implementation prunes in a much less straightforward fashion. Each Dotnode
-     * within each span is examined, and applicable rules compete amongst each other. The number of
-     * them that is kept is not absolute, but is determined by some combination of the maximum heap
-     * size and the score differences. The score differences occur across items in the whole span.
-     */
-
     /* STEP 1: create the heap, and seed it with all of the candidate states */
     PriorityQueue<CubePruneState> candidates = new PriorityQueue<CubePruneState>();
 
     // this records states we have already visited
     HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
 
-    // seed it with the beginning states
-    // for each applicable grammar
+    /* Look at all the grammars, seeding the chart with completed rules from the DotChart */
     for (int g = 0; g < grammars.length; g++) {
       if (!grammars[g].hasRuleForSpan(i, j, inputLattice.distance(i, j))
           || null == dotcharts[g].getDotCell(i, j))
         continue;
+
       // for each rule with applicable rules
       for (DotNode dotNode : dotcharts[g].getDotCell(i, j).getDotNodes()) {
         RuleCollection ruleCollection = dotNode.getApplicableRules();
         if (ruleCollection == null)
           continue;
 
-        // Create the Cell if necessary.
         if (cells.get(i, j) == null)
           cells.set(i, j, new Cell(this, goalSymbolID));
 
-        /*
-         * TODO: This causes the whole list of rules to be copied, which is unnecessary when there
-         * are not actually any constraints in play.
-         */
-        // List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j,
-        // ruleCollection.getSortedRules(this.featureFunctions));
         List<Rule> rules = ruleCollection.getSortedRules(this.featureFunctions);
         SourcePath sourcePath = dotNode.getSourcePath();
 
@@ -320,36 +310,44 @@ public class Chart {
 
         int arity = ruleCollection.getArity();
 
-        // Rules that have no nonterminals in them so far
-        // are added to the chart with no pruning
         if (arity == 0) {
+          /* Terminal productions are added directly to the chart */
           for (Rule rule : rules) {
-            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
-                j, sourcePath, this.segmentID);
+            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, null, i,
+                j, sourcePath, this.sentence.id());
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
               cells.get(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
           }
         } else {
-
+          /* Productions with rank > 0 are subject to cube pruning */
+          
           Rule bestRule = rules.get(0);
 
-          List<HGNode> currentAntNodes = new ArrayList<HGNode>();
+          List<HGNode> currentTailNodes = new ArrayList<HGNode>();
           List<SuperNode> superNodes = dotNode.getAntSuperNodes();
           for (SuperNode si : superNodes) {
-            // TODO: si.nodes must be sorted
-            currentAntNodes.add(si.nodes.get(0));
+            currentTailNodes.add(si.nodes.get(0));
           }
 
+          /* `ranks` records the current position in the cube. the 0th index is the rule, and the
+           * remaining indices 1..N correspond to the tail nodes (= nonterminals in the rule). These
+           * tail nodes are represented by SuperNodes, which group together items with the same
+           * nonterminal but different DP state (e.g., language model state)
+           */
+          int[] ranks = new int[1 + superNodes.size() * 2];
+          Arrays.fill(ranks, 1);
+          
+          DerivationState[] derivationStates = new DerivationState[superNodes.size()];
+          for (int k = 0; k < derivationStates.length; k++) {
+            derivationStates[k] = kBestExtractor.getKthDerivation(currentTailNodes.get(k), 1);
+          }
+          
+          /* Score the rule application */
           ComputeNodeResult result = new ComputeNodeResult(featureFunctions, bestRule,
-              currentAntNodes, i, j, sourcePath, this.segmentID);
+              currentTailNodes, derivationStates, i, j, sourcePath, this.sentence.id());
 
-          int[] ranks = new int[1 + superNodes.size()];
-          for (int r = 0; r < ranks.length; r++)
-            ranks[r] = 1;
+          CubePruneState bestState = new CubePruneState(result, ranks, rules, currentTailNodes, dotNode);
 
-          CubePruneState bestState = new CubePruneState(result, ranks, rules, currentAntNodes);
-
-          bestState.setDotNode(dotNode);
           candidates.add(bestState);
           visitedStates.add(bestState);
         }
@@ -379,30 +377,31 @@ public class Chart {
        * Expand the hypothesis by walking down a step along each dimension of the cube, in turn. k =
        * 0 means we extend the rule being used; k > 0 expands the corresponding tail node.
        */
-      for (int k = 0; k < state.ranks.length; k++) {
+
+      // TODO: go through the derivation states
+      for (int k = 0; k <= state.ranks.length / 2; k++) {
 
         /* Copy the current ranks, then extend the one we're looking at. */
-        int[] newRanks = new int[state.ranks.length];
-        System.arraycopy(state.ranks, 0, newRanks, 0, state.ranks.length);
-        newRanks[k]++;
+        int[] nextRanks = new int[state.ranks.length];
+        System.arraycopy(state.ranks, 0, nextRanks, 0, state.ranks.length);
+        nextRanks[k]++;
 
         /* We might have reached the end of something (list of rules or tail nodes) */
-        if ((k == 0 && newRanks[k] > rules.size())
-            || (k != 0 && newRanks[k] > superNodes.get(k - 1).nodes.size()))
+        if ((k == 0 && nextRanks[k] > rules.size())
+            || (k != 0 && nextRanks[k] > superNodes.get(k - 1).nodes.size()))
           continue;
 
         /* Use the updated ranks to assign the next rule and tail node. */
-        Rule nextRule = rules.get(newRanks[0] - 1);
-        // HGNode[] nextAntNodes = new HGNode[state.antNodes.size()];
-        List<HGNode> nextAntNodes = new ArrayList<HGNode>();
-        for (int x = 0; x < state.ranks.length - 1; x++)
-          nextAntNodes.add(superNodes.get(x).nodes.get(newRanks[x + 1] - 1));
+        Rule nextRule = rules.get(nextRanks[0] - 1);
+        List<HGNode> nextTailNodes = new ArrayList<HGNode>();
+        for (int x = 0; x < (state.ranks.length - 1) / 2; x++)
+          nextTailNodes.add(superNodes.get(x).nodes.get(nextRanks[x + 1] - 1));
 
         /* Create the next state. */
+        // TODO: derivation states
         CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
-            nextRule, nextAntNodes, i, j, sourcePath, this.segmentID), newRanks, rules,
-            nextAntNodes);
-        nextState.setDotNode(dotNode);
+            nextRule, nextTailNodes, null, i, j, sourcePath, this.sentence.id()), nextRanks, rules,
+            nextTailNodes, dotNode);
 
         /* Skip states that have been explored before. */
         if (visitedStates.contains(nextState))
@@ -550,7 +549,7 @@ public class Chart {
 
           for (Rule rule : rules) { // for each unary rules
             ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule,
-                antecedents, i, j, new SourcePath(), this.segmentID);
+                antecedents, null, i, j, new SourcePath(), this.sentence.id());
             HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents,
                 new SourcePath(), true);
 
@@ -576,11 +575,8 @@ public class Chart {
       this.cells.set(i, j, new Cell(this, this.goalSymbolID));
     }
 
-    // System.err.println(String.format("ADDAXIOM(%d,%d,%s,%s", i, j, rule,
-    // srcPath));
-
     this.cells.get(i, j).addHyperEdgeInCell(
-        new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, segmentID), rule,
+        new ComputeNodeResult(this.featureFunctions, rule, null, null, i, j, srcPath, sentence.id()), rule,
         i, j, null, srcPath, false);
   }
 }

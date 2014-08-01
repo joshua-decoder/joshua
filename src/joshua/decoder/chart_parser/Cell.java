@@ -80,7 +80,7 @@ class Cell {
         antNodes.add(antNode);
 
         float finalTransitionLogP = ComputeNodeResult.computeFinalCost(featureFunctions, antNodes,
-            0, sentenceLength, null, this.chart.segmentID);
+            0, sentenceLength, null, this.chart.sentenceID());
 
         List<HGNode> previousItems = new ArrayList<HGNode>();
         previousItems.add(antNode);
@@ -103,7 +103,7 @@ class Cell {
         logger.severe("goalItem is null!");
         return false;
       } else {
-        logger.info(String.format("Sentence id=" + this.chart.segmentID + "; BestlogP=%.3f",
+        logger.info(String.format("Sentence id=" + this.chart.sentenceID() + "; BestlogP=%.3f",
             goalItem.bestHyperedge.getBestDerivationScore()));
       }
     }

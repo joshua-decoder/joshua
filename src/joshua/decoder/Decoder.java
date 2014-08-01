@@ -653,6 +653,8 @@ public class Decoder {
    */
   private void initializeFeatureFunctions() {
 
+    usingNonlocalFeatures = true;
+    
     for (String featureLine : joshuaConfiguration.features) {
 
       // Get rid of the leading crap.

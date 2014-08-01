@@ -19,13 +19,13 @@ public class CubePruneState implements Comparable<CubePruneState> {
   List<Rule> rules;
   private DotNode dotNode;
 
-  public CubePruneState(ComputeNodeResult state, int[] ranks, List<Rule> rules, List<HGNode> antecedents) {
-    this.computeNodeResult = state;
+  public CubePruneState(ComputeNodeResult score, int[] ranks, List<Rule> rules, List<HGNode> antecedents, DotNode dotNode) {
+    this.computeNodeResult = score;
     this.ranks = ranks;
     this.rules = rules;
     // create a new vector is critical, because currentAntecedents will change later
     this.antNodes = new ArrayList<HGNode>(antecedents);
-    this.dotNode = null;
+    this.dotNode = dotNode;
   }
 
   /**

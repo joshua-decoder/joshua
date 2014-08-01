@@ -88,7 +88,7 @@ public class ViterbiExtractor {
     List<HyperEdge> hyperedges = new ArrayList<HyperEdge>(1);
     HyperEdge cloneEdge = cloneHyperedge(inNode.bestHyperedge);
     hyperedges.add(cloneEdge);
-    return new HGNode(inNode.i, inNode.j, inNode.lhs, hyperedges, cloneEdge, inNode.dpStates);
+    return new HGNode(inNode.i, inNode.j, inNode.lhs, hyperedges, cloneEdge, inNode.getDPStates());
   }
 
 

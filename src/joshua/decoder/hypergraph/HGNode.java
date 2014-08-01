@@ -6,15 +6,14 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 
 /**
- * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing.
+ * A node in a hypergraph, i.e., an item in the parsing chart.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author Juri Ganitkevitch, <juri@cs.jhu.edu>
  */
-
-// TODO: handle the case that the Hypergraph only maintains the one-best tree
 
 public class HGNode {
 
@@ -26,18 +25,20 @@ public class HGNode {
   // each hyperedge is an "and" node
   public List<HyperEdge> hyperedges = null;
 
-  // used in pruning, compute_item, and transit_to_goal
+  // cache of the best hyperedge
   public HyperEdge bestHyperedge = null;
 
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
-  List<DPState> dpStates;
+  private List<DPState> dpStates;
 
   private Signature signature = null;
 
   // For pruning purposes.
   public boolean isDead = false;
   private float score = 0.0f;
+  
+  DerivationState derivationState;
 
   // ===============================================================
   // Constructors

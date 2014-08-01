@@ -3,6 +3,7 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import joshua.decoder.ff.NonLocalFF;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
@@ -10,7 +11,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
-
+import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 
 /**
  * This class computes the cost of applying a rule.
@@ -21,7 +22,7 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public class ComputeNodeResult {
 
-  // The cost of applying a rule at a particular spot in the hypergraph.
+  // The cost incurred by the rule itself (and all associated feature functions)
   private float transitionCost;
 
   // transitionCost + the Viterbi costs of the tail nodes.
@@ -31,20 +32,20 @@ public class ComputeNodeResult {
   private float pruningCostEstimate;
 
   // The StateComputer objects themselves serve as keys.
-  List<DPState> dpStates;
-
+  private List<DPState> dpStates;
+  
   /**
    * Computes the new state(s) that are produced when applying the given rule to the list of tail
    * nodes. Also computes a range of costs of doing so (the transition cost, the total (Viterbi)
    * cost, and a score that includes a future cost estimate).
    */
   public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
-      List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID) {
+      List<HGNode> tailNodes, DerivationState[] ranks, int i, int j, SourcePath sourcePath, int sentID) {
 
     // The total Viterbi cost of this edge. This is the Viterbi cost of the tail nodes, plus
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
-
+    
     /*
      * Here we sum the accumulated cost of each of the tail nodes. The total cost of the new
      * hyperedge (the inside or Viterbi cost) is the sum of these nodes plus the cost of the
@@ -71,6 +72,10 @@ public class ComputeNodeResult {
      */
     for (FeatureFunction feature : featureFunctions) {
       FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator(); 
+
+      if (feature instanceof NonLocalFF) {
+        ((NonLocalFF)feature).setRanks(ranks);
+      }
       DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentID, acc);
       transitionCost += acc.getScore();
 
@@ -136,10 +141,18 @@ public class ComputeNodeResult {
     return this.pruningCostEstimate;
   }
 
+  /**
+   *  The complete cost of the Viterbi derivation at this point
+   */
   float getViterbiCost() {
     return this.viterbiCost;
   }
 
+  /**
+   * The cost incurred by this edge alone
+   * 
+   * @return
+   */
   float getTransitionCost() {
     return this.transitionCost;
   }
