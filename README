@@ -28,6 +28,16 @@ Then, compile Joshua by typing:
     ant devel
     ant all
 
+Some issues you may encounter:
+   1. You get a message stating: "no ken in java.library.path"
+     Symptoms: for some reason your Ken library didn't build.
+     Causes:   you are missing the boost library
+     Reference URLs:
+       https://groups.google.com/forum/#!topic/joshua_support/SiGO41tkpsw
+       http://stackoverflow.com/questions/12583080/c-library-in-using-boost-library
+     Corrective Action: 
+       Install Boost library: It may be as easy as sudo yum install boost-devel, otherwise, download boost from source, build and install.
+
 The basic method for invoking the decoder looks like this:
 
     cat SOURCE | JOSHUA -c CONFIG > OUTPUT
