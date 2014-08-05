@@ -18,7 +18,7 @@
   <property name="testng" value="${lib}/testng-6.7.jar" />
   <!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
 
-  <property name="cli" value="commons-cli-2.0-SNAPSHOT.jar" />
+  <property name="cli" value="commons-cli-1.2.jar"/>
 
   <path id="compile.all.classpath">
     <fileset dir="${lib}">
