@@ -4,7 +4,7 @@
     <dependency org="net.sourceforge.ant-doxygen" name="ant-doxygen" rev="1.6.1" />
     <dependency org="asm" name="asm" rev="3.1"/>
     <dependency org="com.amazonaws" name="aws-java-sdk" rev="1.1.3"/>
-    <dependency org="commons-cli" name="commons-cli" rev="2.0-SNAPSHOT" />
+    <dependency org="org.apache.commons" name="commons-cli" rev="1.2"/>
     <dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
     <dependency org="jaxen" name="jaxen" rev="1.1.1"/>
     <dependency org="net.sf.jung" name="jung-algorithms" rev="2.0"/>
