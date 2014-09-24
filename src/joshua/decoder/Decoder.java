@@ -36,6 +36,7 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
+import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
@@ -566,8 +567,12 @@ public class Decoder {
 
         } else if (format.equals("thrax") || format.equals("regexp")) {
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
-              joshuaConfiguration.default_non_terminal, span_limit,joshuaConfiguration);
+              joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
+
+        } else if (format.equals("phrase")) {
+          grammar = new PhraseTable(file, null, joshuaConfiguration);
         }
+        
         this.grammarFactories.add(grammar);
 
         // Record the owner so we can create a feature function for her.

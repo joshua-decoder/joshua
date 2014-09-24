@@ -87,7 +87,6 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
    */
   public StateProbPair probRule(long[] words, long poolPointer) {
 
-
     StateProbPair pair = null;
     try {
       pair = probRule(pointer, poolPointer, words);
@@ -98,6 +97,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
     return pair;
   }
+  
+
 
   /**
    * Inner class used to hold the results returned from KenLM with left-state minimization. Note

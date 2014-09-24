@@ -97,7 +97,9 @@ public class Sentence {
 
   /**
    * Returns the length of the sentence. For lattices, the length is the shortest path through the
-   * lattice.
+   * lattice. The length includes the <s> and </s> sentence markers. 
+   * 
+   * @return number of input tokens + 2 (for start and end of sentence markers)
    */
   public int length() {
     return this.intLattice().getShortestDistance();
@@ -291,5 +293,9 @@ public class Sentence {
       sb.append(" ||| " + target());
     }
     return sb.toString();
+  }
+
+  public boolean hasPath(int begin, int end) {
+    return intLattice().distance(begin, end) != -1;
   }
 }

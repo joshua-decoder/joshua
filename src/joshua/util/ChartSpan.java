@@ -5,7 +5,7 @@ package joshua.util;
  * over the length-n input sentence, 0 <= i <= j <= n. These charts are used for many things; for
  * example, lattices use a chart to denote whether there is a path between nodes i and j, and what
  * their costs is, and the decoder uses charts to record the partial application of rules (
- * {@link DotChart}) and the existence of proved items ({@link Chart}).
+ * {@link DotChart}) and the existence of proved items ({@link PhraseChart}).
  * 
  * The dummy way to implement a chart is to initialize a two-dimensional array; however, this wastes
  * a lot of space, because the constraint (i <= j) means that only half of this space can ever be

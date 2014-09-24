@@ -14,6 +14,8 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.phrase.Stacks;
 import joshua.decoder.segment_file.Sentence;
 import joshua.corpus.Vocabulary;
 
@@ -99,14 +101,27 @@ public class DecoderThread extends Thread {
     if (joshuaConfiguration.segment_oovs)
       sentence.segmentOOVs(grammars);
 
-    /* Seeding: the chart only sees the grammars, not the factories */
-    Chart chart = new Chart(sentence, this.featureFunctions, grammars,
-        joshuaConfiguration.goal_symbol, joshuaConfiguration);
-
-    /* Parsing */
+    /**
+     * Joshua supports (as of September 2014) both phrase-based and hierarchical decoding. Here
+     * we build the appropriate chart. The output of both systems is a hypergraph, which is then
+     * used for further processing (e.g., k-best extraction).
+     */
     HyperGraph hypergraph = null;
+    KBestExtractor kBestExtractor = null;
     try {
-      hypergraph = chart.expand();
+
+      if (joshuaConfiguration.phrase_based) {
+        Stacks stacks = new Stacks(sentence, this.featureFunctions, grammars, joshuaConfiguration);
+        
+        hypergraph = stacks.search();
+      } else {
+        /* Seeding: the chart only sees the grammars, not the factories */
+        Chart chart = new Chart(sentence, this.featureFunctions, grammars,
+            joshuaConfiguration.goal_symbol, joshuaConfiguration);
+
+        hypergraph = chart.expand();
+      }
+      
     } catch (java.lang.OutOfMemoryError e) {
       logger.warning(String.format("sentence %d: out of memory", sentence.id()));
       hypergraph = null;
@@ -120,7 +135,7 @@ public class DecoderThread extends Thread {
 
     /* Return the translation unless we're doing synchronous parsing. */
     if (!joshuaConfiguration.parse || hypergraph == null) {
-      return new Translation(sentence, hypergraph, chart, featureFunctions, joshuaConfiguration);
+      return new Translation(sentence, hypergraph, kBestExtractor, featureFunctions, joshuaConfiguration);
     }
 
     /*****************************************************************************************/
@@ -139,7 +154,7 @@ public class DecoderThread extends Thread {
     /* Step 2. Create a new chart and parse with the instantiated grammar. */
     Grammar[] newGrammarArray = new Grammar[] { newGrammar };
     Sentence targetSentence = new Sentence(sentence.target(), sentence.id(), joshuaConfiguration);
-    chart = new Chart(targetSentence, featureFunctions, newGrammarArray, "GOAL",joshuaConfiguration);
+    Chart chart = new Chart(targetSentence, featureFunctions, newGrammarArray, "GOAL",joshuaConfiguration);
     int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
     String goalSymbolString = Vocabulary.word(goalSymbol);
     logger.info(String.format("Sentence %d: goal symbol is %s (%d).", sentence.id(),
@@ -156,7 +171,7 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
-    return new Translation(sentence, englishParse, chart, featureFunctions, joshuaConfiguration); // or do something else
+    return new Translation(sentence, englishParse, chart.kBestExtractor, featureFunctions, joshuaConfiguration); // or do something else
   }
 
   private Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {

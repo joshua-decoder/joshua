@@ -105,7 +105,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * 
    * @param tail
    * @param head
-   * @return
+   * @return the distance, a positive number, or -1 if there is no path between the nodes
    */
   public int distance(Arc<Value> arc) {
     return this.getShortestPath(arc.getTail().getNumber(), arc.getHead().getNumber());
@@ -367,7 +367,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   private ChartSpan<Integer> calculateAllPairsShortestPath() {
 
-    ChartSpan<Integer> distance = new ChartSpan<Integer>(nodes.size(), Integer.MAX_VALUE);
+    ChartSpan<Integer> distance = new ChartSpan<Integer>(nodes.size(), -1);
     distance.setDiagonal(0);
 
     /* Mark reachability between immediate neighbors */

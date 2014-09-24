@@ -169,8 +169,17 @@ public class JoshuaConfiguration {
    * nonterminal may be substituted for any other nonterminal (except for OOV and GOAL)
    */
   public boolean fuzzy_matching = false;
+
   public static final String SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME = "fuzzy_matching";
 
+  /***
+   * Phrase-based decoding parameters.
+   */
+  
+  public boolean phrase_based = false;
+  
+  public int reordering_limit = 8;
+  
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
    * This is useful when for example making different calls to the decoder within the same java
@@ -216,6 +225,8 @@ public class JoshuaConfiguration {
     features = new ArrayList<String>();
     weights = new ArrayList<String>();
     server_port = 0;
+    
+    reordering_limit = 8;
     logger.info("...done");
   }
 
@@ -438,7 +449,13 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("fragment-map"))) {
             fragmentMapFile = fds[1];
             Tree.readMapping(fragmentMapFile);
+          
+          /** PHRASE-BASED PARAMETERS **/
+
+          } else if (parameter.equals(normalize_key("reordering-limit"))) {
+            reordering_limit = Integer.parseInt(fds[1]);
           }
+            
 
           else {
 
