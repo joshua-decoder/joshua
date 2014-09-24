@@ -535,51 +535,48 @@ public class Tree implements Serializable {
       }
     }
 
-    /* Match the nonterminals in the tree's yield to the derivation states */
-    if (derivationStates != null && derivationStates.length > 0 && maxDepth > 0) {
-      List<Tree> frontier = tree.getNonterminalYield();
+    List<Tree> frontier = tree.getNonterminalYield();
 
-      /* The English side of a rule is a sequence of integers. Nonnegative integers are word
-       * indices in the Vocabulary, while negative indices are used to nonterminals. These negative
-       * indices are a *permutation* of the source side nonterminals, which contain the actual
-       * nonterminal Vocabulary indices for the nonterminal names. Here, we convert this permutation
-       * to a nonnegative 0-based permutation and store it in tailIndices. This is used to index 
-       * the incoming DerivationState items, which are ordered by the source side.
-       */
-      ArrayList<Integer> tailIndices = new ArrayList<Integer>();
-      int[] englishInts = rule.getEnglish();
-      for (int i = 0; i < englishInts.length; i++)
-        if (englishInts[i] < 0)
-          tailIndices.add(-(englishInts[i] + 1));
+    /* The English side of a rule is a sequence of integers. Nonnegative integers are word
+     * indices in the Vocabulary, while negative indices are used to nonterminals. These negative
+     * indices are a *permutation* of the source side nonterminals, which contain the actual
+     * nonterminal Vocabulary indices for the nonterminal names. Here, we convert this permutation
+     * to a nonnegative 0-based permutation and store it in tailIndices. This is used to index 
+     * the incoming DerivationState items, which are ordered by the source side.
+     */
+    ArrayList<Integer> tailIndices = new ArrayList<Integer>();
+    int[] englishInts = rule.getEnglish();
+    for (int i = 0; i < englishInts.length; i++)
+      if (englishInts[i] < 0)
+        tailIndices.add(-(englishInts[i] + 1));
 
-      /*
-       * We now have the tree's yield. The substitution points on the yield should match the
-       * nonterminals of the heads of the derivation states. Since we don't know which of the tree's
-       * frontier items are terminals and which are nonterminals, we walk through the tail nodes,
-       * and then match the label of each against the frontier node labels until we have a match.
-       */
-      // System.err.println(String.format("WORDS: %s\nTREE: %s", rule.getEnglishWords(), tree));
-      for (int i = 0; i < derivationStates.length; i++) {
+    /*
+     * We now have the tree's yield. The substitution points on the yield should match the
+     * nonterminals of the heads of the derivation states. Since we don't know which of the tree's
+     * frontier items are terminals and which are nonterminals, we walk through the tail nodes,
+     * and then match the label of each against the frontier node labels until we have a match.
+     */
+    // System.err.println(String.format("WORDS: %s\nTREE: %s", rule.getEnglishWords(), tree));
+    for (int i = 0; i < derivationStates.length; i++) {
 
-        Tree frontierTree = frontier.get(tailIndices.get(i));
-        frontierTree.setBoundary(true);
+      Tree frontierTree = frontier.get(tailIndices.get(i));
+      frontierTree.setBoundary(true);
 
-        HyperEdge nextEdge = derivationStates[i].edge;
-        if (nextEdge != null) {
-          DerivationState[] nextStates = null;
-          if (nextEdge.getTailNodes() != null && nextEdge.getTailNodes().size() > 0) {
-            nextStates = new DerivationState[nextEdge.getTailNodes().size()];
-            for (int j = 0; j < nextStates.length; j++)
-              nextStates[j] = derivationStates[i].getChildDerivationState(nextEdge, j);
-          }
-          Tree childTree = buildTree(nextEdge.getRule(), nextStates, maxDepth - 1);
-
-          /* This can be null if there is no entry for the rule in the map */
-          if (childTree != null)
-            frontierTree.children = childTree.children;
-        } else {
-          frontierTree.children = tree.children;
+      HyperEdge nextEdge = derivationStates[i].edge;
+      if (nextEdge != null) {
+        DerivationState[] nextStates = null;
+        if (nextEdge.getTailNodes() != null && nextEdge.getTailNodes().size() > 0) {
+          nextStates = new DerivationState[nextEdge.getTailNodes().size()];
+          for (int j = 0; j < nextStates.length; j++)
+            nextStates[j] = derivationStates[i].getChildDerivationState(nextEdge, j);
         }
+        Tree childTree = buildTree(nextEdge.getRule(), nextStates, maxDepth - 1);
+
+        /* This can be null if there is no entry for the rule in the map */
+        if (childTree != null)
+          frontierTree.children = childTree.children;
+      } else {
+        frontierTree.children = tree.children;
       }
     }
       

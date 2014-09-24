@@ -3,7 +3,6 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.List;
 
-import joshua.decoder.ff.NonLocalFF;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
@@ -12,6 +11,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class computes the cost of applying a rule.
@@ -39,9 +39,13 @@ public class ComputeNodeResult {
    * nodes. Also computes a range of costs of doing so (the transition cost, the total (Viterbi)
    * cost, and a score that includes a future cost estimate).
    */
-  public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
-      List<HGNode> tailNodes, DerivationState[] ranks, int i, int j, SourcePath sourcePath, int sentID) {
+  public ComputeNodeResult(List<FeatureFunction> featureFunctions, DerivationState derivationState,
+      int i, int j, SourcePath sourcePath, Sentence sentence) {
 
+    Rule rule = derivationState.edge.getRule();
+    List<HGNode> tailNodes = derivationState.edge.getTailNodes();
+    int sentID = sentence.id();
+    
     // The total Viterbi cost of this edge. This is the Viterbi cost of the tail nodes, plus
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
@@ -73,10 +77,7 @@ public class ComputeNodeResult {
     for (FeatureFunction feature : featureFunctions) {
       FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator(); 
 
-      if (feature instanceof NonLocalFF) {
-        ((NonLocalFF)feature).setRanks(ranks);
-      }
-      DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentID, acc);
+      DPState newState = feature.compute(derivationState, i, j, sourcePath, sentence, acc);
       transitionCost += acc.getScore();
 
       if (feature.isStateful()) {
@@ -118,6 +119,27 @@ public class ComputeNodeResult {
    * feature vector is the delta computed by the transition, not the total inside/Viterbi cost of
    * the edge. The transition might increment previous features or introduce new ones entirely.
    */
+  public static FeatureVector computeTransitionFeatures(List<FeatureFunction> featureFunctions,
+      DerivationState state, int i, int j, Sentence sentence) {
+    // Initialize the set of features with those that were present with the rule in the grammar.
+    FeatureVector featureDelta = new FeatureVector();
+    
+    HyperEdge edge = state.edge;
+    int sentID = sentence.id();
+    
+    // === compute feature logPs
+    for (FeatureFunction feature : featureFunctions) {
+      // A null rule signifies the final transition.
+      if (edge.getRule() == null)
+        featureDelta.add(feature.computeFinalFeatures(edge.getTailNodes().get(0), i, j, edge.getSourcePath(), sentID));
+      else {
+        featureDelta.add(feature.computeFeatures(state, i, j, edge.getSourcePath(), sentence));
+      }
+    }
+    
+    return featureDelta;
+  }
+  
   public static FeatureVector computeTransitionFeatures(List<FeatureFunction> featureFunctions,
       HyperEdge edge, int i, int j, int sentID) {
 

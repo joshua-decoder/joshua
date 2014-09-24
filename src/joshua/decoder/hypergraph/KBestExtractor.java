@@ -206,7 +206,6 @@ public class KBestExtractor {
    * Convenience function for k-best extraction that prints to STDOUT.
    */
   public void lazyKBestExtractOnHG(HyperGraph hg, int topN) throws IOException {
-
     lazyKBestExtractOnHG(hg, topN, new BufferedWriter(new OutputStreamWriter(System.out)));
   }
 
@@ -914,10 +913,9 @@ public class KBestExtractor {
     public void before(DerivationState state, int level) {
       if (features != null) {
         HGNode parentNode = state.parentNode;
-        HyperEdge edge = state.edge;
 
-        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
-            parentNode.i, parentNode.j, sentence.id());
+        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, state,
+            parentNode.i, parentNode.j, sentence);
         features.add(transitionCosts);
       }
     }

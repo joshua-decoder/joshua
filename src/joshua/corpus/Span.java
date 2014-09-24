@@ -8,7 +8,6 @@ import java.util.List;
  * Represents a span with an inclusive starting index and an exclusive ending index.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
 public class Span implements Iterable<Integer>, Comparable<Span> {
 

@@ -18,6 +18,7 @@ import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * Feature function that reads in a list of language model fragments and matches them against the
@@ -85,13 +86,6 @@ public class FragmentLMFF extends NonLocalFF {
   /* The location of the file containing the language model fragments */
   private String fragmentLMFile = "";
 
-  /* The ranks to apply to the tail node derivation states */
-  private DerivationState[] ranks = null;
-  
-  public void setRanks(DerivationState[] ranks) {
-    this.ranks = ranks;
-  }
-  
   /**
    * @param weights
    * @param name
@@ -177,6 +171,11 @@ public class FragmentLMFF extends NonLocalFF {
     lmFragments.get(fragment.getRule()).add(fragment);
     numFragments++;
   }
+  
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc) {
+    throw new RuntimeException("THIS SHOULD NEVER BE CALLED");
+  }
 
   /*
    * This function computes the features that fire when the current rule is applied. The features
@@ -186,13 +185,14 @@ public class FragmentLMFF extends NonLocalFF {
    * internal nodes.
    */
   @Override
-  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
-    
-    System.err.println(String.format("RULE: %s  RANKS: %s", rule, ranks));
-    
-    if (rule == null)
+  public DPState compute(DerivationState derivationState, int i, int j, SourcePath sourcePath,
+      Sentence sentence, Accumulator acc) {
+
+    if (derivationState == null) {
       return null;
+    }
+    
+    System.err.println(String.format("RULE: %s  RANKS: %s", derivationState.edge.getRule(), derivationState));
     
     /*
      * Compute the tree from applying the current rule to the list of tail nodes over the
@@ -202,7 +202,7 @@ public class FragmentLMFF extends NonLocalFF {
      * pattern match against it. This would circumvent having to build the tree possibly once every
      * time you try to apply a rule.)
      */
-    Tree baseTree = Tree.buildTree(rule, this.ranks, BUILD_DEPTH);
+    Tree baseTree = Tree.buildTree(derivationState, BUILD_DEPTH);
     
     Stack<Tree> nodeStack = new Stack<Tree>();
     nodeStack.add(baseTree);
@@ -213,11 +213,11 @@ public class FragmentLMFF extends NonLocalFF {
 
       if (lmFragments.get(tree.getRule()) != null) {
         for (Tree fragment : lmFragments.get(tree.getRule())) {
-          // System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree,
-          // match(fragment, tree)));
+           System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree,
+           match(fragment, tree)));
 
           if (fragment.getLabel() == tree.getLabel() && match(fragment, tree)) {
-            // System.err.println(String.format("  FIRING: matched %s against %s", fragment, tree));
+             System.err.println(String.format("  FIRING: matched %s against %s", fragment, tree));
             acc.add(fragment.escapedString(), 1);
             if (OPTS_DEPTH)
               if (fragment.isLexicalized())

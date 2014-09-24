@@ -32,7 +32,7 @@ class Cell {
   private int goalSymID;
 
   // to maintain uniqueness of nodes
-  private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new HashMap<HGNode.Signature, HGNode>();
+  private HashMap<HGNode, HGNode> nodesSigTbl = new HashMap<HGNode, HGNode>();
 
   // signature by lhs
   private Map<Integer, SuperNode> superNodesTbl = new HashMap<Integer, SuperNode>();
@@ -138,8 +138,6 @@ class Cell {
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
 
-    HGNode newNode = null;
-
     // System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
 
     List<DPState> dpStates = result.getDPStates();
@@ -159,13 +157,13 @@ class Cell {
      */
 
     HyperEdge hyperEdge = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
-    newNode = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
+    HGNode newNode = new HGNode(i, j, rule.getLHS(), dpStates, hyperEdge, pruningEstimate);
 
     /**
      * each node has a list of hyperedges, need to check whether the node is already exist, if
      * yes, just add the hyperedges, this may change the best logP of the node
      * */
-    HGNode oldNode = this.nodesSigTbl.get(newNode.signature());
+    HGNode oldNode = this.nodesSigTbl.get(newNode);
     if (null != oldNode) { // have an item with same states, combine items
       this.chart.nMerged++;
 
@@ -211,7 +209,7 @@ class Cell {
    * is worse than the new hyperedge's logP
    * */
   private void addNewNode(HGNode node, boolean noPrune) {
-    this.nodesSigTbl.put(node.signature(), node); // add/replace the item
+    this.nodesSigTbl.put(node, node); // add/replace the item
     this.sortedNodes = null; // reset the list
 
     // since this.sortedItems == null, this is not necessary because we will always call

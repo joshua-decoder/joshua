@@ -30,13 +30,11 @@ public class HGNode {
 
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
-  private List<DPState> dpStates;
-
-  private Signature signature = null;
+  protected List<DPState> dpStates;
 
   // For pruning purposes.
   public boolean isDead = false;
-  private float score = 0.0f;
+  protected float score = 0.0f;
   
   DerivationState derivationState;
 
@@ -116,75 +114,39 @@ public class HGNode {
       return this.dpStates.get(i);
     }
   }
+  
+  private int hash = 0;
 
-  public Signature signature() {
-    if (signature == null)
-      signature = new Signature();
-    return signature;
+  @Override
+  public int hashCode() {
+    if (hash == 0) {
+      hash = 31 * lhs;
+      if (null != dpStates && dpStates.size() > 0)
+        for (DPState dps : dpStates)
+          hash = hash * 19 + dps.hashCode();
+    }
+    return hash;
   }
 
-  public class Signature {
-    // Cached hash code.
-    private int hash = 0;
-
-    @Override
-    public int hashCode() {
-      if (hash == 0) {
-        hash = 31 * lhs;
-        if (null != dpStates && dpStates.size() > 0)
-          for (DPState dps : dpStates)
-            hash = hash * 19 + dps.hashCode();
+  @Override
+  public boolean equals(Object other) {
+    if (other instanceof HGNode) {
+      HGNode that = (HGNode) other;
+      if (lhs != that.lhs)
+        return false;
+      if (dpStates == null)
+        return (that.dpStates == null);
+      if (that.dpStates == null)
+        return false;
+      if (dpStates.size() != that.dpStates.size())
+        return false;
+      for (int i = 0; i < dpStates.size(); i++) {
+        if (!dpStates.get(i).equals(that.dpStates.get(i)))
+          return false;
       }
-      return hash;
+      return true;
     }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other instanceof Signature) {
-        HGNode that = ((Signature) other).node();
-        if (lhs != that.lhs)
-          return false;
-        if (dpStates == null)
-          return (that.dpStates == null);
-        if (that.dpStates == null)
-          return false;
-        if (dpStates.size() != that.dpStates.size())
-          return false;
-        for (int i = 0; i < dpStates.size(); i++) {
-          if (!dpStates.get(i).equals(that.dpStates.get(i)))
-            return false;
-        }
-        return true;
-      }
-      return false;
-    }
-
-    public String toString() {
-      return String.format("%d", hashCode());
-    }
-
-    public HGNode node() {
-      return HGNode.this;
-    }
-  }
-
-  public float getEstTotalLogP() {
-    return this.score;
-  }
-
-  /*
-   * this will called by the sorting in Cell.ensureSorted()
-   */
-  // sort by estTotalLogP: for pruning purpose
-  public int compareTo(HGNode anotherItem) {
-    System.out.println("HGNode, compare functiuon should never be called");
-    System.exit(1);
-    return 0;
-    /*
-     * if (this.estTotalLogP > anotherItem.estTotalLogP) { return -1; } else if (this.estTotalLogP
-     * == anotherItem.estTotalLogP) { return 0; } else { return 1; }
-     */
-
+    return false;
   }
 
   /**

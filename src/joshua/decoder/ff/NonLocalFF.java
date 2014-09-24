@@ -6,24 +6,34 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
-import joshua.decoder.segment_file.Sentence;
 
 /**
- * Stateless feature functions do not contribute any state. You need not implement this class to
- * create a stateless feature function, but it provides a few convenience functions.
+ * Non-local feature functions are computed over k-best derivations, rather than over the hypergraph
+ * directly. For more information, see (especially §3.2--3.3):
+ * 
+ * @formatter:off
+ * @inproceedings{huang2008forest,
+ *   Address = {Columbus, Ohio},
+ *   Author = {Huang, Liang},
+ *   Booktitle = ACL2008,
+ *   Month = {June},
+ *   Title = {Forest Reranking: Discriminative Parsing with Non-Local Features},
+ *   Year = {2008}}
+ * @formatter: on
+ * 
+ * When a non-local feature is requested, the decoder will trigger a few operations that are a bit
+ * more expensive.
  * 
  * @author Matt Post <post@cs.jhu.edu>
- * @author Juri Ganitkevich <juri@cs.jhu.edu>
  */
 
-public abstract class StatelessFF extends FeatureFunction {
+public abstract class NonLocalFF extends FeatureFunction {
 
-  public StatelessFF(FeatureVector weights, String name) {
+  public NonLocalFF(FeatureVector weights, String name) {
     super(weights, name);
   }
 
-  public StatelessFF(FeatureVector weights, String name, String args) {
+  public NonLocalFF(FeatureVector weights, String name, String args) {
     super(weights, name, args);
   }
 
@@ -37,13 +47,6 @@ public abstract class StatelessFF extends FeatureFunction {
    */
   public float estimateCost(Rule rule, int sentID) {
     return 0.0f;
-  }
-  
-  @Override
-  public final DPState compute(DerivationState derivationState, int i, int j, SourcePath sourcePath,
-      Sentence sentence, Accumulator acc) {
-    return compute(derivationState.edge.getRule(), derivationState.edge.getTailNodes(), i, j,
-        sourcePath, sentence.id(), acc);
   }
 
   /**

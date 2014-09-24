@@ -6,6 +6,8 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class defines is the entry point for Joshua's sparse feature implementation. It defines some
@@ -73,21 +75,28 @@ public abstract class FeatureFunction {
   }
 
   /**
-   * The result of applying a rule is a new state. The Accumulator object is responsible for
-   * accumulating the features contributed by the feature template when applying the current rule,
-   * and is available for querying after this call.
+   * Computes a feature function over a derivation state. Use of the generic derivation state permits
+   * the computation of nonlocal features.
    * 
-   * @param rule
-   * @param tailNodes
+   * New more general interface added August 2014, currently just chains to local version using
+   * only values of the current transition (hyperedge). 
+   *  
+   * @param derivationState
    * @param i
    * @param j
    * @param sourcePath
-   * @param sentID
+   * @param sentence
    * @param acc
    * @return
    */
-  public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID, Accumulator acc);
+  public DPState compute(DerivationState state, int i, int j, SourcePath sourcePath,
+      Sentence sentence, Accumulator acc) {
+    return compute(state.edge.getRule(), state.edge.getTailNodes(), i, j, sourcePath, sentence.id(), acc);
+  }
+  
+
+  public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
+      int sentID, Accumulator acc);
 
   /**
    * This is a convenience function for retrieving the cost of applying a rule, provided for
@@ -132,6 +141,15 @@ public abstract class FeatureFunction {
     FeatureAccumulator features = new FeatureAccumulator();
     compute(rule, tailNodes, i, j, sourcePath, sentID, features);
     return features.getFeatures();
+  }
+  
+  public final FeatureVector computeFeatures(DerivationState state, int i, int j, SourcePath path,
+      Sentence sentence) {
+
+    FeatureAccumulator features = new FeatureAccumulator();
+    compute(state, i, j, path, sentence, features);
+    return features.getFeatures();    
+    
   }
 
   /**
