@@ -1,6 +1,6 @@
 package joshua.decoder.ff.tm.format;
 
-import java.util.logging.Logger;
+import java.util.logging.Logger;	
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;

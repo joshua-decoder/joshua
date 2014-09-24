@@ -13,6 +13,7 @@ import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
+import joshua.decoder.ff.tm.format.PhraseFormatReader;
 import joshua.decoder.ff.tm.format.SamtFormatReader;
 
 /**
@@ -22,7 +23,8 @@ import joshua.decoder.ff.tm.format.SamtFormatReader;
  * french sides so far (2) A HashMap of next-layer trie nodes, the next french word used as the key
  * in HashMap
  * 
- * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author Zhifei Li <zhifei.work@gmail.com>
+ * @author Matt Post <post@cs.jhu.edu
  */
 public class MemoryBasedBatchGrammar extends BatchGrammar {
 
@@ -43,6 +45,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private String grammarFile;
 
   private GrammarReader<BilingualRule> modelReader;
+  
+  /* Maximum source phrase length */
+  int maxSourcePhraseLength;
 
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
@@ -50,12 +55,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   // ===============================================================
   // Static Fields
   // ===============================================================
-
-  /*
-   * Three kinds of rules: regular rule (id>0) oov rule (id=0) null rule (id=-1)
-   */
-
-  static int ruleIDCount = 1;
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(MemoryBasedBatchGrammar.class.getName());
@@ -115,12 +114,13 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
         return new HieroFormatReader(grammarFile);
       } else if ("samt".equals(format)) {
         return new SamtFormatReader(grammarFile);
+      } else if ("phrase".equals(format)) {
+        joshuaConfiguration.phrase_based = true;
+        return new PhraseFormatReader(grammarFile);
       } else {
-        System.err.println("* FATAL: unknown grammar format '" + format + "'");
-        System.exit(1);
+        throw new RuntimeException(String.format("* FATAL: unknown grammar format '%s'", format));
       }
     }
-
     return null;
   }
 
@@ -166,7 +166,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
     // TODO: Why two increments?
     this.qtyRulesRead++;
-    ruleIDCount++;
 
 //    if (owner == -1) {
 //      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
@@ -177,6 +176,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     // === identify the position, and insert the trie nodes as necessary
     MemoryBasedTrie pos = root;
     int[] french = rule.getFrench();
+    
+    maxSourcePhraseLength = Math.max(maxSourcePhraseLength, french.length);
+    
     for (int k = 0; k < french.length; k++) {
       int curSymID = french[k];
 
