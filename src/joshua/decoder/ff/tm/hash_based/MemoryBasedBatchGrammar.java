@@ -47,7 +47,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private GrammarReader<BilingualRule> modelReader;
   
   /* Maximum source phrase length */
-  int maxSourcePhraseLength;
+  protected int maxSourcePhraseLength;
 
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
