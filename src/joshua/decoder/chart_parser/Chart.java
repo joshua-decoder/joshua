@@ -209,7 +209,6 @@ public class Chart {
             oovGrammar.addRule(oovRule);
             oovRule.estimateRuleCost(featureFunctions);
           }
-
         }
 
         if (joshuaConfiguration.oov_list != null && joshuaConfiguration.oov_list.length != 0) {

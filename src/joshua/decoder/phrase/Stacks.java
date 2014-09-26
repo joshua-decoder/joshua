@@ -73,6 +73,8 @@ public class Stacks {
 
     // Initialize root hypothesis with <s> context and future cost for everything.
     stacks.get(0).add(new Hypothesis(null, future.Full()));
+    
+    System.err.println("STACKS::SEARCH()");
 
     // Decode with increasing numbers of source words.
     for (int source_words = 1; source_words <= sentence.length(); ++source_words) {
@@ -84,6 +86,8 @@ public class Stacks {
            ++from_stack) {
         int phrase_length = source_words - from_stack;
 
+        System.err.println(String.format("  WORDS %d (STACK %d phrase_length %d)", source_words, from_stack, phrase_length));
+        
         // Iterate over antecedents in this stack.
         for (Hypothesis ant : stacks.get(from_stack)) {
           System.err.println(ant);
@@ -180,6 +184,7 @@ public class Stacks {
     // Next, make Vertex which consists of a single EOS phrase.
     // The search algorithm will attempt to find the best hypotheses in the "cross product" of these two sets.
     // TODO: Maybe this should belong to the phrase table.  It's constant.
+/*
     Phrase eos_phrase = new Phrase("</s>");
     TargetPhrases eos_phrases = new TargetPhrases();
     eos_phrases.add(eos_phrase);
@@ -195,6 +200,7 @@ public class Stacks {
     gen.Search(output);
 
     end = lastStack.isEmpty() ? null : lastStack.get(0);
+    */
     
     return new HyperGraph(end, -1, -1, this.sentence);
   }

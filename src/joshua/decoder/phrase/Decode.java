@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import joshua.corpus.Vocabulary;
-
 public class Decode {
 
   public Decode(PhraseTable table, String source, HashMap<String, ScoreHistory> history_map,
@@ -43,9 +41,8 @@ public class Decode {
     }
     to.write(Float.toString(hypo.Score()));
     for (int i = hypos.size() - 1; i >= 0; i--) { // todo: skip EOS?
-      for (int id : hypos.get(i).Target().getWords()) {
-        to.write(" " + Vocabulary.word(id));
-      }
+      for (int id : hypos.get(i).Target().getEnglish())
+        to.write(hypos.get(i).Target().getEnglishWords() + " ");
     }
   }
 
@@ -60,9 +57,7 @@ public class Decode {
     map.clear();
     float previous_score = 0;
     for (int i = hypos.size() - 1; i >= 0; i--) { // todo: skip EOS?
-      for (int id : hypos.get(i).Target().getWords()) {
-        to.write(Vocabulary.word(id) + " ");
-      }
+      to.write(hypos.get(i).Target().getEnglishWords());
       float this_score = hypos.get(i).Score();
       float score_delta = this_score - previous_score;
       previous_score = this_score;

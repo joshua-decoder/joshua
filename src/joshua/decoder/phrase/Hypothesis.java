@@ -3,12 +3,13 @@ package joshua.decoder.phrase;
 import java.util.List;
 
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
 public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
 
-  private Phrase target;
+  private Rule rule;
   private Coverage coverage;
 
   public String toString() {
@@ -19,7 +20,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   public Hypothesis(List<DPState> states, float score) {
     // super(start, end, lhs, dpstates, hyperedge, pruningestimate);
     super(0, 0, -1, states, null, score);
-    this.target = null;
+    this.rule = null;
     this.coverage = new Coverage();
   }
 
@@ -28,16 +29,15 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
     
     this.coverage = cand.getCoverage();
     
-    Phrase rule = cand.getRule();
-    HyperEdge edge = new HyperEdge(rule, 0.0f, 0.0f, cand.getTailNodes(), null);
+    HyperEdge edge = new HyperEdge(cand.getRule(), 0.0f, 0.0f, cand.getTailNodes(), null);
   }
   
   // Extend a previous hypothesis.
   public Hypothesis(List<DPState> states, float score, Hypothesis previous, int source_begin,
-      int source_end, Phrase target) {
+      int source_end, Rule target) {
 //  super(source_begin, source_end, -1, null, new HyperEdge(), score);
   super(source_begin, source_end, -1, null, null, score);
-    this.target = target;
+    this.rule = target;
     this.coverage = previous.coverage;
     this.coverage.Set(source_begin, source_end);
   }
@@ -65,8 +65,8 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
     return null;
   }
 
-  public Phrase Target() {
-    return target;
+  public Rule Target() {
+    return rule;
   }
 
   @Override

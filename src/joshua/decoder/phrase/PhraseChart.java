@@ -33,7 +33,7 @@ public class PhraseChart {
           tables[i].getMaxSourcePhraseLength());
     sentence_length = source.length();
     
-    System.err.println(String.format("PhraseChart()::Initializing chart of size %d max %d from %s",
+    System.err.println(String.format("PhraseChart()::Initializing chart for sentlen %d max %d from %s",
         sentence_length, max_source_phrase_length, source));
 
     entries = new ArrayList<TargetPhrases>();
@@ -49,14 +49,15 @@ public class PhraseChart {
             SetRange(begin, end,
                 table.Phrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
       }
-
-      /*
-       * // TODO: add passthrough grammar! if (Range(begin, begin + 1) == null)
-       * { // Add passthrough for words not known to the phrase table.
-       * TargetPhrases passThrough = new TargetPhrases();
-       * passThrough.MakePassThrough(scorer, source.intSentence()[begin]);
-       * SetRange(begin, begin + 1, passThrough); }
-       */
+/*
+      // TODO: add passthrough grammar!
+      // Add passthrough for words not known to the phrase table.
+      if (Range(begin, begin + 1) == null) {
+        TargetPhrases passThrough = new TargetPhrases();
+        passThrough.MakePassThrough(scorer, source.intSentence()[begin]);
+        SetRange(begin, begin + 1, passThrough);
+      }
+*/      
     }
   }
 
@@ -69,21 +70,29 @@ public class PhraseChart {
     return max_source_phrase_length;
   }
 
+  /**
+   * Maps two-dimensional span into a one-dimensional array.
+   * 
+   * @param i
+   * @param j
+   * @return offset into private list of TargetPhrases
+   */
+  private int offset(int i, int j) {
+    return i * max_source_phrase_length + j - i - 1;
+  }
+  
   public TargetPhrases Range(int begin, int end) {
-    int index = begin * max_source_phrase_length + end - begin - 1;
+    int index = offset(begin, end);
     if (index < 0 || index >= entries.size() || entries.get(index) == null)
       return null;
 
-    System.err.println(String.format("TargetPhrases::Range(%d,%d) = '%s'", begin, end,
-        entries.get(index)));
     return entries.get(index);
   }
 
   private void SetRange(int begin, int end, RuleCollection to) {
     if (to != null) {
       try {
-        System.err.println(String.format("Chart::SetRange(%d,%d) = %s", begin, end, to));
-        int offset = begin * max_source_phrase_length + end - begin - 1;
+        int offset = offset(begin, end);
         if (entries.get(offset) == null)
           entries.set(offset, new TargetPhrases(to.getRules()));
         else

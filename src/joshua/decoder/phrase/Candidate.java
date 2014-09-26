@@ -6,6 +6,7 @@ import java.util.List;
 
 import joshua.corpus.Span;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
@@ -33,7 +34,7 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
     this.phrases = phrases;
     this.span = span;
     this.ranks = new int[] { 0, 0 };
-    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getScore(); 
+    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
   }
 
   public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
@@ -41,7 +42,7 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
     this.phrases = phrases;
     this.span = span;
     this.ranks = ranks;
-    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getScore(); 
+    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
   }
 
   public float score() {
@@ -86,7 +87,7 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
    * 
    * @return
    */
-  public Phrase getRule() {
+  public Rule getRule() {
     return phrases.get(ranks[1]);
   }
   

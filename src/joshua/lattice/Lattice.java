@@ -40,11 +40,6 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   private List<Node<Value>> nodes;
 
-  /**
-   * Records the shortest distance through the lattice.
-   */
-  private int shortestDistance = Integer.MAX_VALUE;
-
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Lattice.class.getName());
 

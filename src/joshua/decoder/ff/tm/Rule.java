@@ -15,7 +15,7 @@ import joshua.decoder.segment_file.Sentence;
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
-public abstract class Rule {
+public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
 
   // ===============================================================
   // Attributes
@@ -215,6 +215,15 @@ public abstract class Rule {
       }
     }
   };
+  
+
+  public int compare(Rule rule1, Rule rule2) {
+    return NegativeCostComparator.compare(rule1, rule2);
+  }
+
+  public int compareTo(Rule other) {
+    return NegativeCostComparator.compare(this, other);
+  }
 
   public abstract byte[] getAlignment();
 }

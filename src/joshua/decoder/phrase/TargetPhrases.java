@@ -14,11 +14,7 @@ import joshua.decoder.ff.tm.RuleCollection;
  * @author Matt Post
  */
 
-public class TargetPhrases extends ArrayList<Phrase> {
-
-  public String toString() {
-    return "TargetPhrase::toString()";
-  }
+public class TargetPhrases extends ArrayList<Rule> {
 
   public TargetPhrases() {
     super();
@@ -33,7 +29,7 @@ public class TargetPhrases extends ArrayList<Phrase> {
     super();
     
     for (Rule rule: list) {
-      add((Phrase)rule);
+      add(rule);
     }
   }
   
@@ -51,16 +47,18 @@ public class TargetPhrases extends ArrayList<Phrase> {
    */
   public void extend(RuleCollection more) {
     for (Rule rule: more.getRules())
-      add((Phrase)more);
+      add(rule);
   }
   
   public void MakePassThrough(Scorer scorer, int word) {
+    /*
     Phrase target = new Phrase(word);
     float score = scorer.passThrough()
         + scorer.LM(word) 
         + scorer.TargetWordCount(1);
     target.setScore(score);
     add(target);
+    */
   }
   
 }
