@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.RuleCollection;
 
 /**
  * Represents a sorted collection of target-side phrases. Typically, these are phrases
@@ -38,16 +37,6 @@ public class TargetPhrases extends ArrayList<Rule> {
    */
   public void finish() {
     Collections.sort(this);
-  }
-  
-  /**
-   * Extend the current list with items from another list
-   * 
-   * @param more the other list
-   */
-  public void extend(RuleCollection more) {
-    for (Rule rule: more.getRules())
-      add(rule);
   }
   
   public void MakePassThrough(Scorer scorer, int word) {

@@ -1,20 +1,18 @@
 package joshua.decoder.phrase;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.StatefulFF;
-import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.segment_file.Sentence;
 
 public class EdgeGenerator {
 
   private PriorityQueue<Candidate> generate;
   private List<FeatureFunction> featureFunctions;
-  private int sentID;
+  private Sentence sentence;
   private JoshuaConfiguration config;
   
   public EdgeGenerator(Sentence sentence, List<FeatureFunction> features, JoshuaConfiguration config) {
@@ -23,48 +21,26 @@ public class EdgeGenerator {
     generate = new PriorityQueue<Candidate>(1);
 
     this.featureFunctions = features;
-    this.sentID = sentence.id();
+    this.sentence = sentence;
     this.config = config;
   }
 
   /**
    * Receives a partially-initialized translation candidate and places it on the
    * priority queue after scoring it with all of the feature functions. In this
-   * respect it is like ComputeNodeResult (it could make use of that class with
+   * respect it is like {@link CubePruneState} (it could make use of that class with
    * a little generalization of spans / coverage).
    * 
    * @param cand
    */
   public void AddCandidate(Candidate cand) {
-    // TODO: score the candidate here, before adding
-    // This seems to be the most general way to do it, barring, of course,
-    // whether to score
-    // before or after placing on the candidates list
 
-    // TODO: create (and score with LM) new hypothesis
-    cand.states = new ArrayList<DPState>();
-    float transitionCost = 0.0f, futureCostEstimate = 0.0f;
-    for (FeatureFunction feature : featureFunctions) {
-      FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator();
-
-      // TODO: sourcePath not implemented
-      DPState newState = feature.compute(cand.getRule(), cand.getTailNodes(), -1,
-          cand.getTailNodes().get(0).j, null, sentID, acc);
-      transitionCost += acc.getScore();
-
-      if (feature.isStateful()) {
-        futureCostEstimate += feature.estimateFutureCost(cand.getRule(), newState, sentID);
-        cand.states.add(((StatefulFF) feature).getStateIndex(), newState);
-      }
-    }
-    
-    cand.score += transitionCost;
+    // TODO: sourcepath
+    ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, cand.getRule(),
+        cand.getTailNodes(), -1, cand.getSpan().end, null, this.sentence);
+    cand.setResult(result);
     
     generate.add(cand);
-  }
-
-  public boolean Empty() {
-    return generate.isEmpty();
   }
 
   /**

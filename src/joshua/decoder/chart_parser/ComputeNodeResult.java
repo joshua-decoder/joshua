@@ -38,6 +38,71 @@ public class ComputeNodeResult {
    * Computes the new state(s) that are produced when applying the given rule to the list of tail
    * nodes. Also computes a range of costs of doing so (the transition cost, the total (Viterbi)
    * cost, and a score that includes a future cost estimate).
+   * 
+   * Old version that doesn't use the derivation state.
+   */
+  public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule, List<HGNode> tailNodes,
+      int i, int j, SourcePath sourcePath, Sentence sentence) {
+
+    int sentID = sentence.id();
+    
+    // The total Viterbi cost of this edge. This is the Viterbi cost of the tail nodes, plus
+    // whatever costs we incur applying this rule to create a new hyperedge.
+    float viterbiCost = 0.0f;
+    
+    /*
+     * Here we sum the accumulated cost of each of the tail nodes. The total cost of the new
+     * hyperedge (the inside or Viterbi cost) is the sum of these nodes plus the cost of the
+     * transition. Note that this could and should all be generalized to whatever semiring is being
+     * used.
+     */
+    if (null != tailNodes) {
+      for (HGNode item : tailNodes) {
+        viterbiCost += item.bestHyperedge.getBestDerivationScore();
+      }
+    }
+
+    List<DPState> allDPStates = new ArrayList<DPState>();
+
+    // The transition cost is the new cost incurred by applying this rule
+    float transitionCost = 0.0f;
+
+    // The future cost estimate is a heuristic estimate of the outside cost of this edge.
+    float futureCostEstimate = 0.0f;
+    
+    /*
+     * We now iterate over all the feature functions, computing their cost and their expected future
+     * cost.
+     */
+    for (FeatureFunction feature : featureFunctions) {
+      FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator(); 
+
+      DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentence.id(), acc);
+      transitionCost += acc.getScore();
+
+      if (feature.isStateful()) {
+        futureCostEstimate += feature.estimateFutureCost(rule, newState, sentID);
+        allDPStates.add(((StatefulFF)feature).getStateIndex(), newState);
+      }
+    }
+  
+    //transitionCost -= rule.getEstimatedCost();
+    
+    viterbiCost += transitionCost;
+
+//    System.err.println(sb.toString() + " ||| " + viterbiCost + " ||| " + features);
+    
+    // Set the final results.
+    this.pruningCostEstimate = viterbiCost + futureCostEstimate;
+    this.viterbiCost = viterbiCost;
+    this.transitionCost = transitionCost;
+    this.dpStates = allDPStates;
+  }
+  
+  /**
+   * Computes the new state(s) that are produced when applying the given rule to the list of tail
+   * nodes. Also computes a range of costs of doing so (the transition cost, the total (Viterbi)
+   * cost, and a score that includes a future cost estimate).
    */
   public ComputeNodeResult(List<FeatureFunction> featureFunctions, DerivationState derivationState,
       int i, int j, SourcePath sourcePath, Sentence sentence) {
@@ -166,7 +231,7 @@ public class ComputeNodeResult {
   /**
    *  The complete cost of the Viterbi derivation at this point
    */
-  float getViterbiCost() {
+  public float getViterbiCost() {
     return this.viterbiCost;
   }
 
@@ -175,11 +240,11 @@ public class ComputeNodeResult {
    * 
    * @return
    */
-  float getTransitionCost() {
+  public float getTransitionCost() {
     return this.transitionCost;
   }
 
-  List<DPState> getDPStates() {
+  public List<DPState> getDPStates() {
     return this.dpStates;
   }
 

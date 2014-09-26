@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import joshua.corpus.Span;
+import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
@@ -23,18 +24,15 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   // indices into the hypotheses and phrases arrays (used for cube pruning)
   private int[] ranks;
   
-  // the score of the current candidate
-  public float score;
-
-  // the dynamic programming states for the candidate
-  public ArrayList<DPState> states;
+  // scoring and state information 
+  private ComputeNodeResult result;
   
-  public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span) { 
+  public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span) {
     this.hypotheses = hypotheses;
     this.phrases = phrases;
     this.span = span;
     this.ranks = new int[] { 0, 0 };
-    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
+//    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
   }
 
   public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
@@ -42,11 +40,7 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
     this.phrases = phrases;
     this.span = span;
     this.ranks = ranks;
-    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
-  }
-
-  public float score() {
-    return score;
+//    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
   }
   
   public Candidate[] extend() {
@@ -105,5 +99,19 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   
   public Coverage getCoverage() {
     return getHypothesis().GetCoverage().or(getSpan());
+  }
+
+  public void setResult(ComputeNodeResult result) {
+    this.result = result;
+  }
+  
+  public float score() {
+    if (result != null)
+      return result.getPruningEstimate();
+    return 0.0f;
+  }
+  
+  public List<DPState> getStates() {
+    return result.getDPStates();
   }
 }

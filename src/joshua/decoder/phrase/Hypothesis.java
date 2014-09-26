@@ -25,7 +25,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   }
 
   public Hypothesis(Candidate cand) {
-    super(cand.span.start, cand.span.end, -1, cand.states, null, 0.0f);
+    super(cand.span.start, cand.span.end, -1, cand.getStates(), null, 0.0f);
     
     this.coverage = cand.getCoverage();
     

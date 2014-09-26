@@ -142,13 +142,13 @@ public class Stacks {
         Vertex hypos = vertices.get(pair);
         if (hypos.isEmpty())
           continue;
-        
         // Sorts the hypotheses, since we now know that we're done adding them
         hypos.finish();
 
         TargetPhrases phrases = chart.Range(pair.start, pair.end);
-        Candidate candidate = new Candidate(hypos, phrases, pair);
-        gen.AddCandidate(candidate);
+
+        Candidate cand = new Candidate(hypos, phrases, pair);
+        gen.AddCandidate(cand);
       }
 
       //stacks.resize(stacks_.size() + 1); // todo

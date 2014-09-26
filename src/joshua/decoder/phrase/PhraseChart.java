@@ -20,8 +20,9 @@ public class PhraseChart {
   private List<TargetPhrases> entries;
 
   /**
-   * Create a new PhraseChart object, which represents all phrases that are applicable against
-   * the current input sentence. These phrases are extracted from all avialable grammars.
+   * Create a new PhraseChart object, which represents all phrases that are
+   * applicable against the current input sentence. These phrases are extracted
+   * from all avialable grammars.
    * 
    * @param tables
    * @param source
@@ -32,9 +33,10 @@ public class PhraseChart {
       max_source_phrase_length = Math.max(max_source_phrase_length,
           tables[i].getMaxSourcePhraseLength());
     sentence_length = source.length();
-    
-    System.err.println(String.format("PhraseChart()::Initializing chart for sentlen %d max %d from %s",
-        sentence_length, max_source_phrase_length, source));
+
+    System.err.println(String.format(
+        "PhraseChart()::Initializing chart for sentlen %d max %d from %s", sentence_length,
+        max_source_phrase_length, source));
 
     entries = new ArrayList<TargetPhrases>();
     for (int i = 0; i < sentence_length * max_source_phrase_length; i++)
@@ -44,20 +46,20 @@ public class PhraseChart {
     for (int begin = 0; begin != sentence_length; ++begin) {
       for (int end = begin + 1; (end != sentence_length + 1)
           && (end <= begin + max_source_phrase_length); ++end) {
-        if (source.hasPath(begin, end))
+        if (source.hasPath(begin, end)) {
           for (PhraseTable table : tables)
             SetRange(begin, end,
                 table.Phrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
+        }
+
       }
-/*
-      // TODO: add passthrough grammar!
-      // Add passthrough for words not known to the phrase table.
-      if (Range(begin, begin + 1) == null) {
-        TargetPhrases passThrough = new TargetPhrases();
-        passThrough.MakePassThrough(scorer, source.intSentence()[begin]);
-        SetRange(begin, begin + 1, passThrough);
-      }
-*/      
+      /*
+       * // TODO: add passthrough grammar! // Add passthrough for words not
+       * known to the phrase table. if (Range(begin, begin + 1) == null) {
+       * TargetPhrases passThrough = new TargetPhrases();
+       * passThrough.MakePassThrough(scorer, source.intSentence()[begin]);
+       * SetRange(begin, begin + 1, passThrough); }
+       */
     }
   }
 
@@ -80,15 +82,32 @@ public class PhraseChart {
   private int offset(int i, int j) {
     return i * max_source_phrase_length + j - i - 1;
   }
-  
+
+  /**
+   * Returns phrases from all grammars that match the span.
+   * 
+   * @param begin
+   * @param end
+   * @return
+   */
   public TargetPhrases Range(int begin, int end) {
     int index = offset(begin, end);
-    if (index < 0 || index >= entries.size() || entries.get(index) == null)
+    if (index < 0 || index >= entries.size() || entries.get(index) == null) {
+//      System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
+//          entries.get(index) == null ? 0 : entries.get(index).size()));
       return null;
+    }
 
     return entries.get(index);
   }
 
+  /**
+   * Add a set of phrases from a grammar to the current span.
+   * 
+   * @param begin
+   * @param end
+   * @param to
+   */
   private void SetRange(int begin, int end, RuleCollection to) {
     if (to != null) {
       try {
@@ -96,7 +115,10 @@ public class PhraseChart {
         if (entries.get(offset) == null)
           entries.set(offset, new TargetPhrases(to.getRules()));
         else
-          entries.get(offset).extend(to);
+          entries.get(offset).addAll(to.getRules());
+
+//        System.err.println(String.format("PhraseChart::SetRange(%d,%d) now has %d phrases", begin,
+//            end, entries.get(offset).size()));
       } catch (java.lang.IndexOutOfBoundsException e) {
         System.err.println(String.format("Whoops! %s [%d-%d] too long (%d)", to, begin, end,
             entries.size()));
