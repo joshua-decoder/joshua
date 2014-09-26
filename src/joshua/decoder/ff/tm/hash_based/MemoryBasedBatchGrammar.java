@@ -47,7 +47,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   private GrammarReader<BilingualRule> modelReader;
   
   /* Maximum source phrase length */
-  protected int maxSourcePhraseLength;
+  protected int maxSourcePhraseLength = 0;
 
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
@@ -224,4 +224,16 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   public void setRegexpGrammar(boolean value) {
     this.isRegexpGrammar = value;
   }
+  
+  /**
+   * Returns the longest source phrase read.
+   * 
+   * @return
+   */
+  public int getMaxSourcePhraseLength() {
+    /* We added a nonterminal to all source sides, so subtract that off. */
+    return maxSourcePhraseLength - 1;
+  }
+
+
 }

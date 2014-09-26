@@ -100,7 +100,7 @@ public class EdgeGenerator {
    */
   public void Search(Output output) {
     int to_pop = config.pop_limit;
-    System.err.println("Search(" + to_pop + " " + generate.isEmpty() + ")");
+    System.err.println("EdgeGenerator::Search(): pop: " + to_pop + " empty: " + generate.isEmpty());
     while (to_pop > 0 && !generate.isEmpty()) {
       Candidate got = Pop();
       if (got != null) {

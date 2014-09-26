@@ -55,7 +55,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
       }
     }
 
-    // english side
+    // English side
     String[] englishWords = fields[2].split("\\s+");
     int[] english = new int[englishWords.length];
     for (int i = 0; i < englishWords.length; i++) {
@@ -77,20 +77,20 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
   }
 
-	private static byte [] readAlignment(String s) {
-		String [] indices = s.replaceAll("-", " ").split("\\s+");
-		byte [] result = new byte[indices.length];
-		int j = 0;
-		for (String i : indices) {
-			try {
-				result[j] = Byte.parseByte(i);
-			} catch (NumberFormatException e) {
-				return null; // malformed alignment; just ignore it.
-			}
-			j++;
-		}
-		return result;
-	}
+  private static byte[] readAlignment(String s) {
+    String[] indices = s.replaceAll("-", " ").split("\\s+");
+    byte[] result = new byte[indices.length];
+    int j = 0;
+    for (String i : indices) {
+      try {
+        result[j] = Byte.parseByte(i);
+      } catch (NumberFormatException e) {
+        return null; // malformed alignment; just ignore it.
+      }
+      j++;
+    }
+    return result;
+  }
 
   @Override
   public String toWords(BilingualRule rule) {

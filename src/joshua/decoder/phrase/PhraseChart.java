@@ -19,14 +19,21 @@ public class PhraseChart {
   // Banded array: different source lengths are next to each other.
   private List<TargetPhrases> entries;
 
+  /**
+   * Create a new PhraseChart object, which represents all phrases that are applicable against
+   * the current input sentence. These phrases are extracted from all avialable grammars.
+   * 
+   * @param tables
+   * @param source
+   */
   public PhraseChart(PhraseTable[] tables, Sentence source) {
     max_source_phrase_length = 0;
     for (int i = 0; i < tables.length; i++)
       max_source_phrase_length = Math.max(max_source_phrase_length,
           tables[i].getMaxSourcePhraseLength());
     sentence_length = source.length();
-
-    System.err.println(String.format("Initializing chart of size %d max %d from %s",
+    
+    System.err.println(String.format("PhraseChart()::Initializing chart of size %d max %d from %s",
         sentence_length, max_source_phrase_length, source));
 
     entries = new ArrayList<TargetPhrases>();

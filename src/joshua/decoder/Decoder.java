@@ -36,6 +36,7 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
+import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
@@ -564,7 +565,12 @@ public class Decoder {
             System.exit(2);
           }
 
+        } else if (format.equals("phrase")) {
+
+          grammar = new PhraseTable(file, owner, joshuaConfiguration);
+        
         } else {
+          // thrax, hiero, samt
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
               joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
         }

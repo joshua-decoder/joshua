@@ -18,7 +18,7 @@ public class Future {
   public Future(PhraseChart chart) {
 
     sentlen = chart.SentenceLength();
-    entries = new ChartSpan<Float>(sentlen, Float.NEGATIVE_INFINITY);
+    entries = new ChartSpan<Float>(sentlen + 1, Float.NEGATIVE_INFINITY);
 
     for (int begin = 0; begin <= chart.SentenceLength(); begin++) {
       // Nothing is nothing (this is a useful concept when two phrases abut)

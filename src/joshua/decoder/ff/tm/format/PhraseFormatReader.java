@@ -20,7 +20,7 @@ public class PhraseFormatReader extends HieroFormatReader {
    */
   @Override
   public BilingualRule parseLine(String line) {
-    String newLine = "[X] ||| [X,1] " + line.replaceFirst("|||", "||| [X,1]");
+    String newLine = "[X] ||| [X,1] " + line.replaceFirst("\\|\\|\\|", "||| [X,1]");
     return super.parseLine(newLine);
   }
 }

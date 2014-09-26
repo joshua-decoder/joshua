@@ -1,9 +1,9 @@
 package joshua.decoder.phrase;
 
+import java.io.IOException;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
@@ -18,17 +18,26 @@ import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 
 public class PhraseTable extends MemoryBasedBatchGrammar {
   
-  public PhraseTable(GrammarReader<BilingualRule> gr, JoshuaConfiguration joshuaConfiguration) {
-    super(gr, joshuaConfiguration);
+  /**
+   * Chain to the super with a number of defaults. For example, we only use a single nonterminal,
+   * and there is no span limit.
+   * 
+   * @param grammarFile
+   * @param owner
+   * @param config
+   * @throws IOException
+   */
+  public PhraseTable(String grammarFile, String owner, JoshuaConfiguration config) throws IOException {
+    super("phrase", grammarFile, owner, "[X]", -1, config);
   }
   
   /**
-   * Returns the longest source phrase read.
+   * Returns the longest source phrase read, subtracting off the nonterminal that was added.
    * 
    * @return
    */
+  @Override
   public int getMaxSourcePhraseLength() {
-    /* We added a nonterminal to all source sides, so subtract that off. */
     return maxSourcePhraseLength - 1;
   }
 
