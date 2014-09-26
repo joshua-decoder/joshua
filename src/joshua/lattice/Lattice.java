@@ -316,7 +316,9 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * 
    */
   public int getShortestDistance() {
-    return shortestDistance;
+    if (distances == null)
+      distances = calculateAllPairsShortestPath();
+    return distances.get(0, nodes.size()-1);
   }
 
   /**
@@ -367,7 +369,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    */
   private ChartSpan<Integer> calculateAllPairsShortestPath() {
 
-    ChartSpan<Integer> distance = new ChartSpan<Integer>(nodes.size(), -1);
+    ChartSpan<Integer> distance = new ChartSpan<Integer>(nodes.size() - 1, Integer.MAX_VALUE);
     distance.setDiagonal(0);
 
     /* Mark reachability between immediate neighbors */
@@ -380,23 +382,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
     int size = nodes.size();
 
-    // Loop over every possible starting node (the last node is assumed to not be a starting node)
-    for (int i = 0; i < size - 2; i++) {
-
-      // Loop over every possible ending node, starting two nodes past the starting node (this
-      // assumes no backward arcs)
-      for (int j = i + 2; j < size; j++) {
-
-        // Loop over every possible middle node, starting one node past the starting node (this
-        // assumes no backward arcs)
+    for (int width = 2; width <= size; width++) {
+      for (int i = 0; i < size - width; i++) {
+        int j = i + width;
         for (int k = i + 1; k < j; k++) {
-
-          // The best cost is the minimum of the previously recorded cost and the sum of costs in
-          // the currently considered path
           distance.set(i, j, Math.min(distance.get(i, j), distance.get(i, k) + distance.get(k, j)));
-
-          if (i == 0 && j == size - 1 && distance.get(i, j) < shortestDistance)
-            shortestDistance = distance.get(i, j);
         }
       }
     }
