@@ -46,6 +46,8 @@ public class ComputeNodeResult {
 
     int sentID = sentence.id();
     
+    System.err.println("ComputeNodeResult(): " + rule);
+    
     // The total Viterbi cost of this edge. This is the Viterbi cost of the tail nodes, plus
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
@@ -58,6 +60,7 @@ public class ComputeNodeResult {
      */
     if (null != tailNodes) {
       for (HGNode item : tailNodes) {
+        System.err.println("  -> item.bestedge: " + item + " " + item.bestHyperedge);
         viterbiCost += item.bestHyperedge.getBestDerivationScore();
       }
     }

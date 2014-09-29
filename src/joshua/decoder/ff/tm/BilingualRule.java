@@ -272,14 +272,13 @@ public class BilingualRule extends Rule {
      * sparse (labeled) ones, but it's not required.
      */
 
-    if (owner == -1) {
-      System.err
-          .println("* FATAL: You asked me to compute the features for a rule, but haven't told me the rule's owner.");
-      System.err.println("* RULE: " + this.toString());
-      System.exit(1);
-    }
+    FeatureVector features = null;
+    
+    if (owner != -1) {
+//      throw new RuntimeException("You asked me to compute the features for a rule, but haven't told me the rule's owner.");
 
-    FeatureVector features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
+      features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
+    }
 
     return features;
   }

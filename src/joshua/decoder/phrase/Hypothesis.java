@@ -2,34 +2,43 @@ package joshua.decoder.phrase;
 
 import java.util.List;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
 public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
 
+  // The rule represented by this hypothesis
   private Rule rule;
+  
+  // The hypothesis' coverage vector
   private Coverage coverage;
+  
+  public static Rule beginRule = new BilingualRule(Vocabulary.id("[X]"),
+      new int[] { Vocabulary.id("<s>") }, new int[] { Vocabulary.id("<s>") }, "", 0);
 
   public String toString() {
     return String.format("HYP[%s] %.5f %d", coverage, score, j);
   }
 
   // Initialize root hypothesis. Provide the LM's BeginSentence.
-  public Hypothesis(List<DPState> states, float score) {
-    // super(start, end, lhs, dpstates, hyperedge, pruningestimate);
-    super(0, 0, -1, states, null, score);
-    this.rule = null;
+  public Hypothesis(List<DPState> states, float futureCost) {
+    super(0, 1, Vocabulary.id("[X]"), states,
+        new HyperEdge(beginRule, 0.0f, 0.0f, null, null), futureCost);
+    
+    this.rule = beginRule;
     this.coverage = new Coverage();
   }
 
   public Hypothesis(Candidate cand) {
-    super(cand.span.start, cand.span.end, -1, cand.getStates(), null, 0.0f);
-    
+    // TODO: sourcepath
+    super(cand.span.start, cand.span.end, Vocabulary.id("[X]"), cand.getStates(), new HyperEdge(
+        cand.getRule(), cand.getResult().getViterbiCost(), cand.getResult().getTransitionCost(),
+        cand.getTailNodes(), null), cand.score());
     this.coverage = cand.getCoverage();
-    
-    HyperEdge edge = new HyperEdge(cand.getRule(), 0.0f, 0.0f, cand.getTailNodes(), null);
   }
   
   // Extend a previous hypothesis.

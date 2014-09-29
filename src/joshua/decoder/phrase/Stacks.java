@@ -6,6 +6,7 @@ import java.util.List;
 
 import joshua.corpus.Span;
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -72,7 +73,9 @@ public class Stacks {
       stacks.add(new Stack());
 
     // Initialize root hypothesis with <s> context and future cost for everything.
-    stacks.get(0).add(new Hypothesis(null, future.Full()));
+    ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, Hypothesis.beginRule,
+        null, -1, 1, null, this.sentence);
+    stacks.get(0).add(new Hypothesis(result.getDPStates(), future.Full()));
     
     System.err.println("STACKS::SEARCH()");
 

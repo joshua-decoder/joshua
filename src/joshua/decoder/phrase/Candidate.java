@@ -27,6 +27,13 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   // scoring and state information 
   private ComputeNodeResult result;
   
+  public Candidate(float futureCost) {
+    this.hypotheses = new Vertex();
+    this.phrases = new TargetPhrases();
+    this.span = new Span(0,1);
+    this.ranks = new int[] { 0, 0 };
+  }
+  
   public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span) {
     this.hypotheses = hypotheses;
     this.phrases = phrases;
@@ -113,5 +120,9 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   
   public List<DPState> getStates() {
     return result.getDPStates();
+  }
+
+  public ComputeNodeResult getResult() {
+    return result;
   }
 }
