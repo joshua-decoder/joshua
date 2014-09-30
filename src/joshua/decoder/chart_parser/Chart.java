@@ -124,6 +124,8 @@ public class Chart {
     this.featureFunctions = featureFunctions;
 
     this.sentence = sentence;
+
+    // TODO: OOV handling no longer handles parse tree input (removed after commit 748eb69714b26dd67cba8e7c25a294347603bede)
     this.parseTree = null;
     if (sentence instanceof ParsedSentence)
       this.parseTree = ((ParsedSentence) sentence).syntaxTree();
@@ -145,7 +147,7 @@ public class Chart {
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i] = grammars[i];
     MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", joshuaConfiguration);
-    this.grammars[this.grammars.length - 1] = oovGrammar;
+    this.grammars[this.grammars.length - 1] = MemoryBasedBatchGrammar.createOOVGrammar(inputLattice, featureFunctions, joshuaConfiguration);
 
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
@@ -157,91 +159,9 @@ public class Chart {
     // Begin to do initialization work
 
     // TODO: which grammar should we use to create a manual rule?
+    // TODO: I don't think this is really used
     manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[grammars.length - 1],
         sentence.constraints());
-
-    /*
-     * Add OOV rules; This should be called after the manual constraints have
-     * been set up.
-     */
-    final byte[] oovAlignment = { 0, 0 };
-    for (Node<Integer> node : inputLattice) {
-      for (Arc<Integer> arc : node.getOutgoingArcs()) {
-        // create a rule, but do not add into the grammar trie
-        // TODO: which grammar should we use to create an OOV rule?
-        int sourceWord = arc.getLabel();
-        if (sourceWord == Vocabulary.id(Vocabulary.START_SYM)
-            || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
-          continue;
-
-        // Determine if word is actual OOV.
-        if (joshuaConfiguration.true_oovs_only) {
-          boolean true_oov = true;
-          for (Grammar g : grammars) {
-            if (g.getTrieRoot().match(sourceWord) != null
-                && g.getTrieRoot().match(sourceWord).hasRules()) {
-              true_oov = false;
-              break;
-            }
-          }
-          if (!true_oov)
-            continue;
-        }
-
-        final int targetWord;
-        if (joshuaConfiguration.mark_oovs) {
-          targetWord = Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV");
-        } else {
-          targetWord = sourceWord;
-        }
-
-        List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
-        int[] sourceWords = { sourceWord };
-        int[] targetWords = { targetWord };
-        if (parseTree != null
-            && (joshuaConfiguration.constrain_parse || joshuaConfiguration.use_pos_labels)) {
-          Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber() - 1,
-              node.getNumber());
-          for (int label : labels) {
-            BilingualRule oovRule = new BilingualRule(label, sourceWords, targetWords, "", 0,
-                oovAlignment);
-            oovRules.add(oovRule);
-            oovGrammar.addRule(oovRule);
-            oovRule.estimateRuleCost(featureFunctions);
-          }
-        }
-
-        if (joshuaConfiguration.oov_list != null && joshuaConfiguration.oov_list.length != 0) {
-          for (int i = 0; i < joshuaConfiguration.oov_list.length; i++) {
-            BilingualRule oovRule = new BilingualRule(
-                Vocabulary.id(joshuaConfiguration.oov_list[i]), sourceWords, targetWords, "", 0,
-                oovAlignment);
-            oovRules.add(oovRule);
-            oovGrammar.addRule(oovRule);
-            oovRule.estimateRuleCost(featureFunctions);
-            // System.err.println(String.format("ADDING OOV RULE %s", oovRule));
-          }
-        } else {
-          int nt_i = Vocabulary.id(joshuaConfiguration.default_non_terminal);
-          BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0,
-              oovAlignment);
-          oovRules.add(oovRule);
-          oovGrammar.addRule(oovRule);
-          oovRule.estimateRuleCost(featureFunctions);
-          // System.err.println(String.format("ADDING OOV RULE %s", oovRule));
-        }
-
-        if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getHead()
-            .getNumber())) {
-          // do not add the oov axiom
-          logger.fine("Using hard rule constraint for span " + node.getNumber() + ", "
-              + arc.getHead().getNumber());
-        }
-      }
-    }
-
-    // Grammars must be sorted.
-    oovGrammar.sortGrammar(this.featureFunctions);
 
     /* Find the SourceDependent feature and give it access to the sentence. */
     for (FeatureFunction ff : this.featureFunctions)
