@@ -93,7 +93,7 @@ public class Stacks {
         
         // Iterate over antecedents in this stack.
         for (Hypothesis ant : stacks.get(from_stack)) {
-          System.err.println(ant);
+          System.err.println(String.format("  WORDS %d ANT %s", source_words, ant)); 
           Coverage coverage = ant.GetCoverage();
           int begin = coverage.firstZero();
           int last_end = Math.min(coverage.firstZero() + config.reordering_limit, chart.SentenceLength());
@@ -103,14 +103,12 @@ public class Stacks {
           
           // We can always go from first_zero because it doesn't create a reordering gap.
           do {
-            Span span = new Span(begin, begin + phrase_length);
             TargetPhrases phrases = chart.Range(begin, begin + phrase_length);
             
-            System.err.println(String.format("  Applying target phrases over [%d,%d] = %s", begin, begin + phrase_length, phrases));
-            if (phrases == null || !coverage.compatible(begin, begin + phrase_length)) {
-              System.err.println(String.format("  - no phrases (%s) or incompatible coverage (%s)", phrases, coverage.compatible(begin, begin+ phrase_length)));
+            if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
               continue;
-            }
+
+            System.err.println(String.format("  Applying %d target phrases over [%d,%d]", phrases.size(), begin, begin + phrase_length));
             
             // TODO: could also compute some number of features here (e.g., non-LM ones)
             // float score_delta = context.GetScorer().transition(ant, phrases, begin, begin + phrase_length);
@@ -118,6 +116,7 @@ public class Stacks {
             // Future costs: remove span to be filled.
             float score_delta = future.Change(coverage, begin, begin + phrase_length);
             
+            Span span = new Span(begin, begin + phrase_length);
             if (! vertices.containsKey(span))
               vertices.put(span, new Vertex());
             
@@ -126,6 +125,7 @@ public class Stacks {
              * augment the hypothesis score with a future cost.
              */
             vertices.get(span).add(new HypoState(ant, score_delta));
+            System.err.println(String.format("  NEW VERTEX: %.5f", score_delta));
             // Enforce the reordering limit on later iterations.
 
           } while (++begin <= last_begin);

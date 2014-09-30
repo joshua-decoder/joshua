@@ -39,7 +39,8 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
     this.phrases = phrases;
     this.span = span;
     this.ranks = new int[] { 0, 0 };
-//    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
+    
+    
   }
 
   public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
@@ -111,10 +112,22 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   public void setResult(ComputeNodeResult result) {
     this.result = result;
   }
-  
+
+  /**
+   * This returns the sum of two costs: the HypoState cost + the transition cost. The HypoState cost
+   * is in turn the sum of two costs: the Viterbi cost of the underlying hypothesis, and the adjustment
+   * to the future score incurred by translating the words under the source phrase being added.
+   * The transition cost is the sum of new features incurred along the transition (mostly, the
+   * language model costs).
+   * 
+   * The Future Cost item should probably just be implemented as another kind of feature function,
+   * but it would require some reworking of that interface, which isn't worth it. 
+   * 
+   * @return
+   */
   public float score() {
     if (result != null)
-      return result.getPruningEstimate();
+      return this.hypotheses.get(ranks[0]).score + result.getTransitionCost();
     return 0.0f;
   }
   

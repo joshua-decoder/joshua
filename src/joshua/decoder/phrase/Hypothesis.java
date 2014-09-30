@@ -19,7 +19,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   
   public static Rule beginRule = new BilingualRule(Vocabulary.id("[X]"),
       new int[] { Vocabulary.id("<s>") }, new int[] { Vocabulary.id("<s>") }, "", 0);
-
+  
   public String toString() {
     return String.format("HYP[%s] %.5f %d", coverage, score, j);
   }
@@ -30,7 +30,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
         new HyperEdge(beginRule, 0.0f, 0.0f, null, null), futureCost);
     
     this.rule = beginRule;
-    this.coverage = new Coverage();
+    this.coverage = new Coverage(1);
   }
 
   public Hypothesis(Candidate cand) {

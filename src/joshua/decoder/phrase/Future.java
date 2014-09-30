@@ -15,6 +15,13 @@ public class Future {
 
   private int sentlen;
   
+  /**
+   * Computes bottom-up the best way to cover all spans of the input sentence, using the phrases
+   * that have been assembled in a {@link PhraseChart}. Requires that there be a translation at least
+   * for every word (which can be accomplished with a pass-through grammar).
+   * 
+   * @param chart
+   */
   public Future(PhraseChart chart) {
 
     sentlen = chart.SentenceLength();
@@ -30,8 +37,7 @@ public class Future {
         if (phrases != null) {
           // TODO: what's the cost?
 //          SetEntry(begin, end, phrases.getVertex().Bound());
-          System.err.println("Future::Future(): WARNING: initial bound not set correctly");
-          SetEntry(begin, end, 0.0f);
+          SetEntry(begin, end, phrases.get(0).getEstimatedCost());
         }
       }
     }
@@ -55,6 +61,8 @@ public class Future {
     int left = coverage.LeftOpen(begin);
 //    int right = coverage.RightOpen(end, sentence_length_plus_1 - 1);
     int right = coverage.RightOpen(end, sentlen);
+    System.err.println(String.format("Future::Change(%s, %d, %d) left %d right %d %.3f %.3f %.3f", coverage, begin, end, left, right,
+        Entry(left, begin), Entry(end, right), Entry(left, right)));
     return Entry(left, begin) + Entry(end, right) - Entry(left, right);
   }
   
@@ -67,6 +75,7 @@ public class Future {
   private void SetEntry(int begin, int end, float value) { // &float Entry(begin, end)
     assert end >= begin;
     assert end < this.sentlen;
+    System.err.println(String.format("Future::SetEntry(%d,%d,%.3f)", begin, end, value));
     entries.set(begin, end, value);
   }
 
