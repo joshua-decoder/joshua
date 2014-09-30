@@ -23,14 +23,14 @@ public class ChartSpan<Type> {
   int max;
 
   public ChartSpan(int w, Type defaultValue) {
+    //System.err.println(String.format("ChartSpan::ChartSpan(%d)", w));
     this.max = w;
 
     /* offset(max,max) is the last position in the array */
-    int size = offset(max, max);
-    chart = new Object[size];
+    chart = new Object[offset(max,max) + 1];
 
     /* Initialize all arcs to infinity, except self-loops, which have distance 0 */
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < chart.length; i++)
       chart[i] = defaultValue;
   }
   
@@ -56,6 +56,8 @@ public class ChartSpan<Type> {
       throw new RuntimeException(String.format("Invalid span (%d,%d | %d)", i, j, max));
     }
 
+    // System.err.println(String.format("ChartSpan::offset(%d,%d) = %d / %d", i, j, i * (max + 1) - i * (i + 1) / 2 + j, max * (max + 1) - max * (max + 1) / 2 + max));
+    
     return i * (max + 1) - i * (i + 1) / 2 + j;
   }
 
@@ -65,7 +67,7 @@ public class ChartSpan<Type> {
    * @param value
    */
   public void setDiagonal(Type value) {
-    for (int i = 0; i < max; i++)
+    for (int i = 0; i <= max; i++)
       set(i, i, value);
   }
 }
