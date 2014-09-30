@@ -114,12 +114,15 @@ public class DecoderThread extends Thread {
         Stacks stacks = new Stacks(sentence, this.featureFunctions, grammars, joshuaConfiguration);
         
         hypergraph = stacks.search();
+        kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
+            joshuaConfiguration);
       } else {
         /* Seeding: the chart only sees the grammars, not the factories */
         Chart chart = new Chart(sentence, this.featureFunctions, grammars,
             joshuaConfiguration.goal_symbol, joshuaConfiguration);
 
         hypergraph = chart.expand();
+        kBestExtractor = chart.kBestExtractor;
       }
       
     } catch (java.lang.OutOfMemoryError e) {
