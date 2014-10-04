@@ -150,7 +150,9 @@ public class KBestExtractor {
     String outputString = null;
 
     // Determine the k-best hypotheses at each HGNode
-    DerivationState derivationState = getKthDerivation(node, k);
+    VirtualNode virtualNode = getVirtualNode(node);
+    DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
+//    DerivationState derivationState = getKthDerivation(node, k);
     if (derivationState != null) {
       // ==== read the kbest from each hgnode and convert to output format
       FeatureVector features = new FeatureVector();
@@ -913,9 +915,14 @@ public class KBestExtractor {
     public void before(DerivationState state, int level) {
       if (features != null) {
         HGNode parentNode = state.parentNode;
+        
+        HyperEdge edge = state.edge;
 
-        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, state,
-            parentNode.i, parentNode.j, sentence);
+        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
+            parentNode.i, parentNode.j, sentence.id());
+
+//        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, state,
+//            parentNode.i, parentNode.j, sentence);
         features.add(transitionCosts);
       }
     }

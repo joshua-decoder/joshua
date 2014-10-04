@@ -2,7 +2,6 @@ package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -19,7 +18,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
@@ -30,9 +28,7 @@ import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
-import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
-import joshua.lattice.Node;
 import joshua.util.ChartSpan;
 
 /**
@@ -250,12 +246,18 @@ public class Chart {
         if (arity == 0) {
           /* Terminal productions are added directly to the chart */
           for (Rule rule : rules) {
+/*
             HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, null, new SourcePath());
             HGNode newNode = new HGNode(i, j, rule.getLHS(), null, newEdge, 0.0f);
             DerivationState state = this.kBestExtractor.new DerivationState(newNode, newEdge, null, 0.0f, -1);
 
             ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, state, i, j,
                 sourcePath, this.sentence);
+*/
+            
+            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
+                j, sourcePath, this.sentence);
+
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
               cells.get(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
           }
@@ -277,7 +279,7 @@ public class Chart {
            * represented by SuperNodes, which group together items with the same
            * nonterminal but different DP state (e.g., language model state)
            */
-          int[] ranks = new int[2 + superNodes.size()];
+          int[] ranks = new int[1 + superNodes.size()];
           Arrays.fill(ranks, 1);
 
           HyperEdge newEdge = new HyperEdge(bestRule, 0.0f, 0.0f, currentTailNodes,
@@ -289,8 +291,7 @@ public class Chart {
           ComputeNodeResult result = new ComputeNodeResult(featureFunctions, derivationState, i, j,
               sourcePath, this.sentence);
 
-          CubePruneState bestState = new CubePruneState(result, ranks, rules, currentTailNodes,
-              dotNode);
+          CubePruneState bestState = new CubePruneState(result, ranks, rules, currentTailNodes, dotNode);
 
           candidates.add(bestState);
           visitedStates.add(bestState);
@@ -324,7 +325,7 @@ public class Chart {
        */
 
       // TODO: go through the derivation states
-      for (int k = 0; k < state.ranks.length - 1; k++) {
+      for (int k = 0; k < state.ranks.length; k++) {
 
         /* Copy the current ranks, then extend the one we're looking at. */
         int[] nextRanks = new int[state.ranks.length];
@@ -341,11 +342,17 @@ public class Chart {
 
         /* Use the updated ranks to assign the next rule and tail node. */
         Rule nextRule = rules.get(nextRanks[0] - 1);
-        List<HGNode> nextTailNodes = new ArrayList<HGNode>();
-        for (int x = 0; x < state.ranks.length - 2; x++)
-          nextTailNodes.add(superNodes.get(x).nodes.get(nextRanks[x + 1] - 1));
+        // HGNode[] nextAntNodes = new HGNode[state.antNodes.size()];
+        List<HGNode> nextAntNodes = new ArrayList<HGNode>();
+        for (int x = 0; x < state.ranks.length - 1; x++)
+          nextAntNodes.add(superNodes.get(x).nodes.get(nextRanks[x + 1] - 1));
 
         /* Create the next state. */
+        CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
+            nextRule, nextAntNodes, i, j, sourcePath, this.sentence), nextRanks, rules,
+            nextAntNodes, dotNode);
+        
+        /*
         // TODO: derivation state rank not set correctly
         HyperEdge newEdge = new HyperEdge(nextRule, 0.0f, 0.0f, nextTailNodes, new SourcePath());
         HGNode newNode = new HGNode(i, j, nextRule.getLHS(), null, newEdge, 0.0f);
@@ -354,6 +361,7 @@ public class Chart {
         CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
             nextDerivationState, i, j, sourcePath, this.sentence), nextRanks, rules, nextTailNodes,
             dotNode);
+        */
 
         /* Skip states that have been explored before. */
         if (visitedStates.contains(nextState))
@@ -508,6 +516,8 @@ public class Chart {
 
           List<Rule> rules = childNode.getRuleCollection().getSortedRules(this.featureFunctions);
           for (Rule rule : rules) { // for each unary rules
+
+/*            
             HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, antecedents, new SourcePath());
             HGNode newNode = new HGNode(i, j, rule.getLHS(), null, newEdge, 0.0f);
             DerivationState state = this.kBestExtractor.new DerivationState(newNode, newEdge, null, 0.0f, -1);
@@ -516,6 +526,13 @@ public class Chart {
                 new SourcePath(), this.sentence);
             HGNode resNode = chartBin.addHyperEdgeInCell(result, rule, i, j, antecedents,
                 new SourcePath(), true);
+*/
+            
+            ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule,
+                antecedents, i, j, new SourcePath(), this.sentence);
+            HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents,
+                new SourcePath(), true);
+
 
             if (logger.isLoggable(Level.FINEST))
               logger.finest(rule.toString());
@@ -544,6 +561,7 @@ public class Chart {
       this.cells.set(i, j, new Cell(this, this.goalSymbolID));
     }
 
+/*
     HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, null, new SourcePath());
     HGNode newNode = new HGNode(i, j, rule.getLHS(), null, newEdge, 0.0f);
     DerivationState state = this.kBestExtractor.new DerivationState(newNode, newEdge, null, 0.0f, -1);
@@ -552,5 +570,11 @@ public class Chart {
         .addHyperEdgeInCell(
             new ComputeNodeResult(this.featureFunctions, state, i, j, srcPath,
                 sentence), rule, i, j, null, srcPath, false);
+*/
+    
+    this.cells.get(i, j).addHyperEdgeInCell(
+        new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, sentence), rule,
+        i, j, null, srcPath, false);
+
   }
 }

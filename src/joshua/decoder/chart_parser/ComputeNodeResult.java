@@ -58,7 +58,7 @@ public class ComputeNodeResult {
      */
     if (null != tailNodes) {
       for (HGNode item : tailNodes) {
-        System.err.println("  -> item.bestedge: " + item);
+//        System.err.println("  -> item.bestedge: " + item);
         viterbiCost += item.bestHyperedge.getBestDerivationScore();
       }
     }

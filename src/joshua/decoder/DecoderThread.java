@@ -122,7 +122,8 @@ public class DecoderThread extends Thread {
             joshuaConfiguration.goal_symbol, joshuaConfiguration);
 
         hypergraph = chart.expand();
-        kBestExtractor = chart.kBestExtractor;
+        kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
+            joshuaConfiguration);
       }
       
     } catch (java.lang.OutOfMemoryError e) {

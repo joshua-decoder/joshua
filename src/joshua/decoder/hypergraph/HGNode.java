@@ -6,14 +6,15 @@ import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 
 /**
- * A node in a hypergraph, i.e., an item in the parsing chart.
+ * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author Juri Ganitkevitch, <juri@cs.jhu.edu>
  */
+
+// TODO: handle the case that the Hypergraph only maintains the one-best tree
 
 public class HGNode {
 
@@ -25,18 +26,18 @@ public class HGNode {
   // each hyperedge is an "and" node
   public List<HyperEdge> hyperedges = null;
 
-  // cache of the best hyperedge
+  // used in pruning, compute_item, and transit_to_goal
   public HyperEdge bestHyperedge = null;
 
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
-  protected List<DPState> dpStates;
+  List<DPState> dpStates;
+
+  private Signature signature = null;
 
   // For pruning purposes.
   public boolean isDead = false;
   protected float score = 0.0f;
-  
-  DerivationState derivationState;
 
   // ===============================================================
   // Constructors
@@ -114,39 +115,75 @@ public class HGNode {
       return this.dpStates.get(i);
     }
   }
-  
-  private int hash = 0;
 
-  @Override
-  public int hashCode() {
-    if (hash == 0) {
-      hash = 31 * lhs;
-      if (null != dpStates && dpStates.size() > 0)
-        for (DPState dps : dpStates)
-          hash = hash * 19 + dps.hashCode();
-    }
-    return hash;
+  public Signature signature() {
+    if (signature == null)
+      signature = new Signature();
+    return signature;
   }
 
-  @Override
-  public boolean equals(Object other) {
-    if (other instanceof HGNode) {
-      HGNode that = (HGNode) other;
-      if (lhs != that.lhs)
-        return false;
-      if (dpStates == null)
-        return (that.dpStates == null);
-      if (that.dpStates == null)
-        return false;
-      if (dpStates.size() != that.dpStates.size())
-        return false;
-      for (int i = 0; i < dpStates.size(); i++) {
-        if (!dpStates.get(i).equals(that.dpStates.get(i)))
-          return false;
+  public class Signature {
+    // Cached hash code.
+    private int hash = 0;
+
+    @Override
+    public int hashCode() {
+      if (hash == 0) {
+        hash = 31 * lhs;
+        if (null != dpStates && dpStates.size() > 0)
+          for (DPState dps : dpStates)
+            hash = hash * 19 + dps.hashCode();
       }
-      return true;
+      return hash;
     }
-    return false;
+
+    @Override
+    public boolean equals(Object other) {
+      if (other instanceof Signature) {
+        HGNode that = ((Signature) other).node();
+        if (lhs != that.lhs)
+          return false;
+        if (dpStates == null)
+          return (that.dpStates == null);
+        if (that.dpStates == null)
+          return false;
+        if (dpStates.size() != that.dpStates.size())
+          return false;
+        for (int i = 0; i < dpStates.size(); i++) {
+          if (!dpStates.get(i).equals(that.dpStates.get(i)))
+            return false;
+        }
+        return true;
+      }
+      return false;
+    }
+
+    public String toString() {
+      return String.format("%d", hashCode());
+    }
+
+    public HGNode node() {
+      return HGNode.this;
+    }
+  }
+
+  public float getEstTotalLogP() {
+    return this.score;
+  }
+
+  /*
+   * this will called by the sorting in Cell.ensureSorted()
+   */
+  // sort by estTotalLogP: for pruning purpose
+  public int compareTo(HGNode anotherItem) {
+    System.out.println("HGNode, compare functiuon should never be called");
+    System.exit(1);
+    return 0;
+    /*
+     * if (this.estTotalLogP > anotherItem.estTotalLogP) { return -1; } else if (this.estTotalLogP
+     * == anotherItem.estTotalLogP) { return 0; } else { return 1; }
+     */
+
   }
 
   /**
