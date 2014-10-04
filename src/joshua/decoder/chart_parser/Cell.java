@@ -32,7 +32,7 @@ class Cell {
   private int goalSymID;
 
   // to maintain uniqueness of nodes
-  private HashMap<HGNode, HGNode> nodesSigTbl = new HashMap<HGNode, HGNode>();
+  private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new HashMap<HGNode.Signature, HGNode>();
 
   // signature by lhs
   private Map<Integer, SuperNode> superNodesTbl = new HashMap<Integer, SuperNode>();
@@ -163,7 +163,7 @@ class Cell {
      * each node has a list of hyperedges, need to check whether the node is already exist, if
      * yes, just add the hyperedges, this may change the best logP of the node
      * */
-    HGNode oldNode = this.nodesSigTbl.get(newNode);
+    HGNode oldNode = this.nodesSigTbl.get(newNode.signature());
     if (null != oldNode) { // have an item with same states, combine items
       this.chart.nMerged++;
 
@@ -209,7 +209,7 @@ class Cell {
    * is worse than the new hyperedge's logP
    * */
   private void addNewNode(HGNode node, boolean noPrune) {
-    this.nodesSigTbl.put(node, node); // add/replace the item
+    this.nodesSigTbl.put(node.signature(), node); // add/replace the item
     this.sortedNodes = null; // reset the list
 
     // since this.sortedItems == null, this is not necessary because we will always call
