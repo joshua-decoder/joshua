@@ -1,8 +1,8 @@
 package joshua.decoder.ff.tm.hash_based;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,6 +57,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
+  
+  protected JoshuaConfiguration config = null;
 
   // ===============================================================
   // Static Fields
@@ -72,6 +74,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   public MemoryBasedBatchGrammar(JoshuaConfiguration joshuaConfiguration) {
     super(joshuaConfiguration);
     this.root = new MemoryBasedTrie();
+    this.config = joshuaConfiguration;
   }
 
   public MemoryBasedBatchGrammar(String owner,JoshuaConfiguration joshuaConfiguration) {
@@ -234,21 +237,62 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   /**
    * Returns the longest source phrase read.
    * 
-   * @return
+   * @return the longest source phrase read (nonterminal + terminal symbols).
    */
   public int getMaxSourcePhraseLength() {
     /* We added a nonterminal to all source sides, so subtract that off. */
     return maxSourcePhraseLength - 1;
   }
   
-  public static MemoryBasedBatchGrammar createOOVGrammar(Lattice<Integer> inputLattice, List<FeatureFunction> featureFunctions, JoshuaConfiguration config) {
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config);
+  /***
+   * Takes an input word and creates an OOV rule in the current grammar for that word.
+   * 
+   * @param sourceWord
+   * @param featureFunctions
+   */
+  public void addOOVRule(int sourceWord, List<FeatureFunction> featureFunctions) {
+    
+    // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
+    // certainly is)
+    final int targetWord = config.mark_oovs
+        ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
+        : sourceWord;   
 
+    int[] sourceWords = { sourceWord };
+    int[] targetWords = { targetWord };
+    final byte[] oovAlignment = { 0, 0 };
+    
+    if (config.oov_list != null && config.oov_list.length != 0) {
+      for (int i = 0; i < config.oov_list.length; i++) {
+        BilingualRule oovRule = new BilingualRule(
+            Vocabulary.id(config.oov_list[i]), sourceWords, targetWords, "", 0,
+            oovAlignment);
+        addRule(oovRule);
+        oovRule.estimateRuleCost(featureFunctions);
+        // System.err.println(String.format("ADDING OOV RULE %s", oovRule));
+      }
+    } else {
+      int nt_i = Vocabulary.id(config.default_non_terminal);
+      BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0,
+          oovAlignment);
+      addRule(oovRule);
+      oovRule.estimateRuleCost(featureFunctions);
+    }
+  }
+  
+  /***
+   * Adds OOV rules for all words in the input lattice to the current grammar. Uses addOOVRule() so that
+   * sub-grammars can define different types of OOV rules if needed (as is used in {@link PhraseTable}).
+   * 
+   * @param inputLattice the lattice representing the input sentence
+   * @param featureFunctions a list of feature functions used for scoring
+   */
+  public void createOOVGrammar(Lattice<Integer> inputLattice, List<FeatureFunction> featureFunctions) {
     /*
      * Add OOV rules; This should be called after the manual constraints have
      * been set up.
      */
-    final byte[] oovAlignment = { 0, 0 };
+    HashSet<Integer> words = new HashSet<Integer>();
     for (Node<Integer> node : inputLattice) {
       for (Arc<Integer> arc : node.getOutgoingArcs()) {
         // create a rule, but do not add into the grammar trie
@@ -261,41 +305,15 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
         // Determine if word is actual OOV.
         if (config.true_oovs_only && ! Vocabulary.hasId(sourceWord))
           continue;
-
-        // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
-        // certainly is)
-        final int targetWord = config.mark_oovs
-            ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
-            : sourceWord;   
-
-        List<BilingualRule> oovRules = new ArrayList<BilingualRule>();
-        int[] sourceWords = { sourceWord };
-        int[] targetWords = { targetWord };
-
-        if (config.oov_list != null && config.oov_list.length != 0) {
-          for (int i = 0; i < config.oov_list.length; i++) {
-            BilingualRule oovRule = new BilingualRule(
-                Vocabulary.id(config.oov_list[i]), sourceWords, targetWords, "", 0,
-                oovAlignment);
-            oovRules.add(oovRule);
-            oovGrammar.addRule(oovRule);
-            oovRule.estimateRuleCost(featureFunctions);
-            // System.err.println(String.format("ADDING OOV RULE %s", oovRule));
-          }
-        } else {
-          int nt_i = Vocabulary.id(config.default_non_terminal);
-          BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0,
-              oovAlignment);
-          oovRules.add(oovRule);
-          oovGrammar.addRule(oovRule);
-          oovRule.estimateRuleCost(featureFunctions);
-        }
+        
+        words.add(sourceWord);
       }
     }
 
-    // Grammars must be sorted.
-    oovGrammar.sortGrammar(featureFunctions);
+    for (int sourceWord: words)
+      addOOVRule(sourceWord, featureFunctions);
     
-    return oovGrammar;
+    // Grammars must be sorted.
+    sortGrammar(featureFunctions);
   }
 }

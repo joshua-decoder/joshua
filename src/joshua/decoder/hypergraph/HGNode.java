@@ -34,6 +34,7 @@ public class HGNode {
   List<DPState> dpStates;
 
   private Signature signature = null;
+  private int hash = 0;
 
   // For pruning purposes.
   public boolean isDead = false;
@@ -121,7 +122,57 @@ public class HGNode {
       signature = new Signature();
     return signature;
   }
+  
+  /*
+   * Including hashCode() and equals() directly in the class causes problems, because the 
+   * virtual node table (in KBestExtractor) does not combine HGNodes.
+   */
+//  @Override
+//  public int hashCode() {
+//    if (hash == 0) {
+//      hash = 31 * lhs + 2399 * i + 7853 * j;
+//      if (null != dpStates && dpStates.size() > 0)
+//        for (DPState dps : dpStates)
+//          hash = hash * 19 + dps.hashCode();
+//    }
+//    return hash;
+//  }
+//
+//  @Override
+//  public boolean equals(Object other) {
+//    if (other instanceof HGNode) {
+//      HGNode that = (HGNode) other;
+//      if (lhs != that.lhs)
+//        return false;
+//      if (i != that.i || j != that.j)
+//        return false;
+//      if (bestHyperedge == null && that.bestHyperedge != null)
+//        return false;
+//      if (bestHyperedge != null && that.bestHyperedge == null)
+//        return false;
+//      if (score != that.score)
+//        return false;
+//      if (dpStates == null)
+//        return (that.dpStates == null);
+//      if (that.dpStates == null)
+//        return false;
+//      if (dpStates.size() != that.dpStates.size())
+//        return false;
+//      for (int i = 0; i < dpStates.size(); i++) {
+//        if (!dpStates.get(i).equals(that.dpStates.get(i)))
+//          return false;
+//      }
+//      return true;
+//    }
+//    return false;
+//  }
 
+  /***
+   * We have different purposes when hashing HGNodes. For dynamic programming, we want to establish
+   * equivalency based on dynamic programming state, but when doing k-best extraction, we need
+   * to maintain a separate entry for every object. The Signature class provides a way to hash
+   * based on the dynamic programming state.
+   */
   public class Signature {
     // Cached hash code.
     private int hash = 0;
@@ -142,6 +193,8 @@ public class HGNode {
       if (other instanceof Signature) {
         HGNode that = ((Signature) other).node();
         if (lhs != that.lhs)
+          return false;
+        if (i != that.i || j != that.j)
           return false;
         if (dpStates == null)
           return (that.dpStates == null);

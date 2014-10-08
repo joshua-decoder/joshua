@@ -72,10 +72,10 @@ public class Future {
     return entries.get(begin, end);
   }
   
-  private void SetEntry(int begin, int end, float value) { // &float Entry(begin, end)
+  private void SetEntry(int begin, int end, float value) {
     assert end >= begin;
     assert end < this.sentlen;
-    System.err.println(String.format("Future::SetEntry(%d,%d,%.3f)", begin, end, value));
+    System.err.println(String.format("Future::SetEntry(%d,%d,%.5f)", begin, end, Math.log(value)));
     entries.set(begin, end, value);
   }
 

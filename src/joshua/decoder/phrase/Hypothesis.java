@@ -21,6 +21,9 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
       new int[] { Vocabulary.id("<s>") }, new int[] { Vocabulary.id("<s>") }, "", 0);
   
   public String toString() {
+    StringBuffer sb = new StringBuffer();
+    for (DPState state: getDPStates())
+      sb.append("STATE: " + state + " ");
     return String.format("HYP[%s] %.5f %d", coverage, score, j);
   }
 

@@ -131,7 +131,7 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
    * @param tokenID
    * @return cleaned ID
    */
-  public int cleanNonTerminal(int tokenID) {
+  public static int cleanNonTerminal(int tokenID) {
     // cleans NT of any markup, e.g., [X,1] may becomes [X], depending
     return Vocabulary.id(cleanNonTerminal(Vocabulary.word(tokenID)));
   }
@@ -141,7 +141,7 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
    * @param token
    * @return cleaned token
    */
-  public String cleanNonTerminal(String token) {
+  public static String cleanNonTerminal(String token) {
     // cleans NT of any markup, e.g., [X,1] may becomes [X], depending on nonTerminalCleanRegEx
     return token.replaceAll(nonTerminalCleanRegEx, "");
   }

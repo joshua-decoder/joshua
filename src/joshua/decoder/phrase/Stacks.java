@@ -48,10 +48,13 @@ public class Stacks {
       if (grammars[i] instanceof PhraseTable)
         ++num_phrase_tables;
     
-    PhraseTable[] phraseTables = new PhraseTable[num_phrase_tables];
+    PhraseTable[] phraseTables = new PhraseTable[num_phrase_tables + 1];
     for (int i = 0, j = 0; i < grammars.length; i++)
       if (grammars[i] instanceof PhraseTable)
         phraseTables[j++] = (PhraseTable) grammars[i];
+    
+    phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config);
+    phraseTables[phraseTables.length - 1].createOOVGrammar(sentence.intLattice(), featureFunctions);
     
     this.chart = new PhraseChart(phraseTables, sentence);
   }

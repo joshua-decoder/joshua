@@ -113,8 +113,8 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
-      String goalSymbol, JoshuaConfiguration joshuaConfiguration) {
-    this.joshuaConfiguration = joshuaConfiguration;
+      String goalSymbol, JoshuaConfiguration config) {
+    this.joshuaConfiguration = config;
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
@@ -136,20 +136,22 @@ public class Chart {
      * are decoding with non-local features.
      */
     this.kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
-        joshuaConfiguration);
+        config);
 
     /* Create the grammars, leaving space for the OOV grammar. */
     this.grammars = new Grammar[grammars.length + 1];
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i] = grammars[i];
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", joshuaConfiguration);
-    this.grammars[this.grammars.length - 1] = MemoryBasedBatchGrammar.createOOVGrammar(inputLattice, featureFunctions, joshuaConfiguration);
 
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config);
+    oovGrammar.createOOVGrammar(sentence.intLattice(), featureFunctions);
+    this.grammars[this.grammars.length - 1] = oovGrammar; 
+        
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
       this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
-          NonterminalMatcher.createNonterminalMatcher(logger, joshuaConfiguration),
+          NonterminalMatcher.createNonterminalMatcher(logger, config),
           this.grammars[i].isRegexpGrammar());
 
     // Begin to do initialization work

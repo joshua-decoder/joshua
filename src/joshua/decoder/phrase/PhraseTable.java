@@ -1,11 +1,15 @@
 package joshua.decoder.phrase;
 
 import java.io.IOException;
+import java.util.List;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 
 /**
@@ -29,6 +33,10 @@ public class PhraseTable extends MemoryBasedBatchGrammar {
    */
   public PhraseTable(String grammarFile, String owner, JoshuaConfiguration config) throws IOException {
     super("phrase", grammarFile, owner, "[X]", -1, config);
+  }
+  
+  public PhraseTable(String owner, JoshuaConfiguration config) {
+    super(owner, config);
   }
   
   /**
@@ -59,5 +67,21 @@ public class PhraseTable extends MemoryBasedBatchGrammar {
     }
 
     return null;
+  }
+  
+  @Override
+  public void addOOVRule(int sourceWord, List<FeatureFunction> featureFunctions) {
+    // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
+    // certainly is)
+    int targetWord = config.mark_oovs
+        ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
+        : sourceWord;   
+
+    String ruleString = String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| -1 ||| 0-0 1-1", 
+        Vocabulary.word(sourceWord), Vocabulary.word(targetWord));
+    BilingualRule oovRule = new HieroFormatReader().parseLine(ruleString);
+    oovRule.setOwner(Vocabulary.id("oov"));
+    addRule(oovRule);
+    oovRule.estimateRuleCost(featureFunctions);
   }
 }
