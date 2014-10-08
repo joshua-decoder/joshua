@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import joshua.decoder.Decoder;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.segment_file.Sentence;
 
@@ -22,12 +24,13 @@ public class PhraseChart {
   /**
    * Create a new PhraseChart object, which represents all phrases that are
    * applicable against the current input sentence. These phrases are extracted
-   * from all avialable grammars.
+   * from all available grammars.
    * 
    * @param tables
    * @param source
    */
   public PhraseChart(PhraseTable[] tables, Sentence source) {
+    
     max_source_phrase_length = 0;
     for (int i = 0; i < tables.length; i++)
       max_source_phrase_length = Math.max(max_source_phrase_length,
@@ -53,13 +56,11 @@ public class PhraseChart {
         }
 
       }
-      /*
-       * // TODO: add passthrough grammar! // Add passthrough for words not
-       * known to the phrase table. if (Range(begin, begin + 1) == null) {
-       * TargetPhrases passThrough = new TargetPhrases();
-       * passThrough.MakePassThrough(scorer, source.intSentence()[begin]);
-       * SetRange(begin, begin + 1, passThrough); }
-       */
+    }
+    
+    for (TargetPhrases phrases: entries) {
+      if (phrases != null)
+        phrases.finish(Decoder.weights);
     }
   }
 
@@ -93,8 +94,8 @@ public class PhraseChart {
   public TargetPhrases Range(int begin, int end) {
     int index = offset(begin, end);
     if (index < 0 || index >= entries.size() || entries.get(index) == null) {
-//      System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
-//          entries.get(index) == null ? 0 : entries.get(index).size()));
+      System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
+          entries.get(index) == null ? 0 : entries.get(index).size()));
       return null;
     }
 
@@ -117,8 +118,11 @@ public class PhraseChart {
         else
           entries.get(offset).addAll(to.getRules());
 
-//        System.err.println(String.format("PhraseChart::SetRange(%d,%d) now has %d phrases", begin,
-//            end, entries.get(offset).size()));
+        System.err.println(String.format("PhraseChart::SetRange(%d,%d) now has %d phrases", begin,
+            end, entries.get(offset).size()));
+        for (Rule rule: entries.get(offset)) {
+          System.err.println("    " + rule);
+        }
       } catch (java.lang.IndexOutOfBoundsException e) {
         System.err.println(String.format("Whoops! %s [%d-%d] too long (%d)", to, begin, end,
             entries.size()));

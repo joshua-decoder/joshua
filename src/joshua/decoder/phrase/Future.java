@@ -75,7 +75,7 @@ public class Future {
   private void SetEntry(int begin, int end, float value) {
     assert end >= begin;
     assert end < this.sentlen;
-    System.err.println(String.format("Future::SetEntry(%d,%d,%.5f)", begin, end, Math.log(value)));
+    System.err.println(String.format("Future::SetEntry(%d,%d,%.5f)", begin, end, value));
     entries.set(begin, end, value);
   }
 

@@ -1,9 +1,10 @@
 package joshua.decoder.phrase;
 
-import java.util.ArrayList;
+import java.util.ArrayList;	
 import java.util.Collections;
 import java.util.List;
 
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
 
 /**
@@ -33,21 +34,17 @@ public class TargetPhrases extends ArrayList<Rule> {
   }
   
   /**
-   * Sort the phrases.
+   * Score the rules and sort them. Scoring is necessary because rules are only scored if they
+   * are used, in an effort to make reading in rules more efficient. This is starting to create
+   * some trouble and should probably be reworked.
    */
-  public void finish() {
+  public void finish(FeatureVector weights) {
+    for (Rule rule: this) { 
+      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
+        float score = rule.getFeatureVector().innerProduct(weights);
+        rule.setPrecomputableCost(score);
+      }
+    }
     Collections.sort(this);
   }
-  
-  public void MakePassThrough(Scorer scorer, int word) {
-    /*
-    Phrase target = new Phrase(word);
-    float score = scorer.passThrough()
-        + scorer.LM(word) 
-        + scorer.TargetWordCount(1);
-    target.setScore(score);
-    add(target);
-    */
-  }
-  
 }
