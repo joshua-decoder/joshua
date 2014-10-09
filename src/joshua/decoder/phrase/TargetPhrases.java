@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.Rule;
 
@@ -15,6 +16,8 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 public class TargetPhrases extends ArrayList<Rule> {
+
+  private static final long serialVersionUID = 1L;
 
   public TargetPhrases() {
     super();
@@ -38,12 +41,14 @@ public class TargetPhrases extends ArrayList<Rule> {
    * are used, in an effort to make reading in rules more efficient. This is starting to create
    * some trouble and should probably be reworked.
    */
-  public void finish(FeatureVector weights) {
+  public void finish(List<FeatureFunction> features, FeatureVector weights) {
     for (Rule rule: this) { 
       if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
         float score = rule.getFeatureVector().innerProduct(weights);
         rule.setPrecomputableCost(score);
       }
+      rule.estimateRuleCost(features);
+//      System.err.println("TargetPhrases:finish(): " + rule);
     }
     Collections.sort(this);
   }

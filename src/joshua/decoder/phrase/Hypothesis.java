@@ -6,6 +6,7 @@ import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
@@ -17,9 +18,9 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   // The hypothesis' coverage vector
   private Coverage coverage;
   
-  public static Rule beginRule = new BilingualRule(Vocabulary.id("[X]"),
-      new int[] { Vocabulary.id("<s>") }, new int[] { Vocabulary.id("<s>") }, "", 0);
-  
+  public static BilingualRule BEGIN_RULE = new HieroFormatReader().parseLine("[X] ||| <s> ||| <s> ||| 0");
+  public static BilingualRule END_RULE = new HieroFormatReader().parseLine("[X] ||| [X,1] </s> ||| [X,1] </s> ||| 0");
+      
   public String toString() {
     StringBuffer sb = new StringBuffer();
     for (DPState state: getDPStates())
@@ -30,9 +31,9 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   // Initialize root hypothesis. Provide the LM's BeginSentence.
   public Hypothesis(List<DPState> states, float futureCost) {
     super(0, 1, Vocabulary.id("[X]"), states,
-        new HyperEdge(beginRule, 0.0f, 0.0f, null, null), futureCost);
+        new HyperEdge(BEGIN_RULE, 0.0f, 0.0f, null, null), futureCost);
     
-    this.rule = beginRule;
+    this.rule = BEGIN_RULE;
     this.coverage = new Coverage(1);
   }
 

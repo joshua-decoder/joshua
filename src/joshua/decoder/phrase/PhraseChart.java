@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import joshua.decoder.Decoder;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.segment_file.Sentence;
@@ -29,7 +30,7 @@ public class PhraseChart {
    * @param tables
    * @param source
    */
-  public PhraseChart(PhraseTable[] tables, Sentence source) {
+  public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source) {
     
     max_source_phrase_length = 0;
     for (int i = 0; i < tables.length; i++)
@@ -60,7 +61,7 @@ public class PhraseChart {
     
     for (TargetPhrases phrases: entries) {
       if (phrases != null)
-        phrases.finish(Decoder.weights);
+        phrases.finish(features, Decoder.weights);
     }
   }
 
@@ -93,11 +94,14 @@ public class PhraseChart {
    */
   public TargetPhrases Range(int begin, int end) {
     int index = offset(begin, end);
-    if (index < 0 || index >= entries.size() || entries.get(index) == null) {
-      System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
-          entries.get(index) == null ? 0 : entries.get(index).size()));
+    System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
+        entries.get(index) == null ? 0 : entries.get(index).size()));
+    if (entries.get(index) != null)
+      for (Rule phrase: entries.get(index))
+        System.err.println("  RULE: " + phrase);
+
+    if (index < 0 || index >= entries.size() || entries.get(index) == null)
       return null;
-    }
 
     return entries.get(index);
   }
@@ -117,12 +121,6 @@ public class PhraseChart {
           entries.set(offset, new TargetPhrases(to.getRules()));
         else
           entries.get(offset).addAll(to.getRules());
-
-        System.err.println(String.format("PhraseChart::SetRange(%d,%d) now has %d phrases", begin,
-            end, entries.get(offset).size()));
-        for (Rule rule: entries.get(offset)) {
-          System.err.println("    " + rule);
-        }
       } catch (java.lang.IndexOutOfBoundsException e) {
         System.err.println(String.format("Whoops! %s [%d-%d] too long (%d)", to, begin, end,
             entries.size()));

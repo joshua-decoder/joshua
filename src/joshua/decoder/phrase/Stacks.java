@@ -27,7 +27,7 @@ public class Stacks {
   private PhraseChart chart;
 
   private JoshuaConfiguration config;
-
+  
   /**
    * 
    * 
@@ -48,15 +48,18 @@ public class Stacks {
       if (grammars[i] instanceof PhraseTable)
         ++num_phrase_tables;
     
-    PhraseTable[] phraseTables = new PhraseTable[num_phrase_tables + 1];
+    PhraseTable[] phraseTables = new PhraseTable[num_phrase_tables + 2];
     for (int i = 0, j = 0; i < grammars.length; i++)
       if (grammars[i] instanceof PhraseTable)
         phraseTables[j++] = (PhraseTable) grammars[i];
     
+    phraseTables[phraseTables.length - 2] = new PhraseTable("null", config);
+    phraseTables[phraseTables.length - 2].addRule(Hypothesis.END_RULE);
+    
     phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config);
     phraseTables[phraseTables.length - 1].createOOVGrammar(sentence.intLattice(), featureFunctions);
     
-    this.chart = new PhraseChart(phraseTables, sentence);
+    this.chart = new PhraseChart(phraseTables, featureFunctions, sentence);
   }
   
   
@@ -76,7 +79,7 @@ public class Stacks {
       stacks.add(new Stack());
 
     // Initialize root hypothesis with <s> context and future cost for everything.
-    ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, Hypothesis.beginRule,
+    ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, Hypothesis.BEGIN_RULE,
         null, -1, 1, null, this.sentence);
     stacks.get(0).add(new Hypothesis(result.getDPStates(), future.Full()));
     
@@ -106,6 +109,10 @@ public class Stacks {
           
           // We can always go from first_zero because it doesn't create a reordering gap.
           do {
+            // Don't append </s> until the end
+            if (begin == sentence.length() - 1 && source_words != sentence.length()) 
+              break;
+            
             TargetPhrases phrases = chart.Range(begin, begin + phrase_length);
             
             if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
@@ -163,8 +170,12 @@ public class Stacks {
       EdgeOutput output = new EdgeOutput(lastStack);
       gen.Search(output);
     }
+    
+    Stack lastStack = stacks.get(stacks.size() - 1);
+    Hypothesis end = lastStack.isEmpty() ? null : lastStack.get(0);
 
-    return PopulateLastStack();
+    System.err.println("Stack(): END: " + end);
+    return new HyperGraph(end, -1, -1, this.sentence);
   }
 
   /**
@@ -177,16 +188,7 @@ public class Stacks {
    * @return
    */
   private HyperGraph PopulateLastStack() {
-    
-    Span span = new Span(1, chart.SentenceLength());
-    Vertex all_hyps = new Vertex();
-    
-    for (Hypothesis ant : stacks.get(chart.SentenceLength())) {
-      // TODO: the zero in the following line assumes that EOS is not scored for distortion. 
-      // This assumption might need to be revisited.
-      all_hyps.add(new HypoState(ant, 0));
-    }
-    
+     
     // Next, make Vertex which consists of a single EOS phrase.
     // The search algorithm will attempt to find the best hypotheses in the "cross product" of these two sets.
     // TODO: Maybe this should belong to the phrase table.  It's constant.
@@ -204,10 +206,12 @@ public class Stacks {
 
     PickBest output = new PickBest(lastStack);
     gen.Search(output);
-
-    end = lastStack.isEmpty() ? null : lastStack.get(0);
-    */
+*/
     
+    Stack lastStack = stacks.get(stacks.size() - 1);
+    Hypothesis end = lastStack.isEmpty() ? null : lastStack.get(0);
+
+    System.err.println("Stack(): END: " + end);
     return new HyperGraph(end, -1, -1, this.sentence);
   }
 

@@ -5,6 +5,8 @@ import java.util.Collections;
 
 public class Vertex extends ArrayList<HypoState> {
 
+  private static final long serialVersionUID = 1L;
+
   public Vertex() {
     super();
   }
