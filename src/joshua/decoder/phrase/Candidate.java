@@ -27,6 +27,11 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   // scoring and state information 
   private ComputeNodeResult result;
   
+  public String toString() {
+    return String.format("CAND[%d/%d hypotheses, %d/%d phrases] %s + %s", ranks[0],
+        hypotheses.size(), ranks[1], phrases.size(), getHypothesis(), getRule().getEnglishWords());
+  }
+  
   public Candidate(float futureCost) {
     this.hypotheses = new Vertex();
     this.phrases = new TargetPhrases();
@@ -39,8 +44,6 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
     this.phrases = phrases;
     this.span = span;
     this.ranks = new int[] { 0, 0 };
-    
-    
   }
 
   public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
@@ -66,12 +69,12 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   
   @Override
   public int compareTo(Candidate other) {
-    return Float.compare(score(), other.score());
+    return Float.compare(other.score(), score());
   }
 
   @Override
   public int compare(Candidate arg0, Candidate arg1) {
-    return Float.compare(arg0.score(), arg1.score());
+    return Float.compare(arg1.score(), arg0.score());
   }
 
   public Span getSpan() {

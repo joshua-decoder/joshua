@@ -6,7 +6,6 @@ import java.util.List;
 
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.segment_file.Sentence;
 
@@ -94,11 +93,11 @@ public class PhraseChart {
    */
   public TargetPhrases Range(int begin, int end) {
     int index = offset(begin, end);
-    System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
-        entries.get(index) == null ? 0 : entries.get(index).size()));
-    if (entries.get(index) != null)
-      for (Rule phrase: entries.get(index))
-        System.err.println("  RULE: " + phrase);
+//    System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
+//        entries.get(index) == null ? 0 : entries.get(index).size()));
+//    if (entries.get(index) != null)
+//      for (Rule phrase: entries.get(index))
+//        System.err.println("  RULE: " + phrase);
 
     if (index < 0 || index >= entries.size() || entries.get(index) == null)
       return null;

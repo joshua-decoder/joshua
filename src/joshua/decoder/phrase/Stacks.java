@@ -75,27 +75,26 @@ public class Stacks {
     // Reservation is critical because pointers to Hypothesis objects are retained as history.
     //stacks.reserve(chart.SentenceLength() + 2 /* begin/end of sentence */);
     stacks.clear();
-    for (int i = 0; i < sentence.length(); i++)
+    stacks.add(null);
+    for (int i = 1; i <= sentence.length(); i++)
       stacks.add(new Stack());
 
     // Initialize root hypothesis with <s> context and future cost for everything.
     ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, Hypothesis.BEGIN_RULE,
         null, -1, 1, null, this.sentence);
-    stacks.get(0).add(new Hypothesis(result.getDPStates(), future.Full()));
+    stacks.get(1).add(new Hypothesis(result.getDPStates(), future.Full()));
     
-    System.err.println("STACKS::SEARCH()");
-
     // Decode with increasing numbers of source words.
-    for (int source_words = 1; source_words <= sentence.length(); ++source_words) {
+    for (int source_words = 2; source_words <= sentence.length(); ++source_words) {
       // A vertex represents the root of a trie, e.g., bundled translations of the same source phrase
       HashMap<Span, Vertex> vertices = new HashMap<Span, Vertex>();
       // Iterate over stacks to continue from.
-      for (int from_stack = source_words - Math.min(source_words, chart.MaxSourcePhraseLength());
+      for (int from_stack = source_words - Math.min(source_words - 1, chart.MaxSourcePhraseLength());
            from_stack < source_words;
            ++from_stack) {
         int phrase_length = source_words - from_stack;
 
-        System.err.println(String.format("  WORDS %d (STACK %d phrase_length %d)", source_words, from_stack, phrase_length));
+        System.err.println(String.format("\n  WORDS %d (STACK %d phrase_length %d)", source_words, from_stack, phrase_length));
         
         // Iterate over antecedents in this stack.
         for (Hypothesis ant : stacks.get(from_stack)) {
@@ -105,14 +104,13 @@ public class Stacks {
           int last_end = Math.min(coverage.firstZero() + config.reordering_limit, chart.SentenceLength());
           int last_begin = (last_end > phrase_length) ? (last_end - phrase_length) : 0;
 
-          // TODO: don't consume </s> until you're on the last stack
-          
           // We can always go from first_zero because it doesn't create a reordering gap.
           do {
+            
             // Don't append </s> until the end
             if (begin == sentence.length() - 1 && source_words != sentence.length()) 
-              break;
-            
+              continue;            
+
             TargetPhrases phrases = chart.Range(begin, begin + phrase_length);
             
             if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
@@ -135,7 +133,7 @@ public class Stacks {
              * augment the hypothesis score with a future cost.
              */
             vertices.get(span).add(new HypoState(ant, score_delta));
-            System.err.println(String.format("  NEW VERTEX: %.5f", score_delta));
+
             // Enforce the reordering limit on later iterations.
 
           } while (++begin <= last_begin);
@@ -151,65 +149,29 @@ public class Stacks {
        */
       
       EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
+      System.err.println(String.format("\nBuilding cube-pruning chart for %d words", source_words));
       for (Span pair : vertices.keySet()) {
         Vertex hypos = vertices.get(pair);
         if (hypos.isEmpty())
           continue;
         // Sorts the hypotheses, since we now know that we're done adding them
         hypos.finish();
-
+        
         TargetPhrases phrases = chart.Range(pair.start, pair.end);
+
+        System.err.println(String.format("  Span %s hypotheses %s phrases %s", pair, hypos.size(), phrases.size()));
 
         Candidate cand = new Candidate(hypos, phrases, pair);
         gen.AddCandidate(cand);
       }
 
-      //stacks.resize(stacks_.size() + 1); // todo
-      //stacks.back().reserve(context.SearchContext().PopLimit()); todo
-      Stack lastStack = stacks.get(stacks.size()-1);
-      EdgeOutput output = new EdgeOutput(lastStack);
+      Stack stack = stacks.get(source_words);
+      EdgeOutput output = new EdgeOutput(stack);
       gen.Search(output);
     }
     
-    Stack lastStack = stacks.get(stacks.size() - 1);
-    Hypothesis end = lastStack.isEmpty() ? null : lastStack.get(0);
-
-    System.err.println("Stack(): END: " + end);
-    return new HyperGraph(end, -1, -1, this.sentence);
-  }
-
-  /**
-   * The last stack is a bit of a special case, because only the last word of the input
-   * sentence (</s>) can be translated --- not just any word.
-   * 
-   * I think this function could be done away with entirely in favor of a little special-case
-   * handling in the above routine.
-   * 
-   * @return
-   */
-  private HyperGraph PopulateLastStack() {
-     
-    // Next, make Vertex which consists of a single EOS phrase.
-    // The search algorithm will attempt to find the best hypotheses in the "cross product" of these two sets.
-    // TODO: Maybe this should belong to the phrase table.  It's constant.
-/*
-    Phrase eos_phrase = new Phrase("</s>");
-    TargetPhrases eos_phrases = new TargetPhrases();
-    eos_phrases.add(eos_phrase);
-    eos_phrases.finish();
-
-    Stack lastStack = stacks.get(stacks.size() - 1);
-    
-    EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
-    Candidate candidate = new Candidate(all_hyps, eos_phrases, span);
-    gen.AddCandidate(candidate);
-
-    PickBest output = new PickBest(lastStack);
-    gen.Search(output);
-*/
-    
-    Stack lastStack = stacks.get(stacks.size() - 1);
-    Hypothesis end = lastStack.isEmpty() ? null : lastStack.get(0);
+    Stack lastStack = stacks.get(sentence.length());
+    this.end = lastStack.isEmpty() ? null : lastStack.get(0);
 
     System.err.println("Stack(): END: " + end);
     return new HyperGraph(end, -1, -1, this.sentence);

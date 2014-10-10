@@ -64,13 +64,14 @@ public class Future {
     return Entry(1, sentlen);
   }
 
-  // Calculate change in rest cost when the given coverage is to be covered.                       
+  /**
+   * Calculate change in rest cost when the given coverage is to be covered.
+   */                       
   public float Change(Coverage coverage, int begin, int end) {
     int left = coverage.LeftOpen(begin);
-//    int right = coverage.RightOpen(end, sentence_length_plus_1 - 1);
     int right = coverage.RightOpen(end, sentlen);
-    System.err.println(String.format("Future::Change(%s, %d, %d) left %d right %d %.3f %.3f %.3f", coverage, begin, end, left, right,
-        Entry(left, begin), Entry(end, right), Entry(left, right)));
+//    System.err.println(String.format("Future::Change(%s, %d, %d) left %d right %d %.3f %.3f %.3f", coverage, begin, end, left, right,
+//        Entry(left, begin), Entry(end, right), Entry(left, right)));
     return Entry(left, begin) + Entry(end, right) - Entry(left, right);
   }
   
@@ -84,7 +85,7 @@ public class Future {
     assert end >= begin;
     assert end < this.sentlen;
 //    if (value > Float.NEGATIVE_INFINITY)
-      System.err.println(String.format("Future::SetEntry(%d,%d,%.5f)", begin, end, value));
+//      System.err.println(String.format("Future::SetEntry(%d,%d,%.5f)", begin, end, value));
     entries.set(begin, end, value);
   }
 

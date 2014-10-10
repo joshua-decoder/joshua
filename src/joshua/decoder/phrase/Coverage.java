@@ -28,7 +28,7 @@ public class Coverage {
     sb.append(String.format("%d ", firstZero));
 
     long mask = 1L;
-    for (int i = 0; i < 30; i++) { // only display first 30 bits
+    for (int i = 0; i < 10; i++) { // only display first 10 bits
       sb.append((bits & mask) > 0 ? "x" : ".");
       mask <<= 1;
     }
