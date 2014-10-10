@@ -25,7 +25,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
     StringBuffer sb = new StringBuffer();
     for (DPState state: getDPStates())
       sb.append("STATE: " + state + " ");
-    return String.format("HYP[%s] %.5f %d", coverage, score, j);
+    return String.format("HYP[%s] %.5f j=%d %s", coverage, score, j, sb);
   }
 
   // Initialize root hypothesis. Provide the LM's BeginSentence.
@@ -73,25 +73,19 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
     return j;
   }
 
-  public Hypothesis Previous() {
-    // TODO: return previous hypothesis
-    return null;
-  }
-
-  public Rule Target() {
-    return rule;
-  }
-
   @Override
   public int hashCode() {
     return LastSourceIndex() * GetCoverage().hashCode();
   }
 
+  /**
+   * TODO: compare all the DP states
+   */
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Hypothesis) {
       Hypothesis other = (Hypothesis) obj;
-      if (LastSourceIndex() == other.LastSourceIndex() && GetCoverage() == other.GetCoverage())
+      if (LastSourceIndex() == other.LastSourceIndex() && GetCoverage().equals(other.GetCoverage()))
         return true;
     }
     return false;
