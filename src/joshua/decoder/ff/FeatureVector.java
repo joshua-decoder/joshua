@@ -34,6 +34,12 @@ public class FeatureVector {
    * It produces a Feature Vector where all unlabeled features have been labeled by appending the
    * unlabeled feature index (starting at 0) to the defaultPrefix value.
    * 
+   * **IMPORTANT** The feature values are inverted, for historical reasons, which leads to a lot
+   * of confusion. They have to be inverted here and when the score is actually computed. They 
+   * are inverted here (which is used to build the feature vector representation of a rule's dense
+   * features) and in {@link BilingualRule::estimateRuleCost()}, where the rule's precomputable
+   * (weighted) score is cached.
+   * 
    * @param featureString, the string of labeled and unlabeled features (probably straight from the
    *          grammar text file)
    * @param prefix, the prefix to use for unlabeled features (probably "tm_OWNER_")

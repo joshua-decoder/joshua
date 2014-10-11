@@ -20,6 +20,7 @@ import joshua.decoder.ff.LabelCombinationFF;
 import joshua.decoder.ff.LabelSubstitutionFF;
 import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.PhrasePenaltyFF;
 import joshua.decoder.ff.RuleFF;
 import joshua.decoder.ff.RuleLengthFF;
 import joshua.decoder.ff.SourcePathFF;
@@ -30,6 +31,7 @@ import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.phrase.DistortionFF;
 import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
@@ -718,13 +720,19 @@ public class Decoder {
       } else if (feature.equals("rule")) {
 //        logger.info(String.format("FEATURE: RuleFF %s", featureLine));
         this.featureFunctions.add(new RuleFF(Decoder.weights, featureLine));
+
+      } else if (feature.equals("phrasepenalty")) {
+        this.featureFunctions.add(new PhrasePenaltyFF(Decoder.weights, featureLine));
         
       } else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelCombinationFF(weights));
       
       } else if (feature.equals(LabelSubstitutionFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelSubstitutionFF(weights));
-
+        
+      } else if (feature.equals("distortion")) {
+        this.featureFunctions.add(new DistortionFF(weights));
+        
       } else {
         try {
           Class<?> clas = Class.forName(String.format("joshua.decoder.ff.%sFF", featureName));
