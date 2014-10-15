@@ -52,6 +52,9 @@ public class FeatureVector {
      * 
      * Note that it's bad form to mix unlabeled features and the named feature index they are mapped
      * to, but we are being liberal in what we accept.
+     * 
+     * IMPORTANT: Note that, for historical reasons, the sign is reversed on all scores.
+     * This is the source of *no end* of confusion and should be done away with.
      */
     features = new HashMap<String, Float>();
     int denseFeatureIndex = 0;

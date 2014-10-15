@@ -31,15 +31,17 @@ public class PhraseChart {
    */
   public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source) {
     
+    float startTime = System.currentTimeMillis();
+   
     max_source_phrase_length = 0;
     for (int i = 0; i < tables.length; i++)
       max_source_phrase_length = Math.max(max_source_phrase_length,
           tables[i].getMaxSourcePhraseLength());
     sentence_length = source.length();
 
-    System.err.println(String.format(
-        "PhraseChart()::Initializing chart for sentlen %d max %d from %s", sentence_length,
-        max_source_phrase_length, source));
+//    System.err.println(String.format(
+//        "PhraseChart()::Initializing chart for sentlen %d max %d from %s", sentence_length,
+//        max_source_phrase_length, source));
 
     entries = new ArrayList<TargetPhrases>();
     for (int i = 0; i < sentence_length * max_source_phrase_length; i++)
@@ -62,6 +64,9 @@ public class PhraseChart {
       if (phrases != null)
         phrases.finish(features, Decoder.weights);
     }
+    
+    System.err.println(String.format("[%d] Collecting options took %.3f seconds", source.id(),
+        (System.currentTimeMillis() - startTime) / 1000.0f));
   }
 
   public int SentenceLength() {

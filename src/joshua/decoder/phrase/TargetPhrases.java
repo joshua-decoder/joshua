@@ -50,6 +50,10 @@ public class TargetPhrases extends ArrayList<Rule> {
       rule.estimateRuleCost(features);
 //      System.err.println("TargetPhrases:finish(): " + rule);
     }
-    Collections.sort(this);
+    Collections.sort(this, Rule.EstimatedCostComparator);
+    
+//    System.err.println("TargetPhrases::finish()");
+//    for (Rule rule: this) 
+//      System.err.println("  " + rule);
   }
 }

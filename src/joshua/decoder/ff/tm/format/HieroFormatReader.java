@@ -77,6 +77,12 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
   }
 
+  /**
+   * Reads in a string alignment as a space-delimited list of hyphen-delimited integer pairs "i-j",
+   * where i denotes a zero-based index into the source string and j into the target string.
+   * @param s
+   * @return
+   */
   private static byte[] readAlignment(String s) {
     String[] indices = s.replaceAll("-", " ").split("\\s+");
     byte[] result = new byte[indices.length];
@@ -101,7 +107,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     sb.append(" ||| ");
     sb.append(Vocabulary.getWords(rule.getEnglish()));
     sb.append(" |||");
-    sb.append(" " + rule.computeFeatures());
+    sb.append(" " + rule.getFeatureVector());
 
     return sb.toString();
   }

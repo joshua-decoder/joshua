@@ -59,12 +59,12 @@ public class EdgeGenerator {
     // This is what we'll return, but first we have to do some expansion
     Candidate top = generate.poll();
     
-    System.err.println(String.format("  POP " + top));
+//    System.err.println(String.format("  POP " + top));
 
     for (Candidate c : top.extend())
       if (c != null) {
         AddCandidate(c);
-        System.err.println(String.format("  PUSH " + c));
+//        System.err.println(String.format("  PUSH " + c));
       }
 
     return top;
@@ -79,9 +79,9 @@ public class EdgeGenerator {
    */
   public void Search(Output output) {
     int to_pop = config.pop_limit;
-    System.err.println("EdgeGenerator::Search(): pop: " + to_pop + " size: " + generate.size());
-    for (Candidate c: generate)
-      System.err.println("  " + c);
+//    System.err.println("EdgeGenerator::Search(): pop: " + to_pop + " size: " + generate.size());
+//    for (Candidate c: generate)
+//      System.err.println("  " + c);
     while (to_pop > 0 && !generate.isEmpty()) {
       Candidate got = Pop();
       if (got != null) {

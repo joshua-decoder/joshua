@@ -171,6 +171,11 @@ public class LanguageModelFF extends StatefulFF {
    * terminal words in the rule string are preceded by a nonterminal (c) we encounter adjacent
    * nonterminals. In all of these situations, the corresponding boundary words of the node in the
    * hypergraph represented by the nonterminal must be retrieved.
+   * 
+   * IMPORTANT: only complete n-grams are scored. This means that hypotheses with fewer words
+   * than the complete n-gram state remain *unscored*. This fact adds a lot of complication to the
+   * code, including the use of the computeFinal* family of functions, which correct this fact for
+   * sentences that are too short on the final transition.
    */
   private NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
 
@@ -179,6 +184,8 @@ public class LanguageModelFF extends StatefulFF {
     int ccount = 0;
     float transitionLogP = 0.0f;
     int[] left_context = null;
+    
+//    System.err.println(String.format("LanguageModel::computeTransition(%s)", Arrays.toString(enWords)));
 
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
@@ -200,6 +207,7 @@ public class LanguageModelFF extends StatefulFF {
           if (ccount == this.ngramOrder) {
             // Compute the current word probability, and remove it.
             float prob = this.languageModel.ngramLogProbability(current, this.ngramOrder);
+//            System.err.println(String.format("-> prob(%s) = %f", Vocabulary.getWords(current), prob));
             transitionLogP += prob;
             System.arraycopy(current, 1, shadow, 0, this.ngramOrder - 1);
             int[] tmp = current;
@@ -218,6 +226,7 @@ public class LanguageModelFF extends StatefulFF {
         if (ccount == this.ngramOrder) {
           // Compute the current word probability, and remove it.s
           float prob = this.languageModel.ngramLogProbability(current, this.ngramOrder);
+//          System.err.println(String.format("-> prob(%s) = %f", Vocabulary.getWords(current), prob));
           transitionLogP += prob;
           System.arraycopy(current, 1, shadow, 0, this.ngramOrder - 1);
           int[] tmp = current;
@@ -248,6 +257,8 @@ public class LanguageModelFF extends StatefulFF {
    */
   private NgramDPState computeFinalTransition(NgramDPState state, Accumulator acc) {
 
+//    System.err.println(String.format("LanguageModel::computeFinalTransition()"));
+    
     float res = 0.0f;
     LinkedList<Integer> currentNgram = new LinkedList<Integer>();
     int[] leftContext = state.getLeftLMStateWords();

@@ -28,7 +28,7 @@ public class EdgeOutput implements Output {
         
     Hypothesis added = stack.get(stack.size() - 1);
     
-    System.err.println("EdgeOutput::NewHypothesis() -> " + added);
+//    System.err.println("EdgeOutput::NewHypothesis() -> " + added);
 
     if (deduper.containsKey(added)) {
       Hypothesis existing = deduper.get(added);
@@ -39,12 +39,12 @@ public class EdgeOutput implements Output {
         existing.addHyperedgesInNode(added.hyperedges);
       }
       
-      System.err.println(String.format("-> Edge existed, now has %d incoming arcs", existing.hyperedges.size()));
+//      System.err.println(String.format("-> Edge existed, now has %d incoming arcs", existing.hyperedges.size()));
       
       stack.remove(stack.size() - 1);
     } else {
       deduper.put(added, added);
-      System.err.println(String.format("-> Edge was new"));
+//      System.err.println(String.format("-> Edge was new"));
     }
   }
 

@@ -43,7 +43,7 @@ public class Future {
         if (phrases != null) {
           // TODO: what's the cost?
 //          SetEntry(begin, end, phrases.getVertex().Bound());
-            System.err.println(String.format("  Found %d over (%d,%d)", phrases.size(), begin, end));
+//            System.err.println(String.format("  Found %d over (%d,%d)", phrases.size(), begin, end));
           SetEntry(begin, end, phrases.get(0).getEstimatedCost());
         }
       }
@@ -60,7 +60,7 @@ public class Future {
   }
   
   public float Full() {
-    System.err.println("Future::Full(): " + Entry(1, sentlen));
+//    System.err.println("Future::Full(): " + Entry(1, sentlen));
     return Entry(1, sentlen);
   }
 

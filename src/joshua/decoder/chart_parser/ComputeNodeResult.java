@@ -50,6 +50,9 @@ public class ComputeNodeResult {
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
     
+//    System.err.println("ComputeNodeResult():");
+//    System.err.println("-> RULE " + rule);
+    
     /*
      * Here we sum the accumulated cost of each of the tail nodes. The total cost of the new
      * hyperedge (the inside or Viterbi cost) is the sum of these nodes plus the cost of the
@@ -60,6 +63,7 @@ public class ComputeNodeResult {
       for (HGNode item : tailNodes) {
 //        System.err.println("  -> item.bestedge: " + item);
         viterbiCost += item.bestHyperedge.getBestDerivationScore();
+//        System.err.println("-> TAIL NODE " + item);
       }
     }
 
@@ -80,6 +84,8 @@ public class ComputeNodeResult {
 
       DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentence.id(), acc);
       transitionCost += acc.getScore();
+      
+//      System.err.println(String.format("-> FEATURE %s = %.5f", feature.getName(), acc.getScore()));
 
       if (feature.isStateful()) {
         futureCostEstimate += feature.estimateFutureCost(rule, newState, sentID);
@@ -167,6 +173,15 @@ public class ComputeNodeResult {
 
   /**
    * This is called from Cell.java when making the final transition to the goal state.
+   * This is done to allow feature functions to correct for partial estimates, since
+   * they now have the knowledge that the whole sentence is complete. Basically, this
+   * is only used by LanguageModelFF, which does not score partial n-grams, and therefore
+   * needs to correct for this when a short sentence ends. KenLMFF corrects for this by
+   * always scoring partial hypotheses, and subtracting off the partial score when longer
+   * context is available. This would be good to do for the LanguageModelFF feature function,
+   * too: it makes search better (more accurate at the beginning, for example), and would
+   * also do away with the need for the computeFinal* class of functions (and hooks in
+   * the feature function interface).
    */
   public static float computeFinalCost(List<FeatureFunction> featureFunctions,
       List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID) {

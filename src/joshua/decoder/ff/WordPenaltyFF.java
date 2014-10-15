@@ -14,12 +14,18 @@ import joshua.decoder.hypergraph.HGNode;
  */
 public final class WordPenaltyFF extends StatelessFF {
 
-  private static final float OMEGA = -(float) Math.log10(Math.E); // -0.435
+  private float OMEGA = -(float) Math.log10(Math.E); // -0.435
+//  private float OMEGA = -1;  
 
   public WordPenaltyFF(final FeatureVector weights) {
     super(weights, "WordPenalty", "");
   }
 
+  public WordPenaltyFF(final FeatureVector weights, float value) {
+    super(weights, "WordPenalty", "");
+    OMEGA = value;
+  }
+  
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
