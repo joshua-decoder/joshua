@@ -10,16 +10,22 @@ import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 
+/**
+ * Represents a hypothesis, a translation of some coverage of the input. Extends {@link HGNode}, 
+ * through a bit of a hack. Whereas (i,j) represents the span of an {@link HGNode}, we use it here
+ * to denote the span of the phrase being applied. The complete coverage vector can be obtained by
+ * looking at the tail pointer and casting it.
+ * 
+ * @author Kenneth Heafield
+ * @author Matt Post <post@cs.jhu.edu>
+ */
 public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
 
-  // The rule represented by this hypothesis
-  private Rule rule;
-  
   // The hypothesis' coverage vector
   private Coverage coverage;
   
   public static BilingualRule BEGIN_RULE = new HieroFormatReader().parseLine("[X] ||| <s> ||| <s> ||| 0");
-  public static BilingualRule END_RULE = new HieroFormatReader().parseLine("[X] ||| [X,1] </s> ||| [X,1] </s> ||| 0");
+  public static BilingualRule END_RULE = new HieroFormatReader().parseLine("[GOAL] ||| [X,1] </s> ||| [X,1] </s> ||| 0");
       
   public String toString() {
     StringBuffer sb = new StringBuffer();
@@ -33,7 +39,6 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
     super(0, 1, Vocabulary.id("[X]"), states,
         new HyperEdge(BEGIN_RULE, 0.0f, 0.0f, null, null), futureCost);
     
-    this.rule = BEGIN_RULE;
     this.coverage = new Coverage(1);
   }
 
@@ -49,8 +54,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   public Hypothesis(List<DPState> states, float score, Hypothesis previous, int source_begin,
       int source_end, Rule target) {
 //  super(source_begin, source_end, -1, null, new HyperEdge(), score);
-  super(source_begin, source_end, -1, null, null, score);
-    this.rule = target;
+    super(source_begin, source_end, -1, null, null, score);
     this.coverage = previous.coverage;
     this.coverage.Set(source_begin, source_end);
   }

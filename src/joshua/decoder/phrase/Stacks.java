@@ -9,6 +9,8 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.segment_file.Sentence;
 
@@ -27,7 +29,7 @@ public class Stacks {
   private PhraseChart chart;
 
   private JoshuaConfiguration config;
-  
+
   /**
    * 
    * 
@@ -69,6 +71,9 @@ public class Stacks {
    * @return
    */
   public HyperGraph search() {
+    
+    long startTime = System.currentTimeMillis();
+    
     Future future = new Future(chart);
     stacks = new ArrayList<Stack>();
     
@@ -94,11 +99,11 @@ public class Stacks {
            ++from_stack) {
         int phrase_length = source_words - from_stack;
 
-        System.err.println(String.format("\n  WORDS %d (STACK %d phrase_length %d)", source_words, from_stack, phrase_length));
+//        System.err.println(String.format("\n  WORDS %d (STACK %d phrase_length %d)", source_words, from_stack, phrase_length));
         
         // Iterate over antecedents in this stack.
         for (Hypothesis ant : stacks.get(from_stack)) {
-          System.err.println(String.format("  WORDS %d ANT %s", source_words, ant)); 
+//          System.err.println(String.format("  WORDS %d ANT %s", source_words, ant)); 
           Coverage coverage = ant.GetCoverage();
           int begin = coverage.firstZero();
           int last_end = Math.min(coverage.firstZero() + config.reordering_limit, chart.SentenceLength());
@@ -116,7 +121,7 @@ public class Stacks {
             if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
               continue;
 
-            System.err.println(String.format("  Applying %d target phrases over [%d,%d]", phrases.size(), begin, begin + phrase_length));
+//            System.err.println(String.format("  Applying %d target phrases over [%d,%d]", phrases.size(), begin, begin + phrase_length));
             
             // TODO: could also compute some number of features here (e.g., non-LM ones)
             // float score_delta = context.GetScorer().transition(ant, phrases, begin, begin + phrase_length);
@@ -149,7 +154,7 @@ public class Stacks {
        */
       
       EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
-      System.err.println(String.format("\nBuilding cube-pruning chart for %d words", source_words));
+//      System.err.println(String.format("\nBuilding cube-pruning chart for %d words", source_words));
       for (Span pair : vertices.keySet()) {
         Vertex hypos = vertices.get(pair);
         if (hypos.isEmpty())
@@ -159,7 +164,7 @@ public class Stacks {
         
         TargetPhrases phrases = chart.Range(pair.start, pair.end);
 
-        System.err.println(String.format("  Span %s hypotheses %s phrases %s", pair, hypos.size(), phrases.size()));
+//        System.err.println(String.format("  Span %s hypotheses %s phrases %s", pair, hypos.size(), phrases.size()));
 
         Candidate cand = new Candidate(hypos, phrases, pair);
         gen.AddCandidate(cand);
@@ -170,10 +175,32 @@ public class Stacks {
       gen.Search(output);
     }
     
+    System.err.println(String.format("[%d] Search took %.3f seconds", sentence.id(),
+        (System.currentTimeMillis() - startTime) / 1000.0f));
+    
+    //    System.err.println("Stack(): END: " + end);
+    return createGoalNode();
+  }
+    
+  private HyperGraph createGoalNode() {
     Stack lastStack = stacks.get(sentence.length());
-    this.end = lastStack.isEmpty() ? null : lastStack.get(0);
+    
+    for (Hypothesis hyp: lastStack) {
+      float score = hyp.getScore();
+      List<HGNode> tailNodes = new ArrayList<HGNode>();
+      tailNodes.add(hyp);
+      
+      float finalTransitionScore = ComputeNodeResult.computeFinalCost(featureFunctions, tailNodes, 0, sentence.length(), null, sentence.id());
 
-    System.err.println("Stack(): END: " + end);
+      if (null == this.end)
+        this.end = new Hypothesis(null, score + finalTransitionScore, hyp, sentence.length() - 1, sentence.length(), null);
+
+      HyperEdge edge = new HyperEdge(null, score + finalTransitionScore, finalTransitionScore, tailNodes, null);
+      end.addHyperedgeInNode(edge);
+    }
+    
+    this.end = lastStack.isEmpty() ? null : lastStack.get(0);
+    
     return new HyperGraph(end, -1, -1, this.sentence);
   }
 
