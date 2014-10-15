@@ -52,7 +52,7 @@ public class BilingualRule extends Rule {
 
   private int[] english;
 
-	private byte [] alignment;
+  private byte [] alignment;
 
   // ===============================================================
   // Constructors
@@ -92,9 +92,9 @@ public class BilingualRule extends Rule {
   }
 
   public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, byte [] alignment) {
-		this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
-		this.alignment = alignment;
-	}
+    this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
+    this.alignment = alignment;
+  }
 
   // ===============================================================
   // Attributes
@@ -178,24 +178,26 @@ public class BilingualRule extends Rule {
     return this.pFrench;
   }
 
-  /*
-   * This function returns the feature vector found in the rule's grammar file.
+  /**
+   * This function does the work of turning the string version of the sparse features (passed in
+   * when the rule was created) into an actual set of features. This is a bit complicated because we
+   * support intermingled labeled and unlabeled features, where the unlabeled features are mapped to
+   * a default name template of the form "tm_OWNER_INDEX".
    */
   @Override
   public final FeatureVector getFeatureVector() {
-    return computeFeatures();
-  }
+    /*
+     * Now read the feature scores, which can be any number of dense features and sparse features.
+     * Any unlabeled feature becomes a dense feature. By convention, dense features should precede
+     * sparse (labeled) ones, but it's not required.
+     */
 
-  @Override
-  /**
-   * Sets the estimated cost. Calling estimateRuleCost(models) will also set the cost, but this
-   * function can be used if the cost is computed elsewhere.
-   */
-  public final void setEstimatedCost(float cost) {
-    if (cost <= Float.NEGATIVE_INFINITY) {
-      logger.warning("The cost is being set to -infinity in " + "rule:\n" + toString());
-    }
-    estimatedCost = cost;
+    FeatureVector features = null;
+
+    if (owner != -1)
+      features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
+
+    return features;
   }
 
   /**
@@ -257,31 +259,6 @@ public class BilingualRule extends Rule {
   // ===============================================================
   // Methods
   // ===============================================================
-
-  /**
-   * This function does the work of turning the string version of the sparse features (passed in
-   * when the rule was created) into an actual set of features. This is a bit complicated because we
-   * support intermingled labeled and unlabeled features, where the unlabeled features are mapped to
-   * a default name template of the form "tm_OWNER_INDEX".
-   */
-  public FeatureVector computeFeatures() {
-
-    /*
-     * Now read the feature scores, which can be any number of dense features and sparse features.
-     * Any unlabeled feature becomes a dense feature. By convention, dense features should precede
-     * sparse (labeled) ones, but it's not required.
-     */
-
-    FeatureVector features = null;
-    
-    if (owner != -1) {
-//      throw new RuntimeException("You asked me to compute the features for a rule, but haven't told me the rule's owner.");
-
-      features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
-    }
-
-    return features;
-  }
 
   public String toString() {
     StringBuffer sb = new StringBuffer();
