@@ -454,9 +454,6 @@ public class JoshuaConfiguration {
             fragmentMapFile = fds[1];
             Tree.readMapping(fragmentMapFile);
 
-          } else if (parameter.equals(normalize_key("no-invert-weights"))) {
-            Decoder.invert_weights = false;
-            
           /** PHRASE-BASED PARAMETERS **/
 
           } else if (parameter.equals(normalize_key("reordering-limit"))) {
