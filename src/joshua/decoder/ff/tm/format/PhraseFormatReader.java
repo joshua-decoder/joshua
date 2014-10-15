@@ -20,7 +20,18 @@ public class PhraseFormatReader extends HieroFormatReader {
    */
   @Override
   public BilingualRule parseLine(String line) {
-    String newLine = "[X] ||| [X,1] " + line.replaceFirst("\\|\\|\\|", "||| [X,1]");
+    String[] tokens = line.split(HieroFormatReader.fieldDelimiter);
+    StringBuffer values = new StringBuffer();
+    for (String value: tokens[2].split(" ")) {
+      float f = Float.parseFloat(value);
+      values.append(String.format(" %f", f <= 0.0 ? -100 : -Math.log(f)));
+    }
+    String newLine = String.format("[X] ||| [X,1] %s ||| [X,1] %s |||%s", tokens[0], tokens[1], values);
+
+    for (int i = 3; i < tokens.length; i++)
+      newLine += " ||| " + tokens[i];
+    
+//    System.err.println(String.format("parseLine(%s) --> %s", line, newLine));
     return super.parseLine(newLine);
   }
 }
