@@ -61,7 +61,7 @@ public class Stacks {
     phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config);
     phraseTables[phraseTables.length - 1].createOOVGrammar(sentence.intLattice(), featureFunctions);
     
-    this.chart = new PhraseChart(phraseTables, featureFunctions, sentence);
+    this.chart = new PhraseChart(phraseTables, featureFunctions, sentence, config.num_translation_options);
   }
   
   

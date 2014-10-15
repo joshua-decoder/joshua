@@ -20,6 +20,9 @@ public class PhraseChart {
 
   // Banded array: different source lengths are next to each other.
   private List<TargetPhrases> entries;
+  
+  // number of translation options
+  int numOptions = 20;
 
   /**
    * Create a new PhraseChart object, which represents all phrases that are
@@ -29,7 +32,7 @@ public class PhraseChart {
    * @param tables
    * @param source
    */
-  public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source) {
+  public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source, int num_options) {
     
     float startTime = System.currentTimeMillis();
    
@@ -62,7 +65,7 @@ public class PhraseChart {
     
     for (TargetPhrases phrases: entries) {
       if (phrases != null)
-        phrases.finish(features, Decoder.weights);
+        phrases.finish(features, Decoder.weights, num_options);
     }
     
     System.err.println(String.format("[%d] Collecting options took %.3f seconds", source.id(),

@@ -180,6 +180,8 @@ public class JoshuaConfiguration {
   
   public int reordering_limit = 8;
   
+  public int num_translation_options = 20;
+  
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
    * This is useful when for example making different calls to the decoder within the same java
@@ -227,6 +229,7 @@ public class JoshuaConfiguration {
     server_port = 0;
     
     reordering_limit = 8;
+    num_translation_options = 20;
     logger.info("...done");
   }
 
@@ -446,18 +449,23 @@ public class JoshuaConfiguration {
               .equals(normalize_key(SOFT_SYNTACTIC_CONSTRAINT_DECODING_PROPERTY_NAME))) {
             fuzzy_matching = Boolean.parseBoolean(fds[1]);
             logger.finest(String.format(fuzzy_matching + ": %s", fuzzy_matching));
+
           } else if (parameter.equals(normalize_key("fragment-map"))) {
             fragmentMapFile = fds[1];
             Tree.readMapping(fragmentMapFile);
-          
+
+          } else if (parameter.equals(normalize_key("no-invert-weights"))) {
+            Decoder.invert_weights = false;
+            
           /** PHRASE-BASED PARAMETERS **/
 
           } else if (parameter.equals(normalize_key("reordering-limit"))) {
             reordering_limit = Integer.parseInt(fds[1]);
-          }
-            
 
-          else {
+          } else if (parameter.equals(normalize_key("num-translation-options"))) {
+            num_translation_options = Integer.parseInt(fds[1]);
+
+          } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
                 || parameter.equals(normalize_key("add-combined-cost"))
