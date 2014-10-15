@@ -11,7 +11,5 @@ if [[ $? -eq 0 ]]; then
 	exit 0
 else
 	echo FAILED NORMALIZATION TEST
-	tail diff
 	exit 1
 fi
-

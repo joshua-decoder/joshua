@@ -26,7 +26,5 @@ if [[ $size -eq 989817 ]]; then
   exit 0
 else
   echo FAILED
-
-  tail thrax.log
   exit 1
 fi

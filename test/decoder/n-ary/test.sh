@@ -16,7 +16,6 @@ if [ $? -eq 0 ]; then
 	exit 0
 else
 	echo FAILED
-	tail diff
 	exit 1
 fi
 

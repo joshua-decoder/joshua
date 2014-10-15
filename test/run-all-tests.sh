@@ -11,6 +11,8 @@
 tests=$(find . -name test*.sh | perl -pe 's/\n/ /g')
 echo "TESTS: $tests"
 
+pass=0
+fail=0
 for file in $tests; do
   if [[ ! -x $file ]]; then
     continue;
@@ -20,5 +22,12 @@ for file in $tests; do
   echo -n "Running test '$name' in $dir..."
   pushd $dir > /dev/null
   bash $name
+  if [[ $? -eq 0 ]]; then
+    let pass=pass+1
+  else
+    let fail=fail+1
+  fi
   popd > /dev/null
 done
+
+echo "PASSED $pass FAILED $fail"
