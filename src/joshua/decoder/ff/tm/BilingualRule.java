@@ -2,7 +2,6 @@ package joshua.decoder.ff.tm;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
@@ -16,12 +15,6 @@ import joshua.decoder.ff.FeatureVector;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class BilingualRule extends Rule {
-
-  private static final Logger logger = Logger.getLogger(BilingualRule.class.getName());
-
-  // ===============================================================
-  // Instance Fields
-  // ===============================================================
 
   /*
    * The string format of Rule is: [Phrase] ||| french ||| english ||| feature scores
@@ -242,15 +235,11 @@ public class BilingualRule extends Rule {
 
     if (this.estimatedCost <= Float.NEGATIVE_INFINITY) {
       this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
-      // StringBuilder sb = new StringBuilder("estimateRuleCost(" + toString() + ")");
 
       for (FeatureFunction ff : models) {
-        this.estimatedCost -= ff.estimateCost(this, -1);
-        // sb.append(String.format(" %s: %.3f", ff.getClass().getSimpleName(),
-        // -ff.estimateCost(this, -1)));
+        this.estimatedCost += ff.estimateCost(this, -1);
+//        System.err.println("  -> FEATURE " + ff.getName() + " -> " + ff.estimateCost(this, -1));
       }
-      // sb.append(String.format(" ||| total=%.5f",this.estimatedCost));
-      // System.err.println(sb.toString());
     }
 
     return estimatedCost;
@@ -270,6 +259,7 @@ public class BilingualRule extends Rule {
     sb.append(" |||");
     sb.append(" " + getFeatureVector());
     sb.append(String.format(" ||| %.3f", getEstimatedCost()));
+    sb.append(String.format(" ||| %.3f", getPrecomputableCost()));
     return sb.toString();
   }
 
