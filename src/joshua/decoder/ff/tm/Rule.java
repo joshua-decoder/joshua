@@ -138,13 +138,6 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
   public abstract FeatureVector getFeatureVector();
 
   /**
-   * This allows the estimated cost of a rule to be applied from the outside.
-   * 
-   * @param cost
-   */
-  public abstract void setEstimatedCost(float cost);
-
-  /**
    * This function is called by the rule comparator when sorting the grammar. As such it may be
    * called many times and any implementation of it should be a cached implementation.
    * 
@@ -199,10 +192,10 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
   }
 
   /**
-   * This comparator is used for sorting during cube pruning. It sorts items in reverse (i.e.,
-   * highest-scoring first).
+   * This comparator is used for sorting the rules during cube pruning. An estimate of the cost
+   * of each rule is computed and used to sort. 
    */
-  public static Comparator<Rule> NegativeCostComparator = new Comparator<Rule>() {
+  public static Comparator<Rule> EstimatedCostComparator = new Comparator<Rule>() {
     public int compare(Rule rule1, Rule rule2) {
       float cost1 = rule1.getEstimatedCost();
       float cost2 = rule2.getEstimatedCost();
@@ -216,13 +209,14 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
     }
   };
   
-
+  @Override
   public int compare(Rule rule1, Rule rule2) {
-    return NegativeCostComparator.compare(rule1, rule2);
+    return EstimatedCostComparator.compare(rule1, rule2);
   }
 
+  @Override
   public int compareTo(Rule other) {
-    return NegativeCostComparator.compare(this, other);
+    return EstimatedCostComparator.compare(this, other);
   }
 
   public abstract byte[] getAlignment();

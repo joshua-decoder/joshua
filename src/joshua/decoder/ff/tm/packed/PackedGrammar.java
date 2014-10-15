@@ -707,11 +707,6 @@ public class PackedGrammar extends BatchGrammar {
         }
 
         @Override
-        public void setEstimatedCost(float cost) {
-          estimated[source[address + 2]] = cost;
-        }
-
-        @Override
         public float getEstimatedCost() {
           return estimated[source[address + 2]];
         }

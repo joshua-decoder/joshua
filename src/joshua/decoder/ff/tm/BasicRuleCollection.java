@@ -83,7 +83,7 @@ public class BasicRuleCollection implements RuleCollection {
 
   private void sortRules(List<Rule> rules, List<FeatureFunction> models) {
     // use a priority queue to help sort
-    PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegativeCostComparator);
+    PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.EstimatedCostComparator);
     for (Rule rule : rules) {
       rule.estimateRuleCost(models);
       t_heapRules.add(rule);
