@@ -31,7 +31,7 @@ public class HGNode {
 
   // the key is the state id; remember the state required by each model, for example, edge-ngrams
   // for LM model
-  List<DPState> dpStates;
+  protected List<DPState> dpStates;
 
   private Signature signature = null;
 //  private int hash = 0;

@@ -12,9 +12,9 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 /**
  * Represents a hypothesis, a translation of some coverage of the input. Extends {@link HGNode}, 
- * through a bit of a hack. Whereas (i,j) represents the span of an {@link HGNode}, we use it here
- * to denote the span of the phrase being applied. The complete coverage vector can be obtained by
- * looking at the tail pointer and casting it.
+ * through a bit of a hack. Whereas (i,j) represents the span of an {@link HGNode}, i here is not used,
+ * and j is overloaded to denote the span of the phrase being applied. The complete coverage vector 
+ * can be obtained by looking at the tail pointer and casting it.
  * 
  * @author Kenneth Heafield
  * @author Matt Post <post@cs.jhu.edu>
@@ -44,19 +44,17 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
 
   public Hypothesis(Candidate cand) {
     // TODO: sourcepath
-    super(cand.span.start, cand.span.end, Vocabulary.id("[X]"), cand.getStates(), new HyperEdge(
+    super(-1, cand.span.end, Vocabulary.id("[X]"), cand.getStates(), new HyperEdge(
         cand.getRule(), cand.getResult().getViterbiCost(), cand.getResult().getTransitionCost(),
         cand.getTailNodes(), null), cand.score());
     this.coverage = cand.getCoverage();
   }
   
   // Extend a previous hypothesis.
-  public Hypothesis(List<DPState> states, float score, Hypothesis previous, int source_begin,
-      int source_end, Rule target) {
-//  super(source_begin, source_end, -1, null, new HyperEdge(), score);
-    super(source_begin, source_end, -1, null, null, score);
+  public Hypothesis(List<DPState> states, float score, Hypothesis previous, int source_end, Rule target) {
+    super(-1, source_end, -1, null, null, score);
     this.coverage = previous.coverage;
-    this.coverage.Set(source_begin, source_end);
+    this.coverage.Set(source_end - 1, source_end);
   }
 
   public Coverage GetCoverage() {
@@ -83,12 +81,18 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   }
 
   /**
-   * TODO: compare all the DP states
+   * Defines equivalence in terms of recombinability. Two hypotheses are recombinable if 
+   * all their DP states are the same, their coverage is the same, and they have the next soure
+   * index the same.
    */
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Hypothesis) {
       Hypothesis other = (Hypothesis) obj;
+      for (int i = 0; i < dpStates.size(); i++) {
+        if (!dpStates.get(i).equals(other.dpStates.get(i)))
+          return false;
+      }
       if (LastSourceIndex() == other.LastSourceIndex() && GetCoverage().equals(other.GetCoverage()))
         return true;
     }

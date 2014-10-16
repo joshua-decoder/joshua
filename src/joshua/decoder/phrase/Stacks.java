@@ -193,7 +193,7 @@ public class Stacks {
       float finalTransitionScore = ComputeNodeResult.computeFinalCost(featureFunctions, tailNodes, 0, sentence.length(), null, sentence.id());
 
       if (null == this.end)
-        this.end = new Hypothesis(null, score + finalTransitionScore, hyp, sentence.length() - 1, sentence.length(), null);
+        this.end = new Hypothesis(null, score + finalTransitionScore, hyp, sentence.length(), null);
 
       HyperEdge edge = new HyperEdge(null, score + finalTransitionScore, finalTransitionScore, tailNodes, null);
       end.addHyperedgeInNode(edge);

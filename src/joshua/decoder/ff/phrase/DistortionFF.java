@@ -19,8 +19,10 @@ public class DistortionFF extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
     
+    int start_point = j - rule.getFrench().length + rule.getArity();
+    
     int jump_size = tailNodes != null 
-        ? Math.abs(tailNodes.get(0).j - i)
+        ? Math.abs(tailNodes.get(0).j - start_point)
         : i;
     acc.add(name, -jump_size);
     

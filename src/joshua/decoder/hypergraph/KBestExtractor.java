@@ -168,10 +168,13 @@ public class KBestExtractor {
 
       hypothesis = derivationState.getHypothesis();
 
-      outputString = joshuaConfiguration.outputFormat.replace("%s", hypothesis)
+      outputString = joshuaConfiguration.outputFormat
+          .replace("%k", Integer.toString(k))
+          .replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
-          .replace("%i", Integer.toString(sentence.id())).replace("%f", features.toString())
-          .replace("%c", String.format("%.3f", derivationState.getModelCost()));
+          .replace("%i", Integer.toString(sentence.id()))
+          .replace("%f", features.toString())
+          .replace("%c", String.format("%.3f", features.innerProduct(weights)));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
         // TODO: this always outputs the Viterbi tree
@@ -815,9 +818,10 @@ public class KBestExtractor {
           // in original sentence
           String alignment = "";
           if (joshuaConfiguration.include_align_index 
-              && ! (state.parentNode.i == 0 && state.parentNode.j == 1) 
-              && ! (state.parentNode.i == sentence.length() - 1))
-            alignment = String.format(" |%d-%d|", state.parentNode.i-1, state.parentNode.j-2);
+              && state.parentNode.j != sentence.length() && state.parentNode.j != 1) {
+            int i = state.parentNode.j - 1 - state.edge.getRule().getFrench().length + state.edge.getRule().getArity();
+            alignment = String.format(" |%d-%d|", i, state.parentNode.j-2);
+          }
           merge(String.format("%s%s", state.edge.getRule().getEnglishWords(), alignment));
         } else
           merge(state.edge.getRule().getFrenchWords());
