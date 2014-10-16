@@ -69,12 +69,17 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
     return (start >= o.start) && (end <= o.end) && !(start == o.start && end == o.end);
   }
 
+  /**
+   * Returns true if the other span does not intersect with this one.
+   * @param o
+   * @return
+   */
   public boolean disjointFrom(Span o) {
     if (start < o.start) {
-      return end < o.start;
+      return end <= o.start;
     }
     if (end > o.end) {
-      return start > o.end;
+      return start >= o.end;
     }
     return false;
   }
