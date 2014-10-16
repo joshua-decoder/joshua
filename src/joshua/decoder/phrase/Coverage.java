@@ -68,8 +68,8 @@ public class Coverage {
    */
   public void Set(int begin, int end) {
     assert compatible(begin, end);
-    StringBuffer sb = new StringBuffer();
-    sb.append(String.format("SET(%d,%d) %s", begin, end, this));
+//    StringBuffer sb = new StringBuffer();
+//    sb.append(String.format("SET(%d,%d) %s", begin, end, this));
     if (begin == firstZero) {
       firstZero = end;
       bits >>= (end - begin);
@@ -81,7 +81,7 @@ public class Coverage {
       bits |= pattern(begin, end);
     }
 
-    sb.append(String.format(" -> %s", this));
+//    sb.append(String.format(" -> %s", this));
 //    System.err.println(sb);
   }
 
