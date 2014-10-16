@@ -810,9 +810,16 @@ public class KBestExtractor {
     public void before(DerivationState state, int level) {
       Rule rule = state.edge.getRule();
       if (rule != null)
-        if (side == Side.TARGET)
-          merge(state.edge.getRule().getEnglishWords());
-        else
+        if (side == Side.TARGET) {
+          // Output the alignment Moses-style, skipping <s> and </s>, and converting to indices
+          // in original sentence
+          String alignment = "";
+          if (joshuaConfiguration.include_align_index 
+              && ! (state.parentNode.i == 0 && state.parentNode.j == 1) 
+              && ! (state.parentNode.i == sentence.length() - 1))
+            alignment = String.format(" |%d-%d|", state.parentNode.i-1, state.parentNode.j-2);
+          merge(String.format("%s%s", state.edge.getRule().getEnglishWords(), alignment));
+        } else
           merge(state.edge.getRule().getFrenchWords());
 
     }
