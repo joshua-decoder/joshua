@@ -262,12 +262,53 @@ public class BilingualRule extends Rule {
     sb.append(String.format(" ||| %.3f", getPrecomputableCost()));
     return sb.toString();
   }
+  
+  /**
+   * Returns a version of the rule suitable for reading in from a text file.
+   * 
+   * @return
+   */
+  public String textFormat() {
+    StringBuffer sb = new StringBuffer();
+    sb.append(Vocabulary.word(this.getLHS()));
+    sb.append(" |||");
+    
+    int nt = 1;
+    for (int i = 0; i < getFrench().length; i++) {
+      if (getFrench()[i] < 0)
+        sb.append(" " + Vocabulary.word(getFrench()[i]).replaceFirst("\\]", String.format(",%d]", nt++)));
+      else
+        sb.append(" " + Vocabulary.word(getFrench()[i]));
+    }
+    sb.append(" |||");
+    nt = 1;
+    for (int i = 0; i < getEnglish().length; i++) {
+      if (getEnglish()[i] < 0)
+        sb.append(" " + Vocabulary.word(getEnglish()[i]).replaceFirst("\\]", String.format(",%d]", nt++)));
+      else
+        sb.append(" " + Vocabulary.word(getEnglish()[i]));
+    }
+    sb.append(" |||");
+    sb.append(" " + getFeatureString());
+    if (getAlignment() != null)
+      sb.append(" ||| " + getAlignmentString());
+    return sb.toString();
+  }
 
   public final String getFeatureString() {
     return sparseFeatures;
   }
   
+  @Override
   public byte[] getAlignment() {
     return alignment;
+  }
+  
+  public String getAlignmentString() {
+    StringBuffer sb = new StringBuffer();
+    if (getAlignment() != null)
+      for (int i = 0; i < getAlignment().length; i += 2)
+        sb.append(String.format("%d-%d ", getAlignment()[i], getAlignment()[i+1]));
+    return sb.toString().trim();
   }
 }

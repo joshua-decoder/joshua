@@ -16,7 +16,7 @@ import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
-import joshua.decoder.ff.tm.format.PhraseFormatReader;
+import joshua.decoder.ff.tm.format.MosesFormatReader;
 import joshua.decoder.ff.tm.format.SamtFormatReader;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
@@ -125,7 +125,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
         return new SamtFormatReader(grammarFile);
       } else if ("phrase".equals(format)) {
         joshuaConfiguration.phrase_based = true;
-        return new PhraseFormatReader(grammarFile);
+        return new MosesFormatReader(grammarFile);
       } else {
         throw new RuntimeException(String.format("* FATAL: unknown grammar format '%s'", format));
       }
