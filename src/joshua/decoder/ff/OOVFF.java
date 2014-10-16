@@ -41,4 +41,16 @@ public class OOVFF extends StatelessFF {
 
     return null;
   }
+  
+  /**
+   * It's important for the OOV feature to contribute to the rule's estimated cost, so that OOV
+   * rules (which are added for all words, not just ones without translation options) get sorted
+   * to the bottom during cube pruning.
+   */
+  @Override
+  public float estimateCost(Rule rule, int sentID) {
+    if (rule != null && this.ownerID == rule.getOwner())
+      return weights.get(name);
+    return 0.0f;
+  }
 }
