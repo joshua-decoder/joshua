@@ -176,10 +176,13 @@ public class JoshuaConfiguration {
    * Phrase-based decoding parameters.
    */
   
+  /* Whether phrase-based decoding is happening */
   public boolean phrase_based = false;
   
+  /* The distortion limit */
   public int reordering_limit = 8;
   
+  /* The number of target sides considered for each source side (after sorting by model weight) */
   public int num_translation_options = 20;
   
   /**

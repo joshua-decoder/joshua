@@ -93,8 +93,6 @@ public class ComputeNodeResult {
       }
     }
   
-    //transitionCost -= rule.getEstimatedCost();
-    
     viterbiCost += transitionCost;
 
 //    System.err.println(sb.toString() + " ||| " + viterbiCost + " ||| " + features);

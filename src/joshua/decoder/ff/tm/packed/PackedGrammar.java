@@ -543,7 +543,7 @@ public class PackedGrammar extends BatchGrammar {
             float b_cost = estimated[source[b]];
             if (a_cost == b_cost)
               return 0;
-            return (a_cost > b_cost ? 1 : -1);
+            return (a_cost > b_cost ? -1 : 1);
           }
         });
 
@@ -703,7 +703,9 @@ public class PackedGrammar extends BatchGrammar {
         
         @Override
         public byte[] getAlignment() {
-          return getAlignmentArray(source[address + 2]);
+          if (alignments != null)
+            return getAlignmentArray(source[address + 2]);
+          return null;
         }
 
         @Override

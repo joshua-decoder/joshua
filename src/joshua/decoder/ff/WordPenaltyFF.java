@@ -6,6 +6,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.phrase.Hypothesis;
 
 /**
  * 
@@ -30,7 +31,7 @@ public final class WordPenaltyFF extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
     
-    if (rule != null)
+    if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE)
       acc.add(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
 
     return null;

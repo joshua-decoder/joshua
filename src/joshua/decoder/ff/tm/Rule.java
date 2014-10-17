@@ -10,8 +10,11 @@ import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.segment_file.Sentence;
 
 /**
- * This class define the interface for Rule. Normally, the feature score in the rule should be
- * *cost* (i.e., -LogP), so that the feature weight should be positive.
+ * This class define the interface for Rule. 
+ * 
+ * All feature scores are interpreted as negative log probabilities, and are therefore negated.
+ * Note that not all features need to be negative log probs, but you should be aware that they
+ * will be negated, so if you want a positive count, it should come in as negative.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */

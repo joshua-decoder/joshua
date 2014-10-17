@@ -3,7 +3,6 @@ package joshua.decoder.ff.tm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import joshua.decoder.ff.FeatureFunction;
 
