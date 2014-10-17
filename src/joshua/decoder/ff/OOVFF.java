@@ -46,6 +46,8 @@ public class OOVFF extends StatelessFF {
    * It's important for the OOV feature to contribute to the rule's estimated cost, so that OOV
    * rules (which are added for all words, not just ones without translation options) get sorted
    * to the bottom during cube pruning.
+   * 
+   * Important! estimateCost returns the *weighted* feature value.
    */
   @Override
   public float estimateCost(Rule rule, int sentID) {

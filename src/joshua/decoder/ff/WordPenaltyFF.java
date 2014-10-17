@@ -35,4 +35,11 @@ public final class WordPenaltyFF extends StatelessFF {
 
     return null;
   }
+  
+  @Override
+  public float estimateCost(Rule rule, int sentID) {
+    if (rule != null)
+      return OMEGA * (rule.getEnglish().length - rule.getArity()) * weights.get(name);
+    return 0.0f;
+  }
 }

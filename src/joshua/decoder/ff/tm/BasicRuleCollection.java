@@ -81,20 +81,25 @@ public class BasicRuleCollection implements RuleCollection {
     return sorted;
   }
 
+  /**
+   * Sorts all of the rules, after being sure their costs are estimated.
+   * 
+   * @param rules the list of rules to be sorted
+   * @param models the features functions that will provide cost estimates (optionally)
+   */
   private void sortRules(List<Rule> rules, List<FeatureFunction> models) {
-    // use a priority queue to help sort
-    PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.EstimatedCostComparator);
-    for (Rule rule : rules) {
-      rule.estimateRuleCost(models);
-      t_heapRules.add(rule);
-    }
+//    long startTime = System.currentTimeMillis();
 
-    // rearrange the sortedRules based on t_heapRules
-    rules.clear();
-    while (t_heapRules.size() > 0) {
-      Rule t_r = t_heapRules.poll();
-      rules.add(0, t_r);
-    }
+    for (Rule rule: rules)
+      rule.estimateRuleCost(models);
+    
+    Collections.sort(rules, Rule.EstimatedCostComparator);
+
+//    System.err.println("BasicRuleCollection::sortRules()");
+//    for (Rule rule: rules)
+//      System.err.println("-> " + rule);
+        
+//    System.err.println(String.format("SORTING TOOK %d",System.currentTimeMillis() - startTime)); 
   }
 
   /* See Javadoc comments for RuleCollection interface. */
