@@ -22,10 +22,8 @@ paste output.* > output
 diff -u output expected > diff
 
 if [[ $? -eq 0 ]]; then
-  echo PASSED
   rm -f server.log output output.* log.* diff
   exit 0
 else
-  echo FAILED
   exit 1
 fi

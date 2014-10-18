@@ -11,11 +11,8 @@ cat grammar.de | java -Xmx500m -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.too
 diff -u loose.log loose.log.gold > diff.loose
 
 if [[ $? -eq 0 ]]; then
-  echo PASSED
   rm -rf loose loose.log diff.loose
   exit 0
 else
-  echo FAILED
-  tail diff.loose
   exit 1
 fi

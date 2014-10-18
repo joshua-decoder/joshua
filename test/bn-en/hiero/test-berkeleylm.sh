@@ -11,10 +11,8 @@ cat output | awk -F\| '{print $4 " ||| " $10}' > output.scores
 diff -u output.scores output.scores.berkeleylm.gold > diff
 
 if [ $? -eq 0 ]; then
-	echo PASSED
 	rm -f output log output.scores diff
 	exit 0
 else
-	echo FAILED
 	exit 1
 fi

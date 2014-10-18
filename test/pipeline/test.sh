@@ -17,9 +17,7 @@ $JOSHUA/scripts/training/pipeline.pl \
 #diff -u 1/test/final-bleu final-bleu.gold
 
 if [[ -e "1/test/final-bleu" ]]; then
-	echo "PASSED (file existence check)"
 	exit 0
 else
-	echo FAILED
 	exit 1
 fi

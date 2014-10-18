@@ -11,11 +11,8 @@ cat grammar.de | java -Xmx500m -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.too
 diff -u fast.log fast.log.gold > diff.fast
 
 if [[ $? -eq 0 ]]; then
-  echo PASSED
   rm -rf fast fast.log diff.fast
   exit 0
 else
-  echo FAILED
-  cat diff.fast
   exit 1
 fi

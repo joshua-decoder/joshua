@@ -11,12 +11,8 @@ cat output | awk -F"\|" '{print $1 "|||" $4 "|||" $10}' > output.scores
 diff -u output.scores output.scores.gold > diff
 
 if [ $? -eq 0 ]; then
-  echo PASSED
   rm -f diff output log output.scores
   exit 0
 else
-  echo FAILED
   exit 1
 fi
-
-

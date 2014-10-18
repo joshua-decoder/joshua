@@ -21,10 +21,8 @@ size=$(perl -e "print +(stat('grammar.gz'))[7] . $/")
 
 rm -rf hadoop-0.20.2
 if [[ $size -eq 989817 ]]; then
-  echo PASSED
   rm -rf thrax.log grammar.gz .grammar.crc thrax
   exit 0
 else
-  echo FAILED
   exit 1
 fi

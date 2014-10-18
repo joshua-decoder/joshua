@@ -7,10 +7,8 @@ cat input | $JOSHUA/bin/joshua-decoder > output 2> log
 diff -u output output.gold > diff
 
 if [ $? -eq 0 ]; then
-	echo PASSED
 	exit 0
 else
-	echo FAILED
 	exit 1
 fi
 

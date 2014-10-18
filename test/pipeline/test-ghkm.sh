@@ -20,10 +20,8 @@ $JOSHUA/scripts/training/pipeline.pl \
 
 size=$(perl -e "print +(stat('2/grammar.gz'))[7]")
 if [[ $size -ne 0 ]]; then
-	echo "PASSED (grammar file size check)"
 	exit 0
 else
-	echo FAILED
 	exit 1
 fi
 

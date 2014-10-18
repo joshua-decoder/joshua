@@ -174,7 +174,7 @@ public class KBestExtractor {
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
           .replace("%i", Integer.toString(sentence.id()))
           .replace("%f", features.toString())
-          .replace("%c", String.format("%.3f", features.innerProduct(weights)));
+          .replace("%c", String.format("%.3f", derivationState.cost));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
         // TODO: this always outputs the Viterbi tree
