@@ -1,5 +1,6 @@
 package joshua.decoder.ff.tm.format;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.util.io.LineReader;
 
@@ -20,12 +21,16 @@ import joshua.util.io.LineReader;
 
 public class MosesFormatReader extends HieroFormatReader {
 
+  private int lhs;
+
   public MosesFormatReader(String grammarFile) {
     super(grammarFile);
+    this.lhs = Vocabulary.id("[X]");
   }
   
   public MosesFormatReader() {
     super();
+    this.lhs = Vocabulary.id("[X]");
   }
   
   /**
@@ -40,19 +45,45 @@ public class MosesFormatReader extends HieroFormatReader {
    */
   @Override
   public BilingualRule parseLine(String line) {
-    String[] tokens = line.split(HieroFormatReader.fieldDelimiter);
-    StringBuffer values = new StringBuffer();
-    for (String value: tokens[2].split(" ")) {
-      float f = Float.parseFloat(value);
-      values.append(String.format(" %f", f <= 0.0 ? -100 : -Math.log(f)));
-    }
-    String newLine = String.format("[X] ||| [X,1] %s ||| [X,1] %s |||%s", tokens[0], tokens[1], values);
+    String[] fields = line.split(fieldDelimiter);
 
-    for (int i = 3; i < tokens.length; i++)
-      newLine += " ||| " + tokens[i];
+    int arity = 1;
     
-//    System.err.println(String.format("parseLine(%s) --> %s", line, newLine));
-    return super.parseLine(newLine);
+    // foreign side
+    String[] foreignWords = fields[0].split("\\s+");
+    int[] french = new int[foreignWords.length + 1];
+    french[0] = lhs; 
+    for (int i = 0; i < foreignWords.length; i++) {
+      french[i+1] = Vocabulary.id(foreignWords[i]);
+    }
+
+    // English side
+    String[] englishWords = fields[1].split("\\s+");
+    int[] english = new int[englishWords.length + 1];
+    english[0] = -1;
+    for (int i = 0; i < englishWords.length; i++) {
+      english[i+1] = Vocabulary.id(englishWords[i]);
+    }
+
+    // transform feature values
+    StringBuffer values = new StringBuffer();
+    for (String value: fields[2].split(" ")) {
+      float f = Float.parseFloat(value);
+      values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
+    }
+    String sparse_features = values.toString().trim();
+
+    // alignments
+    byte[] alignment = null;
+    if (fields.length > 3) { // alignments are included
+      alignment = readAlignment(fields[3]);
+    } else {
+      alignment = null;
+    }
+    
+//    System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
+
+    return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
   }
   
   /**

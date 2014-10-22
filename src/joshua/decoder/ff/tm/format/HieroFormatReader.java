@@ -83,7 +83,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
    * @param s
    * @return
    */
-  private static byte[] readAlignment(String s) {
+  protected static byte[] readAlignment(String s) {
     String[] indices = s.replaceAll("-", " ").split("\\s+");
     byte[] result = new byte[indices.length];
     int j = 0;
