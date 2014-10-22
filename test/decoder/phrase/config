@@ -1,0 +1,27 @@
+tm = phrase pt 0 rules.1.gz
+lm = kenlm 5 true false 100 lm.1.gz
+
+mark-oovs = false
+pop-limit = 10
+top-n = 1
+
+output-format = %i ||| %s ||| %f ||| %c
+
+include-align-index = true
+reordering-limit = 6
+
+# And these are the feature functions to activate.
+feature-function = OOVPenalty
+feature-function = WordPenalty
+feature-function = Distortion
+feature-function = PhrasePenalty -owner pt
+
+OOVPenalty -100
+Distortion 0.114849
+WordPenalty -0.201544
+PhrasePenalty -0.236965
+tm_pt_0 0.0370068
+tm_pt_1 0.0495759
+tm_pt_2 0.196742
+tm_pt_3 0.0745423
+lm_0 0.204412452147565
