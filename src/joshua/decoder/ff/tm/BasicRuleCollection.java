@@ -44,29 +44,6 @@ public class BasicRuleCollection implements RuleCollection {
     this.sorted = false;
   }
 
-  /**
-   * Constructs a rule collection with the given data.
-   * <p>
-   * The list of rules must already be sorted
-   * <p>
-   * NOTE: if rules==null, the rule member variable will be initialized to an <em>immutable</em>
-   * empty list.
-   * 
-   * @param arity
-   * @param sourceTokens
-   * @param rules
-   */
-  public BasicRuleCollection(int arity, int[] sourceTokens, List<Rule> rules) {
-    if (rules == null) {
-      this.rules = Collections.<Rule>emptyList();
-    } else {
-      this.rules = rules;
-    }
-    this.sourceTokens = sourceTokens;
-    this.arity = arity;
-    this.sorted = false;
-  }
-
   /* See Javadoc comments for RuleCollection interface. */
   public int getArity() {
     return this.arity;

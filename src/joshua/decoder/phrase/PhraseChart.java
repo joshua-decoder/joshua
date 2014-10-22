@@ -99,7 +99,7 @@ public class PhraseChart {
    * @param end
    * @return
    */
-  public TargetPhrases Range(int begin, int end) {
+  public TargetPhrases getRange(int begin, int end) {
     int index = offset(begin, end);
 //    System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
 //        entries.get(index) == null ? 0 : entries.get(index).size()));

@@ -35,4 +35,4 @@ for file in $tests; do
   popd > /dev/null
 done
 
-echo "${GREEN}PASSED${NONE} $pass ${RED}FAILED${NONE} $fail"
+echo -e "${GREEN}PASSED${NONE} $pass ${RED}FAILED${NONE} $fail"

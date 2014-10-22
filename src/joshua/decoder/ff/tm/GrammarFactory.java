@@ -17,7 +17,7 @@ import joshua.decoder.segment_file.Sentence;
  * 
  * @author Lane Schwartz
  */
-public interface GrammarFactory {
+public class GrammarFactory {
 
   /**
    * Returns a grammar which is adapted to the specified sentence. Depending on the implementation
@@ -28,12 +28,12 @@ public interface GrammarFactory {
    * @return A grammar that represents a set of translation rules, relevant for translating (at
    *         least) the given sentence.
    */
-  Grammar getGrammarForSentence(Sentence sentence);
+  public static Grammar filterToSentence(Grammar grammar, Sentence sentence) {
+    return null;
+  }
+  
+  public static void createOOVGrammar(Sentence sentence, Grammar grammar) {
+  
 
-  /**
-   * Returns the entire grammar represented by this sentence.
-   * 
-   * @return the whole grammar
-   */
-  Grammar getGrammar();
+  }
 }

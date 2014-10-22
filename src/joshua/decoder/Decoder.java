@@ -34,7 +34,6 @@ import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.phrase.DistortionFF;
 import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
@@ -77,7 +76,7 @@ public class Decoder {
    * overhead, but it can be problematic because of unseen dependencies (for example, in the
    * Vocabulary shared by language model, translation grammar, etc).
    */
-  private final List<GrammarFactory> grammarFactories;
+  private List<Grammar> grammars;
   private ArrayList<FeatureFunction> featureFunctions;
   private ArrayList<NGramLanguageModel> languageModels;
 
@@ -129,7 +128,7 @@ public class Decoder {
    */
   private Decoder(JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
-    this.grammarFactories = new ArrayList<GrammarFactory>();
+    this.grammars = new ArrayList<Grammar>();
     this.threadPool = new ArrayBlockingQueue<DecoderThread>(
         this.joshuaConfiguration.num_parallel_decoders, true);
   }
@@ -147,40 +146,6 @@ public class Decoder {
   // ===============================================================
   // Public Methods
   // ===============================================================
-
-  public void changeBaselineFeatureWeights(FeatureVector weights) {
-    changeFeatureWeightVector(weights);
-  }
-
-  /**
-   * aSets the feature weight values used by the decoder.
-   * 
-   * @param weights Feature weight values
-   */
-  public void changeFeatureWeightVector(FeatureVector newWeights) {
-    if (newWeights != null) {
-
-      for (String feature : Decoder.weights.keySet()) {
-        float oldWeight = Decoder.weights.get(feature);
-        float newWeight = newWeights.get(feature);
-        Decoder.weights.put(feature, newWeights.get(feature));
-        logger.info(String.format("Feature %s: weight changed from %.3f to %.3f", feature,
-            oldWeight, newWeight));
-      }
-    }
-
-    /*
-     * TODO: we need to clear out the entire trie of positive sorting markings.
-     */
-    System.err
-        .println("* FATAL: changing the feature weights won't work until you clear the sorted settings for the complete trie");
-    System.exit(1);
-    for (GrammarFactory grammarFactory : this.grammarFactories) {
-      // if (grammarFactory instanceof Grammar) {
-      grammarFactory.getGrammarForSentence(null).sortGrammar(this.featureFunctions);
-      // }
-    }
-  }
 
   /**
    * This class is responsible for getting sentences from the TranslationRequest and procuring a
@@ -469,11 +434,8 @@ public class Decoder {
         logger.info("Grammar sorting happening lazily on-demand.");
       } else {
         long pre_sort_time = System.currentTimeMillis();
-        for (GrammarFactory grammarFactory : this.grammarFactories) {
-          if (grammarFactory instanceof Grammar) {
-            Grammar batchGrammar = (Grammar) grammarFactory;
-            batchGrammar.sortGrammar(this.featureFunctions);
-          }
+        for (Grammar grammar : this.grammars) {
+          grammar.sortGrammar(this.featureFunctions);
         }
         logger.info(String.format("Grammar sorting took %d seconds.",
             (System.currentTimeMillis() - pre_sort_time) / 1000));
@@ -481,7 +443,7 @@ public class Decoder {
 
       // Create the threads
       for (int i = 0; i < joshuaConfiguration.num_parallel_decoders; i++) {
-        this.threadPool.put(new DecoderThread(this.grammarFactories, Decoder.weights,
+        this.threadPool.put(new DecoderThread(this.grammars, Decoder.weights,
             this.featureFunctions, joshuaConfiguration));
       }
 
@@ -557,7 +519,7 @@ public class Decoder {
         int span_limit = Integer.parseInt(tokens[2]);
         String file = tokens[3];
 
-        GrammarFactory grammar = null;
+        Grammar grammar = null;
         if (format.equals("packed") || new File(file).isDirectory()) {
           try {
             grammar = new PackedGrammar(file, span_limit, owner,joshuaConfiguration);
@@ -569,6 +531,7 @@ public class Decoder {
 
         } else if (format.equals("phrase")) {
 
+          joshuaConfiguration.phrase_based = true;
           grammar = new PhraseTable(file, owner, joshuaConfiguration);
         
         } else {
@@ -577,7 +540,7 @@ public class Decoder {
               joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
         }
         
-        this.grammarFactories.add(grammar);
+        this.grammars.add(grammar);
 
         // Record the owner so we can create a feature function for her.
         ownersSeen.add(owner);
@@ -600,7 +563,7 @@ public class Decoder {
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
           "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
           joshuaConfiguration.default_non_terminal, -1, joshuaConfiguration);
-      this.grammarFactories.add(glueGrammar);
+      this.grammars.add(glueGrammar);
     }
 
     logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime

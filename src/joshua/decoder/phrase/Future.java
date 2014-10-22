@@ -39,7 +39,7 @@ public class Future {
       // Insert phrases
       int max_end = Math.min(begin + chart.MaxSourcePhraseLength(), chart.SentenceLength());
       for (int end = begin + 1; end <= max_end; end++) {
-        TargetPhrases phrases = chart.Range(begin, end);
+        TargetPhrases phrases = chart.getRange(begin, end);
         if (phrases != null) {
           // TODO: what's the cost?
 //          SetEntry(begin, end, phrases.getVertex().Bound());

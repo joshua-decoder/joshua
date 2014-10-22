@@ -2,7 +2,6 @@ package joshua.decoder.ff.tm.hash_based;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -10,7 +9,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.BatchGrammar;
+import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
@@ -18,9 +17,6 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.format.MosesFormatReader;
 import joshua.decoder.ff.tm.format.SamtFormatReader;
-import joshua.lattice.Arc;
-import joshua.lattice.Lattice;
-import joshua.lattice.Node;
 
 /**
  * This class implements a memory-based bilingual BatchGrammar.
@@ -32,7 +28,7 @@ import joshua.lattice.Node;
  * @author Zhifei Li <zhifei.work@gmail.com>
  * @author Matt Post <post@cs.jhu.edu
  */
-public class MemoryBasedBatchGrammar extends BatchGrammar {
+public class MemoryBasedBatchGrammar extends AbstractGrammar {
 
   // ===============================================================
   // Instance Fields
@@ -57,8 +53,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
-  
-  protected JoshuaConfiguration config = null;
 
   // ===============================================================
   // Static Fields
@@ -74,10 +68,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
   public MemoryBasedBatchGrammar(JoshuaConfiguration joshuaConfiguration) {
     super(joshuaConfiguration);
     this.root = new MemoryBasedTrie();
-    this.config = joshuaConfiguration;
+    this.joshuaConfiguration = joshuaConfiguration;
   }
 
-  public MemoryBasedBatchGrammar(String owner,JoshuaConfiguration joshuaConfiguration) {
+  public MemoryBasedBatchGrammar(String owner, JoshuaConfiguration joshuaConfiguration) {
     this(joshuaConfiguration);
     this.owner = Vocabulary.id(owner);
   }
@@ -124,7 +118,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
       } else if ("samt".equals(format)) {
         return new SamtFormatReader(grammarFile);
       } else if ("phrase".equals(format)) {
-        joshuaConfiguration.phrase_based = true;
         return new MosesFormatReader(grammarFile);
       } else {
         throw new RuntimeException(String.format("* FATAL: unknown grammar format '%s'", format));
@@ -142,10 +135,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     this.spanLimit = spanLimit;
   }
   
+  @Override
   public int getNumRules() {
     return this.qtyRulesRead;
   }
 
+  @Override
   public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords,
       float[] denseScores, int arity) {
     return null;
@@ -225,6 +220,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     logger.info(String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", this.qtyRulesRead, this.qtyRuleBins, grammarFile));
   }
 
+  /**
+   * This returns true if the grammar contains rules that are regular expressions, possibly matching
+   * many different inputs.
+   * 
+   * @return true if the grammar's rules may contain regular expressions.
+   */
   @Override
   public boolean isRegexpGrammar() {
     return this.isRegexpGrammar;
@@ -250,11 +251,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
    * @param sourceWord
    * @param featureFunctions
    */
-  public void addOOVRule(int sourceWord, List<FeatureFunction> featureFunctions) {
+  public void addOOVRules(int sourceWord, List<FeatureFunction> featureFunctions) {
     
     // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
     // certainly is)
-    final int targetWord = config.mark_oovs
+    final int targetWord = this.joshuaConfiguration.mark_oovs
         ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
         : sourceWord;   
 
@@ -262,58 +263,21 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
     int[] targetWords = { targetWord };
     final byte[] oovAlignment = { 0, 0 };
     
-    if (config.oov_list != null && config.oov_list.length != 0) {
-      for (int i = 0; i < config.oov_list.length; i++) {
+    if (this.joshuaConfiguration.oov_list != null && this.joshuaConfiguration.oov_list.length != 0) {
+      for (int i = 0; i < this.joshuaConfiguration.oov_list.length; i++) {
         BilingualRule oovRule = new BilingualRule(
-            Vocabulary.id(config.oov_list[i]), sourceWords, targetWords, "", 0,
+            Vocabulary.id(this.joshuaConfiguration.oov_list[i]), sourceWords, targetWords, "", 0,
             oovAlignment);
         addRule(oovRule);
         oovRule.estimateRuleCost(featureFunctions);
         // System.err.println(String.format("ADDING OOV RULE %s", oovRule));
       }
     } else {
-      int nt_i = Vocabulary.id(config.default_non_terminal);
+      int nt_i = Vocabulary.id(this.joshuaConfiguration.default_non_terminal);
       BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0,
           oovAlignment);
       addRule(oovRule);
       oovRule.estimateRuleCost(featureFunctions);
     }
-  }
-  
-  /***
-   * Adds OOV rules for all words in the input lattice to the current grammar. Uses addOOVRule() so that
-   * sub-grammars can define different types of OOV rules if needed (as is used in {@link PhraseTable}).
-   * 
-   * @param inputLattice the lattice representing the input sentence
-   * @param featureFunctions a list of feature functions used for scoring
-   */
-  public void createOOVGrammar(Lattice<Integer> inputLattice, List<FeatureFunction> featureFunctions) {
-    /*
-     * Add OOV rules; This should be called after the manual constraints have
-     * been set up.
-     */
-    HashSet<Integer> words = new HashSet<Integer>();
-    for (Node<Integer> node : inputLattice) {
-      for (Arc<Integer> arc : node.getOutgoingArcs()) {
-        // create a rule, but do not add into the grammar trie
-        // TODO: which grammar should we use to create an OOV rule?
-        int sourceWord = arc.getLabel();
-        if (sourceWord == Vocabulary.id(Vocabulary.START_SYM)
-            || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
-          continue;
-
-        // Determine if word is actual OOV.
-        if (config.true_oovs_only && ! Vocabulary.hasId(sourceWord))
-          continue;
-        
-        words.add(sourceWord);
-      }
-    }
-
-    for (int sourceWord: words)
-      addOOVRule(sourceWord, featureFunctions);
-    
-    // Grammars must be sorted.
-    sortGrammar(featureFunctions);
   }
 }

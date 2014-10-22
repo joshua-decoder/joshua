@@ -10,7 +10,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -38,7 +37,7 @@ public class DecoderThread extends Thread {
    * these variables may be the same across all threads (e.g., just copy from DecoderFactory), or
    * differ from thread to thread
    */
-  private final List<GrammarFactory> grammarFactories;
+  private final List<Grammar> allGrammars;
   private final List<FeatureFunction> featureFunctions;
 
   private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
@@ -46,11 +45,11 @@ public class DecoderThread extends Thread {
   // ===============================================================
   // Constructor
   // ===============================================================
-  public DecoderThread(List<GrammarFactory> grammarFactories, FeatureVector weights,
-      List<FeatureFunction> featureFunctions,JoshuaConfiguration joshuaConfiguration) throws IOException {
+  public DecoderThread(List<Grammar> grammars, FeatureVector weights,
+      List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) throws IOException {
 
     this.joshuaConfiguration = joshuaConfiguration;
-    this.grammarFactories = grammarFactories;
+    this.allGrammars = grammars;
 
     this.featureFunctions = new ArrayList<FeatureFunction>();
     for (FeatureFunction ff : featureFunctions) {
@@ -92,11 +91,11 @@ public class DecoderThread extends Thread {
     
     long startTime = System.currentTimeMillis();
 
-    int numGrammars = grammarFactories.size();
+    int numGrammars = allGrammars.size();
     Grammar[] grammars = new Grammar[numGrammars];
 
-    for (int i = 0; i < grammarFactories.size(); i++)
-      grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
+    for (int i = 0; i < allGrammars.size(); i++)
+      grammars[i] = allGrammars.get(i);
     
     if (joshuaConfiguration.segment_oovs)
       sentence.segmentOOVs(grammars);

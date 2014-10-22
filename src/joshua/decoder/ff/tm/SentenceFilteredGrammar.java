@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -15,8 +16,8 @@ import joshua.decoder.segment_file.Sentence;
  * 
  * @author Matt Post <post@cs.jhu.edu>
  */
-public class SentenceFilteredGrammar extends BatchGrammar {
-  private BatchGrammar baseGrammar;
+public class SentenceFilteredGrammar extends MemoryBasedBatchGrammar {
+  private AbstractGrammar baseGrammar;
   private SentenceFilteredTrie filteredTrie;
   private int[] tokens;
   private Sentence sentence;
@@ -28,7 +29,7 @@ public class SentenceFilteredGrammar extends BatchGrammar {
    * @param baseGrammar
    * @param sentence
    */
-  SentenceFilteredGrammar(BatchGrammar baseGrammar, Sentence sentence) {
+  SentenceFilteredGrammar(AbstractGrammar baseGrammar, Sentence sentence) {
     super(baseGrammar.joshuaConfiguration);
     this.baseGrammar = baseGrammar;
     this.sentence = sentence;

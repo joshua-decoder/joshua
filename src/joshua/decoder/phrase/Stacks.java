@@ -8,6 +8,7 @@ import joshua.corpus.Span;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -59,7 +60,7 @@ public class Stacks {
     phraseTables[phraseTables.length - 2].addRule(Hypothesis.END_RULE);
     
     phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config);
-    phraseTables[phraseTables.length - 1].createOOVGrammar(sentence.intLattice(), featureFunctions);
+    AbstractGrammar.addOOVRules(phraseTables[phraseTables.length - 1], sentence.intLattice(), featureFunctions, config.true_oovs_only);
     
     this.chart = new PhraseChart(phraseTables, featureFunctions, sentence, config.num_translation_options);
   }
@@ -116,7 +117,7 @@ public class Stacks {
             if (begin == sentence.length() - 1 && source_words != sentence.length()) 
               continue;            
 
-            TargetPhrases phrases = chart.Range(begin, begin + phrase_length);
+            TargetPhrases phrases = chart.getRange(begin, begin + phrase_length);
             
             if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
               continue;
@@ -162,7 +163,7 @@ public class Stacks {
         // Sorts the hypotheses, since we now know that we're done adding them
         hypos.finish();
         
-        TargetPhrases phrases = chart.Range(pair.start, pair.end);
+        TargetPhrases phrases = chart.getRange(pair.start, pair.end);
 
 //        System.err.println(String.format("  Span %s hypotheses %s phrases %s", pair, hypos.size(), phrases.size()));
 

@@ -70,10 +70,10 @@ public class PhraseTable extends MemoryBasedBatchGrammar {
   }
   
   @Override
-  public void addOOVRule(int sourceWord, List<FeatureFunction> featureFunctions) {
+  public void addOOVRules(int sourceWord, List<FeatureFunction> featureFunctions) {
     // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
     // certainly is)
-    int targetWord = config.mark_oovs
+    int targetWord = joshuaConfiguration.mark_oovs
         ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
         : sourceWord;   
 

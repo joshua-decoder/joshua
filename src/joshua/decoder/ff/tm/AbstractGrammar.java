@@ -2,11 +2,17 @@ package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.lattice.Arc;
+import joshua.lattice.Lattice;
+import joshua.lattice.Node;
 
 /**
  * Partial implementation of the <code>Grammar</code> interface that provides logic for sorting a
@@ -40,12 +46,15 @@ public abstract class AbstractGrammar implements Grammar {
   /* The maximum span of the input this rule can be applied to. */
   protected int spanLimit = 1;
 
+  protected JoshuaConfiguration joshuaConfiguration;
+
   /**
    * Constructs an empty, unsorted grammar.
    * 
    * @see Grammar#isSorted()
    */
-  public AbstractGrammar() {
+  public AbstractGrammar(JoshuaConfiguration config) {
+    this.joshuaConfiguration = config;
     this.sorted = false;
   }
 
@@ -56,10 +65,6 @@ public abstract class AbstractGrammar implements Grammar {
   }
 
   public static final int OOV_RULE_ID = 0;
-
-  public int getOOVRuleID() {
-    return OOV_RULE_ID;
-  }
 
   /**
    * Cube-pruning requires that the grammar be sorted based on the latest feature functions. To
@@ -140,5 +145,42 @@ public abstract class AbstractGrammar implements Grammar {
   // write grammar to disk
   public void writeGrammarOnDisk(String file) {
   }
+  
+  /**
+   * Adds OOV rules for all words in the input lattice to the current grammar. Uses addOOVRule() so that
+   * sub-grammars can define different types of OOV rules if needed (as is used in {@link PhraseTable}).
+   * 
+   * @param inputLattice the lattice representing the input sentence
+   * @param featureFunctions a list of feature functions used for scoring
+   */
+  public static void addOOVRules(Grammar grammar, Lattice<Integer> inputLattice, List<FeatureFunction> featureFunctions,
+      boolean onlyTrue) {
+    /*
+     * Add OOV rules; This should be called after the manual constraints have
+     * been set up.
+     */
+    HashSet<Integer> words = new HashSet<Integer>();
+    for (Node<Integer> node : inputLattice) {
+      for (Arc<Integer> arc : node.getOutgoingArcs()) {
+        // create a rule, but do not add into the grammar trie
+        // TODO: which grammar should we use to create an OOV rule?
+        int sourceWord = arc.getLabel();
+        if (sourceWord == Vocabulary.id(Vocabulary.START_SYM)
+            || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
+          continue;
 
+        // Determine if word is actual OOV.
+        if (onlyTrue && ! Vocabulary.hasId(sourceWord))
+          continue;
+
+        words.add(sourceWord);
+      }
+    }
+
+    for (int sourceWord: words)
+      grammar.addOOVRules(sourceWord, featureFunctions);
+
+    // Sort all the rules (not much to actually do, this just marks it as sorted)
+    grammar.sortGrammar(featureFunctions);
+  }
 }

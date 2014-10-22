@@ -53,8 +53,8 @@ import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BasicRuleCollection;
-import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -63,7 +63,7 @@ import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 
-public class PackedGrammar extends BatchGrammar {
+public class PackedGrammar extends AbstractGrammar {
 
   private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
 
@@ -749,5 +749,10 @@ public class PackedGrammar extends BatchGrammar {
   public boolean isRegexpGrammar() {
     // TODO Auto-generated method stub
     return false;
+  }
+
+  @Override
+  public void addOOVRules(int word, List<FeatureFunction> featureFunctions) {
+    throw new RuntimeException("PackedGrammar: I can't add OOV rules");
   }
 }

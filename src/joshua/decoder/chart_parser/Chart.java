@@ -16,6 +16,7 @@ import joshua.decoder.chart_parser.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.SourceDependentFF;
+import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -142,7 +143,7 @@ public class Chart {
       this.grammars[i] = grammars[i];
 
     MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config);
-    oovGrammar.createOOVGrammar(sentence.intLattice(), featureFunctions);
+    AbstractGrammar.addOOVRules(oovGrammar, sentence.intLattice(), featureFunctions, joshuaConfiguration.true_oovs_only);
     this.grammars[this.grammars.length - 1] = oovGrammar; 
         
     // each grammar will have a dot chart

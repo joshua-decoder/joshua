@@ -81,4 +81,6 @@ public interface Grammar {
    * @return true if the grammar's rules may contain regular expressions.
    */
   boolean isRegexpGrammar();
+    
+  void addOOVRules(int word, List<FeatureFunction> featureFunctions);
 }
