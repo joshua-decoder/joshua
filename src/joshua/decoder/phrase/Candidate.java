@@ -13,7 +13,7 @@ import joshua.decoder.hypergraph.HGNode;
 public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
 
   // the set of hypotheses that can be paired with phrases from this span 
-  private Vertex hypotheses;
+  private HypoStateList hypotheses;
 
   // the list of target phrases gathered from a span of the input
   private TargetPhrases phrases;
@@ -33,20 +33,20 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   }
   
   public Candidate(float futureCost) {
-    this.hypotheses = new Vertex();
+    this.hypotheses = new HypoStateList();
     this.phrases = new TargetPhrases();
     this.span = new Span(0,1);
     this.ranks = new int[] { 0, 0 };
   }
   
-  public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span) {
+  public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span) {
     this.hypotheses = hypotheses;
     this.phrases = phrases;
     this.span = span;
     this.ranks = new int[] { 0, 0 };
   }
 
-  public Candidate(Vertex hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
+  public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
     this.hypotheses = hypotheses;
     this.phrases = phrases;
     this.span = span;
@@ -54,17 +54,39 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
 //    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
   }
   
+  /**
+   * Extends the cube pruning dot in both directions and returns the resulting set. Either of the
+   * results can be null if the end of their respective lists is reached.
+   * 
+   * @return The neighboring candidates (possibly null)
+   */
   public Candidate[] extend() {
-    Candidate[] extend = new Candidate[] { null, null };
+    return new Candidate[] { extendHypothesis(), extendPhrase() };
+  }
+  
+  /**
+   * Extends the cube pruning dot along the dimension of existing hypotheses.
+   * 
+   * @return the next candidate, or null if none
+   */
+  public Candidate extendHypothesis() {
     if (ranks[0] < hypotheses.size() - 1) {
-      extend[0] = new Candidate(hypotheses, phrases, span, new int[] { ranks[0] + 1, ranks[1] });
+      return new Candidate(hypotheses, phrases, span, new int[] { ranks[0] + 1, ranks[1] });
     }
-    
+    return null;
+  }
+  
+  /**
+   * Extends the cube pruning dot along the dimension of candidate target sides.
+   * 
+   * @return the next Candidate, or null if none
+   */
+  public Candidate extendPhrase() {
     if (ranks[1] < phrases.size() - 1) {
-      extend[1] = new Candidate(hypotheses, phrases, span, new int[] { ranks[0], ranks[1] + 1 });
+      return new Candidate(hypotheses, phrases, span, new int[] { ranks[0], ranks[1] + 1 });
     }
     
-    return extend;
+    return null;
   }
   
   @Override

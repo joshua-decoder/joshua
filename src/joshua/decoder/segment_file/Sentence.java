@@ -267,6 +267,10 @@ public class Sentence {
   public String target() {
     return target;
   }
+  
+  public String fullTarget() {
+    return String.format("<s> %s </s>", target());
+  }
 
   public String[] references() {
     return references;

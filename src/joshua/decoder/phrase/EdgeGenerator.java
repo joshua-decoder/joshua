@@ -31,15 +31,34 @@ public class EdgeGenerator {
    * respect it is like {@link CubePruneState} (it could make use of that class with
    * a little generalization of spans / coverage).
    * 
+   * This function is also used to (fairly concisely) implement constrained decoding. Before
+   * adding a candidate, we ensure that the sequence of English words match the sentence. If not,
+   * the code extends the dot in the cube-pruning chart to the next phrase, since that one might
+   * be a match.
+   * 
    * @param cand
    */
-  public void AddCandidate(Candidate cand) {
+  public void addCandidate(Candidate cand) {
+
+    // Constrained decoding
+    if (sentence.target() != null) {
+      String oldWords = cand.getHypothesis().bestHyperedge.getRule().getEnglishWords().replace("[X,1] ",  "");
+      String newWords = cand.getRule().getEnglishWords().replace("[X,1] ",  "");
+          
+      // If the string is not found in the target sentence, explore the cube neighbors
+      if (sentence.fullTarget().indexOf(oldWords + " " + newWords) == -1) {
+        Candidate next = cand.extendPhrase();
+        if (next != null)
+          addCandidate(next); 
+        return;
+      }
+    }
 
     // TODO: sourcepath
     ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, cand.getRule(),
         cand.getTailNodes(), -1, cand.getSpan().end, null, this.sentence);
     cand.setResult(result);
-    
+
     generate.add(cand);
   }
 
@@ -59,12 +78,9 @@ public class EdgeGenerator {
     // This is what we'll return, but first we have to do some expansion
     Candidate top = generate.poll();
     
-//    System.err.println(String.format("  POP " + top));
-
     for (Candidate c : top.extend())
       if (c != null) {
-        AddCandidate(c);
-//        System.err.println(String.format("  PUSH " + c));
+        addCandidate(c);
       }
 
     return top;

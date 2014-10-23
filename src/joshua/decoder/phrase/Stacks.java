@@ -93,7 +93,7 @@ public class Stacks {
     // Decode with increasing numbers of source words.
     for (int source_words = 2; source_words <= sentence.length(); ++source_words) {
       // A vertex represents the root of a trie, e.g., bundled translations of the same source phrase
-      HashMap<Span, Vertex> vertices = new HashMap<Span, Vertex>();
+      HashMap<Span, HypoStateList> hypotheses = new HashMap<Span, HypoStateList>();
       // Iterate over stacks to continue from.
       for (int from_stack = source_words - Math.min(source_words - 1, chart.MaxSourcePhraseLength());
            from_stack < source_words;
@@ -131,14 +131,14 @@ public class Stacks {
             float score_delta = future.Change(coverage, begin, begin + phrase_length);
             
             Span span = new Span(begin, begin + phrase_length);
-            if (! vertices.containsKey(span))
-              vertices.put(span, new Vertex());
+            if (! hypotheses.containsKey(span))
+              hypotheses.put(span, new HypoStateList());
             
             /* This associates with each span a set of hypotheses that can be extended by
              * phrases from that span. The hypotheses are wrapped in HypoState objects, which
              * augment the hypothesis score with a future cost.
              */
-            vertices.get(span).add(new HypoState(ant, score_delta));
+            hypotheses.get(span).add(new HypoState(ant, score_delta));
 
             // Enforce the reordering limit on later iterations.
 
@@ -156,8 +156,8 @@ public class Stacks {
       
       EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
 //      System.err.println(String.format("\nBuilding cube-pruning chart for %d words", source_words));
-      for (Span pair : vertices.keySet()) {
-        Vertex hypos = vertices.get(pair);
+      for (Span pair : hypotheses.keySet()) {
+        HypoStateList hypos = hypotheses.get(pair);
         if (hypos.isEmpty())
           continue;
         // Sorts the hypotheses, since we now know that we're done adding them
@@ -168,7 +168,7 @@ public class Stacks {
 //        System.err.println(String.format("  Span %s hypotheses %s phrases %s", pair, hypos.size(), phrases.size()));
 
         Candidate cand = new Candidate(hypos, phrases, pair);
-        gen.AddCandidate(cand);
+        gen.addCandidate(cand);
       }
 
       Stack stack = stacks.get(source_words);
