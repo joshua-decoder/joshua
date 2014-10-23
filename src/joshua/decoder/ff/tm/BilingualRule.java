@@ -185,10 +185,9 @@ public class BilingualRule extends Rule {
      * sparse (labeled) ones, but it's not required.
      */
 
-    FeatureVector features = null;
-
-    if (owner != -1)
-      features = new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_");
+    FeatureVector features = (owner != -1)
+        ? new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_")
+        : new FeatureVector();
 
     return features;
   }
