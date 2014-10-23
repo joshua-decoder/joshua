@@ -56,10 +56,10 @@ public class Stacks {
       if (grammars[i] instanceof PhraseTable)
         phraseTables[j++] = (PhraseTable) grammars[i];
     
-    phraseTables[phraseTables.length - 2] = new PhraseTable("null", config);
-    phraseTables[phraseTables.length - 2].addRule(Hypothesis.END_RULE);
+    phraseTables[phraseTables.length - 2] = new PhraseTable("null", config, featureFunctions);
+    phraseTables[phraseTables.length - 2].addEOSRule();
     
-    phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config);
+    phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config, featureFunctions);
     AbstractGrammar.addOOVRules(phraseTables[phraseTables.length - 1], sentence.intLattice(), featureFunctions, config.true_oovs_only);
     
     this.chart = new PhraseChart(phraseTables, featureFunctions, sentence, config.num_translation_options);

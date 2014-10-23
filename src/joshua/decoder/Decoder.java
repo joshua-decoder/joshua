@@ -532,7 +532,7 @@ public class Decoder {
         } else if (format.equals("phrase")) {
 
           joshuaConfiguration.phrase_based = true;
-          grammar = new PhraseTable(file, owner, joshuaConfiguration);
+          grammar = new PhraseTable(file, owner, joshuaConfiguration, featureFunctions);
         
         } else {
           // thrax, hiero, samt

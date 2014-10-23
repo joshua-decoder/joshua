@@ -6,7 +6,7 @@ import java.util.List;
 
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.RuleCollection;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -19,10 +19,12 @@ public class PhraseChart {
   private int max_source_phrase_length;
 
   // Banded array: different source lengths are next to each other.
-  private List<TargetPhrases> entries;
+  private List<List<Rule>> entries;
   
   // number of translation options
-  int numOptions = 20;
+  private int numOptions = 20;
+  
+  private List<FeatureFunction> features;
 
   /**
    * Create a new PhraseChart object, which represents all phrases that are
@@ -34,6 +36,8 @@ public class PhraseChart {
    */
   public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source, int num_options) {
     
+    this.features = features;
+    
     float startTime = System.currentTimeMillis();
    
     max_source_phrase_length = 0;
@@ -42,30 +46,20 @@ public class PhraseChart {
           tables[i].getMaxSourcePhraseLength());
     sentence_length = source.length();
 
-//    System.err.println(String.format(
-//        "PhraseChart()::Initializing chart for sentlen %d max %d from %s", sentence_length,
-//        max_source_phrase_length, source));
-
-    entries = new ArrayList<TargetPhrases>();
+    entries = new ArrayList<List<Rule>>(sentence_length * max_source_phrase_length);
     for (int i = 0; i < sentence_length * max_source_phrase_length; i++)
       entries.add(null);
 
     // There's some unreachable ranges off the edge. Meh.
-    for (int begin = 0; begin != sentence_length; ++begin) {
+    for (int begin = 0; begin < sentence_length; ++begin) {
       for (int end = begin + 1; (end != sentence_length + 1)
           && (end <= begin + max_source_phrase_length); ++end) {
         if (source.hasPath(begin, end)) {
           for (PhraseTable table : tables)
-            SetRange(begin, end,
-                table.Phrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
+            addToRange(begin, end,
+                table.getPhrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
         }
-
       }
-    }
-    
-    for (TargetPhrases phrases: entries) {
-      if (phrases != null)
-        phrases.finish(features, Decoder.weights, num_options);
     }
     
     System.err.println(String.format("[%d] Collecting options took %.3f seconds", source.id(),
@@ -101,16 +95,16 @@ public class PhraseChart {
    */
   public TargetPhrases getRange(int begin, int end) {
     int index = offset(begin, end);
-//    System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
+//    System.err.println(String.format("PhraseChart::getRange(%d,%d): found %d entries", begin, end,
 //        entries.get(index) == null ? 0 : entries.get(index).size()));
-//    if (entries.get(index) != null)
-//      for (Rule phrase: entries.get(index))
-//        System.err.println("  RULE: " + phrase);
 
     if (index < 0 || index >= entries.size() || entries.get(index) == null)
       return null;
 
-    return entries.get(index);
+    TargetPhrases phrases = new TargetPhrases(entries.get(index));
+    phrases.finish(features, Decoder.weights, numOptions);
+    
+    return phrases;
   }
 
   /**
@@ -120,14 +114,15 @@ public class PhraseChart {
    * @param end
    * @param to
    */
-  private void SetRange(int begin, int end, RuleCollection to) {
+  private void addToRange(int begin, int end, List<Rule> to) {
     if (to != null) {
+//      System.err.println(String.format("PhraseChart::addToRange(%d, %d) = %d targets", begin, end, to.size()));
+
       try {
         int offset = offset(begin, end);
         if (entries.get(offset) == null)
-          entries.set(offset, new TargetPhrases(to.getRules()));
-        else
-          entries.get(offset).addAll(to.getRules());
+          entries.set(offset, new ArrayList<Rule>());
+        entries.get(offset).addAll(to);
       } catch (java.lang.IndexOutOfBoundsException e) {
         System.err.println(String.format("Whoops! %s [%d-%d] too long (%d)", to, begin, end,
             entries.size()));
