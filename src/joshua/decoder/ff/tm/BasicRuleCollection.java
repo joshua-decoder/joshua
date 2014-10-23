@@ -44,62 +44,39 @@ public class BasicRuleCollection implements RuleCollection {
     this.sorted = false;
   }
 
-  /* See Javadoc comments for RuleCollection interface. */
   public int getArity() {
     return this.arity;
   }
 
+  /**
+   * Returns a list of the rules, without ensuring that they are first sorted.
+   */
+  @Override
   public List<Rule> getRules() {
     return this.rules;
   }
   
+  @Override
   public boolean isSorted() {
     return sorted;
   }
 
   /**
-   * Sorts all of the rules, after being sure their costs are estimated.
-   * 
-   * @param rules the list of rules to be sorted
-   * @param models the features functions that will provide cost estimates (optionally)
+   * Return a list of rules sorted according to their estimated model costs.
    */
-  private void sortRules(List<Rule> rules, List<FeatureFunction> models) {
-//    long startTime = System.currentTimeMillis();
-
-    for (Rule rule: rules)
-      rule.estimateRuleCost(models);
-    
-    Collections.sort(rules, Rule.EstimatedCostComparator);
-
-//    System.err.println("BasicRuleCollection::sortRules()");
-//    for (Rule rule: rules)
-//      System.err.println("-> " + rule);
-        
-//    System.err.println(String.format("SORTING TOOK %d",System.currentTimeMillis() - startTime)); 
-  }
-
-  /* See Javadoc comments for RuleCollection interface. */
-  public synchronized void sortRules(List<FeatureFunction> models) {
-    /* The first check for whether to sort rules was outside a synchronized block, for
-     * efficiency. This creates a race condition, though, since sorting could have finished in
-     * another thread after the unsynchronized check and before this thread got the lock. Now that
-     * we have the lock, we check again, to prevent this condition.
-     */
+  @Override
+  public synchronized List<Rule> getSortedRules(List<FeatureFunction> models) {
     if (! isSorted()) {
-      sortRules(this.rules, models);
-      this.sorted = true;
+      for (Rule rule: getRules())
+        rule.estimateRuleCost(models);
+
+      Collections.sort(rules, Rule.EstimatedCostComparator);
+      this.sorted = true;      
     }
-  }
-
-  /* See Javadoc comments for RuleCollection interface. */
-  public List<Rule> getSortedRules(List<FeatureFunction> models) {
-    if (! isSorted())
-      sortRules(models);
-
+    
     return this.rules;
   }
 
-  /* See Javadoc comments for RuleCollection interface. */
   public int[] getSourceSide() {
     return this.sourceTokens;
   }
