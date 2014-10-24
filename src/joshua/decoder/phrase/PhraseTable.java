@@ -55,7 +55,7 @@ public class PhraseTable extends MemoryBasedBatchGrammar {
    * @param sourceWords the sequence of source words
    * @return the rules
    */
-  public RuleCollection Phrases(int[] sourceWords) {
+  public RuleCollection getPhrases(int[] sourceWords) {
     if (sourceWords.length != 0) {
       Trie pointer = getTrieRoot().match(Vocabulary.id("[X]"));
       int i = 0;

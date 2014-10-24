@@ -23,6 +23,7 @@ public class PhraseChart {
   
   // number of translation options
   int numOptions = 20;
+  private List<FeatureFunction> features;
 
   /**
    * Create a new PhraseChart object, which represents all phrases that are
@@ -35,6 +36,8 @@ public class PhraseChart {
   public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source, int num_options) {
     
     float startTime = System.currentTimeMillis();
+    
+    this.features = features;
    
     max_source_phrase_length = 0;
     for (int i = 0; i < tables.length; i++)
@@ -56,8 +59,8 @@ public class PhraseChart {
           && (end <= begin + max_source_phrase_length); ++end) {
         if (source.hasPath(begin, end)) {
           for (PhraseTable table : tables)
-            SetRange(begin, end,
-                table.Phrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
+            addToRange(begin, end,
+                table.getPhrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
         }
 
       }
@@ -120,8 +123,18 @@ public class PhraseChart {
    * @param end
    * @param to
    */
-  private void SetRange(int begin, int end, RuleCollection to) {
+  private void addToRange(int begin, int end, RuleCollection to) {
     if (to != null) {
+      /* This first call to getSortedRules() is important, because it is what causes the sorting
+       * to happen. Subsequent calls to get the rules will just return the already-sorted list.
+       */
+      if (to.getSortedRules(features).size() > numOptions) {
+//        int old = to.getRules().size();
+        to.getRules().subList(numOptions, to.getRules().size()).clear();
+//        int newSize = to.getRules().size();
+//        System.err.println(String.format("Reduced size from %d to %d", old, newSize));
+      }
+      
       try {
         int offset = offset(begin, end);
         if (entries.get(offset) == null)
