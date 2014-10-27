@@ -35,16 +35,15 @@ public class Future {
      */
     for (int begin = 1; begin <= chart.SentenceLength(); begin++) {
       // Nothing is nothing (this is a useful concept when two phrases abut)
-      SetEntry(begin, begin,  0.0f);
+      setEntry(begin, begin,  0.0f);
       // Insert phrases
       int max_end = Math.min(begin + chart.MaxSourcePhraseLength(), chart.SentenceLength());
       for (int end = begin + 1; end <= max_end; end++) {
         TargetPhrases phrases = chart.getRange(begin, end);
         if (phrases != null) {
-          // TODO: what's the cost?
-//          SetEntry(begin, end, phrases.getVertex().Bound());
-//            System.err.println(String.format("  Found %d over (%d,%d)", phrases.size(), begin, end));
-          SetEntry(begin, end, phrases.get(0).getEstimatedCost());
+//          System.err.println(String.format("SETENTRY(%d,%d) = %.3f %s", begin, end, phrases.get(0).getEstimatedCost(),
+//          phrases.get(0)));
+          setEntry(begin, end, phrases.get(0).getEstimatedCost());
         }
       }
     }
@@ -53,7 +52,7 @@ public class Future {
     for (int length = 2; length <= chart.SentenceLength(); length++) {
       for (int begin = 1; begin <= chart.SentenceLength() - length; begin++) {
         for (int division = begin + 1; division < begin + length; division++) {
-          SetEntry(begin, begin + length, Math.max(Entry(begin, begin + length), Entry(begin, division) + Entry(division, begin + length)));
+          setEntry(begin, begin + length, Math.max(getEntry(begin, begin + length), getEntry(begin, division) + getEntry(division, begin + length)));
         }
       }
     }
@@ -61,7 +60,7 @@ public class Future {
   
   public float Full() {
 //    System.err.println("Future::Full(): " + Entry(1, sentlen));
-    return Entry(1, sentlen);
+    return getEntry(1, sentlen);
   }
 
   /**
@@ -72,21 +71,19 @@ public class Future {
     int right = coverage.RightOpen(end, sentlen);
 //    System.err.println(String.format("Future::Change(%s, %d, %d) left %d right %d %.3f %.3f %.3f", coverage, begin, end, left, right,
 //        Entry(left, begin), Entry(end, right), Entry(left, right)));
-    return Entry(left, begin) + Entry(end, right) - Entry(left, right);
+    return getEntry(left, begin) + getEntry(end, right) - getEntry(left, right);
   }
   
-  private float Entry(int begin, int end) {
+  private float getEntry(int begin, int end) {
     assert end >= begin;
     assert end < this.sentlen;
     return entries.get(begin, end);
   }
   
-  private void SetEntry(int begin, int end, float value) {
+  private void setEntry(int begin, int end, float value) {
     assert end >= begin;
     assert end < this.sentlen;
-//    if (value > Float.NEGATIVE_INFINITY)
-//      System.err.println(String.format("Future::SetEntry(%d,%d,%.5f)", begin, end, value));
+//    System.err.println(String.format("future cost from %d to %d is %.5f", begin, end, value));
     entries.set(begin, end, value);
   }
-
 }

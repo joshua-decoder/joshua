@@ -20,7 +20,7 @@ public class PhraseChart {
 
   // Banded array: different source lengths are next to each other.
   private List<TargetPhrases> entries;
-  
+
   // number of translation options
   int numOptions = 20;
   private List<FeatureFunction> features;
@@ -33,12 +33,13 @@ public class PhraseChart {
    * @param tables
    * @param source
    */
-  public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source, int num_options) {
-    
+  public PhraseChart(PhraseTable[] tables, List<FeatureFunction> features, Sentence source,
+      int num_options) {
+
     float startTime = System.currentTimeMillis();
-    
+
     this.features = features;
-   
+
     max_source_phrase_length = 0;
     for (int i = 0; i < tables.length; i++)
       max_source_phrase_length = Math.max(max_source_phrase_length,
@@ -65,12 +66,12 @@ public class PhraseChart {
 
       }
     }
-    
-    for (TargetPhrases phrases: entries) {
+
+    for (TargetPhrases phrases : entries) {
       if (phrases != null)
         phrases.finish(features, Decoder.weights, num_options);
     }
-    
+
     System.err.println(String.format("[%d] Collecting options took %.3f seconds", source.id(),
         (System.currentTimeMillis() - startTime) / 1000.0f));
   }
@@ -104,11 +105,12 @@ public class PhraseChart {
    */
   public TargetPhrases getRange(int begin, int end) {
     int index = offset(begin, end);
-//    System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries", begin, end,
-//        entries.get(index) == null ? 0 : entries.get(index).size()));
-//    if (entries.get(index) != null)
-//      for (Rule phrase: entries.get(index))
-//        System.err.println("  RULE: " + phrase);
+    // System.err.println(String.format("PhraseChart::Range(%d,%d): found %d entries",
+    // begin, end,
+    // entries.get(index) == null ? 0 : entries.get(index).size()));
+    // if (entries.get(index) != null)
+    // for (Rule phrase: entries.get(index))
+    // System.err.println("  RULE: " + phrase);
 
     if (index < 0 || index >= entries.size() || entries.get(index) == null)
       return null;
@@ -125,16 +127,17 @@ public class PhraseChart {
    */
   private void addToRange(int begin, int end, RuleCollection to) {
     if (to != null) {
-      /* This first call to getSortedRules() is important, because it is what causes the sorting
-       * to happen. Subsequent calls to get the rules will just return the already-sorted list.
+      /*
+       * This first call to getSortedRules() is important, because it is what
+       * causes the scoring and sorting to happen. Subsequent calls to get the
+       * rules will just return the already-sorted list. Here, we score, sort,
+       * and then trim the list to the number of translation options. This provides *huge*
+       * performance gains --- the more common the word, the more translations options it is
+       * likely to have (often into the tens of thousands).
        */
-      if (to.getSortedRules(features).size() > numOptions) {
-//        int old = to.getRules().size();
+      if (to.getSortedRules(features).size() > numOptions)
         to.getRules().subList(numOptions, to.getRules().size()).clear();
-//        int newSize = to.getRules().size();
-//        System.err.println(String.format("Reduced size from %d to %d", old, newSize));
-      }
-      
+
       try {
         int offset = offset(begin, end);
         if (entries.get(offset) == null)

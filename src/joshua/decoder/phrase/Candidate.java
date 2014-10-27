@@ -1,7 +1,6 @@
 package joshua.decoder.phrase;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import joshua.corpus.Span;
@@ -10,10 +9,10 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
-public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
+public class Candidate implements Comparable<Candidate> {
 
   // the set of hypotheses that can be paired with phrases from this span 
-  private HypoStateList hypotheses;
+  private HypoStateList hypostates;
 
   // the list of target phrases gathered from a span of the input
   private TargetPhrases phrases;
@@ -28,26 +27,26 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
   private ComputeNodeResult result;
   
   public String toString() {
-    return String.format("CAND[%d/%d hypotheses, %d/%d phrases] %s + %s", ranks[0],
-        hypotheses.size(), ranks[1], phrases.size(), getHypothesis(), getRule().getEnglishWords());
+    return String.format("CAND[%d/%d hypotheses, %d/%d phrases] %.5f %s + %s", ranks[0],
+        hypostates.size(), ranks[1], phrases.size(), score(), getHypothesis(), getRule().getEnglishWords());
   }
   
   public Candidate(float futureCost) {
-    this.hypotheses = new HypoStateList();
+    this.hypostates = new HypoStateList();
     this.phrases = new TargetPhrases();
     this.span = new Span(0,1);
     this.ranks = new int[] { 0, 0 };
   }
   
   public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span) {
-    this.hypotheses = hypotheses;
+    this.hypostates = hypotheses;
     this.phrases = phrases;
     this.span = span;
     this.ranks = new int[] { 0, 0 };
   }
 
   public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
-    this.hypotheses = hypotheses;
+    this.hypostates = hypotheses;
     this.phrases = phrases;
     this.span = span;
     this.ranks = ranks;
@@ -70,8 +69,8 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
    * @return the next candidate, or null if none
    */
   public Candidate extendHypothesis() {
-    if (ranks[0] < hypotheses.size() - 1) {
-      return new Candidate(hypotheses, phrases, span, new int[] { ranks[0] + 1, ranks[1] });
+    if (ranks[0] < hypostates.size() - 1) {
+      return new Candidate(hypostates, phrases, span, new int[] { ranks[0] + 1, ranks[1] });
     }
     return null;
   }
@@ -83,7 +82,7 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
    */
   public Candidate extendPhrase() {
     if (ranks[1] < phrases.size() - 1) {
-      return new Candidate(hypotheses, phrases, span, new int[] { ranks[0], ranks[1] + 1 });
+      return new Candidate(hypostates, phrases, span, new int[] { ranks[0], ranks[1] + 1 });
     }
     
     return null;
@@ -94,17 +93,12 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
     return Float.compare(other.score(), score());
   }
 
-  @Override
-  public int compare(Candidate arg0, Candidate arg1) {
-    return Float.compare(arg1.score(), arg0.score());
-  }
-
   public Span getSpan() {
     return this.span;
   }
   
   public Hypothesis getHypothesis() {
-    return this.hypotheses.get(ranks[0]).history;
+    return this.hypostates.get(ranks[0]).history;
   }
   
   /**
@@ -152,7 +146,7 @@ public class Candidate implements Comparator<Candidate>, Comparable<Candidate> {
    */
   public float score() {
     if (result != null)
-      return this.hypotheses.get(ranks[0]).score + result.getTransitionCost();
+      return this.hypostates.get(ranks[0]).score + result.getTransitionCost();
     return 0.0f;
   }
   
