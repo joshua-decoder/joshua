@@ -713,10 +713,10 @@ public class PackedGrammar extends AbstractGrammar {
           return estimated[source[address + 2]];
         }
 
-        @Override
-        public void setPrecomputableCost(float cost) {
-          precomputable[source[address + 2]] = cost;
-        }
+//        @Override
+//        public void setPrecomputableCost(float cost) {
+//          precomputable[source[address + 2]] = cost;
+//        }
 
         @Override
         public float getPrecomputableCost() {

@@ -159,7 +159,9 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
    */
   public abstract float getPrecomputableCost();
 
-  public abstract void setPrecomputableCost(float cost);
+  public void setPrecomputableCost(float[] weights) {
+    // default: do nothing
+  }
 
   // ===============================================================
   // Methods

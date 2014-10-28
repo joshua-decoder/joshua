@@ -23,6 +23,8 @@ public class PhraseModelFF extends StatelessFF {
 
   /* The owner of the grammar. */
   private int ownerID;
+  
+  private float[] phrase_weights = null;
 
   public PhraseModelFF(FeatureVector weights, String owner) {
     super(weights, "tm_" + owner, "");
@@ -40,7 +42,15 @@ public class PhraseModelFF extends StatelessFF {
       System.exit(1);
     }
     weights.put(name, 1.0f);
+    
+    int num_features = 0;
+    while (weights.containsKey(String.format("tm_%s_%d", owner, num_features)))
+      num_features++;
 
+    phrase_weights = new float[num_features];
+    for (int i = 0; i < num_features; i++)
+      phrase_weights[i] = weights.get(String.format("tm_%s_%d", owner, i));
+        
     // Store the owner.
     this.ownerID = Vocabulary.id(owner);
   }
@@ -65,8 +75,8 @@ public class PhraseModelFF extends StatelessFF {
        */
       if (acc instanceof ScoreAccumulator) {
         if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-          float score = rule.getFeatureVector().innerProduct(weights);
-          rule.setPrecomputableCost(score);
+//          float score = rule.getFeatureVector().innerProduct(weights);
+          rule.setPrecomputableCost(phrase_weights);
         }
         acc.add(name, rule.getPrecomputableCost());
       } else {

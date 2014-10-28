@@ -1,6 +1,7 @@
 package joshua.decoder.ff.tm;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
@@ -87,6 +88,10 @@ public class BilingualRule extends Rule {
   public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, byte [] alignment) {
     this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
     this.alignment = alignment;
+  }
+  
+  public BilingualRule() {
+    this.lhs = -1;
   }
 
   // ===============================================================
@@ -210,7 +215,27 @@ public class BilingualRule extends Rule {
   }
 
   @Override
-  public final void setPrecomputableCost(float cost) {
+  public void setPrecomputableCost(float[] weights) {
+    int denseFeatureIndex = 0;
+    float cost = 0.0f;
+    if (!sparseFeatures.trim().equals("")) {
+      for (String token : sparseFeatures.split("\\s+")) {
+        if (token.indexOf('=') == -1) {
+//          System.err.println(String.format("VALUE(%s) = %.5f", token, -Float.parseFloat(token)));
+          cost += weights[denseFeatureIndex++] * -Float.parseFloat(token);
+        } else {
+          if (! token.startsWith("tm_"))
+            throw new RuntimeException("FATAL: we don't support arbitrary named features in the grammar file");
+
+          int splitPoint = token.indexOf('=');
+          String name = token.substring(0, splitPoint);
+          float value = Float.parseFloat(token.substring(splitPoint + 1));
+          int index = Integer.parseInt(name.replace(String.format("tm_%s_", Vocabulary.word(owner)), ""));
+          cost += weights[index] * value;
+        }
+      }
+    }
+    
     this.precomputableCost = cost;
   }
 
@@ -237,10 +262,9 @@ public class BilingualRule extends Rule {
 
       for (FeatureFunction ff : models) {
         this.estimatedCost += ff.estimateCost(this, -1);
-//        System.err.println("  -> FEATURE " + ff.getName() + " -> " + ff.estimateCost(this, -1));
       }
     }
-
+    
     return estimatedCost;
   }
 
@@ -257,8 +281,8 @@ public class BilingualRule extends Rule {
     sb.append(getEnglishWords());
     sb.append(" |||");
     sb.append(" " + getFeatureVector());
-    sb.append(String.format(" ||| %.3f", getEstimatedCost()));
-    sb.append(String.format(" ||| %.3f", getPrecomputableCost()));
+    sb.append(String.format(" ||| est=%.3f", getEstimatedCost()));
+    sb.append(String.format(" pre=%.3f", getPrecomputableCost()));
     return sb.toString();
   }
   
