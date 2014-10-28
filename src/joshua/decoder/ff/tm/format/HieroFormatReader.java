@@ -18,7 +18,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
   private static final Logger logger = Logger.getLogger(HieroFormatReader.class.getName());
 
   static {
-    fieldDelimiter = "\\s+\\|{3}\\s+";
+    fieldDelimiter = "\\s\\|{3}\\s";
     nonTerminalRegEx = "^\\[[^\\s]+\\,[0-9]*\\]$";
     nonTerminalCleanRegEx = ",[0-9\\s]+";
     // nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
@@ -37,8 +37,8 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
   @Override
   public BilingualRule parseLine(String line) {
     String[] fields = line.split(fieldDelimiter);
-    if (fields.length < 4) {
-      logger.severe("Rule line does not have four fields: " + line);
+    if (fields.length < 3) {
+      throw new RuntimeException(String.format("Rule '%s' does not have four fields", line));
     }
 
     int lhs = Vocabulary.id(cleanNonTerminal(fields[0]));
@@ -65,7 +65,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
       }
     }
 
-    String sparse_features = fields[3];
+    String sparse_features = (fields.length > 3 ? fields[3] : "");
 
     byte[] alignment = null;
     if (fields.length > 4) { // alignments are included

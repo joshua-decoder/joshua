@@ -77,11 +77,17 @@ public class PhraseTable extends MemoryBasedBatchGrammar {
         ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
         : sourceWord;   
 
-    String ruleString = String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| -1 ||| 0-0 1-1", 
-        Vocabulary.word(sourceWord), Vocabulary.word(targetWord));
-    BilingualRule oovRule = new HieroFormatReader().parseLine(ruleString);
-    oovRule.setOwner(Vocabulary.id("oov"));
+    int nt_i = Vocabulary.id(this.joshuaConfiguration.default_non_terminal);
+    BilingualRule oovRule = new BilingualRule(nt_i, new int[] { nt_i, sourceWord },
+        new int[] { -1, targetWord }, "", 1, null);
     addRule(oovRule);
     oovRule.estimateRuleCost(featureFunctions);
+        
+//    String ruleString = String.format("[X] ||| [X,1] %s ||| [X,1] %s", 
+//        Vocabulary.word(sourceWord), Vocabulary.word(targetWord));
+//    BilingualRule oovRule = new HieroFormatReader().parseLine(ruleString);
+//    oovRule.setOwner(Vocabulary.id("oov"));
+//    addRule(oovRule);
+//    oovRule.estimateRuleCost(featureFunctions);
   }
 }
