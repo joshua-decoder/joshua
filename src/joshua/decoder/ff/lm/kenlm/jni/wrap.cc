@@ -105,6 +105,8 @@ public:
   virtual float ProbString(jint * const begin, jint * const end,
       jint start) const = 0;
 
+  virtual float EstimateRule(jlong *begin, jlong *end) const = 0;
+
   virtual uint8_t Order() const = 0;
 
   virtual bool RegisterWord(const StringPiece& word, const int joshua_id) = 0;
@@ -167,6 +169,31 @@ public:
       long word = *i;
       if (word < 0)
         ruleScore.NonTerminal(*reinterpret_cast<const lm::ngram::ChartState*>(-word));
+      else
+        ruleScore.Terminal(map_[word]);
+    }
+    return ruleScore.Finish();
+  }
+
+  float EstimateRule(jlong * const begin, jlong * const end) const {
+    if (begin == end) return 0.0;
+    lm::ngram::ChartState nullState;
+    lm::ngram::RuleScore<Model> ruleScore(m_, nullState);
+
+    if (*begin < 0) {
+      ruleScore.Reset();
+    } else {
+      const lm::WordIndex word = map_[*begin];
+      if (word == m_.GetVocabulary().BeginSentence()) {
+        ruleScore.BeginSentence();
+      } else {
+        ruleScore.Terminal(word);
+      }
+    }
+    for (jlong* i = begin + 1; i != end; i++) {
+      long word = *i;
+      if (word < 0)
+        ruleScore.Reset();
       else
         ruleScore.Terminal(map_[word]);
     }
@@ -366,6 +393,18 @@ JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
 
   // Call back constructor to allocate a new instance, with an int argument
   return env->NewObject(base->ChartPair(), base->ChartPairInit(), (long)outStatePtr, prob);
+}
+
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_estimateRule(
+  JNIEnv *env, jclass, jlong pointer, jlongArray arr) {
+  jint length = env->GetArrayLength(arr);
+  // GCC only.
+  jlong values[length];
+  env->GetLongArrayRegion(arr, 0, length, values);
+
+  // Compute the probability
+  return reinterpret_cast<const VirtualBase*>(pointer)->EstimateRule(values,
+      values + length);
 }
 
 } // extern

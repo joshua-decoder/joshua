@@ -29,10 +29,42 @@ public class KenLMFF extends LanguageModelFF {
   }
 
   /**
+   * Estimates the cost of a rule. We override here since KenLM can do it more efficiently
+   * than the default {@link LanguageModelFF} class.
+   *    
+   * Most of this function implementation is redundant with compute().
+   */
+  @Override
+  public float estimateCost(Rule rule, int sentID) {
+    
+    int[] ruleWords = rule.getEnglish();
+
+    // The IDs we'll pass to KenLM
+    long[] words = new long[ruleWords.length];
+
+    for (int x = 0; x < ruleWords.length; x++) {
+      int id = ruleWords[x];
+
+      if (Vocabulary.nt(id)) {
+        // For the estimate, we can just mark negative values
+        words[x] = -1;
+
+      } else {
+        // Terminal: just add it
+        words[x] = id;
+      }
+    }
+
+    // Get the probability of applying the rule and the new state
+    float estimate = weight * ((KenLM) languageModel).estimateRule(words);
+//    float parestimate = super.estimateCost(rule, sentID);
+//    System.err.println(String.format("KenLM::estimateCost() = %.5f, %.5f", estimate, parestimate));
+    return estimate;
+  }
+  
+  /**
    * Computes the features incurred along this edge. Note that these features are unweighted costs
    * of the feature; they are the feature cost, not the model cost, or the inner product of them.
-   * 
-   * 
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,

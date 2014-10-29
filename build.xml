@@ -71,6 +71,7 @@
       <arg value="4" />
       <arg value="-C" />
       <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
+      <arg value="install" />
     </exec>
   </target>
 

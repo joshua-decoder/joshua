@@ -39,6 +39,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   private final static native float prob(long ptr, int words[]);
 
   private final static native StateProbPair probRule(long ptr, long pool, long words[]);
+  
+  private final static native float estimateRule(long ptr, long words[]);
 
   private final static native float probString(long ptr, int words[], int start);
 
@@ -97,7 +99,25 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
     return pair;
   }
-  
+
+  /**
+   * Public facing function that estimates the cost of a rule, which value is used for sorting
+   * rules during cube pruning.
+   * 
+   * @param words
+   * @return the estimated cost of the rule (the (partial) n-gram probabilities of all words in the rule)
+   */
+  public float estimateRule(long[] words) {
+    float estimate = 0.0f;
+    try {
+      estimate = estimateRule(pointer, words);
+    } catch (NoSuchMethodError e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
+    
+    return estimate;
+  }
 
 
   /**
