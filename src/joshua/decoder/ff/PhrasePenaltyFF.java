@@ -65,7 +65,7 @@ public class PhrasePenaltyFF extends StatelessFF {
    */
   @Override
   public float estimateCost(Rule rule, int sentID) {
-    if (owner > 0 && rule != null && rule.getOwner() == owner)
+    if (rule != null && (owner == 0 || rule.getOwner() == owner))
       return weights.get(name);
     return 0.0f;
   }
