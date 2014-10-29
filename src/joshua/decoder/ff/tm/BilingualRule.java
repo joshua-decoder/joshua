@@ -1,8 +1,8 @@
 package joshua.decoder.ff.tm;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
@@ -218,8 +218,11 @@ public class BilingualRule extends Rule {
   public void setPrecomputableCost(float[] weights) {
     int denseFeatureIndex = 0;
     float cost = 0.0f;
+    
     if (!sparseFeatures.trim().equals("")) {
-      for (String token : sparseFeatures.split("\\s+")) {
+      StringTokenizer st = new StringTokenizer(sparseFeatures);
+      while (st.hasMoreTokens()) {
+        String token = st.nextToken();
         if (token.indexOf('=') == -1) {
 //          System.err.println(String.format("VALUE(%s) = %.5f", token, -Float.parseFloat(token)));
           cost += weights[denseFeatureIndex++] * -Float.parseFloat(token);
