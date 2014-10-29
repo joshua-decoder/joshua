@@ -7,6 +7,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.phrase.Hypothesis;
 
 /**
  *  This feature just counts rules that are used. You can restrict it with a number of flags:
@@ -21,9 +22,12 @@ import joshua.decoder.hypergraph.HGNode;
 public class PhrasePenaltyFF extends StatelessFF {
 
   private int owner = 0;
+  private float weight = 0.0f;
   
   public PhrasePenaltyFF(FeatureVector weights, String argString) {
     super(weights, "PhrasePenalty");
+    
+    this.weight = weights.get(name);
     
     String args[] = argString.split("\\s+");
     int i = 0;
@@ -53,7 +57,8 @@ public class PhrasePenaltyFF extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
 
-    if (owner > 0 && rule.getOwner() == owner)
+    if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
+        && (owner == 0 || rule.getOwner() == owner))
       acc.add(name, 1);
 
     return null;
@@ -65,8 +70,9 @@ public class PhrasePenaltyFF extends StatelessFF {
    */
   @Override
   public float estimateCost(Rule rule, int sentID) {
-    if (rule != null && (owner == 0 || rule.getOwner() == owner))
-      return weights.get(name);
+    if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
+        && (owner == 0 || rule.getOwner() == owner))
+      return weight;
     return 0.0f;
   }
 }
