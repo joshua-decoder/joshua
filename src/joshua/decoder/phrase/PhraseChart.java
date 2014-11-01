@@ -6,6 +6,7 @@ import java.util.List;
 
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.segment_file.Sentence;
 
@@ -74,6 +75,19 @@ public class PhraseChart {
 
     System.err.println(String.format("[%d] Collecting options took %.3f seconds", source.id(),
         (System.currentTimeMillis() - startTime) / 1000.0f));
+    
+    /*
+    for (int i = 1; i < sentence_length - 1; i++)
+      for (int j = i + 1; j < sentence_length && j <= i + max_source_phrase_length; j++)
+        if (source.hasPath(i, j)) {
+          TargetPhrases phrases = getRange(i, j);
+          if (phrases != null) {
+            System.err.println(String.format("%s (%d-%d)", source.source(i,j), i, j));
+            for (Rule rule: phrases)
+              System.err.println(String.format("    %s est=%.3f", rule.getEnglishWords(), rule.getEstimatedCost()));
+          }
+        }
+        */
   }
 
   public int SentenceLength() {

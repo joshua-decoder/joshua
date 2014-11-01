@@ -63,11 +63,6 @@ public class PhraseModelFF extends StatelessFF {
   public float estimateCost(final Rule rule, int sentID) {
     
     if (rule != null && rule.getOwner() == ownerID) {
-      /*
-       * Here, we peak at the Accumulator object. If it's asking for scores, then we don't bother to
-       * add each feature, but rather compute the inner product and add *that*. This is totally
-       * cheating; the Accumulator is supposed to be a generic object. But without this cheat
-       */
       if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY)
         rule.setPrecomputableCost(phrase_weights);
         

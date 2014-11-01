@@ -13,20 +13,19 @@ public class HypoState implements Comparable<HypoState> {
   public Hypothesis history = null;
 
   // The hypothesis score plus compensations from the future cost estimate
-  public float score = 0.0f;
+  private float futureDelta;
   
   public String toString() {
-    return String.format("HYPO[%s, %.5f]", history, score);
+    return String.format("HYPO[%s, %.5f]", history, score());
   }
 
-  public HypoState() {
-    history = null;
-    score = 0.0f;
-  }
-
-  public HypoState(Hypothesis hypothesis, float score_delta) {
+  public HypoState(Hypothesis hypothesis, float future_delta) {
     history = hypothesis;
-    score = hypothesis.getScore() + score_delta;
+    futureDelta = future_delta;
+  }
+  
+  public float score() {
+    return history.getScore() + futureDelta;
   }
 
   /**
@@ -34,6 +33,10 @@ public class HypoState implements Comparable<HypoState> {
    */
   @Override
   public int compareTo(HypoState o) {
-    return Float.compare(o.score, score);
+    return Float.compare(o.score(), score());
+  }
+
+  public float future() {
+    return futureDelta;
   }
 }

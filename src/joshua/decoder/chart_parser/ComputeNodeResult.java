@@ -248,6 +248,10 @@ public class ComputeNodeResult {
   public float getViterbiCost() {
     return this.viterbiCost;
   }
+  
+  public float getBaseCost() {
+    return getViterbiCost() - getTransitionCost();
+  }
 
   /**
    * The cost incurred by this edge alone

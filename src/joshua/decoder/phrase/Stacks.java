@@ -128,7 +128,7 @@ public class Stacks {
             // float score_delta = context.GetScorer().transition(ant, phrases, begin, begin + phrase_length);
             
             // Future costs: remove span to be filled.
-            float score_delta = future.Change(coverage, begin, begin + phrase_length);
+            float future_delta = future.Change(coverage, begin, begin + phrase_length);
             
             Span span = new Span(begin, begin + phrase_length);
             if (! hypotheses.containsKey(span))
@@ -138,7 +138,7 @@ public class Stacks {
              * phrases from that span. The hypotheses are wrapped in HypoState objects, which
              * augment the hypothesis score with a future cost.
              */
-            hypotheses.get(span).add(new HypoState(ant, score_delta));
+            hypotheses.get(span).add(new HypoState(ant, future_delta));
 
             // Enforce the reordering limit on later iterations.
 

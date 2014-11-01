@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -270,6 +271,21 @@ public class Sentence {
   
   public String fullTarget() {
     return String.format("<s> %s </s>", target());
+  }
+  
+  public String source(int i, int j) {
+    StringTokenizer st = new StringTokenizer(annotatedSource());
+    int index = 0;
+    String substring = "";
+    while (st.hasMoreTokens()) {
+      String token = st.nextToken();
+      if (index >= j)
+        break;
+      if (index >= i)
+        substring += token + " ";
+      index++;
+    }
+    return substring.trim();
   }
 
   public String[] references() {

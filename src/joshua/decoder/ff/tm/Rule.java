@@ -204,13 +204,7 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
     public int compare(Rule rule1, Rule rule2) {
       float cost1 = rule1.getEstimatedCost();
       float cost2 = rule2.getEstimatedCost();
-      if (cost1 > cost2) {
-        return -1;
-      } else if (cost1 == cost2) {
-        return 0;
-      } else {
-        return 1;
-      }
+      return Float.compare(cost2,  cost1);
     }
   };
   

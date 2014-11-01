@@ -58,6 +58,8 @@ public class EdgeGenerator {
     ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, cand.getRule(),
         cand.getTailNodes(), -1, cand.getSpan().end, null, this.sentence);
     cand.setResult(result);
+    
+//    System.err.println("addCandidate(): " + cand);
 
     generate.add(cand);
   }

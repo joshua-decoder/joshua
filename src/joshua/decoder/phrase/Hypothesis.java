@@ -23,22 +23,22 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
 
   // The hypothesis' coverage vector
   private Coverage coverage;
-  
+
   public static BilingualRule BEGIN_RULE = new HieroFormatReader().parseLine("[X] ||| <s> ||| <s> |||   ||| 0-0");
   public static BilingualRule END_RULE = new HieroFormatReader().parseLine("[GOAL] ||| [X,1] </s> ||| [X,1] </s> |||   ||| 0-0 1-1");
-      
+
   public String toString() {
     StringBuffer sb = new StringBuffer();
-    for (DPState state: getDPStates())
-      sb.append("STATE: " + state + " ");
-    return String.format("HYP[%s] %.5f j=%d %s", coverage, score, j, sb);
+//    for (DPState state: getDPStates())
+//      sb.append("STATE: " + state + " ");
+    String words = bestHyperedge.getRule().getEnglishWords();
+    return String.format("HYP[%s] %.5f j=%d words=%s state=%s", coverage, score, j, words, sb);
   }
 
   // Initialize root hypothesis. Provide the LM's BeginSentence.
   public Hypothesis(List<DPState> states, float futureCost) {
     super(0, 1, Vocabulary.id("[X]"), states,
         new HyperEdge(BEGIN_RULE, 0.0f, 0.0f, null, null), futureCost);
-    
     this.coverage = new Coverage(1);
   }
 
@@ -63,6 +63,10 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
 
   public float Score() {
     return score;
+  }
+  
+  public Rule getRule() {
+    return bestHyperedge.getRule();
   }
 
   /**
