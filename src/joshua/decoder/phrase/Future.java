@@ -40,11 +40,14 @@ public class Future {
       // Insert phrases
       int max_end = Math.min(begin + chart.MaxSourcePhraseLength(), chart.SentenceLength());
       for (int end = begin + 1; end <= max_end; end++) {
-        TargetPhrases phrases = chart.getRange(begin, end);
-        if (phrases != null) {
-//          System.err.println(String.format("SETENTRY(%d,%d) = %.3f %s", begin, end, phrases.get(0).getEstimatedCost(),
-//          phrases.get(0)));
-          setEntry(begin, end, phrases.get(0).getEstimatedCost());
+        
+        // Moses doesn't include the cost of applying </s>, so force it to zero
+        if (begin == sentlen - 1 && end == sentlen) 
+          setEntry(begin, end, 0.0f);
+        else {
+          TargetPhrases phrases = chart.getRange(begin, end);
+          if (phrases != null)
+            setEntry(begin, end, phrases.get(0).getEstimatedCost());
         }
       }
     }

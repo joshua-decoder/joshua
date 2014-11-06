@@ -80,11 +80,6 @@ public class EdgeGenerator {
 
     // This is what we'll return, but first we have to do some expansion
     Candidate top = generate.poll();
-    
-    for (Candidate c : top.extend())
-      if (c != null) {
-        addCandidate(c);
-      }
 
     return top;
   }
@@ -108,8 +103,12 @@ public class EdgeGenerator {
       if (got != null) {
         output.NewHypothesis(got);
         --to_pop;
+        
+        for (Candidate c : got.extend())
+          if (c != null) {
+            addCandidate(c);
+          }
       }
     }
-    output.FinishedSearch();
   }
 }

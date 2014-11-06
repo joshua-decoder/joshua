@@ -20,13 +20,11 @@ public class DistortionFF extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
 
-    if (rule != Hypothesis.END_RULE) {
-      int start_point = j - rule.getFrench().length + rule.getArity();
+    if (rule != Hypothesis.END_RULE && rule != Hypothesis.BEGIN_RULE) {
+        int start_point = j - rule.getFrench().length + rule.getArity();
 
-      int jump_size = tailNodes != null 
-          ? Math.abs(tailNodes.get(0).j - start_point)
-              : i;
-          acc.add(name, -jump_size);
+        int jump_size = Math.abs(tailNodes.get(0).j - start_point);
+        acc.add(name, -jump_size);
     }
     
 //    System.err.println(String.format("DISTORTION(%d, %d) from %d = %d", i, j, tailNodes != null ? tailNodes.get(0).j : -1, jump_size));

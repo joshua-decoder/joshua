@@ -27,12 +27,12 @@ public class Candidate implements Comparable<Candidate> {
   private ComputeNodeResult result;
   
   public String toString() {
-    return String.format("CAND[%d/%d hypotheses, %d/%d phrases] score=%.3f (base %.3f + future %.3f + trans %.3f) %s + %s", ranks[0],
+    return String.format("CAND[%d/%d hypotheses, %d/%d phrases] score=%.3f (base %.3f + future %.3f + trans %.3f) %s + %s (over %s)", ranks[0],
         hypostates.size(), ranks[1], phrases.size(), score(),
         getHypothesis().Score(),
         getFutureEstimate(),
         result.getTransitionCost() , 
-        getHypothesis(), getRule().getEnglishWords());
+        getHypothesis(), getRule().getEnglishWords(), getSpan());
   }
   
   public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span) {
@@ -142,13 +142,11 @@ public class Candidate implements Comparable<Candidate> {
    * @return
    */
   public float score() {
-    if (result != null)
-      return this.hypostates.get(ranks[0]).score() + result.getTransitionCost();
-    return 0.0f;
+    return this.hypostates.get(ranks[0]).score() + result.getTransitionCost();
   }
   
   public float getFutureEstimate() {
-    return this.hypostates.get(ranks[0]).future();
+    return this.getHypothesis().Score() + this.hypostates.get(ranks[0]).future();
   }
   
   public List<DPState> getStates() {
