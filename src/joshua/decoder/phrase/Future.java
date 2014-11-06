@@ -8,6 +8,7 @@ package joshua.decoder.phrase;
  * in computing this estimate.	
  */
 
+import joshua.decoder.Decoder;
 import joshua.util.ChartSpan;
 
 public class Future {
@@ -55,6 +56,12 @@ public class Future {
           setEntry(begin, begin + length, Math.max(getEntry(begin, begin + length), getEntry(begin, division) + getEntry(division, begin + length)));
         }
       }
+    }
+    
+    if (Decoder.VERBOSE >= 3) {
+      for (int i = 1; i < chart.SentenceLength(); i++)
+        for (int j = i + 1; j < chart.SentenceLength(); j++)
+          System.err.println(String.format("future cost from %d to %d is %.3f", i-1, j-2, getEntry(i, j)));
     }
   }
   

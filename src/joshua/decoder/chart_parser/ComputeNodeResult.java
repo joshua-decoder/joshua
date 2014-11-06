@@ -3,6 +3,7 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import joshua.decoder.Decoder;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
@@ -50,9 +51,11 @@ public class ComputeNodeResult {
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
     
-//    System.err.println("ComputeNodeResult():");
-//    System.err.println("-> RULE " + rule);
-    
+    if (Decoder.VERBOSE >= 3) {
+      System.err.println("ComputeNodeResult():");
+      System.err.println("-> RULE " + rule);
+    }
+      
     /*
      * Here we sum the accumulated cost of each of the tail nodes. The total cost of the new
      * hyperedge (the inside or Viterbi cost) is the sum of these nodes plus the cost of the
@@ -61,9 +64,11 @@ public class ComputeNodeResult {
      */
     if (null != tailNodes) {
       for (HGNode item : tailNodes) {
-//        System.err.println("  -> item.bestedge: " + item);
+        if (Decoder.VERBOSE >= 3) {
+          System.err.println("  -> item.bestedge: " + item);
+          System.err.println("-> TAIL NODE " + item);
+        }        
         viterbiCost += item.bestHyperedge.getBestDerivationScore();
-//        System.err.println("-> TAIL NODE " + item);
       }
     }
 
@@ -85,7 +90,10 @@ public class ComputeNodeResult {
       DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentence.id(), acc);
       transitionCost += acc.getScore();
       
-//      System.err.println(String.format("-> FEATURE %s = %.5f", feature.getName(), acc.getScore()));
+      if (Decoder.VERBOSE >= 3)
+        System.err.println(String.format("-> FEATURE %s = %.3f * %.3f = %.3f", 
+            feature.getName(), acc.getScore() / Decoder.weights.get(feature.getName()),
+            Decoder.weights.get(feature.getName()), acc.getScore()));
 
       if (feature.isStateful()) {
         futureCostEstimate += feature.estimateFutureCost(rule, newState, sentID);
@@ -95,7 +103,8 @@ public class ComputeNodeResult {
   
     viterbiCost += transitionCost;
 
-//    System.err.println(sb.toString() + " ||| " + viterbiCost + " ||| " + features);
+    if (Decoder.VERBOSE >= 3)
+      System.err.println(String.format("-> COST = %.3f", transitionCost));
     
     // Set the final results.
     this.pruningCostEstimate = viterbiCost + futureCostEstimate;

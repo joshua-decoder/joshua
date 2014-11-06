@@ -3,6 +3,7 @@ package joshua.decoder.phrase;
 import java.util.List;
 import java.util.PriorityQueue;
 
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
@@ -97,9 +98,11 @@ public class EdgeGenerator {
    */
   public void Search(Output output) {
     int to_pop = config.pop_limit;
-//    System.err.println("EdgeGenerator::Search(): pop: " + to_pop + " size: " + generate.size());
-//    for (Candidate c: generate)
-//      System.err.println("  " + c);
+    if (Decoder.VERBOSE >= 3) {
+      System.err.println("EdgeGenerator::Search(): pop: " + to_pop + " size: " + generate.size());
+      for (Candidate c: generate)
+        System.err.println("  " + c);
+    }
     while (to_pop > 0 && !generate.isEmpty()) {
       Candidate got = Pop();
       if (got != null) {

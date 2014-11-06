@@ -306,6 +306,9 @@ public class JoshuaConfiguration {
 
           } else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);
+            
+          } else if (parameter.equals("v")) {
+            Decoder.VERBOSE = Integer.parseInt(fds[1]);
 
           } else if (parameter.equals(normalize_key("parse"))) {
             parse = Boolean.parseBoolean(fds[1]);

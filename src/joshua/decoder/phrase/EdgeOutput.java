@@ -2,6 +2,8 @@ package joshua.decoder.phrase;
 
 import java.util.HashMap;
 
+import joshua.decoder.Decoder;
+
 /**
  * Responsible for receiving new hypotheses that are generated and adding them to the stack. 
  *
@@ -29,14 +31,15 @@ public class EdgeOutput implements Output {
     Hypothesis added = stack.get(stack.size() - 1);
     
 //    System.err.println("EdgeOutput::NewHypothesis() -> " + added);
-    /*
-    System.err.println(String.format("creating new hypothesis from ( ... %s )", complete.getHypothesis().getRule().getEnglishWords()));
-    System.err.println(String.format("    covering %d..%d", complete.getSpan().start, complete.getSpan().end));
-    System.err.println(String.format("    translated as: %s", complete.getRule().getEnglishWords()));
-    System.err.println(String.format("    base score = %.5f", complete.getResult().getBaseCost()));
-    System.err.println(String.format("    transition cost = %.5f", complete.getResult().getTransitionCost()));
-    System.err.println(String.format("    future cost = %.3f", complete.getFutureEstimate()));
-    */
+    if (Decoder.VERBOSE >= 3) {
+      System.err.println(String.format("creating new hypothesis from ( ... %s )", complete.getHypothesis().getRule().getEnglishWords()));
+      System.err.println(String.format("        base score %.3f", complete.getResult().getBaseCost()));
+      System.err.println(String.format("        covering %d-%d", complete.getSpan().start - 1, complete.getSpan().end - 2));
+      System.err.println(String.format("        translated as: %s", complete.getRule().getEnglishWords()));
+      System.err.println(String.format("        score %.3f + future cost %.3f = %.3f", 
+          complete.getResult().getTransitionCost(), complete.getFutureEstimate(),
+          complete.getResult().getTransitionCost() + complete.getFutureEstimate()));
+    }
     
     if (deduper.containsKey(added)) {
       Hypothesis existing = deduper.get(added);

@@ -32,8 +32,6 @@ public class Coverage {
       sb.append((bits & mask) > 0 ? "x" : ".");
       mask <<= 1;
     }
-    
-    
 
     return sb.toString();
   }

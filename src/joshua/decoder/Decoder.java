@@ -89,6 +89,8 @@ public class Decoder {
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Decoder.class.getName());
 
+  public static int VERBOSE = 0;
+
   private BlockingQueue<DecoderThread> threadPool = null;
   
   public static boolean usingNonlocalFeatures = false;
