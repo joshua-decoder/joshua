@@ -105,7 +105,7 @@ public class Stacks {
         // Iterate over antecedents in this stack.
         for (Hypothesis ant : stacks.get(from_stack)) {
           Coverage coverage = ant.GetCoverage();
-
+          
           // the index of the starting point of the first possible phrase
           int begin = coverage.firstZero();
           
@@ -114,16 +114,17 @@ public class Stacks {
           int last_begin = (last_end > phrase_length) ? (last_end - phrase_length) : 0;
 
           for (begin = coverage.firstZero(); begin <= last_begin; begin++) {
-            if (! permissible(coverage, begin, begin + phrase_length))
+            if (!coverage.compatible(begin, begin + phrase_length) ||
+                ! permissible(coverage, begin, begin + phrase_length)) {
               break;
+            }
             
             // Don't append </s> until the end
             if (begin == sentence.length() - 1 && source_words != sentence.length()) 
               continue;            
 
             TargetPhrases phrases = chart.getRange(begin, begin + phrase_length);
-            
-            if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
+            if (phrases == null)
               continue;
 
             if (Decoder.VERBOSE >= 3)
@@ -204,20 +205,13 @@ public class Stacks {
      */
     if (begin == firstZero)
       return true;
-    
-    
-    /* Don't allow the creation of multiple gaps */
-    // find the first zero left of the phrase starting point
-    int leftOpen = coverage.LeftOpen(begin);
-    if (begin != firstZero && leftOpen != firstZero && begin != leftOpen) {
-      return false;
-    }
-    
+
     /* If a gap is created by applying this phrase, make sure that you can reach the first
      * zero later on without violating the distortion constraint.
      */
-    if (begin != firstZero && end - firstZero >= config.reordering_limit)
+    if (end - firstZero > config.reordering_limit) {
       return false;
+    }
     
     return true;
   }
