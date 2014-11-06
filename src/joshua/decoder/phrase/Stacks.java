@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import joshua.corpus.Span;
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
@@ -78,9 +79,7 @@ public class Stacks {
     Future future = new Future(chart);
     stacks = new ArrayList<Stack>();
     
-    // Reservation is critical because pointers to Hypothesis objects are retained as history.
-    //stacks.reserve(chart.SentenceLength() + 2 /* begin/end of sentence */);
-    stacks.clear();
+    // <s> counts as the first word. Pushing null lets us count from one.
     stacks.add(null);
     for (int i = 1; i <= sentence.length(); i++)
       stacks.add(new Stack());
@@ -90,28 +89,33 @@ public class Stacks {
         null, -1, 1, null, this.sentence);
     stacks.get(1).add(new Hypothesis(result.getDPStates(), future.Full()));
     
-    // Decode with increasing numbers of source words.
+    // Decode with increasing numbers of source words. 
     for (int source_words = 2; source_words <= sentence.length(); ++source_words) {
-      // A vertex represents the root of a trie, e.g., bundled translations of the same source phrase
       HashMap<Span, HypoStateList> hypotheses = new HashMap<Span, HypoStateList>();
-      // Iterate over stacks to continue from.
-      for (int from_stack = source_words - Math.min(source_words - 1, chart.MaxSourcePhraseLength());
-           from_stack < source_words;
-           ++from_stack) {
-        int phrase_length = source_words - from_stack;
 
-//        System.err.println(String.format("\n  WORDS %d (STACK %d phrase_length %d)", source_words, from_stack, phrase_length));
+      // Iterate over stacks to continue from.
+      for (int phrase_length = 1; phrase_length <= Math.min(source_words - 1, chart.MaxSourcePhraseLength());
+          phrase_length++) {
+        int from_stack = source_words - phrase_length;
+
+        if (Decoder.VERBOSE >= 3)
+          System.err.println(String.format("\n  WORDS %d MAX %d (STACK %d phrase_length %d)", source_words,
+              chart.MaxSourcePhraseLength(), from_stack, phrase_length));
         
         // Iterate over antecedents in this stack.
         for (Hypothesis ant : stacks.get(from_stack)) {
-//          System.err.println(String.format("  WORDS %d ANT %s", source_words, ant)); 
           Coverage coverage = ant.GetCoverage();
+
+          // the index of the starting point of the first possible phrase
           int begin = coverage.firstZero();
+          
+          // the absolute position of the ending spot of the last possible phrase
           int last_end = Math.min(coverage.firstZero() + config.reordering_limit, chart.SentenceLength());
           int last_begin = (last_end > phrase_length) ? (last_end - phrase_length) : 0;
 
-          // We can always go from first_zero because it doesn't create a reordering gap.
-          do {
+          for (begin = coverage.firstZero(); begin <= last_begin; begin++) {
+            if (! permissible(coverage, begin, begin + phrase_length))
+              break;
             
             // Don't append </s> until the end
             if (begin == sentence.length() - 1 && source_words != sentence.length()) 
@@ -122,7 +126,8 @@ public class Stacks {
             if (phrases == null || !coverage.compatible(begin, begin + phrase_length))
               continue;
 
-//            System.err.println(String.format("  Applying %d target phrases over [%d,%d]", phrases.size(), begin, begin + phrase_length));
+            if (Decoder.VERBOSE >= 3)
+              System.err.println(String.format("  Applying %d target phrases over [%d,%d]", phrases.size(), begin, begin + phrase_length));
             
             // TODO: could also compute some number of features here (e.g., non-LM ones)
             // float score_delta = context.GetScorer().transition(ant, phrases, begin, begin + phrase_length);
@@ -139,10 +144,7 @@ public class Stacks {
              * augment the hypothesis score with a future cost.
              */
             hypotheses.get(span).add(new HypoState(ant, future_delta));
-
-            // Enforce the reordering limit on later iterations.
-
-          } while (++begin <= last_begin);
+          }
         }
       }
 
@@ -183,6 +185,44 @@ public class Stacks {
     return createGoalNode();
   }
     
+  /**
+   * Enforces reordering constraints. Our version of Moses' ReorderingConstraint::Check() and
+   * SearchCubePruning::CheckDistortion(). 
+   * 
+   * @param coverage
+   * @param begin
+   * @param i
+   * @return
+   */
+  private boolean permissible(Coverage coverage, int begin, int end) {
+    int firstZero = coverage.firstZero();
+
+    if (config.reordering_limit < 0)
+      return true;
+    
+    /* We can always start with the first zero since it doesn't create a reordering gap
+     */
+    if (begin == firstZero)
+      return true;
+    
+    
+    /* Don't allow the creation of multiple gaps */
+    // find the first zero left of the phrase starting point
+    int leftOpen = coverage.LeftOpen(begin);
+    if (begin != firstZero && leftOpen != firstZero && begin != leftOpen) {
+      return false;
+    }
+    
+    /* If a gap is created by applying this phrase, make sure that you can reach the first
+     * zero later on without violating the distortion constraint.
+     */
+    if (begin != firstZero && end - firstZero >= config.reordering_limit)
+      return false;
+    
+    return true;
+  }
+
+
   private HyperGraph createGoalNode() {
     Stack lastStack = stacks.get(sentence.length());
     
