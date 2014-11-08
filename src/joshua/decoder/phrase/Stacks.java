@@ -1,7 +1,6 @@
 package joshua.decoder.phrase;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import joshua.corpus.Span;
@@ -91,20 +90,21 @@ public class Stacks {
     
     // Decode with increasing numbers of source words. 
     for (int source_words = 2; source_words <= sentence.length(); ++source_words) {
-      HashMap<Span, HypoStateList> hypotheses = new HashMap<Span, HypoStateList>();
+      EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
 
       // Iterate over stacks to continue from.
       for (int phrase_length = 1; phrase_length <= Math.min(source_words - 1, chart.MaxSourcePhraseLength());
           phrase_length++) {
         int from_stack = source_words - phrase_length;
-
+        Stack stack = stacks.get(from_stack);
+        
         if (Decoder.VERBOSE >= 3)
           System.err.println(String.format("\n  WORDS %d MAX %d (STACK %d phrase_length %d)", source_words,
               chart.MaxSourcePhraseLength(), from_stack, phrase_length));
         
         // Iterate over antecedents in this stack.
-        for (Hypothesis ant : stacks.get(from_stack)) {
-          Coverage coverage = ant.GetCoverage();
+        for (Coverage coverage: stack.getCoverages()) {
+          ArrayList<Hypothesis> hypotheses = stack.get(coverage); 
           
           // the index of the starting point of the first possible phrase
           int begin = coverage.firstZero();
@@ -116,9 +116,11 @@ public class Stacks {
           for (begin = coverage.firstZero(); begin <= last_begin; begin++) {
             if (!coverage.compatible(begin, begin + phrase_length) ||
                 ! permissible(coverage, begin, begin + phrase_length)) {
-              break;
+              continue;
             }
-            
+
+            Span span = new Span(begin, begin + phrase_length);
+
             // Don't append </s> until the end
             if (begin == sentence.length() - 1 && source_words != sentence.length()) 
               continue;            
@@ -136,15 +138,12 @@ public class Stacks {
             // Future costs: remove span to be filled.
             float future_delta = future.Change(coverage, begin, begin + phrase_length);
             
-            Span span = new Span(begin, begin + phrase_length);
-            if (! hypotheses.containsKey(span))
-              hypotheses.put(span, new HypoStateList());
-            
             /* This associates with each span a set of hypotheses that can be extended by
              * phrases from that span. The hypotheses are wrapped in HypoState objects, which
              * augment the hypothesis score with a future cost.
              */
-            hypotheses.get(span).add(new HypoState(ant, future_delta));
+            Candidate cand = new Candidate(hypotheses, phrases, span, future_delta);
+            gen.addCandidate(cand);
           }
         }
       }
@@ -157,25 +156,10 @@ public class Stacks {
        * We seed the chart with the best item in each cube, and then repeatedly pop and extend.
        */
       
-      EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
 //      System.err.println(String.format("\nBuilding cube-pruning chart for %d words", source_words));
-      for (Span pair : hypotheses.keySet()) {
-        HypoStateList hypos = hypotheses.get(pair);
-        if (hypos.isEmpty())
-          continue;
-        // Sorts the hypotheses, since we now know that we're done adding them
-        hypos.finish();
-        
-        TargetPhrases phrases = chart.getRange(pair.start, pair.end);
 
-//        System.err.println(String.format("  Span %s hypotheses %s phrases %s", pair, hypos.size(), phrases.size()));
-
-        Candidate cand = new Candidate(hypos, phrases, pair);
-        gen.addCandidate(cand);
-      }
-
-      Stack stack = stacks.get(source_words);
-      EdgeOutput output = new EdgeOutput(stack);
+      Stack nextStack = stacks.get(source_words);
+      EdgeOutput output = new EdgeOutput(nextStack);
       gen.Search(output);
     }
     

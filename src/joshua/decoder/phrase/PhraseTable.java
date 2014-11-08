@@ -9,7 +9,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
-import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 
 /**

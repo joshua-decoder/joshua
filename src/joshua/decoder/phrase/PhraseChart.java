@@ -1,12 +1,11 @@
 package joshua.decoder.phrase;
 
-import java.util.ArrayList;
+import java.util.ArrayList;	
 import java.util.Arrays;
 import java.util.List;
 
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.segment_file.Sentence;
 

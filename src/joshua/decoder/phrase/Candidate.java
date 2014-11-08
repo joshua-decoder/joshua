@@ -12,13 +12,16 @@ import joshua.decoder.hypergraph.HGNode;
 public class Candidate implements Comparable<Candidate> {
 
   // the set of hypotheses that can be paired with phrases from this span 
-  private HypoStateList hypostates;
+  private List<Hypothesis> hypotheses;
 
   // the list of target phrases gathered from a span of the input
   private TargetPhrases phrases;
 
   // source span of new phrase
   public Span span;
+  
+  // future cost of applying phrases to hypotheses
+  float future_delta;
   
   // indices into the hypotheses and phrases arrays (used for cube pruning)
   private int[] ranks;
@@ -28,24 +31,26 @@ public class Candidate implements Comparable<Candidate> {
   
   public String toString() {
     return String.format("CAND[%d/%d hypotheses, %d/%d phrases] score=%.3f (base %.3f + future %.3f + trans %.3f) %s + %s (over %s)", ranks[0],
-        hypostates.size(), ranks[1], phrases.size(), score(),
+        hypotheses.size(), ranks[1], phrases.size(), score(),
         getHypothesis().Score(),
         getFutureEstimate(),
         result.getTransitionCost() , 
         getHypothesis(), getRule().getEnglishWords(), getSpan());
   }
   
-  public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span) {
-    this.hypostates = hypotheses;
+  public Candidate(List<Hypothesis> hypotheses, TargetPhrases phrases, Span span, float delta) {
+    this.hypotheses = hypotheses;
     this.phrases = phrases;
     this.span = span;
+    this.future_delta = delta;
     this.ranks = new int[] { 0, 0 };
   }
 
-  public Candidate(HypoStateList hypotheses, TargetPhrases phrases, Span span, int[] ranks) {
-    this.hypostates = hypotheses;
+  public Candidate(List<Hypothesis> hypotheses, TargetPhrases phrases, Span span, float delta, int[] ranks) {
+    this.hypotheses = hypotheses;
     this.phrases = phrases;
     this.span = span;
+    this.future_delta = delta;
     this.ranks = ranks;
 //    this.score = hypotheses.get(ranks[0]).score + phrases.get(ranks[1]).getEstimatedCost();
   }
@@ -66,8 +71,8 @@ public class Candidate implements Comparable<Candidate> {
    * @return the next candidate, or null if none
    */
   public Candidate extendHypothesis() {
-    if (ranks[0] < hypostates.size() - 1) {
-      return new Candidate(hypostates, phrases, span, new int[] { ranks[0] + 1, ranks[1] });
+    if (ranks[0] < hypotheses.size() - 1) {
+      return new Candidate(hypotheses, phrases, span, future_delta, new int[] { ranks[0] + 1, ranks[1] });
     }
     return null;
   }
@@ -79,7 +84,7 @@ public class Candidate implements Comparable<Candidate> {
    */
   public Candidate extendPhrase() {
     if (ranks[1] < phrases.size() - 1) {
-      return new Candidate(hypostates, phrases, span, new int[] { ranks[0], ranks[1] + 1 });
+      return new Candidate(hypotheses, phrases, span, future_delta, new int[] { ranks[0], ranks[1] + 1 });
     }
     
     return null;
@@ -95,7 +100,7 @@ public class Candidate implements Comparable<Candidate> {
   }
   
   public Hypothesis getHypothesis() {
-    return this.hypostates.get(ranks[0]).history;
+    return this.hypotheses.get(ranks[0]);
   }
   
   /**
@@ -142,11 +147,11 @@ public class Candidate implements Comparable<Candidate> {
    * @return
    */
   public float score() {
-    return this.hypostates.get(ranks[0]).score() + result.getTransitionCost();
+    return getHypothesis().Score() + future_delta + result.getTransitionCost();
   }
   
   public float getFutureEstimate() {
-    return this.getHypothesis().Score() + this.hypostates.get(ranks[0]).future();
+    return getHypothesis().Score() + future_delta;
   }
   
   public List<DPState> getStates() {
