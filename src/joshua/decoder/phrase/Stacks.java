@@ -64,8 +64,6 @@ public class Stacks {
     AbstractGrammar.addOOVRules(phraseTables[phraseTables.length - 1], sentence.intLattice(), featureFunctions, config.true_oovs_only);
     
     this.chart = new PhraseChart(phraseTables, featureFunctions, sentence, config.num_translation_options);
-
-    this.end = null;
   }
   
   
@@ -224,9 +222,6 @@ public class Stacks {
     
     for (Hypothesis hyp: lastStack) {
       float score = hyp.getScore();
-      if (this.end == null || score > this.end.getScore())
-        this.end = hyp;
-      
       List<HGNode> tailNodes = new ArrayList<HGNode>();
       tailNodes.add(hyp);
       
@@ -238,7 +233,7 @@ public class Stacks {
       HyperEdge edge = new HyperEdge(null, score + finalTransitionScore, finalTransitionScore, tailNodes, null);
       end.addHyperedgeInNode(edge);
     }
-
+    
     return new HyperGraph(end, -1, -1, this.sentence);
   }
 

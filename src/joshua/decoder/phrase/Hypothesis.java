@@ -93,9 +93,12 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   public boolean equals(Object obj) {
     if (obj instanceof Hypothesis) {
       Hypothesis other = (Hypothesis) obj;
-      for (int i = 0; i < dpStates.size(); i++) {
-        if (!dpStates.get(i).equals(other.dpStates.get(i)))
-          return false;
+      if (dpStates == null ^ other.dpStates == null)
+        return false;
+      if (dpStates != null)
+        for (int i = 0; i < dpStates.size(); i++) {
+          if (!dpStates.get(i).equals(other.dpStates.get(i)))
+            return false;
       }
       if (LastSourceIndex() == other.LastSourceIndex() && GetCoverage().equals(other.GetCoverage()))
         return true;
