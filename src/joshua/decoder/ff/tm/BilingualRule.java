@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 
@@ -263,8 +264,13 @@ public class BilingualRule extends Rule {
     if (this.estimatedCost <= Float.NEGATIVE_INFINITY) {
       this.estimatedCost = 0.0f; // weights.innerProduct(computeFeatures());
 
+      if (Decoder.VERBOSE >= 4)
+        System.err.println(String.format("estimateCost(%s ;; %s)", getFrenchWords(), getEnglishWords()));
       for (FeatureFunction ff : models) {
-        this.estimatedCost += ff.estimateCost(this, -1);
+        float val = ff.estimateCost(this, -1);
+        if (Decoder.VERBOSE >= 4) 
+          System.err.println(String.format("  FEATURE %s -> %.3f", ff.getName(), val));
+        this.estimatedCost += val; 
       }
     }
     
