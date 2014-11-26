@@ -527,7 +527,7 @@ public class Chart {
    * @param tailNodes
    */
   private void addToCandidates(DotNode dotNode) {
-//    System.err.println(String.format("ADD TO CANDIDATES AT INDEX %d", dotNode.end() - dotNode.begin()));
+//    System.err.println(String.format("ADD TO CANDIDATES %s AT INDEX %d", dotNode, dotNode.end() - dotNode.begin()));
     
     // TODO: one entry per rule, or per rule instantiation (rule together with unique matching of input)?
     List<Rule> rules = dotNode.getRuleCollection().getSortedRules(featureFunctions); 

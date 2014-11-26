@@ -1,6 +1,6 @@
 package joshua.decoder.chart_parser;
 
-import java.util.ArrayList;
+import java.util.ArrayList;	
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;

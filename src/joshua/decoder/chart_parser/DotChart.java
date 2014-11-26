@@ -458,7 +458,7 @@ class DotChart {
 
     // convenience function
     public boolean hasRules() {
-      return getTrieNode().getRuleCollection() != null;
+      return getTrieNode().getRuleCollection() != null && getTrieNode().getRuleCollection().getRules().size() != 0;
     }
     
     public RuleCollection getRuleCollection() {
