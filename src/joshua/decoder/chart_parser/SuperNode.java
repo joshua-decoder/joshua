@@ -21,7 +21,17 @@ class SuperNode {
    */
   final List<HGNode> nodes;
 
-
+  /**
+   * All nodes in a SuperNode have the same start and end points, so we pick the first one and
+   * return it.
+   * 
+   * @return
+   */
+  public int end() {
+    return nodes.get(0).j;
+  }
+  
+  
   /**
    * Constructs a super item defined by a common left-hand side.
    * 

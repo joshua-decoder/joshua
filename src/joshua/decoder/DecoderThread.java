@@ -120,7 +120,10 @@ public class DecoderThread extends Thread {
         Chart chart = new Chart(sentence, this.featureFunctions, grammars,
             joshuaConfiguration.goal_symbol, joshuaConfiguration);
 
-        hypergraph = chart.expand();
+        hypergraph = (joshuaConfiguration.use_dot_chart) 
+          ? chart.expand() 
+          : chart.expandSansDotChart();
+          
         kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
             joshuaConfiguration);
       }

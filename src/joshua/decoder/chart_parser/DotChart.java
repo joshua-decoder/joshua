@@ -343,9 +343,9 @@ class DotChart {
    * @param curSuperNode the lefthand side of the rule being created
    * @param srcPath the path taken through the input lattice
    */
-  private void addDotItem(Trie tnode, int i, int j, List<SuperNode> antSuperNodesIn,
+  private void addDotItem(Trie tnode, int i, int j, ArrayList<SuperNode> antSuperNodesIn,
       SuperNode curSuperNode, SourcePath srcPath) {
-    List<SuperNode> antSuperNodes = new ArrayList<SuperNode>();
+    ArrayList<SuperNode> antSuperNodes = new ArrayList<SuperNode>();
     if (antSuperNodesIn != null) {
       antSuperNodes.addAll(antSuperNodesIn);
     }
@@ -406,19 +406,22 @@ class DotChart {
    */
   static class DotNode {
 
-    // =======================================================
-    // Package-protected instance fields
-    // =======================================================
-
-    // int i, j; //start and end position in the chart
-    private Trie trieNode = null; // dot_position, point to grammar trie node, this is the only
-                                  // place that the DotChart points to the grammar
-    private List<SuperNode> antSuperNodes = null; // pointer to SuperNode in Chart
+    private int i, j;
+    private Trie trieNode = null;
+    private ArrayList<SuperNode> antSuperNodes = null;
     private SourcePath srcPath;
 
-    public DotNode(int i, int j, Trie trieNode, List<SuperNode> antSuperNodes, SourcePath srcPath) {
-      // i = i_in;
-      // j = j_in;
+    @Override
+    public String toString() {
+      int size = 0;
+      if (trieNode != null && trieNode.getRuleCollection() != null)
+        size = trieNode.getRuleCollection().getRules().size();
+      return String.format("DOTNODE i=%d j=%d #rules=%d #tails=%d", i, j, size, antSuperNodes.size());
+    }
+    
+    public DotNode(int i, int j, Trie trieNode, ArrayList<SuperNode> antSuperNodes, SourcePath srcPath) {
+      this.i = i;
+      this.j = j;
       this.trieNode = trieNode;
       this.antSuperNodes = antSuperNodes;
       this.srcPath = srcPath;
@@ -454,7 +457,11 @@ class DotChart {
     }
 
     // convenience function
-    public RuleCollection getApplicableRules() {
+    public boolean hasRules() {
+      return getTrieNode().getRuleCollection() != null;
+    }
+    
+    public RuleCollection getRuleCollection() {
       return getTrieNode().getRuleCollection();
     }
 
@@ -466,8 +473,43 @@ class DotChart {
       return srcPath;
     }
 
-    public List<SuperNode> getAntSuperNodes() {
+    public ArrayList<SuperNode> getAntSuperNodes() {
       return antSuperNodes;
+    }
+
+    public int begin() {
+      return i;
+    }
+    
+    public int end() {
+      return j;
+    }
+
+    /**
+     * Creates a new dotnode that has been extended over an arc of the input lattice.
+     * 
+     * @param arc
+     * @param nextTrie
+     * @return a new dotnode
+     */
+    public DotNode extend(Arc<Integer> arc, Trie nextTrie) { 
+      return new DotNode(i, arc.getHead().id(), nextTrie, antSuperNodes, getSourcePath().extend(arc));
+    }
+    
+    /**
+     * Creates a new dotnode that has been extended over a nonterminal in the chart.
+     * 
+     * @param node the node we're passing over
+     * @param nextTrie the trie pointer we're taken to
+     * @return a new dotnode
+     */
+    public DotNode extend(SuperNode node, Trie nextTrie) {
+      ArrayList<SuperNode> nodes = (ArrayList<SuperNode>) antSuperNodes.clone();
+      nodes.add(node);
+      DotNode nextNode = new DotNode(i, node.end(), nextTrie, nodes, getSourcePath().extendNonTerminal());
+      System.err.println(String.format("DotNode::extend(%s,%d-%d) -> %d-%d", 
+          Vocabulary.word(node.lhs), i, j, nextNode.begin(), nextNode.end()));
+      return nextNode;
     }
   }
 

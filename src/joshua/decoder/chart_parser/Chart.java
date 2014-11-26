@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,7 +28,9 @@ import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
+import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
+import joshua.lattice.Node;
 import joshua.util.ChartSpan;
 
 /**
@@ -86,7 +89,10 @@ public class Chart {
   private SyntaxTree parseTree;
 
   private ManualConstraintsHandler manualConstraintsHandler;
+  private StateConstraint stateConstraint;
 
+  private NonterminalMatcher nonterminalMatcher;
+  
   // ===============================================================
   // Static fields
   // ===============================================================
@@ -140,11 +146,11 @@ public class Chart {
     /* Create the grammars, leaving space for the OOV grammar. */
     this.grammars = new Grammar[grammars.length + 1];
     for (int i = 0; i < grammars.length; i++)
-      this.grammars[i] = grammars[i];
+      this.grammars[i + 1] = grammars[i];
 
     MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config);
     AbstractGrammar.addOOVRules(oovGrammar, sentence.intLattice(), featureFunctions, joshuaConfiguration.true_oovs_only);
-    this.grammars[this.grammars.length - 1] = oovGrammar; 
+    this.grammars[0] = oovGrammar; 
         
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
@@ -159,11 +165,19 @@ public class Chart {
     // TODO: I don't think this is really used
     manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[grammars.length - 1],
         sentence.constraints());
+    
+    stateConstraint = null;
+    if (sentence.target() != null)
+      // stateConstraint = new StateConstraint(sentence.target());
+      stateConstraint = new StateConstraint(Vocabulary.START_SYM + " " + sentence.target() + " "
+          + Vocabulary.STOP_SYM);
 
     /* Find the SourceDependent feature and give it access to the sentence. */
     for (FeatureFunction ff : this.featureFunctions)
       if (ff instanceof SourceDependentFF)
         ((SourceDependentFF) ff).setSource(sentence);
+    
+    nonterminalMatcher = NonterminalMatcher.createNonterminalMatcher(logger, config);
 
     logger.fine("Finished seeding chart.");
   }
@@ -206,17 +220,8 @@ public class Chart {
    */
   private void completeSpan(int i, int j) {
 
-    StateConstraint stateConstraint = null;
-    if (sentence.target() != null)
-      // stateConstraint = new StateConstraint(sentence.target());
-      stateConstraint = new StateConstraint(Vocabulary.START_SYM + " " + sentence.target() + " "
-          + Vocabulary.STOP_SYM);
-
     /* STEP 1: create the heap, and seed it with all of the candidate states */
     PriorityQueue<CubePruneState> candidates = new PriorityQueue<CubePruneState>();
-
-    // this records states we have already visited
-    HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
 
     /*
      * Look at all the grammars, seeding the chart with completed rules from the
@@ -229,17 +234,14 @@ public class Chart {
 
       // for each rule with applicable rules
       for (DotNode dotNode : dotcharts[g].getDotCell(i, j).getDotNodes()) {
-        RuleCollection ruleCollection = dotNode.getApplicableRules();
+        RuleCollection ruleCollection = dotNode.getRuleCollection();
         if (ruleCollection == null)
           continue;
-
-        if (cells.get(i, j) == null)
-          cells.set(i, j, new Cell(this, goalSymbolID));
 
         List<Rule> rules = ruleCollection.getSortedRules(this.featureFunctions);
         SourcePath sourcePath = dotNode.getSourcePath();
 
-        if (null == rules || rules.size() <= 0)
+        if (null == rules || rules.size() == 0)
           continue;
 
         int arity = ruleCollection.getArity();
@@ -261,7 +263,7 @@ public class Chart {
                 j, sourcePath, this.sentence);
 
             if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
-              cells.get(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
+              getCell(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
           }
         } else {
           /* Productions with rank > 0 are subject to cube pruning */
@@ -297,15 +299,30 @@ public class Chart {
           */
           
           ComputeNodeResult result = new ComputeNodeResult(featureFunctions, bestRule, currentTailNodes, i, j, sourcePath, sentence);
-          
           CubePruneState bestState = new CubePruneState(result, ranks, rules, currentTailNodes, dotNode);
-
           candidates.add(bestState);
-          visitedStates.add(bestState);
         }
       }
     }
 
+    applyCubePruning(i, j, candidates);
+  }
+
+  /**
+   * Applies cube pruning over a span.
+   * 
+   * @param i
+   * @param j
+   * @param stateConstraint
+   * @param candidates
+   */
+  private void applyCubePruning(int i, int j, PriorityQueue<CubePruneState> candidates) {
+
+    System.err.println(String.format("CUBEPRUNE: %d-%d with %d candidates", i, j, candidates.size()));
+    
+    /* There are multiple ways to reach each point in the cube, so short-circuit that. */
+    HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
+    
     int popLimit = joshuaConfiguration.pop_limit;
     int popCount = 0;
     while (candidates.size() > 0 && ((++popCount <= popLimit) || popLimit == 0)) {
@@ -321,7 +338,7 @@ public class Chart {
        * doing constrained decoding or (b) we are and the state is legal.
        */
       if (stateConstraint == null || stateConstraint.isLegal(state.getDPStates())) {
-        cells.get(i, j).addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
+        getCell(i, j).addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
             state.antNodes, sourcePath, true);
       }
 
@@ -333,7 +350,7 @@ public class Chart {
 
       // TODO: go through the derivation states
       for (int k = 0; k < state.ranks.length; k++) {
-
+        
         /* Copy the current ranks, then extend the one we're looking at. */
         int[] nextRanks = new int[state.ranks.length];
         System.arraycopy(state.ranks, 0, nextRanks, 0, state.ranks.length);
@@ -381,6 +398,193 @@ public class Chart {
     }
   }
 
+  // Create a priority queue of candidates for each span under consideration
+  private PriorityQueue<CubePruneState>[] allCandidates;
+
+  /**
+   * Translates the sentence using the CKY+ variation proposed in 
+   * "A CYK+ Variant for SCFG Decoding Without A Dot Chart" (Sennrich, SSST 2014).
+   */
+  public HyperGraph expandSansDotChart() {
+    for (int i = sourceLength - 1; i >= 0; i--) {
+      allCandidates = new PriorityQueue[sourceLength - i + 2];
+      for (int id = 0; id < allCandidates.length; id++)
+        allCandidates[id] = new PriorityQueue<CubePruneState>();
+
+      /* Add preterminals ending in a single word */
+      System.err.println(String.format("I=%d SEED", i));
+      for (int g = 0; g < this.grammars.length; g++) {
+        Node<Integer> node = sentence.getNode(i);
+        for (Arc<Integer> arc : node.getOutgoingArcs()) {
+          int word = arc.getLabel();
+          Trie trie = this.grammars[g].getTrieRoot().match(word);
+          if (trie != null && trie.hasRules()) {
+            int j = arc.getHead().id();
+
+            DotNode dotNode = new DotNode(i, j, trie, new ArrayList<SuperNode>(), new SourcePath().extend(arc));
+            for (Rule rule: dotNode.getRuleCollection().getSortedRules(featureFunctions)) {
+              ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, 
+                  dotNode.begin(), dotNode.end(), dotNode.getSourcePath(), this.sentence);
+              if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
+                getCell(i,j).addHyperEdgeInCell(result, rule, i, j, null, dotNode.getSourcePath(), false);
+            }
+//            addToChart(new DotNode(i, arc.getHead().id(), trie, new ArrayList<SuperNode>(), new SourcePath().extend(arc)), 
+  //              true, false);
+          }
+        }
+      }
+      
+      for (int j = i + 1; j <= sourceLength; j++) {
+        if (! sentence.hasPath(i,  j)) {
+          System.err.println(String.format("NO PATH FROM %d to %d", i, j));
+          continue;
+        }
+        
+        /* Recurse */
+        for (int g = 0; g < this.grammars.length; g++) {
+          System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i, j, g));
+          consume(new DotNode(i, i, this.grammars[g].getTrieRoot(), new ArrayList<SuperNode>(), new SourcePath()), j-1);
+        }
+
+        // Now that we've accumulated all the candidates, apply cube pruning
+        applyCubePruning(i, j, allCandidates[j - i]);
+
+        // Add unary nodes
+        addUnaryNodes(this.grammars, i, j);
+      }
+    }
+    
+    // transition_final: setup a goal item, which may have many deductions
+    if (null == this.cells.get(0, sourceLength)
+        || !this.goalBin.transitToGoal(this.cells.get(0, sourceLength), this.featureFunctions,
+            this.sourceLength)) {
+      logger.severe("No complete item in the Cell[0," + sourceLength + "]; possible reasons: "
+          + "(1) your grammar does not have any valid derivation for the source sentence; "
+          + "(2) too aggressive pruning.");
+      return null;
+    }
+
+    return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.sentence);
+  }
+
+  /**
+   * Recursively consumes the trie, following input nodes, finding applicable rules and adding
+   * them to bins for each span for later cube pruning.
+   * 
+   * @param dotNode data structure containing information about what's been already matched
+   * @param l extension point we're looking at
+   * 
+   */
+  private void consume(DotNode dotNode, int l) {
+    /*
+     * 1. If the trie node has any rules, we can add them to the collection
+     * 
+     * 2. Next, look at all the outgoing nonterminal arcs of the trie node. If any of them
+     * match an existing chart item, then we know we can extend (i,j) to (i,l). We then
+     * recurse for all m from l+1 to n (the end of the sentence)
+     * 
+     * 3. We also try to match terminals if (j + 1 == l)
+     */
+    
+    System.err.println(String.format("CONSUME %s / %d %d %d", dotNode, dotNode.begin(), dotNode.end(), l));
+    
+    // The span that's already been consumed
+    int i = dotNode.begin();
+    int j = dotNode.end();
+    Trie trie = dotNode.getTrieNode();
+    
+    // Try to match terminals
+    if (inputLattice.distance(j, l) == 1) {
+      // Get the current sentence node, and explore all outgoing arcs, since we might be decoding
+      // a lattice. For sentence decoding, this is trivial: there is only one outgoing arc.
+      Node<Integer> inputNode = sentence.getNode(j);
+      for (Arc<Integer> arc : inputNode.getOutgoingArcs()) {
+        int word = arc.getLabel();
+        Trie nextTrie;
+        if ((nextTrie = trie.match(word)) != null) {
+          // add to chart item over (i, l)
+          addToChart(dotNode.extend(arc, nextTrie), i == j);
+        }
+      }
+    }
+        
+    // Now try to match nonterminals
+    if (trie.hasExtensions()) {
+      System.err.println(String.format(" -> yes extensions"));
+      // Get a list of all the supernodes, and query each to see if it's in the grammar
+      if (cells.get(j, l) != null) {
+        System.err.println(String.format(" -> yes cell over %d %d", j, l));
+        Map<Integer,SuperNode> items = getCell(j,l).getSortedSuperItems();
+        for (int lhs: items.keySet()) {
+          Trie nextTrie = trie.match(lhs);
+          if (nextTrie != null) {
+            System.err.println("  -> MATCHED " + Vocabulary.word(lhs));
+            // add item over (i, l) to candidates list
+            addToChart(dotNode.extend(items.get(lhs), nextTrie), i == j);
+          }
+        }
+      } else {
+        System.err.println(String.format(" -> no cell over %d %d", j, l));
+      }
+    }
+  }
+  
+  /**
+   * Record the completed rule with backpointers for later cube-pruning.
+   * 
+   * @param width
+   * @param rules
+   * @param tailNodes
+   */
+  private void addToCandidates(DotNode dotNode) {
+    System.err.println(String.format("ADD TO CANDIDATES AT INDEX %d", dotNode.end() - dotNode.begin()));
+    
+    // TODO: one entry per rule, or per rule instantiation (rule together with unique matching of input)?
+    List<Rule> rules = dotNode.getRuleCollection().getSortedRules(featureFunctions); 
+    Rule bestRule = rules.get(0);
+    List<SuperNode> superNodes = dotNode.getAntSuperNodes();
+    
+    List<HGNode> tailNodes = new ArrayList<HGNode>();
+    for (SuperNode superNode : superNodes)
+      tailNodes.add(superNode.nodes.get(0));
+
+    int[] ranks = new int[1 + superNodes.size()];
+    Arrays.fill(ranks, 1);
+    
+    ComputeNodeResult result = new ComputeNodeResult(featureFunctions, bestRule, tailNodes, 
+        dotNode.begin(), dotNode.end(), dotNode.getSourcePath(), sentence);
+    CubePruneState seedState = new CubePruneState(result, ranks, rules, tailNodes, dotNode);
+    
+    allCandidates[dotNode.end() - dotNode.begin()].add(seedState);
+    for (int i = 0; i < allCandidates.length; i++)
+      System.err.println(String.format("  INDEX %d #cands %d", i, allCandidates[i].size()));
+  }
+  
+  /**
+   * Adds all rules at a trie node to the chart, unless its a unary rule. A unary rule is the
+   * first outgoing arc of a grammar's root trie. For terminals, these are added during the
+   * seeding stage; for nonterminals, these confuse cube pruning and can result in infinite loops, 
+   * and are handled separately (see addUnaryNodes());
+   *  
+   * @param trie the grammar node
+   * @param isUnary whether the rules at this dotnode are unary
+   */
+  private void addToChart(DotNode dotNode, boolean isUnary) {
+    
+    System.err.println(String.format("ADD TO CHART %s unary=%s", dotNode, isUnary));
+    
+    int i = dotNode.begin();
+    int j = dotNode.end();
+    List<SuperNode> nodesMatched = dotNode.getAntSuperNodes();
+
+    if (! isUnary && dotNode.hasRules())
+      addToCandidates(dotNode);
+    
+    for (int l = j + 1; l <= sentence.length(); l++)
+      consume(dotNode, l);
+  }
+
+  
   /**
    * This function performs the main work of decoding.
    * 
@@ -463,8 +667,21 @@ public class Chart {
     return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.sentence);
   }
 
+  /**
+   * Get the requested cell, creating the entry if it doesn't already exist.
+   * 
+   * @param i span start
+   * @param j span end
+   * @return the cell item
+   */
   public Cell getCell(int i, int j) {
-    return this.cells.get(i, j);
+    assert i >= 0;
+    assert i <= sentence.length();
+    assert i <= j;
+    if (cells.get(i, j) == null)
+      cells.set(i, j, new Cell(this, goalSymbolID));
+
+    return cells.get(i, j);
   }
 
   // ===============================================================

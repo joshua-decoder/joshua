@@ -318,4 +318,8 @@ public class Sentence {
   public boolean hasPath(int begin, int end) {
     return intLattice().distance(begin, end) != -1;
   }
+
+  public Node<Integer> getNode(int i) {
+    return intLattice().getNode(i);
+  }
 }

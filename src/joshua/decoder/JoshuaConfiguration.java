@@ -184,6 +184,11 @@ public class JoshuaConfiguration {
   
   /* The number of target sides considered for each source side (after sorting by model weight) */
   public int num_translation_options = 20;
+
+  /* If true, decode using a dot chart (standard CKY+); if false, use the much more efficient
+   * version of Sennrich (SSST 2014)
+   */
+  public boolean use_dot_chart = true;
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -467,6 +472,9 @@ public class JoshuaConfiguration {
 
           } else if (parameter.equals(normalize_key("num-translation-options"))) {
             num_translation_options = Integer.parseInt(fds[1]);
+            
+          } else if (parameter.equals(normalize_key("no-dot-chart"))) {
+            use_dot_chart = false;
 
           } else {
 

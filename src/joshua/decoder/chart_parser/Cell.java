@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -138,7 +139,11 @@ class Cell {
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
 
-    // System.err.println(String.format("ADD_EDGE(%s,%d,%d", rule, i, j));
+    System.err.println(String.format("  ADD_EDGE(%s,%d,%d", rule, i, j));
+    if (ants != null)
+      for (int xi = 0; xi < ants.size(); xi++) {
+        System.err.println(String.format("  -> TAIL %s", ants.get(xi)));
+      }
 
     List<DPState> dpStates = result.getDPStates();
     float pruningEstimate = result.getPruningEstimate();
@@ -175,7 +180,7 @@ class Cell {
 
         newNode.addHyperedgesInNode(oldNode.hyperedges);
         // This will update the HashMap, so that the oldNode is destroyed.
-        addNewNode(newNode, noPrune);
+        addNewNode(newNode);
       } else {// merge new to old, does not trigger pruningItems
         oldNode.addHyperedgesInNode(newNode.hyperedges);
       }
@@ -183,7 +188,7 @@ class Cell {
     } else { // first time item
       this.chart.nAdded++; // however, this item may not be used in the future due to pruning in
       // the hyper-graph
-      addNewNode(newNode, noPrune);
+      addNewNode(newNode);
     }
 
     return newNode;
@@ -198,7 +203,7 @@ class Cell {
     ensureSorted();
     return this.superNodesTbl;
   }
-
+  
   // ===============================================================
   // Private Methods
   // ===============================================================
@@ -208,9 +213,11 @@ class Cell {
    * (2) a new hyperedge's signature matches an old node's signature, but the best-logp of old node
    * is worse than the new hyperedge's logP
    * */
-  private void addNewNode(HGNode node, boolean noPrune) {
+  private void addNewNode(HGNode node) {
     this.nodesSigTbl.put(node.signature(), node); // add/replace the item
     this.sortedNodes = null; // reset the list
+    
+//    System.err.println(String.format("** NEW NODE %s %d %d", Vocabulary.word(node.lhs), node.i, node.j));
 
     // since this.sortedItems == null, this is not necessary because we will always call
     // ensure_sorted to reconstruct the this.tableSuperItems
