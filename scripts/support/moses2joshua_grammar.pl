@@ -24,11 +24,12 @@ use File::Basename;
 use Getopt::Std;
 
 my %opts;
-getopts("m:",\%opts);
+getopts("m:p",\%opts);
 
 sub usage {
-  print "Usage: cat moses.grammar | moses2joshua_grammar.pl [-m TREE_MAP_FILE] > joshua.grammar\n";
+  print "Usage: cat moses.grammar | moses2joshua_grammar.pl [-p] [-m TREE_MAP_FILE] > grammar\n";
   print "where TREE_MAP_FILE maps rule target-sides to internal trees\n";
+  print "where -p means to add a phrase penalty feature\n";
 
   exit;
 }
@@ -133,7 +134,7 @@ while (my $rule = <>) {
   my @probs = map { transform($_) } (split(' ',$probs));
   # Moses no longer uses exp(1) as its phrase penalty feature, so we can't
   # rely on the uniform transform above...
-  $probs[-1] = 1.0;
+  push(@probs, -1) if ($opts{p});
   my $scores = join(" ", map { sprintf("%.5f", $_) } @probs);
 
 #  $new_rule .= " ||| $scores ||| $alignment ||| $counts";
