@@ -507,8 +507,6 @@ class DotChart {
       ArrayList<SuperNode> nodes = (ArrayList<SuperNode>) antSuperNodes.clone();
       nodes.add(node);
       DotNode nextNode = new DotNode(i, node.end(), nextTrie, nodes, getSourcePath().extendNonTerminal());
-      System.err.println(String.format("DotNode::extend(%s,%d-%d) -> %d-%d", 
-          Vocabulary.word(node.lhs), i, j, nextNode.begin(), nextNode.end()));
       return nextNode;
     }
   }

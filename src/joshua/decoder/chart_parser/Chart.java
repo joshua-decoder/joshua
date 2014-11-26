@@ -318,7 +318,7 @@ public class Chart {
    */
   private void applyCubePruning(int i, int j, PriorityQueue<CubePruneState> candidates) {
 
-    System.err.println(String.format("CUBEPRUNE: %d-%d with %d candidates", i, j, candidates.size()));
+//    System.err.println(String.format("CUBEPRUNE: %d-%d with %d candidates", i, j, candidates.size()));
     
     /* There are multiple ways to reach each point in the cube, so short-circuit that. */
     HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
@@ -412,7 +412,6 @@ public class Chart {
         allCandidates[id] = new PriorityQueue<CubePruneState>();
 
       /* Add preterminals ending in a single word */
-      System.err.println(String.format("I=%d SEED", i));
       for (int g = 0; g < this.grammars.length; g++) {
         Node<Integer> node = sentence.getNode(i);
         for (Arc<Integer> arc : node.getOutgoingArcs()) {
@@ -428,21 +427,17 @@ public class Chart {
               if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
                 getCell(i,j).addHyperEdgeInCell(result, rule, i, j, null, dotNode.getSourcePath(), false);
             }
-//            addToChart(new DotNode(i, arc.getHead().id(), trie, new ArrayList<SuperNode>(), new SourcePath().extend(arc)), 
-  //              true, false);
           }
         }
       }
       
       for (int j = i + 1; j <= sourceLength; j++) {
-        if (! sentence.hasPath(i,  j)) {
-          System.err.println(String.format("NO PATH FROM %d to %d", i, j));
+        if (! sentence.hasPath(i,  j))
           continue;
-        }
         
         /* Recurse */
         for (int g = 0; g < this.grammars.length; g++) {
-          System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i, j, g));
+//          System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i, j, g));
           consume(new DotNode(i, i, this.grammars[g].getTrieRoot(), new ArrayList<SuperNode>(), new SourcePath()), j-1);
         }
 
@@ -486,7 +481,7 @@ public class Chart {
      * 3. We also try to match terminals if (j + 1 == l)
      */
     
-    System.err.println(String.format("CONSUME %s / %d %d %d", dotNode, dotNode.begin(), dotNode.end(), l));
+//    System.err.println(String.format("CONSUME %s / %d %d %d", dotNode, dotNode.begin(), dotNode.end(), l));
     
     // The span that's already been consumed
     int i = dotNode.begin();
@@ -510,21 +505,16 @@ public class Chart {
         
     // Now try to match nonterminals
     if (trie.hasExtensions()) {
-      System.err.println(String.format(" -> yes extensions"));
       // Get a list of all the supernodes, and query each to see if it's in the grammar
       if (cells.get(j, l) != null) {
-        System.err.println(String.format(" -> yes cell over %d %d", j, l));
         Map<Integer,SuperNode> items = getCell(j,l).getSortedSuperItems();
         for (int lhs: items.keySet()) {
           Trie nextTrie = trie.match(lhs);
           if (nextTrie != null) {
-            System.err.println("  -> MATCHED " + Vocabulary.word(lhs));
             // add item over (i, l) to candidates list
             addToChart(dotNode.extend(items.get(lhs), nextTrie), i == j);
           }
         }
-      } else {
-        System.err.println(String.format(" -> no cell over %d %d", j, l));
       }
     }
   }
@@ -537,7 +527,7 @@ public class Chart {
    * @param tailNodes
    */
   private void addToCandidates(DotNode dotNode) {
-    System.err.println(String.format("ADD TO CANDIDATES AT INDEX %d", dotNode.end() - dotNode.begin()));
+//    System.err.println(String.format("ADD TO CANDIDATES AT INDEX %d", dotNode.end() - dotNode.begin()));
     
     // TODO: one entry per rule, or per rule instantiation (rule together with unique matching of input)?
     List<Rule> rules = dotNode.getRuleCollection().getSortedRules(featureFunctions); 
@@ -556,8 +546,6 @@ public class Chart {
     CubePruneState seedState = new CubePruneState(result, ranks, rules, tailNodes, dotNode);
     
     allCandidates[dotNode.end() - dotNode.begin()].add(seedState);
-    for (int i = 0; i < allCandidates.length; i++)
-      System.err.println(String.format("  INDEX %d #cands %d", i, allCandidates[i].size()));
   }
   
   /**
@@ -571,15 +559,12 @@ public class Chart {
    */
   private void addToChart(DotNode dotNode, boolean isUnary) {
     
-    System.err.println(String.format("ADD TO CHART %s unary=%s", dotNode, isUnary));
-    
-    int i = dotNode.begin();
-    int j = dotNode.end();
-    List<SuperNode> nodesMatched = dotNode.getAntSuperNodes();
+//    System.err.println(String.format("ADD TO CHART %s unary=%s", dotNode, isUnary));
 
     if (! isUnary && dotNode.hasRules())
       addToCandidates(dotNode);
-    
+
+    int j = dotNode.end();
     for (int l = j + 1; l <= sentence.length(); l++)
       consume(dotNode, l);
   }

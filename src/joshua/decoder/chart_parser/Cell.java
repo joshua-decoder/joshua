@@ -139,11 +139,11 @@ class Cell {
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
 
-    System.err.println(String.format("  ADD_EDGE(%s,%d,%d", rule, i, j));
-    if (ants != null)
-      for (int xi = 0; xi < ants.size(); xi++) {
-        System.err.println(String.format("  -> TAIL %s", ants.get(xi)));
-      }
+//    System.err.println(String.format("  ADD_EDGE(%s,%d,%d", rule, i, j));
+//    if (ants != null)
+//      for (int xi = 0; xi < ants.size(); xi++) {
+//        System.err.println(String.format("  -> TAIL %s", ants.get(xi)));
+//      }
 
     List<DPState> dpStates = result.getDPStates();
     float pruningEstimate = result.getPruningEstimate();
