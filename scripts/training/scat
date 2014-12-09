@@ -4,11 +4,12 @@
 # appropriate.
 
 for file in $@; do
-	if [[ $file =~ \.gz$ ]]; then
-		gzip -cd $file
-	elif [[ $file =~ \.bz2$ ]]; then
-		bzcat $file
-	else
-		cat $file
-	fi
+    text=$(file $file)
+    if [[ $text =~ "gzip" ]]; then
+        gzip -cd $file
+    elif [[ $text =~ "bzip2" ]]; then
+        bzcat $file
+    else
+        cat $file
+    fi
 done
