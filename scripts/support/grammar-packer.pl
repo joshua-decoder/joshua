@@ -39,9 +39,13 @@ if (! -e $grammar) {
   exit 1;
 }
 
-# Sort the grammar.
-my $sorted_grammar = "grammar.sorted.gz";
-if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
+# Sort the grammar or phrase table
+my $sorted_grammar = $grammar . ".tmp.gz";
+# We need to sort by source side, which is field 0 (for phrase tables not listing the LHS)
+# or field 1 (convention, Thrax format)
+chomp(my $first_line = `$CAT $grammar | head -n1`);
+my $source_field = ($first_line =~ /^\[/) ? "3,3" : "1,1";
+if (system("$CAT $grammar | sort -k${source_field} --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
   print STDERR "* FATAL: Couldn't sort the grammar (not enough memory? short on tmp space?)\n";
   exit 2;
 }
