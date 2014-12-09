@@ -63,12 +63,12 @@ while (my $rule = <>) {
   # The source-side nonterminals (of each pair) have been removed. Here we push all the for the
   # source and target sides into arrays. We grab the LHS from the target side list.
   my (@l1tokens) = split(' ', $l1);
-  pop(@l1tokens);
   my (@l2tokens) = split(' ', $l2);
 
   # Support regular phrase tables, too (with no LHS).
   my $lhs = undef;
   if ($l2tokens[-1] =~ /^\[.*\]$/) {
+    pop(@l1tokens);
     $lhs = pop(@l2tokens);
   }
 
@@ -152,7 +152,7 @@ while (my $rule = <>) {
 #  $new_rule .= " ||| $scores ||| $alignment ||| $counts";
   $new_rule .= "||| $scores ||| $alignment";
 
-  # print STDERR "  NEW_RULE: $new_rule$/";
+  # print STDERR "  NEW_RULE: $rule => $new_rule$/" if $new_rule =~ /^\|/;
   print "$new_rule\n";
 
   if ($opts{m} and defined $tree) {
