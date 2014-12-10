@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipException;
 
 /**
  * This class provides an Iterator interface to a BufferedReader. This covers the most common
@@ -79,10 +80,14 @@ public class LineReader implements Reader<String> {
    */
   @Deprecated
   public static final InputStream getInputStream(String filename) throws IOException {
-    FileInputStream fis =
-        (filename.equals("-")) ? new FileInputStream(FileDescriptor.in) : new FileInputStream(
-            filename);
-    return (filename.endsWith(".gz") ? new GZIPInputStream(fis) : fis);
+    if (filename.equals("-"))
+      return new FileInputStream(FileDescriptor.in);
+
+    try {
+      return new GZIPInputStream(new FileInputStream(filename));
+    } catch (ZipException e) {
+      return new FileInputStream(filename);
+    }
   }
 
 
