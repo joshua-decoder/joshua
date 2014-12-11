@@ -128,7 +128,9 @@ while (my $line = <STDIN>) {
           push @WEIGHTS, "tm_owner${num}_${i} $weights[$i]";
         }
       } elsif ($name eq "UnknownWordPenalty") {
-        push @WEIGHTS, "OOVPenalty $value";
+        push @WEIGHTS, "OOVPenalty " . (-100 * $value);
+      } elsif ($name eq "WordPenalty") {
+        push @WEIGHTS, "WordPenalty " . ($value * 2.29885);
       } else {
         push @WEIGHTS, "$name $value";
       }
@@ -145,17 +147,26 @@ while (my $line = <STDIN>) {
         print "feature-function = WordPenalty\n";
       } elsif ($key eq "PhrasePenalty") {
         print "feature-function = PhrasePenalty\n";
+      } elsif ($key eq "Distortion") {
+        print "feature-function = Distortion\n";
       } elsif ($key =~ /^PhraseDictionary/) {
         my $grammar_file;
+        my $table_limit = 20;
         foreach my $token (@rest) {
           if ($token =~ /^path/) {
             $token =~ s/^path=//;
             $grammar_file = $token;
+          } elsif ($token =~ /^table-limit/) {
+            $token =~ s/^table-limit=//;
+            $table_limit = $token;
           }
         }
-        print "tm = thrax owner${grammar_no} $span_limits[$grammar_no] $grammar_file\n";
+        my $span_limit = $span_limits[$grammar_no] || 1000;
+        my $owner = "phrase";
+        print "tm = $owner owner${grammar_no} $span_limit $grammar_file\n";
+        print "num_translation_options = $table_limit\n";
         $grammar_no++;
-        print STDERR "TODO: You need to convert the grammar manually and edit the 'tm = ...' line\n";
+#        print STDERR "TODO: You need to convert the grammar manually and edit the 'tm = ...' line\n";
       } elsif ($key eq "KENLM") {
         my $str = join(" ", @rest);
         my $order = $str; $order =~ s/.*order=(\d+).*/$1/;
@@ -178,7 +189,12 @@ while (my $line = <STDIN>) {
     # words
     print "default-non-terminal = X\n";
     print "goal-symbol = GOAL\n";
-    print "\n";
+    print "\n"; 
+
+  } elsif (header($line) eq "distortion") {
+    chomp(my $limit = <>);
+
+    print "reordering-limit = $limit\n";
 
   } elsif (header($line) eq "search-algorithm") {
 
@@ -193,8 +209,6 @@ while (my $line = <STDIN>) {
 
 print "top-n = 1\n\n";
 print "mark-oovs = false\n";
-
-print "feature-function = OOVPenalty\n";
 
 print "\n# WEIGHTS\n\n";
 foreach my $weight (@WEIGHTS) {
