@@ -1,6 +1,7 @@
 package joshua.decoder.phrase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import joshua.corpus.Span;
@@ -29,6 +30,39 @@ public class Candidate implements Comparable<Candidate> {
   // scoring and state information 
   private ComputeNodeResult result;
   
+  /**
+   * When candidate objects are extended, the new one is initialized with the same underlying
+   * "phrases" and "hypotheses" and "span" objects. So these all have to be equal, as well as
+   * the ranks.
+   * 
+   * This is used to prevent cube pruning from adding the same candidate twice, having reached
+   * a point in the cube via different paths.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof Candidate) {
+      Candidate other = (Candidate) obj;
+      if (hypotheses != other.hypotheses || phrases != other.phrases || span != other.span)
+        return false;
+      
+      if (ranks.length != other.ranks.length)
+        return false;
+      
+      for (int i = 0; i < ranks.length; i++)
+        if (ranks[i] != other.ranks[i])
+          return false;
+          
+      return true;
+    }
+    return false;
+  }
+  
+  @Override
+  public int hashCode() {
+    return hypotheses.hashCode() * phrases.hashCode() * span.hashCode() * Arrays.hashCode(ranks);
+  }
+  
+  @Override
   public String toString() {
     return String.format("CAND[%d/%d hypotheses, %d/%d phrases] score=%.3f (base %.3f + future %.3f + trans %.3f) %s + %s (over %s)", ranks[0],
         hypotheses.size(), ranks[1], phrases.size(), score(),

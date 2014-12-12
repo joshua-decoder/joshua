@@ -1,5 +1,6 @@
 package joshua.decoder.phrase;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -15,6 +16,7 @@ public class EdgeGenerator {
   private List<FeatureFunction> featureFunctions;
   private Sentence sentence;
   private JoshuaConfiguration config;
+  private HashSet<Candidate> visitedStates;
   
   public EdgeGenerator(Sentence sentence, List<FeatureFunction> features, JoshuaConfiguration config) {
     // TODO: does the comparator need to be reversed to put highest-scoring
@@ -24,6 +26,8 @@ public class EdgeGenerator {
     this.featureFunctions = features;
     this.sentence = sentence;
     this.config = config;
+    
+    this.visitedStates = new HashSet<Candidate>();
   }
 
   /**
@@ -40,6 +44,10 @@ public class EdgeGenerator {
    * @param cand
    */
   public void addCandidate(Candidate cand) {
+    if (visitedStates.contains(cand))
+      return;
+    
+    visitedStates.add(cand);
 
     // Constrained decoding
     if (sentence.target() != null) {
