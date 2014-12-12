@@ -145,21 +145,24 @@ public class PhraseChart {
     if (to != null) {
       /*
        * This first call to getSortedRules() is important, because it is what
-       * causes the scoring and sorting to happen. Subsequent calls to get the
+       * causes the scoring and sorting to happen. It is also a synchronized call,
+       * which is necessary because the underlying grammar gets sorted. Subsequent calls to get the
        * rules will just return the already-sorted list. Here, we score, sort,
-       * and then trim the list to the number of translation options. This provides *huge*
+       * and then trim the list to the number of translation options. Trimming provides huge
        * performance gains --- the more common the word, the more translations options it is
        * likely to have (often into the tens of thousands).
        */
-      if (to.getSortedRules(features).size() > numOptions)
-        to.getRules().subList(numOptions, to.getRules().size()).clear();
+      List<Rule> rules = to.getSortedRules(features);
+      if (rules.size() > numOptions)
+        rules = rules.subList(0,  numOptions);
+//        to.getRules().subList(numOptions, to.getRules().size()).clear();
 
       try {
         int offset = offset(begin, end);
         if (entries.get(offset) == null)
-          entries.set(offset, new TargetPhrases(to.getRules()));
+          entries.set(offset, new TargetPhrases(rules));
         else
-          entries.get(offset).addAll(to.getRules());
+          entries.get(offset).addAll(rules);
       } catch (java.lang.IndexOutOfBoundsException e) {
         System.err.println(String.format("Whoops! %s [%d-%d] too long (%d)", to, begin, end,
             entries.size()));
