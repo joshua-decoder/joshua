@@ -86,7 +86,7 @@ public class JoshuaConfiguration {
    * N-best configuration.
    */
   // Make sure output strings in the n-best list are unique.
-  public boolean use_unique_nbest = false;
+  public boolean use_unique_nbest = true;
 
   /* Include the phrasal alignments in the output (not word-level alignmetns at the moment). */
   public boolean include_align_index = false;
