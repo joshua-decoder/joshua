@@ -93,7 +93,7 @@ public class JoshuaConfiguration {
 
   /* The number of hypotheses to output by default. */
   public int topN = 1;
-
+  
   /**
    * This string describes the format of each line of output from the decoder (i.e., the
    * translations). The string can include arbitrary text and also variables. The following
@@ -189,6 +189,9 @@ public class JoshuaConfiguration {
    * version of Sennrich (SSST 2014)
    */
   public boolean use_dot_chart = true;
+  
+  /* If true, just print out the weights found in the config file, and exit. */
+  public boolean show_weights_and_quit = false;
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -475,7 +478,13 @@ public class JoshuaConfiguration {
             
           } else if (parameter.equals(normalize_key("no-dot-chart"))) {
             use_dot_chart = false;
-
+            
+          } else if (parameter.equals(normalize_key("show-weights"))) {
+            show_weights_and_quit = true;
+            
+          } else if (parameter.equals(normalize_key("input-type"))) {
+            ; // for Moses compatibility; ignore this 
+            
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))

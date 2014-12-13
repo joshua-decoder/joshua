@@ -407,6 +407,12 @@ public class Decoder {
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
       
+      if (joshuaConfiguration.show_weights_and_quit) {
+        for (String key: weights.keySet())
+          System.out.println(String.format("%s %.5f", key, weights.get(key)));
+        System.exit(0);
+      }
+      
       if (! weights.containsKey("BLEU"))
         Decoder.weights.put("BLEU", 0.0f);
 
