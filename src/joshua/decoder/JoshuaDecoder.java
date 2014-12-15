@@ -57,6 +57,11 @@ public class JoshuaDecoder {
       return;
     }
     
+    // Create the n-best output stream
+    FileWriter out = null;
+    if (joshuaConfiguration.n_best_file != null)
+      out = new FileWriter(joshuaConfiguration.n_best_file);
+    
     // Create a TranslationRequest object, reading from a file if requested, or from STDIN
     InputStream input = (joshuaConfiguration.input_file != null) 
       ? new FileInputStream(joshuaConfiguration.input_file)
@@ -71,11 +76,8 @@ public class JoshuaDecoder {
       String text;
       if (joshuaConfiguration.moses) {
         text = translation.toString().replaceAll("=", "= ");
-        if (joshuaConfiguration.n_best_file != null) {
-          FileWriter out = new FileWriter(joshuaConfiguration.n_best_file);
+        if (joshuaConfiguration.n_best_file != null)
           out.write(text);
-          out.close();
-        }
         
         text = text.substring(0,  text.indexOf('\n'));
         String[] fields = text.split(" \\|\\|\\| ");
@@ -87,6 +89,9 @@ public class JoshuaDecoder {
       
       System.out.print(text);
     }
+    
+    if (joshuaConfiguration.n_best_file != null)
+      out.close();
 
     Decoder.LOG(1, "Decoding completed.");
     Decoder.LOG(1, String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
