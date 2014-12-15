@@ -31,7 +31,7 @@ public class TranslationRequest {
   /* Whether the request has been killed by a broken client connection. */
   private boolean isShutDown = false;
 
-  public TranslationRequest(InputStream in,JoshuaConfiguration joshuaConfiguration) {
+  public TranslationRequest(InputStream in, JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
     reader = new BufferedReader(new InputStreamReader(in, FILE_ENCODING));
   }

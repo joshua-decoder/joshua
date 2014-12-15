@@ -1,7 +1,10 @@
 package joshua.decoder;
 
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Logger;
 
 import joshua.decoder.io.TranslationRequest;
@@ -54,15 +57,35 @@ public class JoshuaDecoder {
       return;
     }
     
-    // create a TranslationRequest object on STDIN
-    TranslationRequest fileRequest = new TranslationRequest(System.in, joshuaConfiguration);
+    // Create a TranslationRequest object, reading from a file if requested, or from STDIN
+    InputStream input = (joshuaConfiguration.input_file != null) 
+      ? new FileInputStream(joshuaConfiguration.input_file)
+      : System.in;
+    TranslationRequest fileRequest = new TranslationRequest(input, joshuaConfiguration);
     Translations translationStream = decoder.decodeAll(fileRequest);
     for (;;) {
       Translation translation = translationStream.next();
       if (translation == null)
         break;
+
+      String text;
+      if (joshuaConfiguration.moses) {
+        text = translation.toString().replaceAll("=", "= ");
+        if (joshuaConfiguration.n_best_file != null) {
+          FileWriter out = new FileWriter(joshuaConfiguration.n_best_file);
+          out.write(text);
+          out.close();
+        }
+        
+        text = text.substring(0,  text.indexOf('\n'));
+        String[] fields = text.split(" \\|\\|\\| ");
+        text = fields[1] + "\n";
+        
+      } else {
+        text = translation.toString();
+      }
       
-      System.out.print(translation);
+      System.out.print(text);
     }
 
     Decoder.LOG(1, "Decoding completed.");

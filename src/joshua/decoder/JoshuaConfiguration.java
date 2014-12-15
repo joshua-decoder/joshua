@@ -190,8 +190,17 @@ public class JoshuaConfiguration {
    */
   public boolean use_dot_chart = true;
   
+  /* Moses compatibility */
+  public boolean moses = false;
+  
   /* If true, just print out the weights found in the config file, and exit. */
   public boolean show_weights_and_quit = false;
+  
+  /* Read input from a file (Moses compatible flag) */
+  public String input_file = null;
+  
+  /* Write n-best output to this file */
+  public String n_best_file = null;
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -479,11 +488,25 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("no-dot-chart"))) {
             use_dot_chart = false;
             
+          } else if (parameter.equals(normalize_key("moses"))) {
+            moses = true; // triggers some Moses-specific compatibility options
+            
           } else if (parameter.equals(normalize_key("show-weights"))) {
             show_weights_and_quit = true;
-            
+
           } else if (parameter.equals(normalize_key("input-type"))) {
             ; // for Moses compatibility; ignore this 
+
+          } else if (parameter.equals(normalize_key("weight-overwrite"))) {
+            ; // for Moses compatibility; ignore this 
+            
+          } else if (parameter.equals(normalize_key("n-best-list"))) {
+            // for Moses compatibility 
+            n_best_file = fds[1] ; 
+            
+          } else if (parameter.equals(normalize_key("input-file"))) {
+            // for Moses compatibility 
+            input_file = fds[1];
             
           } else {
 
