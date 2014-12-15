@@ -42,9 +42,9 @@ public class JoshuaDecoder {
     /* Step-1: initialize the decoder, test-set independent */
     Decoder decoder = new Decoder(joshuaConfiguration, userArgs.getConfigFile());
 
-    logger.info(String.format("Model loading took %d seconds",
-      (System.currentTimeMillis() - startTime) / 1000));
-    logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
+    Decoder.LOG(1, String.format("Model loading took %d seconds",
+        (System.currentTimeMillis() - startTime) / 1000));
+    Decoder.LOG(1, String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));  
 
     /* Step-2: Decoding */
@@ -65,13 +65,13 @@ public class JoshuaDecoder {
       System.out.print(translation);
     }
 
-    logger.info("Decoding completed.");
-    logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
+    Decoder.LOG(1, "Decoding completed.");
+    Decoder.LOG(1, String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
 
     /* Step-3: clean up */
     decoder.cleanUp();
-    logger.info(String.format("Total running time: %d seconds",
+    Decoder.LOG(1, String.format("Total running time: %d seconds",
       (System.currentTimeMillis() - startTime) / 1000));
   }
 }

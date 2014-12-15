@@ -57,7 +57,7 @@ public class Translation {
         }
 
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
-        System.err.println(String.format("[%d] %d-best extraction took %.3f seconds", id(),
+        Decoder.LOG(1, String.format("[%d] %d-best extraction took %.3f seconds", id(),
             joshuaConfiguration.topN, seconds));
 
       } else {

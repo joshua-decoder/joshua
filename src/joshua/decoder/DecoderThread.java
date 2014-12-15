@@ -77,15 +77,15 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    logger.info(String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(),
+    Decoder.LOG(1, String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(),
         sentence.source()));
 
     if (sentence.target() != null)
-      logger.info("Constraining to target sentence '" + sentence.target() + "'");
+      Decoder.LOG(1, "Constraining to target sentence '" + sentence.target() + "'");
 
     // skip blank sentences
     if (sentence.isEmpty()) {
-      logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
+      Decoder.LOG(1, "translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
       return new Translation(sentence, null, null, featureFunctions, joshuaConfiguration);
     }
     
@@ -134,9 +134,9 @@ public class DecoderThread extends Thread {
     }
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
-    logger.info(String.format("translation of sentence %d took %.3f seconds [thread %d]",
+    Decoder.LOG(1, String.format("translation of sentence %d took %.3f seconds [thread %d]",
         sentence.id(), seconds, getId()));
-    logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
+    Decoder.LOG(1, String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
     /* Return the translation unless we're doing synchronous parsing. */

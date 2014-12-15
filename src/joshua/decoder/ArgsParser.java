@@ -19,16 +19,26 @@ public class ArgsParser {
   public ArgsParser(String[] args, JoshuaConfiguration joshuaConfiguration) {
 
     /*
+     * Look for a verbose flag, -v.
+     * 
      * Look for an argument to the "-config" flag to find the config file, if any. 
      */
     if (args.length >= 1) {
+      // Search for a verbose flag
+      for (int i = 0; i < args.length; i++) {
+        if (args[i].equals("-v")) {
+          Decoder.VERBOSE = Integer.parseInt(args[i + 1].trim());
+          break;
+        }
+      } 
+
       // Search for the configuration file
       for (int i = 0; i < args.length; i++) {
         if (args[i].equals("-c") || args[i].equals("-config")) {
 
           setConfigFile(args[i + 1].trim());
           try {
-            System.err.println("Parameters read from configuration file:");
+            Decoder.LOG(1, "Parameters read from configuration file:");
             joshuaConfiguration.readConfigFile(getConfigFile());
           } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -40,7 +50,7 @@ public class ArgsParser {
       }
 
       // Now process all the command-line args
-      System.err.println("Parameters overridden from the command line:");
+      Decoder.LOG(1, "Parameters overridden from the command line:");
       joshuaConfiguration.processCommandLineOptions(args);
     }
   }

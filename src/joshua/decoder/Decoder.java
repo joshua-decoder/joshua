@@ -420,15 +420,15 @@ public class Decoder {
       for (String feature: feature_names)
         if (FeatureVector.isDense(feature))
             num_dense++;
-      
-      System.err.println(String.format("Read %d sparse and %d dense weights", weights.size() - num_dense, num_dense));
+
+      Decoder.LOG(1, String.format("Read %d sparse and %d dense weights", weights.size() - num_dense, num_dense));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
 
       // Initialize and load grammars.
       this.initializeTranslationGrammars();
-      logger.info(String.format("Grammar loading took: %d seconds.",
+      Decoder.LOG(1, String.format("Grammar loading took: %d seconds.",
           (System.currentTimeMillis() - pre_load_time) / 1000));
 
       // Initialize the LM.
@@ -439,13 +439,13 @@ public class Decoder {
 
       // Sort the TM grammars (needed to do cube pruning)
       if (joshuaConfiguration.amortized_sorting) {
-        logger.info("Grammar sorting happening lazily on-demand.");
+        Decoder.LOG(1, "Grammar sorting happening lazily on-demand.");
       } else {
         long pre_sort_time = System.currentTimeMillis();
         for (Grammar grammar : this.grammars) {
           grammar.sortGrammar(this.featureFunctions);
         }
-        logger.info(String.format("Grammar sorting took %d seconds.",
+        Decoder.LOG(1, String.format("Grammar sorting took %d seconds.",
             (System.currentTimeMillis() - pre_sort_time) / 1000));
       }
 
@@ -472,7 +472,7 @@ public class Decoder {
     // lm = kenlm 5 0 0 100 file
     for (String lmLine : joshuaConfiguration.lms) {
 
-      logger.info("lm line: " + lmLine);
+      Decoder.LOG(1, "lm line: " + lmLine);
 
       String tokens[] = lmLine.split("\\s+");
       String lm_type = tokens[0];
@@ -574,7 +574,7 @@ public class Decoder {
       this.grammars.add(glueGrammar);
     }
 
-    logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
+    Decoder.LOG(1, String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
         .getRuntime().freeMemory()) / 1000000.0)));
   }
 
@@ -718,7 +718,17 @@ public class Decoder {
     }
 
     for (FeatureFunction feature: featureFunctions) {
-      logger.info(String.format("FEATURE: %s", feature.logString()));
+      Decoder.LOG(1, String.format("FEATURE: %s", feature.logString()));
     }
   }
+
+  public static boolean VERBOSE(int i) {
+    return i <= VERBOSE;
+  }
+  
+  public static void LOG(int i, String msg) {
+    if (VERBOSE(i))
+      System.err.println(msg);
+  }
+
 }

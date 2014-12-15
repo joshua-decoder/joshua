@@ -47,7 +47,7 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
           + (null != e.getMessage() ? e.getMessage() : "No details available. Sorry."), e);
     }
 
-    System.err.println(String.format("Reading grammar from file %s...", fileName));
+    Decoder.LOG(1, String.format("Reading grammar from file %s...", fileName));
     numRulesRead = 0;
     advanceReader();
   }

@@ -73,10 +73,10 @@ public class PhraseChart {
         phrases.finish(features, Decoder.weights, num_options);
     }
 
-    System.err.println(String.format("[%d] Collecting options took %.3f seconds", source.id(),
+    Decoder.LOG(1, String.format("[%d] Collecting options took %.3f seconds", source.id(),
         (System.currentTimeMillis() - startTime) / 1000.0f));
     
-    if (Decoder.VERBOSE >= 3) {
+    if (Decoder.VERBOSE(3)) {
       for (int i = 1; i < sentence_length - 1; i++) {
         for (int j = i + 1; j < sentence_length && j <= i + max_source_phrase_length; j++) {
           if (source.hasPath(i, j)) {

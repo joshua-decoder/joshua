@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.Decoder;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -28,14 +29,14 @@ public abstract class StatefulFF extends FeatureFunction {
   public StatefulFF(FeatureVector weights, String name) {
     super(weights, name, "");
 
-    System.err.println("Stateful object with state index " + GLOBAL_STATE_INDEX);
+    Decoder.LOG(2, "Stateful object with state index " + GLOBAL_STATE_INDEX);
     stateIndex = GLOBAL_STATE_INDEX++;
   }
 
   public StatefulFF(FeatureVector weights, String name, String args) {
     super(weights, name, args);
 
-    System.err.println("Stateful object with state index " + GLOBAL_STATE_INDEX);
+    Decoder.LOG(1, "Stateful object with state index " + GLOBAL_STATE_INDEX);
     stateIndex = GLOBAL_STATE_INDEX++;
   }
 

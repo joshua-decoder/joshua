@@ -502,7 +502,7 @@ public class JoshuaConfiguration {
             }
           }
 
-          logger.info(String.format("    %s = '%s'", normalize_key(fds[0]), fds[1]));
+          Decoder.LOG(1, String.format("    %s = '%s'", normalize_key(fds[0]), fds[1]));
 
         } else {
           /*
