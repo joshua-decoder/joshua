@@ -89,7 +89,7 @@ public class Decoder {
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Decoder.class.getName());
 
-  public static int VERBOSE = 0;
+  public static int VERBOSE = 1;
 
   private BlockingQueue<DecoderThread> threadPool = null;
   

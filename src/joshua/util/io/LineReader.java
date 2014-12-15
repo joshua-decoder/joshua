@@ -17,7 +17,7 @@ import java.util.zip.ZipException;
  * use-cases for reading from files without ugly code to check whether we got a line or not.
  * 
  * @author wren ng thornton <wren@users.sourceforge.net>
- * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
+ * @author Matt Post <post@cs.jhu.edu>
  */
 public class LineReader implements Reader<String> {
 
@@ -27,7 +27,14 @@ public class LineReader implements Reader<String> {
    */
   private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 
+  /*
+   * The reader and its underlying input stream. We need to keep a hold of the underlying
+   * input stream so that we can query how many raw bytes it's read (for a generic progress
+   * meter that works across GZIP'ed and plain text files).
+   */
   private BufferedReader reader;
+  private ProgressInputStream rawStream;
+
   private String buffer;
   private IOException error;
 
@@ -38,13 +45,34 @@ public class LineReader implements Reader<String> {
   // ===============================================================
 
   /**
-   * Opens a file for iterating line by line. If the file name ends in ".gz" then we automatically
-   * open it with GZIP. File encoding is assumed to be UTF-8.
+   * Opens a file for iterating line by line. The special "-" filename can be used to specify
+   * STDIN. GZIP'd files are tested for automatically.
    * 
-   * @param filename the file to be opened
+   * @param filename the file to be opened ("-" for STDIN)
    */
   public LineReader(String filename) throws IOException {
-    this(LineReader.getInputStream(filename));
+    
+    InputStream stream = null; 
+    long totalBytes = -1;
+    if (filename.equals("-")) {
+      rawStream = null;
+      stream = new FileInputStream(FileDescriptor.in);
+    } else {
+      FileInputStream fis = new FileInputStream(filename);
+      totalBytes = (int) fis.getChannel().size();
+      rawStream = new ProgressInputStream(fis, totalBytes);
+      
+      try {
+        stream = new GZIPInputStream(rawStream);
+      } catch (ZipException e) {
+        // GZIP ate a byte, so reset
+        fis = new FileInputStream(filename);
+        rawStream = new ProgressInputStream(fis, totalBytes);
+        stream = rawStream;
+      }
+    } 
+    
+    this.reader = new BufferedReader(new InputStreamReader(stream, FILE_ENCODING));
   }
 
 
@@ -55,42 +83,15 @@ public class LineReader implements Reader<String> {
     this.reader = new BufferedReader(new InputStreamReader(in, FILE_ENCODING));
   }
 
-
   /**
-   * Uses a BufferedReader for iterating line by line.
-   */
-  public LineReader(BufferedReader reader) {
-    this.reader = reader;
-  }
-
-
-  /**
-   * Returns an InputStream for a filename, using Joshua's canonical means for interpreting that
-   * name (e.g\ detecting gzipped files). This is used by the LineReader constructor that accepts a
-   * String argument.
+   * Chain to the underlying {@link ProgressInputStream}. 
    * 
-   * @deprecated This method is provided in order for {@link joshua.decoder.DecoderThread} to open
-   *             files in the canonical way for handing off to
-   *             {@link joshua.decoder.segment_file.SegmentFileParser}. The
-   *             <code>SegmentFileParser</code> interface can't be made more liberal (e.g. to accept
-   *             a {@link java.io.Reader}) because {@link javax.xml.parsers.SAXParser} can't parse
-   *             that argument and no common {@link java.io.Reader} gives access to the underlying
-   *             <code>InputStream</code>. This method is considered a hack which should be removed
-   *             once a better solution presents itself.
+   * @return an integer from 0..100, indicating how much of the file has been read.
    */
-  @Deprecated
-  public static final InputStream getInputStream(String filename) throws IOException {
-    if (filename.equals("-"))
-      return new FileInputStream(FileDescriptor.in);
-
-    try {
-      return new GZIPInputStream(new FileInputStream(filename));
-    } catch (ZipException e) {
-      return new FileInputStream(filename);
-    }
+  public int progress() {
+    return rawStream == null ? 0 : rawStream.progress();
   }
-
-
+  
   /**
    * This method will close the file handle, and will raise any exceptions that occured during
    * iteration. The method is idempotent, and all calls after the first are no-ops (unless the

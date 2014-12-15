@@ -16,7 +16,7 @@ E_OPTERROR=1
 mem=4g
 
 if [[ $1 == "-m" ]]; then
-	mem=$2
+    mem=$2
 
     shift
     shift

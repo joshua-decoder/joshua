@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.util.io.LineReader;
 
 /**
@@ -103,18 +104,35 @@ public abstract class GrammarReader<R extends Rule> implements Iterable<R>, Iter
     }
     if (lookAhead == null && reader != null) {
       this.close();
-      System.err.println("...done.");
     }
   }
 
+  /**
+   * Read the next line, and print reader progress.
+   */
   public R next() {
     String line = lookAhead;
-    advanceReader();
 
-    if ((numRulesRead) % 80000 == 0) {
-      System.err.println(String.format("%d rules read", numRulesRead));
-    } else if ((numRulesRead) % 1000 == 0) {
-      System.err.print(".");
+    int oldProgress = reader.progress();
+    advanceReader();
+    
+    if (Decoder.VERBOSE >= 1) {
+      int newProgress = (reader != null) ? reader.progress() : 100;
+
+      if (newProgress > oldProgress) {
+        for (int i = oldProgress + 1; i <= newProgress; i++)
+          if (i == 100)
+            System.err.println("100%");
+          else if (i % 10 == 0) {
+            System.err.print(String.format("%d", i));
+            System.err.flush();
+          } else if ((i - 1) % 10 == 0)
+            ; // skip at 11 since 10, 20, etc take two digits
+          else {
+            System.err.print(".");
+            System.err.flush();
+          }
+      }
     }
     return parseLine(line);
   }
