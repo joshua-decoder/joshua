@@ -311,8 +311,8 @@ public class JoshuaConfiguration {
         if (line.indexOf("=") != -1) { // parameters; (not feature function)
           String[] fds = Regex.equalsWithSpaces.split(line);
           if (fds.length != 2) {
-            logger.severe("* FATAL: bad config file line '" + line + "'");
-            System.exit(1);
+            Decoder.LOG(1, String.format("* WARNING: skipping config file line '%s'", line));
+            continue;
           }
 
           String parameter = normalize_key(fds[0]);
