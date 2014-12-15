@@ -24,10 +24,10 @@ import joshua.util.io.LineReader;
  */
 public class JoshuaConfiguration {
   // List of language models to load
-  public ArrayList<String> lms = new ArrayList<String>();
+  public ArrayList<String[]> lms = new ArrayList<String[]>();
 
   // List of grammar files to read
-  public ArrayList<String> tms = new ArrayList<String>();
+  public ArrayList<String[]> tms = new ArrayList<String[]>();
 
   /*
    * The file to read the weights from (part of the sparse features implementation). Weights can
@@ -218,8 +218,8 @@ public class JoshuaConfiguration {
     logger.info("\n\tResetting the StatefullFF global state index ...");
     logger.info("\n\t...done");
     StatefulFF.resetGlobalStateIndex();
-    lms = new ArrayList<String>();
-    tms = new ArrayList<String>();
+    lms = new ArrayList<String[]>();
+    tms = new ArrayList<String[]>();
     weights_file = "";
     default_non_terminal = "[X]";
     oov_list = null;
@@ -271,14 +271,16 @@ public class JoshuaConfiguration {
         String key = options[i].substring(1);
         if (i + 1 == options.length || options[i + 1].startsWith("-")) {
           // if this is the last item, or if the next item
-          // is another flag, then this is an argument-less
-          // flag
-          out.println(key + "=true");
+          // is another flag, then this is a boolean flag
+          out.println(key + " = true");
 
         } else {
-          out.println(key + "=" + options[i + 1]);
-          // skip the next item
-          i++;
+          out.print(key + " =");
+          while (i + 1 < options.length && ! options[i + 1].startsWith("-")) {
+            out.print(String.format(" %s", options[i + 1]));
+            i++;
+          }
+          out.println();
         }
       }
       out.close();
@@ -298,7 +300,7 @@ public class JoshuaConfiguration {
     try {
       for (String line : configReader) {
         line = line.trim(); // .toLowerCase();
-
+        
         if (Regex.commentOrEmptyLine.matches(line))
           continue;
 
@@ -310,7 +312,7 @@ public class JoshuaConfiguration {
 
         if (line.indexOf("=") != -1) { // parameters; (not feature function)
           String[] fds = Regex.equalsWithSpaces.split(line);
-          if (fds.length != 2) {
+          if (fds.length < 2) {
             Decoder.LOG(1, String.format("* WARNING: skipping config file line '%s'", line));
             continue;
           }
@@ -319,10 +321,10 @@ public class JoshuaConfiguration {
 
           // store the line for later processing
           if (parameter.equals(normalize_key("lm"))) {
-            lms.add(fds[1]);
+            lms.add(new String[] { fds[1], fds[2], fds[3], fds[4], fds[5], fds[6] });
 
           } else if (parameter.equals(normalize_key("tm"))) {
-            tms.add(fds[1]);
+            tms.add(new String[] { fds[1], fds[2], fds[3], fds[4] });
             
           } else if (parameter.equals("v")) {
             Decoder.VERBOSE = Integer.parseInt(fds[1]);
@@ -502,7 +504,9 @@ public class JoshuaConfiguration {
             
           } else if (parameter.equals(normalize_key("n-best-list"))) {
             // for Moses compatibility 
-            n_best_file = fds[1] ; 
+            n_best_file = fds[1];
+            if (fds.length > 2)
+              topN = Integer.parseInt(fds[2]);
             
           } else if (parameter.equals(normalize_key("input-file"))) {
             // for Moses compatibility 

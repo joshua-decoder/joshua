@@ -47,7 +47,7 @@ public class Regex {
   /**
    * A pattern for splitting on the equals character, with optional whitespace on each side.
    */
-  public static final Regex equalsWithSpaces = new Regex("\\s*=\\s*");
+  public static final Regex equalsWithSpaces = new Regex("\\s*=\\s*|\\s+");
 
   /**
    * A pattern for splitting on three vertical pipes, with one or more whitespace on each side.

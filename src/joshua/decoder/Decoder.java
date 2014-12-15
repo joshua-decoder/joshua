@@ -470,11 +470,9 @@ public class Decoder {
     this.languageModels = new ArrayList<NGramLanguageModel>();
 
     // lm = kenlm 5 0 0 100 file
-    for (String lmLine : joshuaConfiguration.lms) {
+    for (String[] tokens : joshuaConfiguration.lms) {
 
-      Decoder.LOG(1, "lm line: " + lmLine);
-
-      String tokens[] = lmLine.split("\\s+");
+      Decoder.LOG(1, "lm line: " + tokens);
       String lm_type = tokens[0];
       int lm_order = Integer.parseInt(tokens[1]);
       boolean minimizing = Boolean.parseBoolean(tokens[2]);
@@ -520,8 +518,7 @@ public class Decoder {
       HashSet<String> ownersSeen = new HashSet<String>();
 
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
-      for (String tmLine : joshuaConfiguration.tms) {
-        String tokens[] = tmLine.split("\\s+");
+      for (String[] tokens : joshuaConfiguration.tms) {
         String format = tokens[0];
         String owner = tokens[1];
         int span_limit = Integer.parseInt(tokens[2]);
