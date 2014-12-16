@@ -44,21 +44,25 @@ import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
 /**
- * This class handles decoder initialization and the complication introduced by multithreading.
+ * This class handles decoder initialization and the complication introduced by
+ * multithreading.
  * 
  * After initialization, the main entry point to the Decoder object is
- * decodeAll(TranslationRequest), which returns a set of Translation objects wrapped in an iterable
- * Translations object. It is important that we support multithreading both (a) across the sentences
- * within a request and (b) across requests, in a round-robin fashion. This is done by maintaining a
- * fixed sized concurrent thread pool. When a new request comes in, a RequestHandler thread is
- * launched. This object reads iterates over the request's sentences, obtaining a thread from the
- * thread pool, and using that thread to decode the sentence. If a decoding thread is not available,
- * it will block until one is in a fair (FIFO) manner. This maintains fairness across requests so
- * long as each request only requests thread when it has a sentence ready.
+ * decodeAll(TranslationRequest), which returns a set of Translation objects
+ * wrapped in an iterable Translations object. It is important that we support
+ * multithreading both (a) across the sentences within a request and (b) across
+ * requests, in a round-robin fashion. This is done by maintaining a fixed sized
+ * concurrent thread pool. When a new request comes in, a RequestHandler thread
+ * is launched. This object reads iterates over the request's sentences,
+ * obtaining a thread from the thread pool, and using that thread to decode the
+ * sentence. If a decoding thread is not available, it will block until one is
+ * in a fair (FIFO) manner. This maintains fairness across requests so long as
+ * each request only requests thread when it has a sentence ready.
  * 
- * A decoding thread is handled by DecoderThread and launched from DecoderThreadRunner. The purpose
- * of the runner is to record where to place the translated sentence when it is done (i.e., which
- * Translations object). Translations itself is an iterator whose next() call blocks until the next
+ * A decoding thread is handled by DecoderThread and launched from
+ * DecoderThreadRunner. The purpose of the runner is to record where to place
+ * the translated sentence when it is done (i.e., which Translations object).
+ * Translations itself is an iterator whose next() call blocks until the next
  * translation is available.
  * 
  * @author Matt Post <post@cs.jhu.edu>
@@ -71,16 +75,20 @@ public class Decoder {
   private final JoshuaConfiguration joshuaConfiguration;
 
   /*
-   * Many of these objects themselves are global objects. We pass them in when constructing other
-   * objects, so that they all share pointers to the same object. This is good because it reduces
-   * overhead, but it can be problematic because of unseen dependencies (for example, in the
-   * Vocabulary shared by language model, translation grammar, etc).
+   * Many of these objects themselves are global objects. We pass them in when
+   * constructing other objects, so that they all share pointers to the same
+   * object. This is good because it reduces overhead, but it can be problematic
+   * because of unseen dependencies (for example, in the Vocabulary shared by
+   * language model, translation grammar, etc).
    */
   private List<Grammar> grammars;
   private ArrayList<FeatureFunction> featureFunctions;
   private ArrayList<NGramLanguageModel> languageModels;
 
-  /* A sorted list of the feature names (so they can be output in the order they were read in) */
+  /*
+   * A sorted list of the feature names (so they can be output in the order they
+   * were read in)
+   */
   public static ArrayList<String> feature_names = new ArrayList<String>();
 
   /* The feature weights. */
@@ -92,16 +100,16 @@ public class Decoder {
   public static int VERBOSE = 1;
 
   private BlockingQueue<DecoderThread> threadPool = null;
-  
+
   public static boolean usingNonlocalFeatures = false;
 
   // ===============================================================
   // Constructors
   // ===============================================================
 
-  
   /**
-   * Constructor method that creates a new decoder using the specified configuration file.
+   * Constructor method that creates a new decoder using the specified
+   * configuration file.
    * 
    * @param configFile Name of configuration file.
    */
@@ -112,7 +120,8 @@ public class Decoder {
   }
 
   /**
-   * Factory method that creates a new decoder using the specified configuration file.
+   * Factory method that creates a new decoder using the specified configuration
+   * file.
    * 
    * @param configFile Name of configuration file.
    */
@@ -125,8 +134,8 @@ public class Decoder {
    * Constructs an uninitialized decoder for use in testing.
    * <p>
    * This method is private because it should only ever be called by the
-   * {@link #getUninitalizedDecoder()} method to provide an uninitialized decoder for use in
-   * testing.
+   * {@link #getUninitalizedDecoder()} method to provide an uninitialized
+   * decoder for use in testing.
    */
   private Decoder(JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
@@ -138,8 +147,8 @@ public class Decoder {
   /**
    * Gets an uninitialized decoder for use in testing.
    * <p>
-   * This method is called by unit tests or any outside packages (e.g., MERT) relying on the
-   * decoder.
+   * This method is called by unit tests or any outside packages (e.g., MERT)
+   * relying on the decoder.
    */
   static public Decoder getUninitalizedDecoder(JoshuaConfiguration joshuaConfiguration) {
     return new Decoder(joshuaConfiguration);
@@ -150,10 +159,11 @@ public class Decoder {
   // ===============================================================
 
   /**
-   * This class is responsible for getting sentences from the TranslationRequest and procuring a
-   * DecoderThreadRunner to translate it. Each call to decodeAll(TranslationRequest) launches a
-   * thread that will read the request's sentences, obtain a DecoderThread to translate them, and
-   * then place the Translation in the appropriate place.
+   * This class is responsible for getting sentences from the TranslationRequest
+   * and procuring a DecoderThreadRunner to translate it. Each call to
+   * decodeAll(TranslationRequest) launches a thread that will read the
+   * request's sentences, obtain a DecoderThread to translate them, and then
+   * place the Translation in the appropriate place.
    * 
    * @author Matt Post <post@cs.jhu.edu>
    * 
@@ -173,9 +183,10 @@ public class Decoder {
     @Override
     public void run() {
       /*
-       * Repeatedly get an input sentence, wait for a DecoderThread, and then start a new thread to
-       * translate the sentence. We start a new thread (via DecoderRunnerThread) as opposed to
-       * blocking, so that the RequestHandler can go on to the next sentence in this request, which
+       * Repeatedly get an input sentence, wait for a DecoderThread, and then
+       * start a new thread to translate the sentence. We start a new thread
+       * (via DecoderRunnerThread) as opposed to blocking, so that the
+       * RequestHandler can go on to the next sentence in this request, which
        * allows parallelization across the sentences of the request.
        */
       for (;;) {
@@ -193,8 +204,8 @@ public class Decoder {
   }
 
   /**
-   * Retrieve a thread from the thread pool, blocking until one is available. The blocking occurs in
-   * a fair fashion (i.e,. FIFO across requests).
+   * Retrieve a thread from the thread pool, blocking until one is available.
+   * The blocking occurs in a fair fashion (i.e,. FIFO across requests).
    * 
    * @return a thread that can be used for decoding.
    */
@@ -209,14 +220,16 @@ public class Decoder {
   }
 
   /**
-   * This class handles running a DecoderThread (which takes care of the actual translation of an
-   * input Sentence, returning a Translation object when its done). This is done in a thread so as
-   * not to tie up the RequestHandler that launched it, freeing it to go on to the next sentence in
-   * the TranslationRequest, in turn permitting parallelization across the sentences of a request.
+   * This class handles running a DecoderThread (which takes care of the actual
+   * translation of an input Sentence, returning a Translation object when its
+   * done). This is done in a thread so as not to tie up the RequestHandler that
+   * launched it, freeing it to go on to the next sentence in the
+   * TranslationRequest, in turn permitting parallelization across the sentences
+   * of a request.
    * 
-   * When the decoder thread is finshed, the Translation object is placed in the correct place in
-   * the corresponding Translations object that was returned to the caller of
-   * Decoder.decodeAll(TranslationRequest).
+   * When the decoder thread is finshed, the Translation object is placed in the
+   * correct place in the corresponding Translations object that was returned to
+   * the caller of Decoder.decodeAll(TranslationRequest).
    * 
    * @author Matt Post <post@cs.jhu.edu>
    */
@@ -235,16 +248,17 @@ public class Decoder {
     @Override
     public void run() {
       /*
-       * Use the thread to translate the sentence. Then record the translation with the
-       * corresponding Translations object, and return the thread to the pool.
+       * Use the thread to translate the sentence. Then record the translation
+       * with the corresponding Translations object, and return the thread to
+       * the pool.
        */
       try {
         Translation translation = decoderThread.translate(this.sentence);
         translations.record(translation);
 
         /*
-         * This is crucial! It's what makes the thread available for the next sentence to be
-         * translated.
+         * This is crucial! It's what makes the thread available for the next
+         * sentence to be translated.
          */
         threadPool.put(decoderThread);
       } catch (InterruptedException e) {
@@ -253,7 +267,9 @@ public class Decoder {
             .println("* WARNING: I encountered an error trying to return the decoder thread.");
         e.printStackTrace();
       } catch (RuntimeException e) {
-        System.err.println(String.format("* Decoder: fatal uncaught runtime exception on sentence %d: %s", sentence.id(), e.getMessage()));
+        System.err.println(String.format(
+            "* Decoder: fatal uncaught runtime exception on sentence %d: %s", sentence.id(),
+            e.getMessage()));
         e.printStackTrace();
         System.exit(1);
       }
@@ -261,9 +277,9 @@ public class Decoder {
   }
 
   /**
-   * This function is the main entry point into the decoder. It translates all the sentences in a
-   * (possibly boundless) set of input sentences. Each request launches its own thread to read the
-   * sentences of the request.
+   * This function is the main entry point into the decoder. It translates all
+   * the sentences in a (possibly boundless) set of input sentences. Each
+   * request launches its own thread to read the sentences of the request.
    * 
    * @param request
    * @return an iterable set of Translation objects
@@ -335,7 +351,8 @@ public class Decoder {
 
             if (newDiscriminativeModel != null && "discriminative".equals(fds[0])) {
               newSent.append(fds[0]).append(' ');
-              newSent.append(newDiscriminativeModel).append(' ');// change the file name
+              newSent.append(newDiscriminativeModel).append(' ');// change the
+                                                                 // file name
               for (int i = 2; i < fds.length - 1; i++) {
                 newSent.append(fds[i]).append(' ');
               }
@@ -383,8 +400,9 @@ public class Decoder {
       long pre_load_time = System.currentTimeMillis();
 
       /*
-       * Weights can be listed in a separate file (denoted by parameter "weights-file") or directly
-       * in the Joshua config file. Config file values take precedent.
+       * Weights can be listed in a separate file (denoted by parameter
+       * "weights-file") or directly in the Joshua config file. Config file
+       * values take precedent.
        */
       Decoder.weights = this.readWeights(joshuaConfiguration.weights_file);
 
@@ -406,22 +424,24 @@ public class Decoder {
         feature_names.add(pair[0]);
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
-      
+
       if (joshuaConfiguration.show_weights_and_quit) {
-        for (String key: weights.keySet())
+        for (String key : Decoder.feature_names) {
           System.out.println(String.format("%s %.5f", key, weights.get(key)));
+        }
         System.exit(0);
       }
-      
-      if (! weights.containsKey("BLEU"))
+
+      if (!weights.containsKey("BLEU"))
         Decoder.weights.put("BLEU", 0.0f);
 
       int num_dense = 0;
-      for (String feature: feature_names)
+      for (String feature : feature_names)
         if (FeatureVector.isDense(feature))
-            num_dense++;
+          num_dense++;
 
-      Decoder.LOG(1, String.format("Read %d sparse and %d dense weights", weights.size() - num_dense, num_dense));
+      Decoder.LOG(1, String.format("Read %d sparse and %d dense weights", weights.size()
+          - num_dense, num_dense));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -470,7 +490,9 @@ public class Decoder {
     this.languageModels = new ArrayList<NGramLanguageModel>();
 
     // lm = kenlm 5 0 0 100 file
-    for (String[] tokens : joshuaConfiguration.lms) {
+    for (String lmLine : joshuaConfiguration.lms) {
+
+      String[] tokens = lmLine.trim().split("\\s+");
 
       Decoder.LOG(1, "lm line: " + tokens);
       String lm_type = tokens[0];
@@ -514,11 +536,15 @@ public class Decoder {
 
     if (joshuaConfiguration.tms.size() > 0) {
 
-      // Records which PhraseModelFF's have been instantiated (one is needed for each owner).
+      // Records which PhraseModelFF's have been instantiated (one is needed for
+      // each owner).
       HashSet<String> ownersSeen = new HashSet<String>();
 
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
-      for (String[] tokens : joshuaConfiguration.tms) {
+      for (String tmLine: joshuaConfiguration.tms) {
+        
+        String[] tokens = tmLine.trim().split("\\s+");
+        
         String format = tokens[0];
         String owner = tokens[1];
         int span_limit = Integer.parseInt(tokens[2]);
@@ -527,7 +553,7 @@ public class Decoder {
         Grammar grammar = null;
         if (format.equals("packed") || new File(file).isDirectory()) {
           try {
-            grammar = new PackedGrammar(file, span_limit, owner,joshuaConfiguration);
+            grammar = new PackedGrammar(file, span_limit, owner, joshuaConfiguration);
           } catch (FileNotFoundException e) {
             System.err.println(String.format("Couldn't load packed grammar from '%s'", file));
             System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
@@ -538,13 +564,13 @@ public class Decoder {
 
           joshuaConfiguration.phrase_based = true;
           grammar = new PhraseTable(file, owner, joshuaConfiguration);
-        
+
         } else {
           // thrax, hiero, samt
           grammar = new MemoryBasedBatchGrammar(format, file, owner,
               joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
         }
-        
+
         this.grammars.add(grammar);
 
         // Record the owner so we can create a feature function for her.
@@ -552,10 +578,11 @@ public class Decoder {
       }
 
       /*
-       * Create and add a feature function for this owner, the first time we see each owner.
+       * Create and add a feature function for this owner, the first time we see
+       * each owner.
        * 
-       * Warning! This needs to be done *after* initializing the grammars, in case there is a packed
-       * grammar, since it resets the vocabulary.
+       * Warning! This needs to be done *after* initializing the grammars, in
+       * case there is a packed grammar, since it resets the vocabulary.
        */
       for (String owner : ownersSeen) {
         this.featureFunctions.add(new PhraseModelFF(weights, owner));
@@ -563,7 +590,8 @@ public class Decoder {
 
     } else {
       logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
-      // TODO: this should initialize the grammar dynamically so that the goal symbol and default
+      // TODO: this should initialize the grammar dynamically so that the goal
+      // symbol and default
       // non terminal match
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
           "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
@@ -571,13 +599,13 @@ public class Decoder {
       this.grammars.add(glueGrammar);
     }
 
-    Decoder.LOG(1, String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
-        .getRuntime().freeMemory()) / 1000000.0)));
+    Decoder.LOG(1, String.format("Memory used %.1f MB",
+        ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
   }
 
   /*
-   * This function reads the weights for the model. Feature names and their weights are listed one
-   * per line in the following format:
+   * This function reads the weights for the model. Feature names and their
+   * weights are listed one per line in the following format:
    * 
    * FEATURE_NAME WEIGHT
    */
@@ -631,7 +659,7 @@ public class Decoder {
   private void initializeFeatureFunctions() {
 
     usingNonlocalFeatures = true;
-    
+
     for (String featureLine : joshuaConfiguration.features) {
 
       // Get rid of the leading crap.
@@ -658,7 +686,7 @@ public class Decoder {
 
       } else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights));
-        
+
       } else if (feature.equals("rulelength")) {
         this.featureFunctions.add(new RuleLengthFF(weights));
 
@@ -682,25 +710,25 @@ public class Decoder {
         weights.put(String.format("tm_%s_%s", owner, index), weight);
 
       } else if (feature.equals("fragmentlm")) {
-//        logger.info(String.format("FEATURE: FragmentLMFF %s", featureLine));
+        // logger.info(String.format("FEATURE: FragmentLMFF %s", featureLine));
         this.featureFunctions.add(new FragmentLMFF(Decoder.weights, featureLine));
 
       } else if (feature.equals("rule")) {
-//        logger.info(String.format("FEATURE: RuleFF %s", featureLine));
+        // logger.info(String.format("FEATURE: RuleFF %s", featureLine));
         this.featureFunctions.add(new RuleFF(Decoder.weights, featureLine));
 
       } else if (feature.equals("phrasepenalty")) {
         this.featureFunctions.add(new PhrasePenaltyFF(Decoder.weights, featureLine));
-        
+
       } else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelCombinationFF(weights));
-      
+
       } else if (feature.equals(LabelSubstitutionFF.getLowerCasedFeatureName())) {
         this.featureFunctions.add(new LabelSubstitutionFF(weights));
-        
+
       } else if (feature.equals("distortion")) {
         this.featureFunctions.add(new DistortionFF(weights));
-        
+
       } else {
         try {
           Class<?> clas = Class.forName(String.format("joshua.decoder.ff.%sFF", featureName));
@@ -714,7 +742,7 @@ public class Decoder {
       }
     }
 
-    for (FeatureFunction feature: featureFunctions) {
+    for (FeatureFunction feature : featureFunctions) {
       Decoder.LOG(1, String.format("FEATURE: %s", feature.logString()));
     }
   }
@@ -722,7 +750,7 @@ public class Decoder {
   public static boolean VERBOSE(int i) {
     return i <= VERBOSE;
   }
-  
+
   public static void LOG(int i, String msg) {
     if (VERBOSE(i))
       System.err.println(msg);

@@ -24,10 +24,10 @@ import joshua.util.io.LineReader;
  */
 public class JoshuaConfiguration {
   // List of language models to load
-  public ArrayList<String[]> lms = new ArrayList<String[]>();
+  public ArrayList<String> lms = new ArrayList<String>();
 
   // List of grammar files to read
-  public ArrayList<String[]> tms = new ArrayList<String[]>();
+  public ArrayList<String> tms = new ArrayList<String>();
 
   /*
    * The file to read the weights from (part of the sparse features implementation). Weights can
@@ -218,8 +218,8 @@ public class JoshuaConfiguration {
     logger.info("\n\tResetting the StatefullFF global state index ...");
     logger.info("\n\t...done");
     StatefulFF.resetGlobalStateIndex();
-    lms = new ArrayList<String[]>();
-    tms = new ArrayList<String[]>();
+    lms = new ArrayList<String>();
+    tms = new ArrayList<String>();
     weights_file = "";
     default_non_terminal = "[X]";
     oov_list = null;
@@ -321,10 +321,10 @@ public class JoshuaConfiguration {
 
           // store the line for later processing
           if (parameter.equals(normalize_key("lm"))) {
-            lms.add(new String[] { fds[1], fds[2], fds[3], fds[4], fds[5], fds[6] });
+            lms.add(fds[1]);
 
           } else if (parameter.equals(normalize_key("tm"))) {
-            tms.add(new String[] { fds[1], fds[2], fds[3], fds[4] });
+            tms.add(fds[1]);
             
           } else if (parameter.equals("v")) {
             Decoder.VERBOSE = Integer.parseInt(fds[1]);
@@ -503,10 +503,11 @@ public class JoshuaConfiguration {
             ; // for Moses compatibility; ignore this 
             
           } else if (parameter.equals(normalize_key("n-best-list"))) {
-            // for Moses compatibility 
-            n_best_file = fds[1];
-            if (fds.length > 2)
-              topN = Integer.parseInt(fds[2]);
+            // for Moses compatibility
+            String[] tokens = fds[1].split("\\s+");
+            n_best_file = tokens[0];
+            if (tokens.length > 1)
+              topN = Integer.parseInt(tokens[1]);
             
           } else if (parameter.equals(normalize_key("input-file"))) {
             // for Moses compatibility 
