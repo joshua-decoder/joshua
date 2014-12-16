@@ -30,6 +30,8 @@ moses-bin-dir = $joshua-src-dir/bin
 #
 # moses scripts
 moses-script-dir = $moses-src-dir/scripts
+# joshua scripts
+moses-script-dir = $joshua-src-dir/scripts
 #
 # directory where GIZA++/MGIZA programs resides
 external-bin-dir = /Users/hieuhoang/workspace/bin/training-tools
@@ -466,7 +468,7 @@ filter-settings = ""
 
 ### additional flags for the decoder
 #
-decoder-settings = "-pop-limit 500 -moses-output"
+decoder-settings = "-pop-limit 5000"
 
 ### if tuning should be skipped, specify this here
 # and also point to a configuration file that contains

@@ -845,6 +845,21 @@ filter-devtest
 	ignore-if: TRAINING:binarize-all
 	ignore-unless: use-mira	
 	error: already exists. Please delete
+
+# joshua-convert-grammar
+#   in: filtered-dir
+#   out: joshua-grammar
+#   ignore-unless: use-joshua
+#   default-name: tuning/phrase-table.joshua.gz
+#   template: gzip -cd IN/phrase-table.0-0.1.1.gz | ${joshua-script-dir}/support/moses2joshua_grammar.pl | gzip -9n > OUT
+
+# joshua-pack-grammar
+#   in: joshua-grammar
+#   out: joshua-packed-grammar
+#   ignore-unless: use-joshua
+#   default-name: tuning/phrase-table.joshua.packed
+#   template: ${joshua-script-dir}/support/grammar-packer.pl IN OUT
+
 apply-filter
 	in: TRAINING:bin-config filtered-dir
 	out: filtered-config
@@ -858,14 +873,33 @@ apply-filter-devtest
 	pass-if: TRAINING:binarize-all
 	ignore-unless: use-mira
 	template: $moses-script-dir/ems/support/substitute-filtered-tables.perl IN1/moses.ini < IN > OUT
+
+joshua-convert-config
+  in: filtered-config filtered-dir
+  out: joshua-filtered-config
+  ignore-unless: use-joshua
+  default-name: tuning/joshua.filtered.config
+  template: $joshua-script-dir/support/moses2joshua.pl < IN | $joshua-script-dir/copy-config.pl -tm/owner0 IN1/phrase-table.0-0.1.1.gz > OUT
+
 tune
 	in: TRAINING:bin-config input reference filtered-config-devtest input-devtest reference-devtest filtered-config 
 	out: weight-config
-	ignore-if: use-hiero
+	ignore-if: use-hiero use-joshua
 	qsub-script: yes
 	default-name: tuning/moses.ini
 	rerun-on-change: decoder-settings tuning-settings nbest lambda async
 	not-error: trans: No such file or directory
+
+joshua-tune
+	in: input reference joshua-filtered-config
+	out: weight-config
+  ignore-unless: use-joshua
+	qsub-script: yes
+	default-name: tuning/joshua.config
+	rerun-on-change: decoder-settings tuning-settings nbest lambda async
+	not-error: trans: No such file or directory
+  template: ${joshua-script-dir}/training/mira/run-mira.pl --input IN --refs IN1 --config IN2 --decoder $decoder --mertdir ${moses-bin-dir} --rootdir ${moses-script-dir} --batch-mira --working-dir tuning/tmp.VERSION --maximum-iterations ${mira-iterations} --return-best-dev --nbest $nbest --decoder-flags "-m ${joshua-mem} ${decoder-settings} -threads ${cores}"
+
 apply-weights
 	in: TRAINING:bin-config weight-config
 	out: config-with-reused-weights
@@ -955,21 +989,56 @@ filter
 	pass-if: TRAINING:binarize-all
 	ignore-if: use-hiero
 	error: already exists. Please delete
+
+# joshua-convert-grammar
+#   in: filtered-dir
+#   out: joshua-grammar
+#   ignore-unless: use-joshua
+#   default-name: evaluation/phrase-table.joshua.gz
+#   template: gzip -cd IN/phrase-table.0-0.1.1.gz | ${joshua-script-dir}/support/moses2joshua_grammar.pl | gzip -9n > OUT
+
+# joshua-pack-grammar
+#   in: joshua-grammar
+#   out: joshua-packed-grammar
+#   ignore-unless: use-joshua
+#   default-name: evaluation/phrase-table.joshua.packed
+#   template: ${joshua-script-dir}/support/grammar-packer.pl IN OUT
+
 apply-filter
 	in: filtered-dir TRAINING:config TUNING:config-with-reused-weights
 	out: filtered-config
 	default-name: evaluation/filtered.ini
 	ignore-if: TRAINING:binarize-all
 	template: $moses-script-dir/ems/support/substitute-filtered-tables-and-weights.perl IN/moses.ini IN1 IN2 OUT
+
+joshua-convert-config
+  in: filtered-config filtered-dir
+  out: joshua-filtered-config
+  ignore-unless: use-joshua
+  default-name: evaluation/joshua.filtered.config
+  template: $joshua-script-dir/support/moses2joshua.pl < IN | $joshua-script-dir/copy-config.pl -tm/owner0 IN1/phrase-table.0-0.1.1.gz > OUT
+
 decode
 	in: TUNING:config-with-reused-weights input filtered-config
 	out: system-output
 	default-name: evaluation/output
 	qsub-script: yes
-	ignore-if: use-hiero
+	ignore-if: use-hiero use-joshua
 	rerun-on-change: decoder decoder-settings nbest report-segmentation report-precision-by-coverage analyze-search-graph wade
 	error: Translation was not performed correctly
 	not-error: trans: No such file or directory
+
+joshua-decode
+	in: TUNING:config-with-reused-weights input joshua-filtered-config
+	out: system-output
+	default-name: evaluation/output
+	qsub-script: yes
+  ignore-unless: use-joshua
+  template: $decoder -c IN2 < IN1 > OUT
+	rerun-on-change: decoder decoder-settings nbest report-segmentation report-precision-by-coverage analyze-search-graph wade
+	error: Translation was not performed correctly
+	not-error: trans: No such file or directory
+
 hiero-decode
 	in: TUNING:hiero-config-with-reused-weights input
 	out: system-output
