@@ -180,6 +180,7 @@ public class FeatureVector {
   }
 
   public static boolean isDense(String feature) {
-    return feature.startsWith("tm_") || feature.startsWith("lm_") || feature.equals("WordPenalty");
+    return feature.startsWith("tm_") || feature.startsWith("lm_") || feature.equals("WordPenalty")
+        || feature.equals("Distortion") || feature.equals("PhrasePenalty");
   }
 }
