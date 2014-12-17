@@ -18,13 +18,14 @@ import joshua.corpus.Vocabulary;
  */
 public class ArityPhrasePenaltyFF extends StatelessFF {
 
+  private static final String ARITY_PHRASE_PENALTY_FF_NAME = "aritypenalty";
   // when the rule.arity is in the range, then this feature is activated
   private final int owner;
   private final int minArity;
   private final int maxArity;
 
   public ArityPhrasePenaltyFF(final FeatureVector weights, String argString) {
-    super(weights, "ArityPenalty", argString);
+    super(weights,ARITY_PHRASE_PENALTY_FF_NAME , argString);
 
     // Process the args for the owner, minimum, and maximum.
 
@@ -39,6 +40,10 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
       System.err.println("WARNING: no weight found for feature '" + name + "'");
   }
 
+  public static String getFeatureName(){
+    return ARITY_PHRASE_PENALTY_FF_NAME;
+  }
+  
   /**
    * Returns 1 if the arity penalty feature applies to the current rule.
    */
