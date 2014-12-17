@@ -73,7 +73,7 @@ my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
 my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
-my $GRAMMAR_TYPE = "hiero";  # or "phrasal" or "samt" or "ghkm"
+my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase"
 
 # Which GHKM extractor to use ("galley" or "moses")
 my $GHKM_EXTRACTOR = "moses";
@@ -179,7 +179,7 @@ my $OPTIMIZER_RUNS = 1;
 my $LM_GEN = "kenlm";
 my $LM_OPTIONS = "";
 
-my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR TUNE MERT PRO TEST LAST];
+my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR PHRASE TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $NAME = undef;
@@ -381,6 +381,15 @@ foreach my $lmfile (@LMFILES) {
 # case-normalize this
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
 
+if ($GRAMMAR_TYPE eq "phrase") {
+  if ($DO_PACK_GRAMMARS) {
+    print "* Turning off grammar packing for phrase translation (currently unsupported)\n";
+    $DO_PACK_GRAMMARS = 0;
+  }
+
+  $MAXSPAN = 0;
+}
+
 # make sure source and target were specified
 if (! defined $SOURCE or $SOURCE eq "") {
   print "* FATAL: I need a source language extension (--source)\n";
@@ -533,7 +542,7 @@ if ($NUM_JOBS == 1) {
   $TUNEFILES{'decoder_command'} = "$TUNECONFDIR/decoder_command.sequential";
 }
 
-my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? "X" : "OOV";
+my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "itg" or $GRAMMAR_TYPE eq "phrase") ? "X" : "OOV";
 
 # The phrasal system should use the ITG grammar, allowing for limited distortion
 if ($GRAMMAR_TYPE eq "phrasal") {
@@ -811,8 +820,8 @@ PARSE:
 
 # Parsing only happens for SAMT grammars.
 
-if ($FIRST_STEP eq "PARSE" and ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal")) {
-  print STDERR "* FATAL: parsing doesn't apply to hiero grammars; You need to add '--type samt'\n";
+if ($FIRST_STEP eq "PARSE" and ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal" or $GRAMMAR_TYPE eq "phrase")) {
+  print STDERR "* FATAL: parsing doesn't apply to hiero grammars; You need to add '--type samt|ghkm'\n";
   exit;
 }
 
@@ -872,6 +881,8 @@ GRAMMAR:
     ;
 THRAX:
     ;
+PHRASE:
+    ;
 
 system("mkdir -p $DATA_DIRS{train}") unless -d $DATA_DIRS{train};
 
@@ -926,7 +937,7 @@ if (! defined $ALIGNMENT) {
 # If the grammar file wasn't specified
 if (! defined $GRAMMAR_FILE) {
 
-  my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal") ? $TRAIN{target} : $TRAIN{parsed};
+  my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal" or $GRAMMAR_TYPE eq "phrase") ? $TRAIN{target} : $TRAIN{parsed};
 
   if ($GRAMMAR_TYPE eq "ghkm") {
     if ($GHKM_EXTRACTOR eq "galley") {
@@ -974,6 +985,44 @@ if (! defined $GRAMMAR_FILE) {
       print STDERR "* FATAL: no such GHKM extractor '$GHKM_EXTRACTOR'\n";
       exit(1);
     }
+
+    $GRAMMAR_FILE = "grammar.gz";
+
+  } elsif ($GRAMMAR_TYPE eq "phrase") {
+
+    my $max_phrase_length = 5;
+
+    mkdir("model") unless -d "model";
+
+    # Compute lexical probabilities
+    $cachepipe->cmd("build-lex-trans",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -alignment grow-diag-final-and -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file $ALIGNMENT -alignment-stem $ALIGNMENT -corpus $TRAIN{prefix}",
+                    $TRAIN{source},
+                    $TRAIN{target},
+                    $ALIGNMENT,
+                    "model/lex.e2f",
+                    "model/lex.f2e"
+        );
+
+    # Extract the phrases
+    $cachepipe->cmd("extract-phrases",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -alignment-file $ALIGNMENT -alignment-stem $ALIGNMENT -extract-file model/extract -corpus $TRAIN{prefix}",
+                    $TRAIN{source},
+                    $TRAIN{target},
+                    $ALIGNMENT,
+                    "model/extract.sorted.gz",
+                    "model/extract.inv.sorted.gz"
+        );
+
+    # Build the phrase table
+    $cachepipe->cmd("build-ttable",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 6 -last-step 6 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -alignment grow-diag-final-and -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -extract-file model/extract -lexical-file model/lex -phrase-translation-table model/phrase-table",
+                    "model/lex.e2f",
+                    "model/extract.sorted.gz"
+        );
+
+    $GRAMMAR_FILE = "model/phrase-table.gz";
+
   } elsif (! -e "grammar.gz" && ! -z "grammar.gz") {
 
     # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
@@ -1035,10 +1084,9 @@ if (! defined $GRAMMAR_FILE) {
     if ($HADOOP eq "hadoop") {
       system("rm -rf $THRAXDIR hadoop hadoop-0.20.2");
     }
-  }
 
-  # set the grammar file
-  $GRAMMAR_FILE = "grammar.gz";
+    $GRAMMAR_FILE = "grammar.gz";
+  }
 }
 
 maybe_quit("THRAX");
@@ -1119,12 +1167,11 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
                     "$TRAIN{target}.uniq",
 										$lmfile);
   } else {
-    # Make sure it exists (doesn't build for OS X)
+    # Make sure it exists
     if (! -e "$JOSHUA/bin/lmplz") {
       print "* FATAL: $JOSHUA/bin/lmplz (for building LMs) does not exist.\n";
-      print "  If you are on OS X, you need to use either SRILM (recommended) or BerkeleyLM,\n";
-      print "  triggered with '--lm-gen srilm' or '--lm-gen berkeleylm'. If you are on Linux,\n";
-      print "  you should run \"ant -f \$JOSHUA/build.xml kenlm\".\n";
+      print "  This is often a problem with the boost libraries (particularly threaded\n";
+      print "  versus unthreaded).\n";
       exit 1;
     }
 
@@ -1274,6 +1321,8 @@ while (my $line = <CONFIG>) {
     my (undef,$grammarline) = split(/\s*=\s*/, $line);
     my (undef,$owner,$span,$grammar) = split(' ', $grammarline);
 
+    next if ($GRAMMAR_TYPE eq "phrase" and $grammar =~ /<GLUE_GRAMMAR>/);
+
     if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
       
       my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
@@ -1328,6 +1377,9 @@ for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   system("mkdir -p $tunedir") unless -d $tunedir;
 
+  my $tmtype = "thrax";
+  $tmtype = "phrase" if $GRAMMAR_TYPE eq "phrase";
+
   foreach my $key (keys %TUNEFILES) {
 		my $file = $TUNEFILES{$key};
 		open FROM, $file or die "can't find file '$file'";
@@ -1350,6 +1402,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<MEM>/$JOSHUA_MEM/g;
 			s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
 			s/<GRAMMAR_FILE>/$TUNE_GRAMMAR/g;
+      s/<GRAMMAR_KEYWORD>/$tmtype/g;
 			s/<GLUE_GRAMMAR>/$GLUE_GRAMMAR_FILE/g;
 			s/<MAXSPAN>/$MAXSPAN/g;
 			s/<OOV>/$OOV/g;
@@ -1527,7 +1580,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs true -tm 'thrax pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
+                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs true -tm '$tmtype pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config.final",
 									"$testrun/joshua.config");
 
@@ -1687,8 +1740,10 @@ close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
+my $tmtype = "thrax";
+$tmtype = "phrase" if $GRAMMAR_TYPE eq "phrase";
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -tm/pt 'thrax pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -tm/pt '$tmtype pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 
