@@ -37,7 +37,7 @@ public class OOVFF extends StatelessFF {
       int sentID, Accumulator acc) {
     
     if (rule != null && this.ownerID == rule.getOwner())
-      acc.add(name, 1.0f);
+      acc.add(name, -100.0f);
 
     return null;
   }

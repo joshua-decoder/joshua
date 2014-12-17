@@ -128,7 +128,7 @@ while (my $line = <STDIN>) {
           push @WEIGHTS, "tm_owner${num}_${i} $weights[$i]";
         }
       } elsif ($name eq "UnknownWordPenalty") {
-        push @WEIGHTS, "OOVPenalty " . (-100 * $value);
+        push @WEIGHTS, "OOVPenalty " . ($value);
       } elsif ($name eq "WordPenalty") {
         push @WEIGHTS, "WordPenalty " . ($value * 2.29885);
       } else {
