@@ -57,11 +57,6 @@ while (my $line = <>) {
 
     # if the parameter was found on the command line, print out its replaced value
     if (exists $params{$norm_key}) {
-      if ($norm_key =~ /^tm/) {
-        my @fields = split(' ', $value);
-        $fields[-1] = $params{$norm_key};
-        $params{$norm_key} = join(' ', @fields);
-      }
       print "$key = " . $params{$norm_key} . "\n";
 
       # Deleting the parameter means it will only match the first time.  Useful for duplicated keys

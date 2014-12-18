@@ -1507,7 +1507,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     $TEST_GRAMMAR = $TEST_GRAMMAR_FILE = $GRAMMAR_FILE;
     
     if ($DO_FILTER_TM and ! $DOING_LATTICES) {
-      $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
+      $TEST_GRAMMAR = $TEST_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
                       "java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
