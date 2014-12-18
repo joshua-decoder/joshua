@@ -220,10 +220,6 @@ public class HGNode {
     }
   }
 
-  public float getEstTotalLogP() {
-    return this.score;
-  }
-
   /*
    * this will called by the sorting in Cell.ensureSorted()
    */

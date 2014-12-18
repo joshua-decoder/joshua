@@ -51,7 +51,7 @@ public class ComputeNodeResult {
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
     
-    if (Decoder.VERBOSE >= 3) {
+    if (Decoder.VERBOSE >= 4) {
       System.err.println("ComputeNodeResult():");
       System.err.println("-> RULE " + rule);
     }
@@ -64,7 +64,7 @@ public class ComputeNodeResult {
      */
     if (null != tailNodes) {
       for (HGNode item : tailNodes) {
-        if (Decoder.VERBOSE >= 3) {
+        if (Decoder.VERBOSE >= 4) {
           System.err.println("  -> item.bestedge: " + item);
           System.err.println("-> TAIL NODE " + item);
         }        
@@ -90,7 +90,7 @@ public class ComputeNodeResult {
       DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentence.id(), acc);
       transitionCost += acc.getScore();
       
-      if (Decoder.VERBOSE >= 3)
+      if (Decoder.VERBOSE >= 4)
         System.err.println(String.format("-> FEATURE %s = %.3f * %.3f = %.3f", 
             feature.getName(), acc.getScore() / Decoder.weights.get(feature.getName()),
             Decoder.weights.get(feature.getName()), acc.getScore()));
@@ -103,7 +103,7 @@ public class ComputeNodeResult {
   
     viterbiCost += transitionCost;
 
-    if (Decoder.VERBOSE >= 3)
+    if (Decoder.VERBOSE >= 4)
       System.err.println(String.format("-> COST = %.3f", transitionCost));
     
     // Set the final results.

@@ -29,6 +29,19 @@ public class Stack extends ArrayList<Hypothesis> {
     return super.add(hyp);
   }
   
+  @Override
+  public boolean remove(Object obj) {
+    boolean found = super.remove(obj);
+    if (found) {
+      Hypothesis item = (Hypothesis) obj;
+      Coverage cov = item.GetCoverage();
+      assert coverages.get(cov).remove(obj);
+      if (coverages.get(cov).size() == 0)
+        coverages.remove(cov);
+    }
+    return found;
+  }
+  
   /* Returns the set of coverages contained in this stack.
    * 
    */

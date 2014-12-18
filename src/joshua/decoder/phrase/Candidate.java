@@ -64,12 +64,9 @@ public class Candidate implements Comparable<Candidate> {
   
   @Override
   public String toString() {
-    return String.format("CAND[%d/%d hypotheses, %d/%d phrases] score=%.3f (base %.3f + future %.3f + trans %.3f) %s + %s (over %s)", ranks[0],
-        hypotheses.size(), ranks[1], phrases.size(), score(),
-        getHypothesis().Score(),
-        getFutureEstimate(),
-        result.getTransitionCost() , 
-        getHypothesis(), getRule().getEnglishWords(), getSpan());
+    return String.format("CANDIDATE(hyp %d/%d, phr %d/%d) [%s] phrase=[%s] span=%s",
+        ranks[0], hypotheses.size(), ranks[1], phrases.size(),
+        getHypothesis(), getRule().getEnglishWords().replaceAll("\\[.*?\\] ",""), getSpan());
   }
   
   public Candidate(List<Hypothesis> hypotheses, TargetPhrases phrases, Span span, float delta) {
@@ -181,11 +178,11 @@ public class Candidate implements Comparable<Candidate> {
    * @return
    */
   public float score() {
-    return getHypothesis().Score() + future_delta + result.getTransitionCost();
+    return getHypothesis().getScore() + future_delta + result.getTransitionCost();
   }
   
   public float getFutureEstimate() {
-    return getHypothesis().Score() + future_delta;
+    return getHypothesis().getScore() + future_delta;
   }
   
   public List<DPState> getStates() {
