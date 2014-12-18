@@ -325,7 +325,8 @@ public class TestSetFilter {
 
       String[] parts = P_DELIM.split(rule);
       if (parts.length >= 4) {
-        String source = parts[1].trim();
+        // the source is the second field for thrax grammars, first field for phrasal ones 
+        String source = rule.startsWith("[") ? parts[1].trim() : parts[0].trim();
         if (filter.inTestSet(source)) {
           System.out.println(rule);
           if (filter.parallel)

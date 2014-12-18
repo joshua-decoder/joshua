@@ -24,6 +24,7 @@ public class PhrasePenaltyFF extends StatelessFF {
 
   private int owner = 0;
   private float weight = 0.0f;
+  private float value = 1.0f;
   
   public PhrasePenaltyFF(FeatureVector weights, String argString) {
     super(weights, "PhrasePenalty");
@@ -60,7 +61,7 @@ public class PhrasePenaltyFF extends StatelessFF {
 
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
-      acc.add(name, 1);
+      acc.add(name, value);
 
     return null;
   }
@@ -73,7 +74,7 @@ public class PhrasePenaltyFF extends StatelessFF {
   public float estimateCost(Rule rule, int sentID) {
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
-      return weight;
+      return weight * value;
     return 0.0f;
   }
 }
