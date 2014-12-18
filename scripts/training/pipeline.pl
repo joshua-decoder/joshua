@@ -209,6 +209,9 @@ my $LM_STATE_MINIMIZATION = "true";
 
 my $NBEST = 300;
 
+my $REORDERING_LIMIT = 6;
+my $NUM_TRANSLATION_OPTIONS = 20;
+
 my $retval = GetOptions(
   "readme=s"    => \$README,
   "corpus=s"        => \@CORPORA,
@@ -279,6 +282,8 @@ my $retval = GetOptions(
   "tmp=s"             => \$TMPDIR,
   "rescore-forest!"  => \$RESCORE_FOREST,
   "nbest=i"           => \$NBEST,
+  "reordering-limit=i" => \$REORDERING_LIMIT,
+  "num-translation-options=i" => \$NUM_TRANSLATION_OPTIONS,
 );
 
 if (! $retval) {
@@ -1360,16 +1365,31 @@ close CONFIG;
 my $tmparams = join($/, @tmparamstrings);
 my $tmweights = join($/, @tmweightstrings);
 
-my $latticeparam = ($DOING_LATTICES == 1) 
-		? "SourcePath ||| 1.0 Opt -Inf +Inf -1 +1"
-		: "";
-my $latticeweight = ($DOING_LATTICES == 1)
-		? "SourcePath 1.0"
-		: "";
+my @otherparams;
+my @otherweights;
+
+if ($DOING_LATTICES) {
+  push @otherparams, "SourcePath ||| 1.0 Opt -Inf +Inf -1 +1";
+  push @otherweights, "SourcePath 1.0";
+}
+if ($GRAMMAR_TYPE eq "phrase") {
+  push @otherparams, "PhrasePenalty ||| 1.0 Opt -Inf +Inf -1 +1";
+  push @otherweights, "PhrasePenalty 1.0";
+
+  push @otherparams, "Distortion ||| 1.0 Opt -Inf +Inf -1 +1";
+  push @otherweights, "Distortion 1.0";
+}
+
+my $otherparams = join $/, @otherparams;
+my $otherweights = join $/, @otherweights;
 
 my @feature_functions;
 if ($DOING_LATTICES) {
   push(@feature_functions, "feature_function = SourcePath");
+}
+if ($GRAMMAR_TYPE eq "phrase") {
+  push(@feature_functions, "feature_function = Distortion");
+  push(@feature_functions, "feature_function = PhrasePenalty");
 }
 my $feature_functions = join("\n", @feature_functions);
 
@@ -1395,8 +1415,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
       s/<FEATURE_FUNCTIONS>/$feature_functions/g;
-			s/<LATTICEWEIGHT>/$latticeweight/g;
-			s/<LATTICEPARAM>/$latticeparam/g;
+			s/<OTHERWEIGHTS>/$otherweights/g;
+			s/<OTHERPARAMS>/$otherparams/g;
 			s/<LMFILE>/$LMFILES[0]/g;
 			s/<LMTYPE>/$LM_TYPE/g;
 			s/<MEM>/$JOSHUA_MEM/g;
@@ -1419,6 +1439,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TUNEDIR>/$tunedir/g;
 			s/<MERTDIR>/$tunedir/g;   # for backwards compatibility
 			s/use_sent_specific_tm=.*/use_sent_specific_tm=0/g;
+      s/<REORDERING_LIMIT>/$REORDERING_LIMIT/g;
+      s/<NUM_TRANSLATION_OPTIONS>/$NUM_TRANSLATION_OPTIONS/g;
 			print TO;
 		}
 		close(FROM);
@@ -2017,7 +2039,8 @@ sub get_features {
     while (my $line = <GRAMMAR>) {
       chomp($line);
       my @tokens = split(/ \|\|\| /, $line);
-      my $feature_str = $tokens[3];
+      # field 4 for regular grammars, field 3 for phrase tables
+      my $feature_str = ($line =~ /^\[/) ? $tokens[3] : $tokens[2];
       my @features = split(' ', $feature_str);
       my $feature_no = 0;
       foreach my $feature (@features) {
