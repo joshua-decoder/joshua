@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.AbstractGrammar;
@@ -58,9 +58,6 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   // Static Fields
   // ===============================================================
 
-  /** Logger for this class. */
-  private static final Logger logger = Logger.getLogger(MemoryBasedBatchGrammar.class.getName());
-
   // ===============================================================
   // Constructors
   // ===============================================================
@@ -102,8 +99,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
           addRule(rule);
         }
     } else {
-      if (logger.isLoggable(Level.WARNING))
-        logger.warning("Couldn't create a GrammarReader for file " + grammarFile + " with format "
+      Decoder.LOG(1, "Couldn't create a GrammarReader for file " + grammarFile + " with format "
             + formatKeyword);
     }
 
@@ -186,8 +182,6 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     for (int k = 0; k < french.length; k++) {
       int curSymID = french[k];
 
-      if (logger.isLoggable(Level.FINEST)) logger.finest("Matching: " + curSymID);
-
       /*
        * Note that the nonTerminal symbol in the french is not cleaned (i.e., will be sth like
        * [X,1]), but the symbol in the Trie has to be cleaned, so that the match does not care about
@@ -217,7 +211,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   }
 
   protected void printGrammar() {
-    logger.info(String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", this.qtyRulesRead, this.qtyRuleBins, grammarFile));
+    Decoder.LOG(1,  String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", 
+        this.qtyRulesRead, this.qtyRuleBins, grammarFile));
   }
 
   /**

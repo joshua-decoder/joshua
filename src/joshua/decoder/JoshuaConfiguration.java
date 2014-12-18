@@ -296,7 +296,7 @@ public class JoshuaConfiguration {
 
   public void readConfigFile(String configFile) throws IOException {
 
-    LineReader configReader = new LineReader(configFile);
+    LineReader configReader = new LineReader(configFile, false);
     try {
       for (String line : configReader) {
         line = line.trim(); // .toLowerCase();

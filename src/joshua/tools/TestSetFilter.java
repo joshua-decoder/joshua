@@ -2,6 +2,7 @@ package joshua.tools;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +11,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import joshua.util.io.LineReader;
 
 public class TestSetFilter {
   private Filter filter = null;
@@ -264,16 +267,19 @@ public class TestSetFilter {
     }
   }
 
-  public static void main(String[] argv) {
+  public static void main(String[] argv) throws IOException {
     // do some setup
     if (argv.length < 1) {
       System.err.println("usage: TestSetFilter [-v|-p|-f|-n N] <test set1> [test set2 ...]");
+      System.err.println("    -g    grammar file");
       System.err.println("    -v    verbose output");
       System.err.println("    -p    parallel compatibility");
       System.err.println("    -f    fast mode");
       System.err.println("    -n    max n-gram to compare to (default 12)");
       return;
     }
+    
+    String grammarFile = null;
 
     TestSetFilter filter = new TestSetFilter();
 
@@ -283,6 +289,9 @@ public class TestSetFilter {
         continue;
       } else if (argv[i].equals("-p")) {
         filter.setParallel(true);
+        continue;
+      } else if (argv[i].equals("-g")) {
+        grammarFile = argv[++i];
         continue;
       } else if (argv[i].equals("-f")) {
         filter.setFilter("fast");
@@ -302,26 +311,17 @@ public class TestSetFilter {
       filter.loadTestSentences(argv[i]);
     }
 
-    Scanner scanner = new Scanner(System.in, "UTF-8");
     int rulesIn = 0;
     int rulesOut = 0;
     if (filter.verbose) {
       System.err.println(String.format("Filtering rules with the %s filter...", filter.getFilterName()));
 //      System.err.println("Using at max " + filter.RULE_LENGTH + " n-grams...");
     }
-    while (scanner.hasNextLine()) {
-      if (filter.verbose) {
-        if ((rulesIn + 1) % 2000 == 0) {
-          System.err.print(".");
-          System.err.flush();
-        }
-        if ((rulesIn + 1) % 100000 == 0) {
-          System.err.println(" [" + (rulesIn + 1) + "]");
-          System.err.flush();
-        }
-      }
+    LineReader reader = (grammarFile != null) 
+        ? new LineReader(grammarFile, filter.verbose)
+        : new LineReader(System.in); 
+    for (String rule: reader) {
       rulesIn++;
-      String rule = scanner.nextLine();
 
       String[] parts = P_DELIM.split(rule);
       if (parts.length >= 4) {

@@ -12,6 +12,8 @@ import java.util.NoSuchElementException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
+import joshua.decoder.Decoder;
+
 /**
  * This class provides an Iterator interface to a BufferedReader. This covers the most common
  * use-cases for reading from files without ugly code to check whether we got a line or not.
@@ -39,6 +41,10 @@ public class LineReader implements Reader<String> {
   private IOException error;
 
   private int lineno = 0;
+  
+  private boolean display_progress = false;
+  
+  private int progress = 0;
 
   // ===============================================================
   // Constructors and destructors
@@ -51,6 +57,10 @@ public class LineReader implements Reader<String> {
    * @param filename the file to be opened ("-" for STDIN)
    */
   public LineReader(String filename) throws IOException {
+    
+    display_progress = (Decoder.VERBOSE >= 1);
+    
+    progress = 0;
     
     InputStream stream = null; 
     long totalBytes = -1;
@@ -74,6 +84,11 @@ public class LineReader implements Reader<String> {
     
     this.reader = new BufferedReader(new InputStreamReader(stream, FILE_ENCODING));
   }
+  
+  public LineReader(String filename, boolean show_progress) throws IOException {
+    this(filename);
+    display_progress = (Decoder.VERBOSE >= 1 && show_progress);
+  }
 
 
   /**
@@ -81,8 +96,9 @@ public class LineReader implements Reader<String> {
    */
   public LineReader(InputStream in) {
     this.reader = new BufferedReader(new InputStreamReader(in, FILE_ENCODING));
+    display_progress = false;
   }
-
+  
   /**
    * Chain to the underlying {@link ProgressInputStream}. 
    * 
@@ -236,6 +252,33 @@ public class LineReader implements Reader<String> {
    */
   public String next() throws NoSuchElementException {
     if (this.hasNext()) {
+      if (display_progress) {
+        int newProgress = (reader != null) ? progress() : 100;
+//        System.err.println(String.format("OLD %d NEW %d", progress, newProgress));
+        
+        if (newProgress > progress) {
+          for (int i = progress + 1; i <= newProgress; i++)
+            if (i == 97) {
+              System.err.print("1");
+            } else if (i == 98) {
+              System.err.print("0");
+            } else if (i == 99) {
+              System.err.print("0");
+            } else if (i == 100) {
+              System.err.println("%");
+            } else if (i % 10 == 0) {
+              System.err.print(String.format("%d", i));
+              System.err.flush();
+            } else if ((i - 1) % 10 == 0)
+              ; // skip at 11 since 10, 20, etc take two digits
+            else {
+              System.err.print(".");
+              System.err.flush();
+            }
+          progress = newProgress;
+        }
+      }
+      
       String line = this.buffer;
       this.lineno++;
       this.buffer = null;

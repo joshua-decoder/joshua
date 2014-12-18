@@ -3,6 +3,7 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -37,7 +38,7 @@ public class PhrasePenaltyFF extends StatelessFF {
           String key = args[i].substring(1);
           if (key.equals("owner")) {
             owner = Vocabulary.id(args[i+1]);
-            System.err.println("PhrasePenalty: Setting owner to " + args[i+1]);
+            Decoder.LOG(1, "PhrasePenalty: Setting owner to " + args[i+1]);
           } else {
             System.err.println(String.format("* FATAL: invalid PhrasePenaltyFF argument '%s'", key));
             System.exit(1);
