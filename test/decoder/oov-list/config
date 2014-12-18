@@ -26,4 +26,4 @@ lm_0 1.2373676802179452
 tm_phrase_0 1
 tm_glue_0 1
 WordPenalty -3.6942747832593694
-OOVPenalty -100.0
+OOVPenalty 1.0

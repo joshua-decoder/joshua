@@ -40,4 +40,4 @@ tm_glue_0 0.0
 WordPenalty -1.0
 SourcePath 1.0
 
-OOVPenalty -100
+OOVPenalty 1.0

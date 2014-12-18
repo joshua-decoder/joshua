@@ -20,6 +20,7 @@ import joshua.decoder.chart_parser.SourcePath;
  */
 public class OOVFF extends StatelessFF {
   private int ownerID = -1;
+  private float value = -100f;
 
   public OOVFF(FeatureVector weights) {
     super(weights, "OOVPenalty");
@@ -37,7 +38,7 @@ public class OOVFF extends StatelessFF {
       int sentID, Accumulator acc) {
     
     if (rule != null && this.ownerID == rule.getOwner())
-      acc.add(name, -100.0f);
+      acc.add(name, value);
 
     return null;
   }
@@ -52,7 +53,7 @@ public class OOVFF extends StatelessFF {
   @Override
   public float estimateCost(Rule rule, int sentID) {
     if (rule != null && this.ownerID == rule.getOwner())
-      return weights.get(name);
+      return weights.get(name) * value;
     return 0.0f;
   }
 }

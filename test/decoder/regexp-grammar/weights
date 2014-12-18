@@ -2,4 +2,4 @@ tm_regexp_0 1
 tm_regexp_1 1
 tm_glue_0 -1
 
-OOVPenalty -100
+OOVPenalty 1

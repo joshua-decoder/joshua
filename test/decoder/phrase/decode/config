@@ -16,7 +16,7 @@ feature-function = WordPenalty
 feature-function = Distortion
 feature-function = PhrasePenalty -owner pt
 
-OOVPenalty -100
+OOVPenalty 1.0
 Distortion 0.114849
 WordPenalty -0.201544
 PhrasePenalty -0.236965

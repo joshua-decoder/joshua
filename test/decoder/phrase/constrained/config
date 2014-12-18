@@ -1,4 +1,5 @@
 tm = phrase pt 0 ../decode/rules.1.gz
+tm = thrax pt 0 glue.grammar
 lm = kenlm 5 true false 100 ../decode/lm.1.gz
 
 mark-oovs = false
@@ -16,7 +17,7 @@ feature-function = WordPenalty
 feature-function = Distortion
 feature-function = PhrasePenalty -owner pt
 
-OOVPenalty -100
+OOVPenalty 1.0
 Distortion 0.114849
 WordPenalty -0.201544
 PhrasePenalty -0.236965
