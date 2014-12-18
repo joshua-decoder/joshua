@@ -270,11 +270,13 @@ public class TestSetFilter {
   public static void main(String[] argv) throws IOException {
     // do some setup
     if (argv.length < 1) {
-      System.err.println("usage: TestSetFilter [-v|-p|-f|-n N] <test set1> [test set2 ...]");
-      System.err.println("    -g    grammar file");
+      System.err.println("usage: TestSetFilter [-v|-p|-f|-e|-l|-n N|-g grammar] test_set1 [test_set2 ...]");
+      System.err.println("    -g    grammar file (can also be on STDIN)");
       System.err.println("    -v    verbose output");
       System.err.println("    -p    parallel compatibility");
-      System.err.println("    -f    fast mode");
+      System.err.println("    -f    fast mode (default)");
+      System.err.println("    -e    exact mode (slower)");
+      System.err.println("    -l    loose mode");
       System.err.println("    -n    max n-gram to compare to (default 12)");
       return;
     }

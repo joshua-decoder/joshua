@@ -1255,7 +1255,7 @@ if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = $TUNE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
-									"java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter -g $GRAMMAR_FILE $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
+									"$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
 									$GRAMMAR_FILE,
 									$TUNE{source},
 									$TUNE_GRAMMAR);
@@ -1510,7 +1510,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
       $TEST_GRAMMAR = $TEST_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.filtered.gz";
 
       $cachepipe->cmd("filter-test",
-                      "java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
+                      "$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
                       $GRAMMAR_FILE,
                       $TEST{source},
                       $TEST_GRAMMAR);
@@ -1710,12 +1710,11 @@ if ($TEST_GRAMMAR_FILE) {
   
   if ($DO_FILTER_TM and ! $DOING_LATTICES) {
 		$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
-
 		$cachepipe->cmd("filter-test-$NAME",
-										"java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/class joshua.tools.TestSetFilter -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
-										$GRAMMAR_FILE,
-										$TEST{source},
-										$TEST_GRAMMAR);
+                "$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
+                $GRAMMAR_FILE,
+                $TEST{source},
+                $TEST_GRAMMAR);
   }
 }
 
