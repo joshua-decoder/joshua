@@ -319,7 +319,6 @@ public class JoshuaConfiguration {
 
           String parameter = normalize_key(fds[0]);
 
-          // store the line for later processing
           if (parameter.equals(normalize_key("lm"))) {
             lms.add(fds[1]);
 

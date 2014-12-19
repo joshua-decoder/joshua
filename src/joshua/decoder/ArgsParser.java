@@ -1,6 +1,10 @@
 package joshua.decoder;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author orluke
@@ -30,7 +34,25 @@ public class ArgsParser {
           Decoder.VERBOSE = Integer.parseInt(args[i + 1].trim());
           break;
         }
-      } 
+      
+        if (args[i].equals("-version")) {
+          System.out.println("The Joshua machine translator, version 6.0 (git: ");
+          System.out.println("joshua-decoder.org");
+          System.exit(0);
+
+        } else if (args[i].equals("-license")) {
+          try {
+            for (String line: Files.readAllLines(Paths.get(String.format("%s/../LICENSE", 
+                JoshuaConfiguration.class.getProtectionDomain().getCodeSource().getLocation().getPath())), 
+                Charset.defaultCharset())) {
+              System.out.println(line);
+            }
+          } catch (IOException e) {
+            System.err.println("FATAL: missing license file!");
+          }
+          System.exit(0);
+        }
+      }
 
       // Search for the configuration file
       for (int i = 0; i < args.length; i++) {
