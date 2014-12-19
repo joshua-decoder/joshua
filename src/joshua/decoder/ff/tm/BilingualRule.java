@@ -226,7 +226,15 @@ public class BilingualRule extends Rule {
         String token = st.nextToken();
         if (token.indexOf('=') == -1) {
 //          System.err.println(String.format("VALUE(%s) = %.5f", token, -Float.parseFloat(token)));
-          cost += weights[denseFeatureIndex++] * -Float.parseFloat(token);
+          try {
+            cost += weights[denseFeatureIndex++] * -Float.parseFloat(token);
+          } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            /* This occurs if there are more values stored in the rule than there are weights
+             * found in the config file. Consistent with treating unfound weights as have a value
+             * of 0, we just skip it here.
+             */
+            ;
+          }
         } else {
           if (! token.startsWith("tm_"))
             throw new RuntimeException("FATAL: we don't support arbitrary named features in the grammar file");
