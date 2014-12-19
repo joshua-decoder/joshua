@@ -191,7 +191,7 @@ while (my $line = <STDIN>) {
     print "goal-symbol = GOAL\n";
     print "\n"; 
 
-  } elsif (header($line) eq "distortion") {
+  } elsif (header($line) eq "distortion" or header($line) eq "distortion-limit") {
     chomp(my $limit = <>);
 
     print "reordering-limit = $limit\n";
