@@ -59,7 +59,11 @@ public class Candidate implements Comparable<Candidate> {
   
   @Override
   public int hashCode() {
-    return hypotheses.hashCode() * phrases.hashCode() * span.hashCode() * Arrays.hashCode(ranks);
+    return 17 * hypotheses.size() 
+        + 23 * phrases.size() 
+        + 57 * span.hashCode() 
+        + 117 * Arrays.hashCode(ranks);
+//    return hypotheses.hashCode() * phrases.hashCode() * span.hashCode() * Arrays.hashCode(ranks);
   }
   
   @Override

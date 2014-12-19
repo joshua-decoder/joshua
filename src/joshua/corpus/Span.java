@@ -152,10 +152,6 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 
   @Override
   public int hashCode() {
-
     return start * 31 + end * 773;
-
   }
-
-
 }
