@@ -1,3 +1,28 @@
+6.0 (December 2014)
+===================
+
+Joshua 6.0 introduces many extensions and improvements. They include:
+
+- Phrase-based decoder
+
+  Joshua now includes an unlexicalized phrase-based decoder. It reads
+  Moses phrase tables directly. Support for training phrase-based
+  models is included in the pipeline (via callouts to Moses)
+
+- Significant speed improvements
+
+  Joshua is a lot faster (TODO: quantify). The phrase-based decoder is
+  on roughly par with Moses in terms of decoding speed: slower for
+  small beam sizes and faster for larger (above 200). GHKM decoding is
+  significantly faster as a result of the dot chart removal due to
+  Sennrich (2014).
+
+- Numerous bugfixes and other improvements
+
+  Dynamic lattice-based OOV segmenting, improved progress meters and
+  verbose output handling, support for alignments in phrase table,
+  latest KenLM (including lmplz)
+	
 5.0 (August 16, 2013)
 ===================
 
