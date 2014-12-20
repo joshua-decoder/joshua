@@ -9,6 +9,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.hypergraph.ViterbiExtractor;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -46,14 +47,22 @@ public class Translation {
         // We must put this weight as zero, otherwise we get an error when we try to retrieve it
         // without checking
         Decoder.weights.put("BLEU", 0);
-        kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
-        if (joshuaConfiguration.rescoreForest) {
-          Decoder.weights.put("BLEU", joshuaConfiguration.rescoreForestWeight);
+        if (joshuaConfiguration.topN == 0) {
+          String translation = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
+          translation = translation.substring(translation.indexOf(' ') + 1, translation.lastIndexOf(' '));
+          out.write(translation);
+          out.newLine();
+        } else {
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
-          Decoder.weights.put("BLEU", -joshuaConfiguration.rescoreForestWeight);
-          kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+          if (joshuaConfiguration.rescoreForest) {
+            Decoder.weights.put("BLEU", joshuaConfiguration.rescoreForestWeight);
+            kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+
+            Decoder.weights.put("BLEU", -joshuaConfiguration.rescoreForestWeight);
+            kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+          }
         }
 
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
