@@ -674,11 +674,9 @@ public class Chart {
   // ===============================================================
 
   private void logStatistics(Level level) {
-    if (logger.isLoggable(level))
-      logger.log(
-          level,
-          String.format("Sentence %d Chart: ADDED %d MERGED %d DOT-ITEMS ADDED: %d",
-              this.sentence.id(), this.nAdded, this.nMerged, this.nDotitemAdded));
+    Decoder.LOG(2, 
+        String.format("Input %d: Chart: added %d merged %d dot-items added: %d",
+            this.sentence.id(), this.nAdded, this.nMerged, this.nDotitemAdded));
   }
 
   /**

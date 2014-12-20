@@ -77,15 +77,15 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    Decoder.LOG(1, String.format("Translating sentence #%d [thread %d]: '%s'", sentence.id(), getId(),
-        sentence.source()));
+    Decoder.LOG(1, String.format("Input %d: %s", sentence.id(), sentence.source()));
 
     if (sentence.target() != null)
-      Decoder.LOG(1, "Constraining to target sentence '" + sentence.target() + "'");
+      Decoder.LOG(1, String.format("Input %d: Constraining to target sentence '%s'", 
+          sentence.id(), sentence.target()));
 
     // skip blank sentences
     if (sentence.isEmpty()) {
-      Decoder.LOG(1, "translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
+      Decoder.LOG(1, String.format("Translation %d: Translation took 0 seconds", sentence.id()));
       return new Translation(sentence, null, null, featureFunctions, joshuaConfiguration);
     }
     
@@ -129,13 +129,12 @@ public class DecoderThread extends Thread {
       }
       
     } catch (java.lang.OutOfMemoryError e) {
-      logger.warning(String.format("sentence %d: out of memory", sentence.id()));
+      Decoder.LOG(1, String.format("Input %d: out of memory", sentence.id()));
       hypergraph = null;
     }
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
-    Decoder.LOG(1, String.format("translation of sentence %d took %.3f seconds [thread %d]",
-        sentence.id(), seconds, getId()));
+    Decoder.LOG(1, String.format("Input %d: Translation took %.3f second", sentence.id(), seconds));
     Decoder.LOG(1, String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 

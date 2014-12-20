@@ -98,15 +98,6 @@ class Cell {
       } // End if item.lhs == this.goalSymID
     } // End foreach Item in bin.get_sorted_items()
 
-    if (logger.isLoggable(Level.INFO)) {
-      if (null == goalItem) {
-        logger.severe("goalItem is null!");
-        return false;
-      } else {
-        logger.info(String.format("Sentence id=" + this.chart.sentenceID() + "; BestlogP=%.3f",
-            goalItem.bestHyperedge.getBestDerivationScore()));
-      }
-    }
     ensureSorted();
 
     int itemsInGoalBin = getSortedNodes().size();

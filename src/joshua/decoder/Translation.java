@@ -48,12 +48,16 @@ public class Translation {
         // without checking
         Decoder.weights.put("BLEU", 0);
 
+        String translation = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
+        translation = translation.substring(translation.indexOf(' ') + 1, translation.lastIndexOf(' '));
+        
+        Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
+            translation));
+        
         if (joshuaConfiguration.topN == 0) {
-          String translation = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-          translation = translation.substring(translation.indexOf(' ') + 1, translation.lastIndexOf(' '));
           out.write(translation);
           out.newLine();
-        } else {
+        } else  {
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
           if (joshuaConfiguration.rescoreForest) {
@@ -66,7 +70,7 @@ public class Translation {
         }
 
         float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
-        Decoder.LOG(1, String.format("[%d] %d-best extraction took %.3f seconds", id(),
+        Decoder.LOG(1, String.format("Input %d: %d-best extraction took %.3f seconds", id(),
             joshuaConfiguration.topN, seconds));
 
       } else {

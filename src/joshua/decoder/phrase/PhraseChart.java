@@ -73,7 +73,7 @@ public class PhraseChart {
         phrases.finish(features, Decoder.weights, num_options);
     }
 
-    Decoder.LOG(1, String.format("[%d] Collecting options took %.3f seconds", source.id(),
+    Decoder.LOG(1, String.format("Input %d: Collecting options took %.3f seconds", source.id(),
         (System.currentTimeMillis() - startTime) / 1000.0f));
     
     if (Decoder.VERBOSE(3)) {

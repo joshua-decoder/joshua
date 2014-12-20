@@ -163,7 +163,7 @@ public class Stacks {
       gen.Search(output);
     }
     
-    Decoder.LOG(1, String.format("[%d] Search took %.3f seconds", sentence.id(),
+    Decoder.LOG(1, String.format("Input %d: Search took %.3f seconds", sentence.id(),
         (System.currentTimeMillis() - startTime) / 1000.0f));
     
     return createGoalNode();
