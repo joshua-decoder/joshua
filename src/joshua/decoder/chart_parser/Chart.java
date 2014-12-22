@@ -247,8 +247,20 @@ public class Chart {
         int arity = ruleCollection.getArity();
 
         if (arity == 0) {
+          /*
+           * The total number of arity-0 items (pre-terminal rules) that we add
+           * is controlled by num_translation_options in the configuration.
+           *
+           * We limit the translation options per DotNode; that is, per LHS.
+           */
+          int numTranslationsAdded = 0;
+
           /* Terminal productions are added directly to the chart */
           for (Rule rule : rules) {
+
+            if (numTranslationsAdded >= joshuaConfiguration.num_translation_options) {
+              break;
+            }
 /*
             // DON'T USE UNIQUE STATE CHECKING!!!  
             HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, null, new SourcePath());
@@ -262,8 +274,10 @@ public class Chart {
             ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
                 j, sourcePath, this.sentence);
 
-            if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
+            if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates())) {
               getCell(i, j).addHyperEdgeInCell(result, rule, i, j, null, sourcePath, true);
+              numTranslationsAdded++;
+            }
           }
         } else {
           /* Productions with rank > 0 are subject to cube pruning */
