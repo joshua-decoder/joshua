@@ -29,7 +29,7 @@ public class Translation {
    */
   private String output = null;
 
-  public Translation(Sentence source, HyperGraph hypergraph, KBestExtractor kBestExtractor,
+  public Translation(Sentence source, HyperGraph hypergraph, 
       List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
 
@@ -58,6 +58,7 @@ public class Translation {
           out.write(translation);
           out.newLine();
         } else  {
+          KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, false, joshuaConfiguration);
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
           if (joshuaConfiguration.rescoreForest) {

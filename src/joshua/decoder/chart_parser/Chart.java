@@ -25,7 +25,6 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
@@ -83,8 +82,6 @@ public class Chart {
   private int goalSymbolID = -1;
   private Lattice<Integer> inputLattice;
 
-  public KBestExtractor kBestExtractor;
-
   private Sentence sentence = null;
   private SyntaxTree parseTree;
 
@@ -135,13 +132,6 @@ public class Chart {
 
     this.goalSymbolID = Vocabulary.id(goalSymbol);
     this.goalBin = new Cell(this, this.goalSymbolID);
-
-    /*
-     * Create the kbest extractor. This is only actually used in the chart if we
-     * are decoding with non-local features.
-     */
-    this.kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
-        config);
 
     /* Create the grammars, leaving space for the OOV grammar. */
     this.grammars = new Grammar[grammars.length + 1];
@@ -262,15 +252,6 @@ public class Chart {
                 && numTranslationsAdded >= joshuaConfiguration.num_translation_options) {
               break;
             }
-/*
-            // DON'T USE UNIQUE STATE CHECKING!!!  
-            HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, null, new SourcePath());
-            HGNode newNode = new HGNode(i, j, rule.getLHS(), null, newEdge, 0.0f);
-            DerivationState state = this.kBestExtractor.new DerivationState(newNode, newEdge, null, 0.0f, -1);
-
-            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, state, i, j,
-                sourcePath, this.sentence);
-*/
             
             ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, i,
                 j, sourcePath, this.sentence);
@@ -300,18 +281,6 @@ public class Chart {
            */
           int[] ranks = new int[1 + superNodes.size()];
           Arrays.fill(ranks, 1);
-
-          /*
-          // DON'T USE UNIQUE STATE CHECKING!!!
-          HyperEdge newEdge = new HyperEdge(bestRule, 0.0f, 0.0f, currentTailNodes,
-              new SourcePath());
-          HGNode newNode = new HGNode(i, j, bestRule.getLHS(), null, newEdge, 0.0f);
-          DerivationState derivationState = kBestExtractor.getKthDerivation(newNode, 1);
-
-          // Score the rule application
-          ComputeNodeResult result = new ComputeNodeResult(featureFunctions, derivationState, i, j,
-              sourcePath, this.sentence);
-          */
           
           ComputeNodeResult result = new ComputeNodeResult(featureFunctions, bestRule, currentTailNodes, i, j, sourcePath, sentence);
           CubePruneState bestState = new CubePruneState(result, ranks, rules, currentTailNodes, dotNode);
@@ -390,18 +359,6 @@ public class Chart {
         CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
             nextRule, nextAntNodes, i, j, sourcePath, this.sentence), nextRanks, rules,
             nextAntNodes, dotNode);
-        
-        /*
-        // DON'T USE UNIQUE STATE CHECKING!!!
-        // TODO: derivation state rank not set correctly
-        HyperEdge newEdge = new HyperEdge(nextRule, 0.0f, 0.0f, nextTailNodes, new SourcePath());
-        HGNode newNode = new HGNode(i, j, nextRule.getLHS(), null, newEdge, 0.0f);
-        DerivationState nextDerivationState = kBestExtractor.getKthDerivation(newNode, 1);
-
-        CubePruneState nextState = new CubePruneState(new ComputeNodeResult(featureFunctions,
-            nextDerivationState, i, j, sourcePath, this.sentence), nextRanks, rules, nextTailNodes,
-            dotNode);
-        */
 
         /* Skip states that have been explored before. */
         if (visitedStates.contains(nextState))
@@ -739,18 +696,6 @@ public class Chart {
 
           List<Rule> rules = childNode.getRuleCollection().getSortedRules(this.featureFunctions);
           for (Rule rule : rules) { // for each unary rules
-
-/*          
-            // DON'T USE UNIQUE STATE CHECKING!!!  
-            HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, antecedents, new SourcePath());
-            HGNode newNode = new HGNode(i, j, rule.getLHS(), null, newEdge, 0.0f);
-            DerivationState state = this.kBestExtractor.new DerivationState(newNode, newEdge, null, 0.0f, -1);
-            
-            ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, state, i, j,
-                new SourcePath(), this.sentence);
-            HGNode resNode = chartBin.addHyperEdgeInCell(result, rule, i, j, antecedents,
-                new SourcePath(), true);
-*/
             
             ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule,
                 antecedents, i, j, new SourcePath(), this.sentence);
@@ -784,18 +729,6 @@ public class Chart {
     if (null == this.cells.get(i, j)) {
       this.cells.set(i, j, new Cell(this, this.goalSymbolID));
     }
-
-/*
-    // DON'T USE UNIQUE STATE CHECKING!!!
-    HyperEdge newEdge = new HyperEdge(rule, 0.0f, 0.0f, null, new SourcePath());
-    HGNode newNode = new HGNode(i, j, rule.getLHS(), null, newEdge, 0.0f);
-    DerivationState state = this.kBestExtractor.new DerivationState(newNode, newEdge, null, 0.0f, -1);
-    
-    this.cells.get(i, j)
-        .addHyperEdgeInCell(
-            new ComputeNodeResult(this.featureFunctions, state, i, j, srcPath,
-                sentence), rule, i, j, null, srcPath, false);
-*/
     
     this.cells.get(i, j).addHyperEdgeInCell(
         new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, sentence), rule,

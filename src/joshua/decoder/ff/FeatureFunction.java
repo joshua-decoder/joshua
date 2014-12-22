@@ -6,7 +6,6 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -74,27 +73,6 @@ public abstract class FeatureFunction {
     }
   }
 
-  /**
-   * Computes a feature function over a derivation state. Use of the generic derivation state permits
-   * the computation of nonlocal features.
-   * 
-   * New more general interface added August 2014, currently just chains to local version using
-   * only values of the current transition (hyperedge). 
-   *  
-   * @param derivationState
-   * @param i
-   * @param j
-   * @param sourcePath
-   * @param sentence
-   * @param acc
-   * @return
-   */
-  public DPState compute(DerivationState state, int i, int j, SourcePath sourcePath,
-      Sentence sentence, Accumulator acc) {
-    return compute(state.edge.getRule(), state.edge.getTailNodes(), i, j, sourcePath, sentence.id(), acc);
-  }
-  
-
   public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc);
 
@@ -141,15 +119,6 @@ public abstract class FeatureFunction {
     FeatureAccumulator features = new FeatureAccumulator();
     compute(rule, tailNodes, i, j, sourcePath, sentID, features);
     return features.getFeatures();
-  }
-  
-  public final FeatureVector computeFeatures(DerivationState state, int i, int j, SourcePath path,
-      Sentence sentence) {
-
-    FeatureAccumulator features = new FeatureAccumulator();
-    compute(state, i, j, path, sentence, features);
-    return features.getFeatures();    
-    
   }
 
   /**

@@ -172,38 +172,25 @@ public class FragmentLMFF extends NonLocalFF {
     numFragments++;
   }
   
-  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
-    throw new RuntimeException("THIS SHOULD NEVER BE CALLED");
-  }
-
   /*
    * This function computes the features that fire when the current rule is applied. The features
-   * that fire are any LM fragments that match the tree fragment that is defined by the current
-   * rule, its tail nodes, and a DerivationState object denoting the k-best deconstruction of the
-   * tree to explore. The fragments are matched against the root of this tree, and also against any
-   * internal nodes.
+   * that fire are any LM fragments that match the fragment associated with the current rule. LM
+   * fragments may recurse over the tail nodes, following 1-best backpointers until the fragment
+   * either matches or fails.
    */
   @Override
-  public DPState compute(DerivationState derivationState, int i, int j, SourcePath sourcePath,
-      Sentence sentence, Accumulator acc) {
+  public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, 
+      int sentID, Accumulator acc) {
 
-    if (derivationState == null) {
-      return null;
-    }
-    
-    System.err.println(String.format("RULE: %s  RANKS: %s", derivationState.edge.getRule(), derivationState));
-    
     /*
-     * Compute the tree from applying the current rule to the list of tail nodes over the
-     * kth-best derivation over the hyperforest.
+     * Get the fragment associated with the target side of this rule.
      * 
-     * (This could be done more efficiently. For example, just build the tree fragment once and then
+     * This could be done more efficiently. For example, just build the tree fragment once and then
      * pattern match against it. This would circumvent having to build the tree possibly once every
-     * time you try to apply a rule.)
+     * time you try to apply a rule.
      */
-    Tree baseTree = Tree.buildTree(derivationState, BUILD_DEPTH);
-    
+    Tree baseTree = Tree.buildTree(rule, tailNodes, BUILD_DEPTH);
+
     Stack<Tree> nodeStack = new Stack<Tree>();
     nodeStack.add(baseTree);
     while (!nodeStack.empty()) {
@@ -213,11 +200,11 @@ public class FragmentLMFF extends NonLocalFF {
 
       if (lmFragments.get(tree.getRule()) != null) {
         for (Tree fragment : lmFragments.get(tree.getRule())) {
-           System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree,
-           match(fragment, tree)));
+//           System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree,
+//           match(fragment, tree)));
 
           if (fragment.getLabel() == tree.getLabel() && match(fragment, tree)) {
-             System.err.println(String.format("  FIRING: matched %s against %s", fragment, tree));
+//             System.err.println(String.format("  FIRING: matched %s against %s", fragment, tree));
             acc.add(fragment.escapedString(), 1);
             if (OPTS_DEPTH)
               if (fragment.isLexicalized())
@@ -229,7 +216,8 @@ public class FragmentLMFF extends NonLocalFF {
       }
 
       // We also need to try matching rules against internal nodes of the fragment corresponding to
-      // this rule
+      // this
+      // rule
       if (tree.getChildren() != null)
         for (Tree childNode : tree.getChildren()) {
           if (!childNode.isBoundary())

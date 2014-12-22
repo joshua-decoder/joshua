@@ -38,13 +38,6 @@ public abstract class StatelessFF extends FeatureFunction {
   public float estimateCost(Rule rule, int sentID) {
     return 0.0f;
   }
-  
-  @Override
-  public final DPState compute(DerivationState derivationState, int i, int j, SourcePath sourcePath,
-      Sentence sentence, Accumulator acc) {
-    return compute(derivationState.edge.getRule(), derivationState.edge.getTailNodes(), i, j,
-        sourcePath, sentence.id(), acc);
-  }
 
   /**
    * Implementations of this should return null, since no state is contributed.

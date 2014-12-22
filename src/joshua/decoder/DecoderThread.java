@@ -86,7 +86,7 @@ public class DecoderThread extends Thread {
     // skip blank sentences
     if (sentence.isEmpty()) {
       Decoder.LOG(1, String.format("Translation %d: Translation took 0 seconds", sentence.id()));
-      return new Translation(sentence, null, null, featureFunctions, joshuaConfiguration);
+      return new Translation(sentence, null, featureFunctions, joshuaConfiguration);
     }
     
     long startTime = System.currentTimeMillis();
@@ -113,8 +113,6 @@ public class DecoderThread extends Thread {
         Stacks stacks = new Stacks(sentence, this.featureFunctions, grammars, joshuaConfiguration);
         
         hypergraph = stacks.search();
-        kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
-            joshuaConfiguration);
       } else {
         /* Seeding: the chart only sees the grammars, not the factories */
         Chart chart = new Chart(sentence, this.featureFunctions, grammars,
@@ -123,9 +121,6 @@ public class DecoderThread extends Thread {
         hypergraph = (joshuaConfiguration.use_dot_chart) 
           ? chart.expand() 
           : chart.expandSansDotChart();
-          
-        kBestExtractor = new KBestExtractor(sentence, featureFunctions, Decoder.weights, false,
-            joshuaConfiguration);
       }
       
     } catch (java.lang.OutOfMemoryError e) {
@@ -134,13 +129,13 @@ public class DecoderThread extends Thread {
     }
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
-    Decoder.LOG(1, String.format("Input %d: Translation took %.3f second", sentence.id(), seconds));
+    Decoder.LOG(1, String.format("Input %d: Translation took %.3f seconds", sentence.id(), seconds));
     Decoder.LOG(1, String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
     /* Return the translation unless we're doing synchronous parsing. */
     if (!joshuaConfiguration.parse || hypergraph == null) {
-      return new Translation(sentence, hypergraph, kBestExtractor, featureFunctions, joshuaConfiguration);
+      return new Translation(sentence, hypergraph, featureFunctions, joshuaConfiguration);
     }
 
     /*****************************************************************************************/
@@ -176,7 +171,7 @@ public class DecoderThread extends Thread {
     logger.info(String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
-    return new Translation(sentence, englishParse, chart.kBestExtractor, featureFunctions, joshuaConfiguration); // or do something else
+    return new Translation(sentence, englishParse, featureFunctions, joshuaConfiguration); // or do something else
   }
 
   private Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) {
