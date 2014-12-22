@@ -258,7 +258,8 @@ public class Chart {
           /* Terminal productions are added directly to the chart */
           for (Rule rule : rules) {
 
-            if (numTranslationsAdded >= joshuaConfiguration.num_translation_options) {
+            if (joshuaConfiguration.num_translation_options > 0 
+                && numTranslationsAdded >= joshuaConfiguration.num_translation_options) {
               break;
             }
 /*

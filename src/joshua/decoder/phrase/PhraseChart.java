@@ -39,6 +39,7 @@ public class PhraseChart {
 
     float startTime = System.currentTimeMillis();
 
+    this.numOptions = num_options;
     this.features = features;
 
     max_source_phrase_length = 0;
@@ -153,7 +154,7 @@ public class PhraseChart {
        * likely to have (often into the tens of thousands).
        */
       List<Rule> rules = to.getSortedRules(features);
-      if (rules.size() > numOptions)
+      if (numOptions > 0 && rules.size() > numOptions)
         rules = rules.subList(0,  numOptions);
 //        to.getRules().subList(numOptions, to.getRules().size()).clear();
 
