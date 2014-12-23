@@ -188,8 +188,7 @@ public class KBestExtractor {
           outputString = outputString.replace("%t",
               Tree.buildTree(rootRule, rootTails, Integer.MAX_VALUE).toString());
         } else {
-          // TODO: add functionality to HypothesisExtractor
-          outputString = outputString.replace("%t", "Outputting the target-side tree structure only works if you specify a -fragment-map");
+          outputString = outputString.replace("%t", derivationState.getTree());
         }
       }
 
@@ -718,6 +717,10 @@ public class KBestExtractor {
       return getHypothesis(defaultSide);
     }
 
+    private String getTree() {
+      return visit(new TreeExtractor()).toString();
+    }
+
     private String getHypothesis(Side side) {
       return visit(new HypothesisExtractor(side)).toString();
     }
@@ -838,6 +841,53 @@ public class KBestExtractor {
      */
     public String toString() {
       return outputs.pop().replaceAll("<s> ", "").replace(" </s>", "");
+    }
+  }
+
+  /**
+   * Assembles a Penn treebank format tree for a given derivation.
+   */
+  public class TreeExtractor implements DerivationVisitor {
+
+    private Stack<String> outputs;
+    private String ntMatcher = ".*" + Rule.NT_REGEX + ".*";
+
+    public TreeExtractor() {
+      outputs = new Stack<String>();
+    }
+
+    @Override
+    public void before(DerivationState state, int indent) {
+      HyperEdge edge = state.edge;
+      Rule rule = edge.getRule();
+
+      if (rule == null) {
+        return;
+      }
+
+      String lhs = Vocabulary.word(rule.getLHS());
+      String unbracketedLHS = lhs.substring(1, lhs.length() - 1);
+      String subtree = String.format("(%s %s)", unbracketedLHS, rule.getEnglishWords());
+      merge(subtree);
+    }
+
+    @Override
+    public void after(DerivationState state, int indent) {
+      // do nothing
+    }
+
+    public String toString() {
+      return outputs.pop();
+    }
+
+    private void merge(String subtree) {
+      if (outputs.size() == 0 || subtree.matches(ntMatcher)) {
+        outputs.push(subtree);
+      } else {
+        String parent = outputs.pop();
+        String replaced = parent.replaceFirst(Rule.NT_REGEX, Matcher.quoteReplacement(subtree));
+        merge(replaced);
+      }
     }
   }
 
