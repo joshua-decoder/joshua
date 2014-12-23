@@ -82,7 +82,7 @@ public class Translation {
             .replace("%s", source.source())
             .replace("%e", "")
             .replace("%S", "")
-            .replace("%t", "")
+            .replace("%t", "()")
             .replace("%i", Integer.toString(source.id()))
             .replace("%f", "")
             .replace("%c", "0.000");
