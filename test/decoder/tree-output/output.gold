@@ -1,0 +1,3 @@
+0 (GOAL (GOAL (GOAL (GOAL <s>) (A (B foo) (C bar))) (D baz)) </s>)
+1 ()
+2 (GOAL (GOAL (GOAL <s>) (D baz)) </s>)
