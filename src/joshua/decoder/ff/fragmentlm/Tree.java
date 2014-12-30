@@ -24,9 +24,7 @@ import joshua.util.io.LineReader;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class Tree implements Serializable {
-  /**
-   * 
-   */
+
   private static final long serialVersionUID = 1L;
 
   protected int label;
@@ -64,7 +62,7 @@ public class Tree implements Serializable {
    * hand, we can iterate through our store of language model fragments to match them against this,
    * following tail nodes if necessary.
    */
-  public static HashMap<String, Tree> rulesToFragments = new HashMap<String, Tree>();
+  public static HashMap<String, String> rulesToFragmentStrings = new HashMap<String, String>();
 
   public Tree(String label, List<Tree> children) {
     setLabel(label);
@@ -294,6 +292,16 @@ public class Tree implements Serializable {
     return sb.toString();
   }
 
+  /**
+   * Removes the quotes around terminals. Note that the resulting tree could not be read back
+   * in by this class, since unquoted leaves are interpreted as nonterminals.
+   * 
+   * @return
+   */
+  public String unquotedString() {
+    return toString().replaceAll("\"", "");
+  }
+  
   public String escapedString() {
     return toString().replaceAll(" ", "_");
   }
@@ -469,10 +477,12 @@ public class Tree implements Serializable {
     return fragment;
   }
 
-  public static Tree buildFragment(String fragmentString) {
-    PennTreeReader reader = new PennTreeReader(new StringReader(fragmentString));
-    Tree fragment = reader.next();
-    return fragment;
+  public static Tree getFragmentFromYield(String yield) {
+    String fragmentString = rulesToFragmentStrings.get(yield);
+    if (fragmentString != null)
+      return fromString(fragmentString);
+
+    return null;
   }
 
   public static void readMapping(String fragmentMappingFile) {
@@ -487,7 +497,7 @@ public class Tree implements Serializable {
           continue;
         }
 
-        addRuleMapping(fields[1], buildFragment(fields[0]));
+        rulesToFragmentStrings.put(fields[1].trim(), fields[0].trim()); // buildFragment(fields[0]));
       }
     } catch (IOException e) {
       System.err.println(String.format("* WARNING: couldn't read fragment mapping file '%s'",
@@ -495,13 +505,7 @@ public class Tree implements Serializable {
       System.exit(1);
     }
     System.err.println(String.format("FragmentLMFF: Read %d mappings from '%s'",
-        rulesToFragments.size(), fragmentMappingFile));
-  }
-
-  public static void addRuleMapping(String english, Tree fragment) {
-    // System.err.println(String.format("MAPPING: %s <> %s", english, fragment));
-    if (rulesToFragments != null)
-      rulesToFragments.put(english, fragment);
+        rulesToFragmentStrings.size(), fragmentMappingFile));
   }
 
   /**
@@ -520,7 +524,7 @@ public class Tree implements Serializable {
    * @return
    */
   public static Tree buildTree(Rule rule, DerivationState[] derivationStates, int maxDepth) {
-    Tree tree = rulesToFragments.get(rule.getEnglishWords());
+    Tree tree = getFragmentFromYield(rule.getEnglishWords());
 
     if (tree == null) {
       return null;
@@ -601,7 +605,7 @@ public class Tree implements Serializable {
   public static Tree buildTree(DerivationState derivationState, int maxDepth) {
     Rule rule = derivationState.edge.getRule();
     
-    Tree tree = rulesToFragments.get(rule.getEnglishWords());
+    Tree tree = getFragmentFromYield(rule.getEnglishWords());
 
     if (tree == null) {
       return null;
@@ -662,18 +666,19 @@ public class Tree implements Serializable {
    * @return
    */
   public static Tree buildTree(Rule rule, List<HGNode> tailNodes, int maxDepth) {
-    Tree tree = rulesToFragments.get(rule.getEnglishWords());
+    Tree tree = getFragmentFromYield(rule.getEnglishWords());
 
     if (tree == null) {
+      tree = new Tree(String.format("(%s %s)", Vocabulary.word(rule.getLHS()), rule.getEnglishWords()));
       // System.err.println("COULDN'T FIND " + rule.getEnglishWords());
       // System.err.println("RULE " + rule);
       // for (Entry<String, Tree> pair: rulesToFragments.entrySet())
       // System.err.println("  FOUND " + pair.getKey());
 
-      return null;
+//      return null;
+    } else {
+      tree = tree.shallowClone();
     }
-
-    tree = tree.shallowClone();
 
     if (tree != null && tailNodes != null && tailNodes.size() > 0 && maxDepth > 0) {
       List<Tree> frontier = tree.getNonterminalYield();

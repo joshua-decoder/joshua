@@ -10,7 +10,7 @@ import java.util.Stack;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.NonLocalFF;
+import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
@@ -49,7 +49,7 @@ import joshua.decoder.segment_file.Sentence;
  * 
  * @author Matt Post <post@cs.jhu.edu>
  */
-public class FragmentLMFF extends NonLocalFF {
+public class FragmentLMFF extends StatefulFF {
 
   /*
    * When building a fragment from a rule rooted in the hypergraph, this parameter determines how
@@ -225,7 +225,7 @@ public class FragmentLMFF extends NonLocalFF {
         }
     }
 
-    return null;
+    return new FragmentState(baseTree);
   }
 
   /**
@@ -266,14 +266,33 @@ public class FragmentLMFF extends NonLocalFF {
     return true;
   }
 
+  @Override
+  public DPState computeFinal(HGNode tailNodes, int i, int j, SourcePath sourcePath, int sentID,
+      Accumulator acc) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public float estimateCost(Rule rule, int sentID) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+  
   public static void main(String[] args) {
     /* Add an LM fragment, then create a dummy multi-level hypergraph to match the fragment against. */
     // FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(), (StateComputer) null, "");
     FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(),
         "-lm test/fragments.txt -map test/mapping.txt");
-
+  
     Tree fragment = Tree.fromString("(S NP (VP (VBD \"said\") SBAR) (. \".\"))");
-
+  
     BilingualRule ruleS = new HieroFormatReader()
         .parseLine("[S] ||| the man [VP,1] [.,2] ||| the man [VP,1] [.,2] ||| 0");
     BilingualRule ruleVP = new HieroFormatReader()
@@ -281,28 +300,64 @@ public class FragmentLMFF extends NonLocalFF {
     BilingualRule ruleSBAR = new HieroFormatReader()
         .parseLine("[SBAR] ||| that he was done ||| that he was done ||| 0");
     BilingualRule rulePERIOD = new HieroFormatReader().parseLine("[.] ||| . ||| . ||| 0");
-
+  
     ruleS.setOwner(0);
     ruleVP.setOwner(0);
     ruleSBAR.setOwner(0);
     rulePERIOD.setOwner(0);
-
+  
     HyperEdge edgeSBAR = new HyperEdge(ruleSBAR, 0.0f, 0.0f, null, (SourcePath) null);
-
+  
     HGNode nodeSBAR = new HGNode(3, 7, ruleSBAR.getLHS(), null, edgeSBAR, 0.0f);
     ArrayList<HGNode> tailNodesVP = new ArrayList<HGNode>();
     Collections.addAll(tailNodesVP, nodeSBAR);
     HyperEdge edgeVP = new HyperEdge(ruleVP, 0.0f, 0.0f, tailNodesVP, (SourcePath) null);
     HGNode nodeVP = new HGNode(2, 7, ruleVP.getLHS(), null, edgeVP, 0.0f);
-
+  
     HyperEdge edgePERIOD = new HyperEdge(rulePERIOD, 0.0f, 0.0f, null, (SourcePath) null);
     HGNode nodePERIOD = new HGNode(7, 8, rulePERIOD.getLHS(), null, edgePERIOD, 0.0f);
-
+  
     ArrayList<HGNode> tailNodes = new ArrayList<HGNode>();
     Collections.addAll(tailNodes, nodeVP, nodePERIOD);
-
+  
     Tree tree = Tree.buildTree(ruleS, tailNodes, 1);
     boolean matched = fragmentLMFF.match(fragment, tree);
     System.err.println(String.format("Does\n  %s match\n  %s??\n  -> %s", fragment, tree, matched));
   }
+
+  /**
+   * Maintains a state pointer used by KenLM to implement left-state minimization. 
+   * 
+   * @author Matt Post <post@cs.jhu.edu>
+   * @author Juri Ganitkevitch <juri@cs.jhu.edu>
+   */
+  public class FragmentState extends DPState {
+
+    private Tree tree = null;
+
+    public FragmentState(Tree tree) {
+      this.tree = tree;
+    }
+
+    /**
+     * Every tree is unique.
+     * 
+     * Some savings could be had here if we grouped together items with the same string.
+     */
+    @Override
+    public int hashCode() {
+      return tree.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return (other instanceof FragmentState && this == other);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("[FragmentState %s]", tree);
+    }
+  }
+
 }

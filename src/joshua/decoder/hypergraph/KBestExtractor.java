@@ -177,19 +177,7 @@ public class KBestExtractor {
           .replace("%c", String.format("%.3f", derivationState.cost));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {
-        // TODO: this always outputs the Viterbi tree
-        HyperEdge topEdge = derivationState.edge.getTailNodes().get(0).bestHyperedge.getTailNodes()
-            .get(0).bestHyperedge;
-        Rule rootRule = topEdge.getRule();
-        String englishSide = rootRule.getEnglishWords();
-        List<HGNode> rootTails = topEdge.getTailNodes();
-
-        if (Tree.rulesToFragments.containsKey(englishSide)) {
-          outputString = outputString.replace("%t",
-              Tree.buildTree(rootRule, rootTails, Integer.MAX_VALUE).toString());
-        } else {
-          outputString = outputString.replace("%t", derivationState.getTree());
-        }
+        outputString = outputString.replace("%t", derivationState.getTree());
       }
 
       if (joshuaConfiguration.outputFormat.contains("%e"))
@@ -772,8 +760,20 @@ public class KBestExtractor {
    * @author Matt Post <post@cs.jhu.edu>
    */
   public interface DerivationVisitor {
+    /**
+     * Called before each node's children are visited.
+     *
+     * @param state the derivation state
+     * @param level the tree depth
+     */
     void before(DerivationState state, int level);
 
+    /**
+     * Called after a node's children have been visited.
+     * 
+     * @param state the derivation state
+     * @param level the tree depth
+     */
     void after(DerivationState state, int level);
   }
 
@@ -849,26 +849,58 @@ public class KBestExtractor {
    */
   public class TreeExtractor implements DerivationVisitor {
 
-    private Stack<String> outputs;
-    private String ntMatcher = ".*" + Rule.NT_REGEX + ".*";
+    /* The tree being built. */
+    private Tree tree;
 
     public TreeExtractor() {
-      outputs = new Stack<String>();
+      tree = null;
     }
 
+    /**
+     * Before visiting the children, find the fragment representation for the current rule,
+     * and merge it into the tree we're building.
+     */
     @Override
     public void before(DerivationState state, int indent) {
       HyperEdge edge = state.edge;
       Rule rule = edge.getRule();
 
+      // Skip the special top-level rule
       if (rule == null) {
         return;
       }
 
       String lhs = Vocabulary.word(rule.getLHS());
       String unbracketedLHS = lhs.substring(1, lhs.length() - 1);
-      String subtree = String.format("(%s %s)", unbracketedLHS, rule.getEnglishWords());
-      merge(subtree);
+
+      /* Find the fragment corresponding to this flattened rule in the fragment map; if it's not
+       * there, just pretend it's a depth-one rule.
+       */
+      Tree fragment = Tree.getFragmentFromYield(rule.getEnglishWords());
+      if (fragment == null) {
+        String subtree = String.format("(%s %s)", unbracketedLHS, quoteTerminals(rule.getEnglishWords()));
+        fragment = Tree.fromString(subtree);
+      }
+      
+      merge(fragment);
+    }
+
+    /**
+     * Quotes just the terminals in the yield of a tree, represented as a string. This is to force
+     * compliance with the Tree class, which interprets all non-quoted strings as nonterminals. 
+     * 
+     * @param words a string of words representing a rule's yield
+     * @return
+     */
+    private String quoteTerminals(String words) {
+      String quotedWords = "";
+      for (String word: words.split("\\s+"))
+        if (word.startsWith("[") && word.endsWith("]"))
+          quotedWords += String.format("%s ", word);
+        else
+          quotedWords += String.format(" \"%s\"", word);
+
+      return quotedWords.substring(1);
     }
 
     @Override
@@ -877,16 +909,22 @@ public class KBestExtractor {
     }
 
     public String toString() {
-      return outputs.pop();
+      return tree.unquotedString();
     }
 
-    private void merge(String subtree) {
-      if (outputs.size() == 0 || subtree.matches(ntMatcher)) {
-        outputs.push(subtree);
+    /**
+     * Either set the root of the tree or merge this tree by grafting it onto the first nonterminal
+     * in the yield of the parent tree.
+     * 
+     * @param fragment
+     */
+    private void merge(Tree fragment) {
+      if (tree == null) {
+        tree = fragment;
       } else {
-        String parent = outputs.pop();
-        String replaced = parent.replaceFirst(Rule.NT_REGEX, Matcher.quoteReplacement(subtree));
-        merge(replaced);
+        Tree parent = tree.getNonterminalYield().get(0);
+        parent.setLabel(Vocabulary.word(fragment.getLabel()));
+        parent.setChildren(fragment.getChildren());
       }
     }
   }
