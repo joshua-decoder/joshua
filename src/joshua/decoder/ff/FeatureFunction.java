@@ -6,51 +6,64 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.segment_file.Sentence;
 
 /**
- * This class defines is the entry point for Joshua's sparse feature implementation. It defines some
- * basic variables and interfaces that are common to all features, and is immediately inherited by
- * StatelessFF and StatefulFF, which provide functionality common to stateless and stateful
- * features, respectively. Any feature implementation should extend those classes, and not this one.
+ * This class defines Joshua's feature function interface, for both sparse and
+ * dense features. It is immediately inherited by StatelessFF and StatefulFF,
+ * which provide functionality common to stateless and stateful features,
+ * respectively. Any feature implementation should extend those classes, and not
+ * this one. The distinction between stateless and stateful features is somewhat
+ * narrow: all features have the opportunity to return an instance of a
+ * {@link DPState} object, and stateless ones just return null.
  * 
- * Features in Joshua work like templates. Each feature function defines any number of actual
- * features, which are associated with weights. The task of the feature function is to compute the
- * features that are fired in different circumstances and then return the inner product of those
- * features with the weight vector. Feature functions can also produce estimates of their future
- * cost; these values are not used in computing the score, but are only used for pruning. The
- * individual features produced by each template should have globally unique names; a good
- * convention is to prefix each feature with the name of the template that produced it.
+ * Features in Joshua work like templates. Each feature function defines any
+ * number of actual features, which are associated with weights. The task of the
+ * feature function is to compute the features that are fired in different
+ * circumstances and then return the inner product of those features with the
+ * weight vector. Feature functions can also produce estimates of their future
+ * cost (via {@link estimateCost()}); these values are not used in computing the
+ * score, but are only used for sorting rules during cube pruning. The
+ * individual features produced by each template should have globally unique
+ * names; a good convention is to prefix each feature with the name of the
+ * template that produced it.
+ * 
+ * Joshua does not retain individual feature values while decoding, since this
+ * requires keeping a sparse feature vector along every hyperedge, which can be
+ * expensive. Instead, it computes only the weighted cost of each edge. If the
+ * individual feature values are requested, the feature functions are replayed
+ * in post-processing, say during k-best list extraction. This is implemented in
+ * a generic way by passing an {@link Accumulator} object to the compute()
+ * function. During decoding, the accumulator simply sums weighted features in a
+ * scalar. During k-best extraction, when individual feature values are needed,
+ * a {@link FeatureAccumulator} is used to retain the individual values.
  * 
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevich <juri@cs.jhu.edu>
  */
 public abstract class FeatureFunction {
 
-  // ===============================================================
-  // Attributes
-  // ===============================================================
-
-  // The name of the feature function (also the prefix on weights)
+  /*
+   * The name of the feature function; this generally matches the weight name on
+   * the config file. This can also be used as a prefix for feature / weight
+   * names, for templates that define multiple features.
+   */
   protected String name = null;
 
   // The list of arguments passed to the feature.
   private String argString;
 
-  // The weight vector used by the decoder, passed it when the feature is instantiated.
+  /*
+   * The global weight vector used by the decoder, passed it when the feature is
+   * instantiated
+   */
   protected FeatureVector weights;
 
-  // Accessor functions
   public String getName() {
     return name;
   }
 
   // Whether the feature has state.
   public abstract boolean isStateful();
-
-  // ===============================================================
-  // Methods
-  // ===============================================================
 
   public FeatureFunction(FeatureVector weights, String name) {
     this.weights = weights;
@@ -63,7 +76,7 @@ public abstract class FeatureFunction {
     this.argString = args;
 
     processArgs(this.argString);
-  } 
+  }
 
   public String logString() {
     try {
@@ -73,12 +86,16 @@ public abstract class FeatureFunction {
     }
   }
 
-  public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc);
-
   /**
-   * This is a convenience function for retrieving the cost of applying a rule, provided for
-   * backwards compatibility.
+   * This is the main function for defining feature values. The implementor
+   * should compute all the features along the hyperedge, calling acc.put(name,
+   * value) for each feature. It then returns the newly-computed dynamic
+   * programming state for this feature (for example, for the
+   * {@link LanguageModelFF} feature, this returns the new language model
+   * context). For stateless features, this value is null.
+   * 
+   * Note that the accumulator accumulates *unweighted* feature values. The
+   * feature vector is multiplied times the weight vector later on.
    * 
    * @param rule
    * @param tailNodes
@@ -86,23 +103,20 @@ public abstract class FeatureFunction {
    * @param j
    * @param sourcePath
    * @param sentID
-   * @return the *weighted* cost of the feature.
+   * @param acc
+   * @return the new dynamic programming state (null for stateless features)
    */
-  public final float computeCost(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID) {
-
-    ScoreAccumulator score = new ScoreAccumulator();
-    compute(rule, tailNodes, i, j, sourcePath, sentID, score);
-    return score.getScore();
-  }
+  public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
+      SourcePath sourcePath, int sentID, Accumulator acc);
 
   /**
-   * This is a convenience function for retrieving the features fired when applying a rule, provided
-   * for backward compatibility.
+   * This is a convenience function for retrieving the features fired when
+   * applying a rule, provided for backward compatibility.
    * 
-   * Returns the *unweighted* cost of the features delta computed at this position. Note that this
-   * is a feature delta, so existing feature costs of the tail nodes should not be incorporated, and
-   * it is very important not to incorporate the feature weights. This function is used in the kbest
+   * Returns the *unweighted* cost of the features delta computed at this
+   * position. Note that this is a feature delta, so existing feature costs of
+   * the tail nodes should not be incorporated, and it is very important not to
+   * incorporate the feature weights. This function is used in the kbest
    * extraction code but could also be used in computing the cost.
    * 
    * @param rule
@@ -122,9 +136,10 @@ public abstract class FeatureFunction {
   }
 
   /**
-   * This function is called for the final transition. For example, the LanguageModel feature
-   * function treats the last rule specially. It needs to return the *weighted* cost of applying the
-   * feature. Provided for backward compatibility.
+   * This function is called for the final transition. For example, the
+   * LanguageModel feature function treats the last rule specially. It needs to
+   * return the *weighted* cost of applying the feature. Provided for backward
+   * compatibility.
    * 
    * @param tailNode
    * @param i
@@ -142,8 +157,8 @@ public abstract class FeatureFunction {
   }
 
   /**
-   * Returns the *unweighted* feature delta for the final transition (e.g., for the language model
-   * feature function). Provided for backward compatibility.
+   * Returns the *unweighted* feature delta for the final transition (e.g., for
+   * the language model feature function). Provided for backward compatibility.
    * 
    * @param tailNode
    * @param i
@@ -161,8 +176,8 @@ public abstract class FeatureFunction {
   }
 
   /**
-   * Feature functions must overrided this. StatefulFF and StatelessFF provide reasonable defaults
-   * since most features do not fire on the goal node.
+   * Feature functions must overrided this. StatefulFF and StatelessFF provide
+   * reasonable defaults since most features do not fire on the goal node.
    * 
    * @param tailNode
    * @param i
@@ -176,32 +191,36 @@ public abstract class FeatureFunction {
       int sentID, Accumulator acc);
 
   /**
-   * This function is called when initializing translation grammars (for pruning purpose, and to get
-   * stateless cost for each rule). This is also needed to sort the rules for cube pruning. It must
-   * return the *weighted* estimated cost of applying a feature. This need not be the actual cost of
-   * applying the rule in context. Basically, it's the inner product of the weight vector and all
-   * features found in the grammar rule, though some features (like LanguageModelFF) can also
-   * compute some of their values.
+   * This function is called when sorting rules for cube pruning. It must return
+   * the *weighted* estimated cost of applying a feature. This need not be the
+   * actual cost of applying the rule in context. Basically, it's the inner
+   * product of the weight vector and all features found in the grammar rule,
+   * though some features (like LanguageModelFF) can also compute some of their
+   * values. This is just an estimate of the cost, which helps do better
+   * sorting. Later, the real cost of this feature function is called via
+   * compute();
    * 
    * @return the *weighted* cost of applying the feature.
    */
   public abstract float estimateCost(Rule rule, int sentID);
 
   /**
-   * This feature is called to produce a *weighted estimate* of the future cost of applying this
-   * feature. This value is not incorporated into the model score but is used in pruning decisions.
-   * Stateless features return 0.0f by default, but Stateful features might want to override this.
+   * This feature is called to produce a *weighted estimate* of the future cost
+   * of applying this feature. This value is not incorporated into the model
+   * score but is used in pruning decisions. Stateless features return 0.0f by
+   * default, but Stateful features might want to override this.
    * 
    * @param rule
    * @param state
    * @param sentID
-   * @return the *weighted* future cost estimate of applying this rule in context.
+   * @return the *weighted* future cost estimate of applying this rule in
+   *         context.
    */
   public abstract float estimateFutureCost(Rule rule, DPState state, int sentID);
 
   /**
-   * This function could be implemented to process the feature-line arguments in a generic way, if
-   * so desired.
+   * This function could be implemented to process the feature-line arguments in
+   * a generic way, if so desired.
    * 
    * TODO: implement this.
    */
@@ -210,9 +229,10 @@ public abstract class FeatureFunction {
   }
 
   /**
-   * Accumulator objects allow us to generalize feature computation. ScoreAccumulator takes
-   * (feature,value) pairs and simple stores the weighted sum (for decoding). FeatureAccumulator
-   * records the named feature values (for k-best extraction).
+   * Accumulator objects allow us to generalize feature computation.
+   * ScoreAccumulator takes (feature,value) pairs and simple stores the weighted
+   * sum (for decoding). FeatureAccumulator records the named feature values
+   * (for k-best extraction).
    * 
    * @author Matt Post <post@cs.jhu.edu>
    */

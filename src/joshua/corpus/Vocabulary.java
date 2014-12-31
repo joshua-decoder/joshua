@@ -14,8 +14,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Logger;
 
+import joshua.decoder.Decoder;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.util.FormatUtils;
 import joshua.util.MurmurHash;
@@ -28,8 +28,6 @@ import joshua.util.MurmurHash;
  */
 
 public class Vocabulary {
-
-  private static final Logger logger;
 
   private static ArrayList<NGramLanguageModel> lms;
 
@@ -46,7 +44,6 @@ public class Vocabulary {
   public static final String STOP_SYM = "</s>";
   
   static {
-    logger = Logger.getLogger(Vocabulary.class.getName());
 
     UNKNOWN_ID = 0;
     UNKNOWN_WORD = "<unk>";
@@ -82,7 +79,7 @@ public class Vocabulary {
       DataInputStream vocab_stream =
           new DataInputStream(new BufferedInputStream(new FileInputStream(vocab_file)));
       int size = vocab_stream.readInt();
-      logger.info("Reading vocabulary: " + size + " tokens.");
+      Decoder.LOG(1, String.format("Read %d entries from the vocabulary", size));
       clear();
       for (int i = 0; i < size; i++) {
         int id = vocab_stream.readInt();
@@ -103,7 +100,7 @@ public class Vocabulary {
       DataOutputStream vocab_stream =
           new DataOutputStream(new BufferedOutputStream(new FileOutputStream(vocab_file)));
       vocab_stream.writeInt(idToString.size() - 1);
-      logger.info("Writing vocabulary: " + (idToString.size() - 1) + " tokens.");
+      Decoder.LOG(1, String.format("Writing vocabulary: %d tokens", idToString.size() - 1));
       for (int i = 1; i < idToString.size(); i++) {
         vocab_stream.writeInt(i);
         vocab_stream.writeUTF(idToString.get(i));
@@ -144,8 +141,7 @@ public class Vocabulary {
       String hash_word = hashToString.get(hash);
       if (hash_word != null) {
         if (!token.equals(hash_word)) {
-          logger.warning("MurmurHash for the following symbols collides: '" + hash_word + "', '"
-              + token + "'");
+          Decoder.LOG(1, String.format("MurmurHash for the following symbols collides: '%s', '%s'", hash_word, token));
         }
         return hashToId.get(hash);
       } else {
