@@ -999,9 +999,15 @@ if (! defined $GRAMMAR_FILE) {
 
     mkdir("model") unless -d "model";
 
+    if ($ALIGNMENT ne "alignments/training.align") {
+      system("mkdir alignments") unless -d "alignments";
+      system("ln -sf $ALIGNMENT alignments/training.align");
+      $ALIGNMENT = "alignments/training.align";
+    }
+
     # Compute lexical probabilities
     $cachepipe->cmd("build-lex-trans",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -alignment grow-diag-final-and -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file $ALIGNMENT -alignment-stem $ALIGNMENT -corpus $TRAIN{prefix}",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file alignments/training -alignment align -corpus $TRAIN{prefix}",
                     $TRAIN{source},
                     $TRAIN{target},
                     $ALIGNMENT,
@@ -1011,7 +1017,7 @@ if (! defined $GRAMMAR_FILE) {
 
     # Extract the phrases
     $cachepipe->cmd("extract-phrases",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -alignment-file $ALIGNMENT -alignment-stem $ALIGNMENT -extract-file model/extract -corpus $TRAIN{prefix}",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -alignment-file alignments/training -alignment align -extract-file model/extract -corpus $TRAIN{prefix}",
                     $TRAIN{source},
                     $TRAIN{target},
                     $ALIGNMENT,
