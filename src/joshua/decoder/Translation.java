@@ -75,21 +75,27 @@ public class Translation {
             joshuaConfiguration.topN, seconds));
 
       } else {
+        
+        if (source.isEmpty()) {
+          // Empty output just gets echoed back
+          out.write("");
+          out.newLine();
+        } else {
+          // Failed translations get empty formatted outputs
+          // @formatter:off
+          String outputString = joshuaConfiguration.outputFormat
+              .replace("%s", source.source())
+              .replace("%e", "")
+              .replace("%S", "")
+              .replace("%t", "()")
+              .replace("%i", Integer.toString(source.id()))
+              .replace("%f", "")
+              .replace("%c", "0.000");
+          // @formatter:on
 
-        // There is no output for the given input (e.g. blank line)
-        // @formatter:off
-        String outputString = joshuaConfiguration.outputFormat
-            .replace("%s", source.source())
-            .replace("%e", "")
-            .replace("%S", "")
-            .replace("%t", "()")
-            .replace("%i", Integer.toString(source.id()))
-            .replace("%f", "")
-            .replace("%c", "0.000");
-        // @formatter:on
-
-        out.write(outputString);
-        out.newLine();
+          out.write(outputString);
+          out.newLine();
+        }
       }
 
       out.flush();
