@@ -111,6 +111,12 @@ public class ExtractTopCand {
       String prevID = null;
       for (String line : nbestReader) {
 
+        // pass empty lines through
+        if (Regex.commentOrEmptyLine.matches(line)) {
+          onebestWriter.newLine();
+          continue;
+        }
+
         String[] columns = Regex.threeBarsWithSpace.split(line);
 
         // We allow non-integer segment IDs because the

@@ -11,13 +11,18 @@ use warnings;
 while (my $line = <>) {
   my @tokens = split(/ \|\|\| /, $line);
 
-  # Add an underscore to every feature
-  $tokens[2] =~ s/=/_= /g;
+  if (@tokens > 1) {
 
-  # Remove underscores from dense features so they'll get translated as dense
-  $tokens[2] =~ s/tm_(\w+)_(\d+)_=/tm-$1-$2=/g;
-  $tokens[2] =~ s/lm_(\d+)_=/lm-$1=/g;
-  $tokens[2] =~ s/WordPenalty_=/WordPenalty=/g;
+    # Add an underscore to every feature
+    $tokens[2] =~ s/=/_= /g;
 
-  print join(" ||| ", @tokens);
+    # Remove underscores from dense features so they'll get translated as dense
+    $tokens[2] =~ s/tm_(\w+)_(\d+)_=/tm-$1-$2=/g;
+    $tokens[2] =~ s/lm_(\d+)_=/lm-$1=/g;
+    $tokens[2] =~ s/WordPenalty_=/WordPenalty=/g;
+    $tokens[2] =~ s/Distortion_=/Distortion=/g;
+    $tokens[2] =~ s/PhrasePenalty_=/PhrasePenalty=/g;
+
+    print join(" ||| ", @tokens);
+  }
 }

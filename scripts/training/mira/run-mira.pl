@@ -621,6 +621,8 @@ while (1) {
   system("perl -pi -e 's/(\\S+)_=(\\S+)/\$1=\$2/g; s/tm-(\\w+)-(\\d+)_0/tm_\$1_\$2/g' $feature_file");
   system("perl -pi -e 's/lm-(\\d+)_0/lm_\$1/g' $feature_file");
   system("perl -pi -e 's/WordPenalty_0/WordPenalty/g' $feature_file");
+  system("perl -pi -e 's/Distortion_0/Distortion/g' $feature_file");
+  system("perl -pi -e 's/PhrasePenalty_0/PhrasePenalty/g' $feature_file");
 
   # We also need to rename features that contain a colon in them, since that causes MIRA to
   # barf. This could be addressed by having MIRA split the feature name on the *last* colon it
