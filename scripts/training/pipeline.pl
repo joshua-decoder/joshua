@@ -2140,9 +2140,9 @@ sub compute_time_summary {
     my $time = 0.0;
     my $numrecs = 0;
     while (<FILE>) {
-      next unless /translation of .* took/;
+      next unless /^Input \d+: Translation took/;
       my @F = split;
-      $time += $F[5];
+      $time += $F[4];
       $numrecs++;
     }
     close(FILE);
