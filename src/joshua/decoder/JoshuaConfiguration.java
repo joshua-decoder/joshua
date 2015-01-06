@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.logging.Logger;
 
-import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.fragmentlm.Tree;
 import joshua.util.FormatUtils;
@@ -196,8 +195,8 @@ public class JoshuaConfiguration {
    * Phrase-based decoding parameters.
    */
   
-  /* Whether phrase-based decoding is happening */
-  public boolean phrase_based = false;
+  /* The search algorithm: currently either "cky" or "stack" */
+  public String search_algorithm = "cky";
   
   /* The distortion limit */
   public int reordering_limit = 8;
@@ -499,6 +498,14 @@ public class JoshuaConfiguration {
             Tree.readMapping(fragmentMapFile);
 
           /** PHRASE-BASED PARAMETERS **/
+          } else if (parameter.equals(normalize_key("search"))) {
+            search_algorithm = fds[1];
+            
+            if (!search_algorithm.equals("cky") && !search_algorithm.equals("stack")) {
+              System.err.println("* FATAL: -search must be one of 'stack' (for phrase-based decoding)");
+              System.err.println("*   or 'cky' (for hierarchical / syntactic decoding)");
+              System.exit(1);
+            }
 
           } else if (parameter.equals(normalize_key("reordering-limit"))) {
             reordering_limit = Integer.parseInt(fds[1]);

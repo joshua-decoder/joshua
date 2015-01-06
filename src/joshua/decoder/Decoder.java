@@ -562,7 +562,7 @@ public class Decoder {
 
         } else if (format.equals("phrase")) {
 
-          joshuaConfiguration.phrase_based = true;
+          joshuaConfiguration.search_algorithm = "phrase";
           grammar = new PhraseTable(file, owner, joshuaConfiguration);
 
         } else {
