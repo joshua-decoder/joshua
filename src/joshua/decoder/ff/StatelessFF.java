@@ -6,8 +6,6 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
-import joshua.decoder.segment_file.Sentence;
 
 /**
  * Stateless feature functions do not contribute any state. You need not implement this class to

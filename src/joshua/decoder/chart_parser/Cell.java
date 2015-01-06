@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
@@ -65,6 +64,8 @@ class Cell {
   // ===============================================================
 
   /**
+   * This function loops over all items in the top-level bin (covering the input sentence from
+   * <s> ... </s>), looking for items with the goal LHS. For each of these, 
    * add all the items with GOAL_SYM state into the goal bin the goal bin has only one Item, which
    * itself has many hyperedges only "goal bin" should call this function
    */
@@ -98,8 +99,6 @@ class Cell {
       } // End if item.lhs == this.goalSymID
     } // End foreach Item in bin.get_sorted_items()
 
-    ensureSorted();
-
     int itemsInGoalBin = getSortedNodes().size();
     if (1 != itemsInGoalBin) {
       logger.severe("the goal_bin does not have exactly one item");
@@ -129,11 +128,12 @@ class Cell {
   HGNode addHyperEdgeInCell(ComputeNodeResult result, Rule rule, int i, int j, List<HGNode> ants,
       SourcePath srcPath, boolean noPrune) {
 
-//    System.err.println(String.format("  ADD_EDGE(%s,%d,%d", rule, i, j));
-//    if (ants != null)
+//    System.err.println(String.format("ADD_EDGE(%d-%d): %s", i, j, rule.getRuleString()));
+//    if (ants != null) {
 //      for (int xi = 0; xi < ants.size(); xi++) {
 //        System.err.println(String.format("  -> TAIL %s", ants.get(xi)));
 //      }
+//    }
 
     List<DPState> dpStates = result.getDPStates();
     float pruningEstimate = result.getPruningEstimate();

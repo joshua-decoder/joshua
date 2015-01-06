@@ -47,8 +47,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
-
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
@@ -65,8 +63,6 @@ import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 
 public class PackedGrammar extends AbstractGrammar {
-
-  private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
 
   private EncoderConfiguration encoding;
 

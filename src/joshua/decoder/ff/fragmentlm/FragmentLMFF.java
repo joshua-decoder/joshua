@@ -17,8 +17,6 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
-import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
-import joshua.decoder.segment_file.Sentence;
 
 /**
  * Feature function that reads in a list of language model fragments and matches them against the
