@@ -56,7 +56,7 @@ while (my $rule = <>) {
 # ! es [X][VP] [X][,] [X] ||| , we [X][VP] [X][,] [PRN] ||| 0.0120482 0.0206611 1 0.000867691 2.718 ||| 2-2 3-3 ||| 83 1
 
   # Get rid of the source-side nonterminal.
-  $rule =~ s/ \[\S+?\](\[\S+?\])/ $1/g;
+  $rule =~ s/( ?)\[\S+?\](\[\S+?\])/$1$2/g;
 
   my ($l1, $l2, $probs, $alignment, $counts, undef, $tree) = split(/\s*\|\|\|\s*/, $rule);
 
