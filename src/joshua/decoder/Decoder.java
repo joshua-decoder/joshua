@@ -685,7 +685,7 @@ public class Decoder {
         this.featureFunctions.add(new WordPenaltyFF(weights));
 
       } else if (feature.equals("oovpenalty")) {
-        this.featureFunctions.add(new OOVFF(weights));
+        this.featureFunctions.add(new OOVFF(weights, joshuaConfiguration));
 
       } else if (feature.equals("rulelength")) {
         this.featureFunctions.add(new RuleLengthFF(weights));
