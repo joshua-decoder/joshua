@@ -219,4 +219,8 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
   }
 
   public abstract byte[] getAlignment();
+  
+  public String getRuleString() {
+    return String.format("%s -> %s ||| %s", Vocabulary.word(getLHS()), getFrenchWords(), getEnglishWords());
+  }
 }
