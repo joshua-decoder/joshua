@@ -50,7 +50,7 @@ import joshua.util.ChartSpan;
 
 public class Chart {
 
-  private final JoshuaConfiguration joshuaConfiguration;
+  private final JoshuaConfiguration config;
   // ===========================================================
   // Statistics
   // ===========================================================
@@ -115,8 +115,8 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
-      String goalSymbol, JoshuaConfiguration config) {
-    this.joshuaConfiguration = config;
+      String goalSymbol, JoshuaConfiguration config2) {
+    this.config = config2;
     this.inputLattice = sentence.intLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
@@ -138,20 +138,19 @@ public class Chart {
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i + 1] = grammars[i];
 
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config);
-    AbstractGrammar.addOOVRules(oovGrammar, sentence.intLattice(), featureFunctions, joshuaConfiguration.true_oovs_only);
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config2);
+    AbstractGrammar.addOOVRules(oovGrammar, sentence.intLattice(), featureFunctions, config.true_oovs_only);
     this.grammars[0] = oovGrammar; 
         
     // each grammar will have a dot chart
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
       this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
-          NonterminalMatcher.createNonterminalMatcher(logger, config),
+          NonterminalMatcher.createNonterminalMatcher(logger, config2),
           this.grammars[i].isRegexpGrammar());
 
     // Begin to do initialization work
 
-    // TODO: which grammar should we use to create a manual rule?
     // TODO: I don't think this is really used
     manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[grammars.length - 1],
         sentence.constraints());
@@ -167,9 +166,9 @@ public class Chart {
       if (ff instanceof SourceDependentFF)
         ((SourceDependentFF) ff).setSource(sentence);
     
-    nonterminalMatcher = NonterminalMatcher.createNonterminalMatcher(logger, config);
+    nonterminalMatcher = NonterminalMatcher.createNonterminalMatcher(logger, config2);
 
-    logger.fine("Finished seeding chart.");
+    Decoder.LOG(2, "Finished seeding chart.");
   }
 
   /**
@@ -230,13 +229,11 @@ public class Chart {
 
         List<Rule> rules = ruleCollection.getSortedRules(this.featureFunctions);
         SourcePath sourcePath = dotNode.getSourcePath();
-
+        
         if (null == rules || rules.size() == 0)
           continue;
 
-        int arity = ruleCollection.getArity();
-
-        if (arity == 0) {
+        if (ruleCollection.getArity() == 0) {
           /*
            * The total number of arity-0 items (pre-terminal rules) that we add
            * is controlled by num_translation_options in the configuration.
@@ -248,8 +245,8 @@ public class Chart {
           /* Terminal productions are added directly to the chart */
           for (Rule rule : rules) {
 
-            if (joshuaConfiguration.num_translation_options > 0 
-                && numTranslationsAdded >= joshuaConfiguration.num_translation_options) {
+            if (config.num_translation_options > 0 
+                && numTranslationsAdded >= config.num_translation_options) {
               break;
             }
             
@@ -303,11 +300,14 @@ public class Chart {
   private void applyCubePruning(int i, int j, PriorityQueue<CubePruneState> candidates) {
 
 //    System.err.println(String.format("CUBEPRUNE: %d-%d with %d candidates", i, j, candidates.size()));
+//    for (CubePruneState cand: candidates) {
+//      System.err.println(String.format("  CAND " + cand));
+//    }
     
     /* There are multiple ways to reach each point in the cube, so short-circuit that. */
     HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
     
-    int popLimit = joshuaConfiguration.pop_limit;
+    int popLimit = config.pop_limit;
     int popCount = 0;
     while (candidates.size() > 0 && ((++popCount <= popLimit) || popLimit == 0)) {
       CubePruneState state = candidates.poll();
@@ -325,14 +325,13 @@ public class Chart {
         getCell(i, j).addHyperEdgeInCell(state.computeNodeResult, state.getRule(), i, j,
             state.antNodes, sourcePath, true);
       }
-
+        
       /*
        * Expand the hypothesis by walking down a step along each dimension of
        * the cube, in turn. k = 0 means we extend the rule being used; k > 0
        * expands the corresponding tail node.
        */
 
-      // TODO: go through the derivation states
       for (int k = 0; k < state.ranks.length; k++) {
         
         /* Copy the current ranks, then extend the one we're looking at. */
@@ -344,8 +343,10 @@ public class Chart {
          * We might have reached the end of something (list of rules or tail
          * nodes)
          */
-        if ((k == 0 && nextRanks[k] > rules.size())
-            || (k != 0 && nextRanks[k] > superNodes.get(k - 1).nodes.size()))
+        if (k == 0 && (nextRanks[k] > rules.size() || 
+            (config.num_translation_options > 0 && nextRanks[k] > config.num_translation_options)))
+          continue;
+        else if ((k != 0 && nextRanks[k] > superNodes.get(k - 1).nodes.size()))
           continue;
 
         /* Use the updated ranks to assign the next rule and tail node. */
@@ -393,7 +394,10 @@ public class Chart {
             int j = arc.getHead().id();
 
             DotNode dotNode = new DotNode(i, j, trie, new ArrayList<SuperNode>(), new SourcePath().extend(arc));
+            int ruleNo = 0;
             for (Rule rule: dotNode.getRuleCollection().getSortedRules(featureFunctions)) {
+              if (config.num_translation_options > 0 && ++ruleNo > config.num_translation_options)
+                break;
               ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, 
                   dotNode.begin(), dotNode.end(), dotNode.getSourcePath(), this.sentence);
               if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))

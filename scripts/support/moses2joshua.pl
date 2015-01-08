@@ -130,7 +130,7 @@ while (my $line = <STDIN>) {
       } elsif ($name eq "UnknownWordPenalty") {
         push @WEIGHTS, "OOVPenalty " . ($value);
       } elsif ($name eq "WordPenalty") {
-        push @WEIGHTS, "WordPenalty " . ($value * 2.29885);
+        push @WEIGHTS, "WordPenalty " . ($value / 0.4342944819032518);
       } else {
         push @WEIGHTS, "$name $value";
       }

@@ -47,9 +47,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
-
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
@@ -65,8 +64,6 @@ import joshua.util.encoding.FloatEncoder;
 
 public class PackedGrammar extends AbstractGrammar {
 
-  private static final Logger logger = Logger.getLogger(PackedGrammar.class.getName());
-
   private EncoderConfiguration encoding;
 
   private PackedRoot root;
@@ -78,11 +75,12 @@ public class PackedGrammar extends AbstractGrammar {
     this.spanLimit = span_limit;
 
     // Read the vocabulary.
-    logger.info("Reading vocabulary: " + grammar_dir + File.separator + "vocabulary");
-    Vocabulary.read(grammar_dir + File.separator + "vocabulary");
-
+    String vocabFile = grammar_dir + File.separator + "vocabulary";
+    Decoder.LOG(1, String.format("Reading vocabulary: %s", vocabFile));
+    Vocabulary.read(vocabFile);
+    
     // Read the quantizer setup.
-    logger.info("Reading encoder configuration: " + grammar_dir + File.separator + "encoding");
+    Decoder.LOG(1, String.format("Reading encoder configuration: %s%sencoding", grammar_dir, File.separator));
     encoding = new EncoderConfiguration();
     encoding.load(grammar_dir + File.separator + "encoding");
 
@@ -101,7 +99,7 @@ public class PackedGrammar extends AbstractGrammar {
       count += s.estimated.length;
     root = new PackedRoot(this);
 
-    logger.info("Loaded " + count + " rules.");
+    Decoder.LOG(1, String.format("Loaded %d rules", count));
   }
 
   @Override

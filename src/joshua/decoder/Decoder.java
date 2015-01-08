@@ -562,7 +562,7 @@ public class Decoder {
 
         } else if (format.equals("phrase")) {
 
-          joshuaConfiguration.phrase_based = true;
+          joshuaConfiguration.search_algorithm = "phrase";
           grammar = new PhraseTable(file, owner, joshuaConfiguration);
 
         } else {
@@ -688,7 +688,7 @@ public class Decoder {
         this.featureFunctions.add(new MyFirstFunctionFF(weights));
 
       } else if (feature.equals("oovpenalty")) {
-        this.featureFunctions.add(new OOVFF(weights));
+        this.featureFunctions.add(new OOVFF(weights, joshuaConfiguration));
 
       } else if (feature.equals("rulelength")) {
         this.featureFunctions.add(new RuleLengthFF(weights));

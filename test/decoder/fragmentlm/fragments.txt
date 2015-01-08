@@ -1,0 +1,7 @@
+(S NP (VP (VBD "said") SBAR) (. "."))
+(S (NP (DT "the") (NN "man")) (VP (VBD "said") (SBAR (IN "that") (S (NP (PRP "he")) (VP (VBD "was") (VB "done"))))) (. "."))
+(S NP VP (. "."))
+(NP (DT "the") (NN "man"))
+(NN "man")
+(VP (VBD "said"))
+(VP (VBD "said") SBAR)

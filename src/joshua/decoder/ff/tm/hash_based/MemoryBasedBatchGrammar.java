@@ -1,13 +1,13 @@
 package joshua.decoder.ff.tm.hash_based;
 
-import java.io.IOException;
+import java.io.IOException;	
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.JoshuaConfiguration.OOVItem;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -246,6 +246,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
    * @param sourceWord
    * @param featureFunctions
    */
+  @Override
   public void addOOVRules(int sourceWord, List<FeatureFunction> featureFunctions) {
     
     // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
@@ -258,14 +259,13 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     int[] targetWords = { targetWord };
     final byte[] oovAlignment = { 0, 0 };
     
-    if (this.joshuaConfiguration.oov_list != null && this.joshuaConfiguration.oov_list.length != 0) {
-      for (int i = 0; i < this.joshuaConfiguration.oov_list.length; i++) {
+    if (this.joshuaConfiguration.oovList != null && this.joshuaConfiguration.oovList.size() != 0) {
+      for (OOVItem item: this.joshuaConfiguration.oovList) {
         BilingualRule oovRule = new BilingualRule(
-            Vocabulary.id(this.joshuaConfiguration.oov_list[i]), sourceWords, targetWords, "", 0,
+            Vocabulary.id(item.label), sourceWords, targetWords, "", 0,
             oovAlignment);
         addRule(oovRule);
         oovRule.estimateRuleCost(featureFunctions);
-        // System.err.println(String.format("ADDING OOV RULE %s", oovRule));
       }
     } else {
       int nt_i = Vocabulary.id(this.joshuaConfiguration.default_non_terminal);

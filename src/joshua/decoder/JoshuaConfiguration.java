@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.StatefulFF;
@@ -51,8 +52,26 @@ public class JoshuaConfiguration {
    * 
    * If this is empty, an unweighted default_non_terminal is used.
    */
-  public String[] oov_list = null;
-  public float[] oov_weights = null;
+  
+  public class OOVItem implements Comparable<OOVItem> {
+    public String label;
+    public float weight;
+
+    OOVItem(String l, float w) {
+      label = l;
+      weight = w;
+    }
+    
+    @Override
+    public int compareTo(OOVItem other) {
+      if (weight > other.weight) 
+        return -1;
+      else if (weight < other.weight)
+        return 1;
+      return 0;
+    }
+  }
+  public ArrayList<OOVItem> oovList = null;
 
   /*
    * Whether to segment OOVs into a lattice
@@ -176,8 +195,8 @@ public class JoshuaConfiguration {
    * Phrase-based decoding parameters.
    */
   
-  /* Whether phrase-based decoding is happening */
-  public boolean phrase_based = false;
+  /* The search algorithm: currently either "cky" or "stack" */
+  public String search_algorithm = "cky";
   
   /* The distortion limit */
   public int reordering_limit = 8;
@@ -222,8 +241,8 @@ public class JoshuaConfiguration {
     tms = new ArrayList<String>();
     weights_file = "";
     default_non_terminal = "[X]";
-    oov_list = null;
-    oov_weights = null;
+    oovList = new ArrayList<OOVItem>(); 
+    oovList.add(new OOVItem(default_non_terminal, 1.0f));
     goal_symbol = "[GOAL]";
     amortized_sorting = true;
     constrain_parse = false;
@@ -338,20 +357,20 @@ public class JoshuaConfiguration {
                 .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
           } else if (parameter.equals(normalize_key("oov-list"))) {
-            String[] oovs = fds[1].trim().split("\\s+");
-            if (oovs.length % 2 != 0) {
+            String[] tokens = fds[1].trim().split("\\s+");
+            if (tokens.length % 2 != 0) {
               System.err.println(String.format("* FATAL: invalid format for '%s'", fds[0]));
               System.exit(1);
             }
 
-            oov_list = new String[oovs.length / 2];
-            oov_weights = new float[oovs.length / 2];
+            oovList = new ArrayList<OOVItem>();
 
-            for (int i = 0; i < oovs.length; i += 2) {
-              oov_list[i / 2] = FormatUtils.markup(oovs[i]);
-              oov_weights[i / 2] = Float.parseFloat(oovs[i + 1]);
-            }
-
+            for (int i = 0; i < tokens.length; i += 2)
+              oovList.add(new OOVItem(FormatUtils.markup(tokens[i]), 
+                  (float) Math.log(Float.parseFloat(tokens[i + 1]))));
+            
+            Collections.sort(oovList);
+            
           } else if (parameter.equals(normalize_key("segment-oovs"))) {
             segment_oovs = true;
 
@@ -479,6 +498,14 @@ public class JoshuaConfiguration {
             Tree.readMapping(fragmentMapFile);
 
           /** PHRASE-BASED PARAMETERS **/
+          } else if (parameter.equals(normalize_key("search"))) {
+            search_algorithm = fds[1];
+            
+            if (!search_algorithm.equals("cky") && !search_algorithm.equals("stack")) {
+              System.err.println("* FATAL: -search must be one of 'stack' (for phrase-based decoding)");
+              System.err.println("*   or 'cky' (for hierarchical / syntactic decoding)");
+              System.exit(1);
+            }
 
           } else if (parameter.equals(normalize_key("reordering-limit"))) {
             reordering_limit = Integer.parseInt(fds[1]);

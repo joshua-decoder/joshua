@@ -3,11 +3,11 @@ all: build_binary ngram_query install
 CC = g++
 
 # Set to the location of your boost libraries
-BOOST_ROOT = /opt/boost
+BOOST_ROOT = /opt/local
 
 # Should be set to blank or "-mt", depending on whether you have the boost multithreaded
 # libraries installed
-#BOOST_MT = -mt
+BOOST_MT = -mt
 
 CORE = lm/bhiksha.o lm/binary_format.o lm/config.o lm/lm_exception.o lm/model.o lm/quantize.o lm/read_arpa.o lm/search_hashed.o lm/search_trie.o lm/sizes.o lm/trie.o lm/trie_sort.o lm/value_build.o lm/virtual_interface.o lm/vocab.o util/bit_packing.o util/ersatz_progress.o util/exception.o util/file.o util/file_piece.o util/mmap.o util/murmur_hash.o util/pool.o util/read_compressed.o util/scoped.o util/usage.o util/double-conversion/bignum.o util/double-conversion/bignum-dtoa.o util/double-conversion/cached-powers.o util/double-conversion/diy-fp.o util/double-conversion/double-conversion.o util/double-conversion/fast-dtoa.o util/double-conversion/fixed-dtoa.o util/double-conversion/strtod.o util/parallel_read.o
 

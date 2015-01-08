@@ -109,7 +109,7 @@ public class DecoderThread extends Thread {
     KBestExtractor kBestExtractor = null;
     try {
 
-      if (joshuaConfiguration.phrase_based) {
+      if (joshuaConfiguration.search_algorithm.equals("phrase")) {
         Stacks stacks = new Stacks(sentence, this.featureFunctions, grammars, joshuaConfiguration);
         
         hypergraph = stacks.search();

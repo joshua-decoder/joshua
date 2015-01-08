@@ -74,6 +74,7 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
 my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase"
+my $SEARCH_ALGORITHM = "cky"; # or "stack" (for phrase-based)
 
 # Which GHKM extractor to use ("galley" or "moses")
 my $GHKM_EXTRACTOR = "moses";
@@ -391,6 +392,8 @@ if ($GRAMMAR_TYPE eq "phrase") {
     print "* Turning off grammar packing for phrase translation (currently unsupported)\n";
     $DO_PACK_GRAMMARS = 0;
   }
+
+  $SEARCH_ALGORITHM = "stack";
 
   $MAXSPAN = 0;
 }
@@ -999,9 +1002,15 @@ if (! defined $GRAMMAR_FILE) {
 
     mkdir("model") unless -d "model";
 
+    if ($ALIGNMENT ne "alignments/training.align") {
+      system("mkdir alignments") unless -d "alignments";
+      system("ln -sf $ALIGNMENT alignments/training.align");
+      $ALIGNMENT = "alignments/training.align";
+    }
+
     # Compute lexical probabilities
     $cachepipe->cmd("build-lex-trans",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -alignment grow-diag-final-and -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file $ALIGNMENT -alignment-stem $ALIGNMENT -corpus $TRAIN{prefix}",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file alignments/training -alignment align -corpus $TRAIN{prefix}",
                     $TRAIN{source},
                     $TRAIN{target},
                     $ALIGNMENT,
@@ -1011,7 +1020,7 @@ if (! defined $GRAMMAR_FILE) {
 
     # Extract the phrases
     $cachepipe->cmd("extract-phrases",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -alignment-file $ALIGNMENT -alignment-stem $ALIGNMENT -extract-file model/extract -corpus $TRAIN{prefix}",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -alignment-file alignments/training -alignment align -extract-file model/extract -corpus $TRAIN{prefix}",
                     $TRAIN{source},
                     $TRAIN{target},
                     $ALIGNMENT,
@@ -1415,6 +1424,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
       s/<FEATURE_FUNCTIONS>/$feature_functions/g;
+			s/<SEARCH>/$SEARCH_ALGORITHM/g;
 			s/<OTHERWEIGHTS>/$otherweights/g;
 			s/<OTHERPARAMS>/$otherparams/g;
 			s/<LMFILE>/$LMFILES[0]/g;
@@ -1754,7 +1764,6 @@ if ($DO_PACK_GRAMMARS && ! is_packed($TEST_GRAMMAR)) {
 }
 
 # this needs to be in a function since it is done all over the place
-open FROM, $TUNEFILES{decoder_command} or die "can't find file '$TUNEFILES{decoder_command}'";
 open TO, ">$testrun/decoder_command";
 print TO "cat $TEST{source} | \$JOSHUA/bin/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
 close(TO);
@@ -1764,7 +1773,7 @@ chmod(0755,"$testrun/decoder_command");
 my $tmtype = "thrax";
 $tmtype = "phrase" if $GRAMMAR_TYPE eq "phrase";
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -tm/pt '$tmtype pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs true -tm/pt '$tmtype pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV -search $SEARCH_ALGORITHM > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 
@@ -2134,9 +2143,9 @@ sub compute_time_summary {
     my $time = 0.0;
     my $numrecs = 0;
     while (<FILE>) {
-      next unless /translation of .* took/;
+      next unless /^Input \d+: Translation took/;
       my @F = split;
-      $time += $F[5];
+      $time += $F[4];
       $numrecs++;
     }
     close(FILE);

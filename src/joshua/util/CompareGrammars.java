@@ -44,6 +44,8 @@ public class CompareGrammars {
 
       set.add(fields[fieldNumber]);
     }
+    
+    grammarScanner.close();
 
     return set;
   }
@@ -101,6 +103,8 @@ public class CompareGrammars {
           / set.size() + ") (" + totalOverDiffs / counter + ")");
     }
 
+    grammarScanner1.close();
+    grammarScanner2.close();
   }
 
   /**

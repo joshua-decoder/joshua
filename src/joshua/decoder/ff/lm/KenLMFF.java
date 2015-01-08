@@ -54,12 +54,9 @@ public class KenLMFF extends LanguageModelFF {
         words[x] = id;
       }
     }
-
+    
     // Get the probability of applying the rule and the new state
-    float estimate = weight * ((KenLM) languageModel).estimateRule(words);
-//    float parestimate = super.estimateCost(rule, sentID);
-//    System.err.println(String.format("KenLM::estimateCost() = %.5f, %.5f", estimate, parestimate));
-    return estimate;
+    return weight * ((KenLM) languageModel).estimateRule(words);
   }
   
   /**

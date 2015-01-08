@@ -1,7 +1,10 @@
 package joshua.decoder.ff;
 
+import java.util.HashMap;
 import java.util.List;
 
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.JoshuaConfiguration.OOVItem;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
@@ -20,12 +23,20 @@ import joshua.decoder.chart_parser.SourcePath;
  */
 public class OOVFF extends StatelessFF {
   private int ownerID = -1;
-  private float value = -100f;
+  
+  /* The default value returned for OOVs. Can be overridden with -oov-list */
+  private float defaultValue = -100f;
+  private HashMap<Integer,Float> oovWeights = null;
 
-  public OOVFF(FeatureVector weights) {
+  public OOVFF(FeatureVector weights, JoshuaConfiguration config) {
     super(weights, "OOVPenalty");
 
     ownerID = Vocabulary.id("oov");
+    oovWeights = new HashMap<Integer,Float>();
+    
+    if (config.oovList != null)
+      for (OOVItem item: config.oovList) 
+        oovWeights.put(Vocabulary.id(item.label), item.weight);
   }
 
   /**
@@ -37,8 +48,9 @@ public class OOVFF extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       int sentID, Accumulator acc) {
     
-    if (rule != null && this.ownerID == rule.getOwner())
-      acc.add(name, value);
+    if (rule != null && this.ownerID == rule.getOwner()) {
+      acc.add(name, getValue(rule.getLHS()));
+    }
 
     return null;
   }
@@ -53,7 +65,11 @@ public class OOVFF extends StatelessFF {
   @Override
   public float estimateCost(Rule rule, int sentID) {
     if (rule != null && this.ownerID == rule.getOwner())
-      return weights.get(name) * value;
+      return weights.get(name) * getValue(rule.getLHS());
     return 0.0f;
+  }
+  
+  private float getValue(int lhs) {
+    return oovWeights.containsKey(lhs) ? oovWeights.get(lhs) : defaultValue;
   }
 }

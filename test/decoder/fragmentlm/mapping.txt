@@ -1,0 +1,4 @@
+(S (NP (DT "the") (NN "man")) VP .) ||| the man [VP,1] [.,2]
+(SBAR (IN "that") (S (NP (PRP "he")) (VP (VBD "was") (VB "done")))) ||| that he was done
+(VP (VBD "said") SBAR) ||| said [SBAR,1]
+(. ".") ||| .
