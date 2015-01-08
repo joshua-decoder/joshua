@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
@@ -62,6 +63,14 @@ class Cell {
   // ===============================================================
   // Package-protected methods
   // ===============================================================
+  
+  public Set<Integer> getKeySet() {
+    return superNodesTbl.keySet();
+  }
+  
+  public SuperNode getSuperNode(int lhs) {
+    return superNodesTbl.get(lhs);
+  }
 
   /**
    * This function loops over all items in the top-level bin (covering the input sentence from
