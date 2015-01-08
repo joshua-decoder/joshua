@@ -684,9 +684,6 @@ public class Decoder {
       } else if (feature.equals("wordpenalty")) {
         this.featureFunctions.add(new WordPenaltyFF(weights));
 
-      } else if (feature.equals("myfirstfunction")) {
-        this.featureFunctions.add(new MyFirstFunctionFF(weights));
-
       } else if (feature.equals("oovpenalty")) {
         this.featureFunctions.add(new OOVFF(weights, joshuaConfiguration));
 
