@@ -2,6 +2,8 @@ package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -384,37 +386,28 @@ public class Chart {
       for (int id = 0; id < allCandidates.length; id++)
         allCandidates[id] = new PriorityQueue<CubePruneState>();
 
-      /* Add preterminals ending in a single word */
-      for (int g = 0; g < this.grammars.length; g++) {
-        Node<Integer> node = sentence.getNode(i);
-        for (Arc<Integer> arc : node.getOutgoingArcs()) {
-          int word = arc.getLabel();
-          Trie trie = this.grammars[g].getTrieRoot().match(word);
-          if (trie != null && trie.hasRules()) {
-            int j = arc.getHead().id();
-
-            DotNode dotNode = new DotNode(i, j, trie, new ArrayList<SuperNode>(), new SourcePath().extend(arc));
-            int ruleNo = 0;
-            for (Rule rule: dotNode.getRuleCollection().getSortedRules(featureFunctions)) {
-              if (config.num_translation_options > 0 && ++ruleNo > config.num_translation_options)
-                break;
-              ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, rule, null, 
-                  dotNode.begin(), dotNode.end(), dotNode.getSourcePath(), this.sentence);
-              if (stateConstraint == null || stateConstraint.isLegal(result.getDPStates()))
-                getCell(i,j).addHyperEdgeInCell(result, rule, i, j, null, dotNode.getSourcePath(), false);
-            }
-          }
-        }
-      }
-      
       for (int j = i + 1; j <= sourceLength; j++) {
         if (! sentence.hasPath(i,  j))
           continue;
         
-        /* Recurse */
         for (int g = 0; g < this.grammars.length; g++) {
 //          System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i, j, g));
-          consume(new DotNode(i, i, this.grammars[g].getTrieRoot(), new ArrayList<SuperNode>(), new SourcePath()), j-1);
+
+          if (j == i + 1) {
+            /* Handle terminals */
+            Node<Integer> node = sentence.getNode(i);
+            for (Arc<Integer> arc : node.getOutgoingArcs()) {
+              int word = arc.getLabel();
+              // disallow lattice decoding for now
+              assert arc.getHead().id() == j;
+              Trie trie = this.grammars[g].getTrieRoot().match(word);
+              if (trie != null && trie.hasRules())
+                addToChart(new ConsumedState(i, j, trie, new SourcePath().extend(arc), null), false);
+            }
+          } else {
+            /* Recurse for non-terminal case */
+            consume(new ConsumedState(i, i, this.grammars[g].getTrieRoot(), new SourcePath(), null), j-1);
+          }
         }
 
         // Now that we've accumulated all the candidates, apply cube pruning
@@ -446,7 +439,7 @@ public class Chart {
    * @param l extension point we're looking at
    * 
    */
-  private void consume(DotNode dotNode, int l) {
+  private void consume(ConsumedState state, int l) {
     /*
      * 1. If the trie node has any rules, we can add them to the collection
      * 
@@ -460,9 +453,9 @@ public class Chart {
 //    System.err.println(String.format("CONSUME %s / %d %d %d", dotNode, dotNode.begin(), dotNode.end(), l));
     
     // The span that's already been consumed
-    int i = dotNode.begin();
-    int j = dotNode.end();
-    Trie trie = dotNode.getTrieNode();
+    int i = state.i;
+    int j = state.j;
+    Trie trie = state.trie;
     
     // Try to match terminals
     if (inputLattice.distance(j, l) == 1) {
@@ -474,24 +467,86 @@ public class Chart {
         Trie nextTrie;
         if ((nextTrie = trie.match(word)) != null) {
           // add to chart item over (i, l)
-          addToChart(dotNode.extend(arc, nextTrie), i == j);
+          addToChart(state.extend(arc, nextTrie), i == j);
         }
       }
     }
         
     // Now try to match nonterminals
-    if (trie.hasExtensions()) {
-      // Get a list of all the supernodes, and query each to see if it's in the grammar
-      if (cells.get(j, l) != null) {
-        Map<Integer,SuperNode> items = getCell(j,l).getSortedSuperItems();
-        for (int lhs: items.keySet()) {
-          Trie nextTrie = trie.match(lhs);
-          if (nextTrie != null) {
-            // add item over (i, l) to candidates list
-            addToChart(dotNode.extend(items.get(lhs), nextTrie), i == j);
-          }
-        }
+    Cell cell = cells.get(j, l);
+    if (cell != null) {
+      for (int id: cell.getKeySet()) { // for each supernode (lhs), see if you can match a trie
+        Trie nextTrie = trie.match(id);
+        if (nextTrie != null)
+          addToChart(state.extend(cell.getSuperNode(id), nextTrie), i == j);
       }
+    }
+  }
+  
+  private class ConsumedState {
+    public ConsumedState prev = null;
+    public SuperNode superNode = null;
+    public SourcePath sourcePath = null;
+    public Trie trie;
+    public int i;
+    public int j;
+    
+    /**
+     * Initialize from arc traversal.
+     * 
+     * @param i
+     * @param j
+     * @param trie
+     * @param sourcePath
+     */
+    public ConsumedState(int i, int j, Trie trie, SourcePath sourcePath, ConsumedState prev) {
+      this.i = i;
+      this.j = j;
+      this.trie = trie;
+      this.sourcePath = sourcePath;
+      this.prev = prev;
+    }
+    
+    /**
+     * Extend the grammar trie over an arc of the input lattice
+     * 
+     * @param arc an arc in the input lattice
+     * @param trie an arc in the grammar trie
+     * @return the next state
+     */
+    public ConsumedState extend(Arc arc, Trie trie) {
+//      return new ConsumedStatedotNode(i, j).extend(arc, nextTrie), i == j);
+      return new ConsumedState(i, arc.getHead().id(), trie, sourcePath.extend(arc), this);
+    }
+    
+    public ConsumedState extend(SuperNode node, Trie nextTrie) {
+      ConsumedState state = new ConsumedState(i, node.end(), nextTrie, sourcePath.extendNonTerminal(), this);
+      state.superNode = node;
+      return state;
+    }
+
+    /**
+     * Produces a DotNode representing the rule that has been built; this DotNode is then useful
+     * in the old cube-pruning implementation (which is shared with the standard CKY+ implementation). 
+     * 
+     * @return
+     */
+    public DotNode getDotNode() {
+      /* Follow backpointers to build list of SuperNodes that have been crossed */
+      ArrayList<SuperNode> nodes = new ArrayList<SuperNode>();
+      ConsumedState state = this;
+      while (state != null) {
+        if (state.superNode != null)
+          nodes.add(state.superNode);
+        state = state.prev;
+      }
+      Collections.reverse(nodes);
+      
+      return new DotNode(i, j, trie, nodes, sourcePath);
+    }
+
+    public boolean hasRules() {
+      return trie.getRuleCollection() != null && trie.getRuleCollection().getRules().size() != 0;
     }
   }
   
@@ -502,8 +557,10 @@ public class Chart {
    * @param rules
    * @param tailNodes
    */
-  private void addToCandidates(DotNode dotNode) {
+  private void addToCandidates(ConsumedState state) {
 //    System.err.println(String.format("ADD TO CANDIDATES %s AT INDEX %d", dotNode, dotNode.end() - dotNode.begin()));
+
+    DotNode dotNode = state.getDotNode();
     
     // TODO: one entry per rule, or per rule instantiation (rule together with unique matching of input)?
     List<Rule> rules = dotNode.getRuleCollection().getSortedRules(featureFunctions); 
@@ -533,16 +590,16 @@ public class Chart {
    * @param trie the grammar node
    * @param isUnary whether the rules at this dotnode are unary
    */
-  private void addToChart(DotNode dotNode, boolean isUnary) {
+  private void addToChart(ConsumedState state, boolean isUnary) {
     
 //    System.err.println(String.format("ADD TO CHART %s unary=%s", dotNode, isUnary));
 
-    if (! isUnary && dotNode.hasRules())
-      addToCandidates(dotNode);
+    if (! isUnary && state.hasRules())
+      addToCandidates(state);
 
-    int j = dotNode.end();
+    int j = state.j;
     for (int l = j + 1; l <= sentence.length(); l++)
-      consume(dotNode, l);
+      consume(state, l);
   }
 
   

@@ -406,9 +406,14 @@ class DotChart {
    */
   static class DotNode {
 
+    private DotNode previous = null;
     private int i, j;
     private Trie trieNode = null;
+    
+    /* A list of grounded (over a span) nonterminals that have been crossed in traversing the rule */
     private ArrayList<SuperNode> antSuperNodes = null;
+    
+    /* The source lattice cost of applying the rule */
     private SourcePath srcPath;
 
     @Override
@@ -484,31 +489,5 @@ class DotChart {
     public int end() {
       return j;
     }
-
-    /**
-     * Creates a new dotnode that has been extended over an arc of the input lattice.
-     * 
-     * @param arc
-     * @param nextTrie
-     * @return a new dotnode
-     */
-    public DotNode extend(Arc<Integer> arc, Trie nextTrie) { 
-      return new DotNode(i, arc.getHead().id(), nextTrie, antSuperNodes, getSourcePath().extend(arc));
-    }
-    
-    /**
-     * Creates a new dotnode that has been extended over a nonterminal in the chart.
-     * 
-     * @param node the node we're passing over
-     * @param nextTrie the trie pointer we're taken to
-     * @return a new dotnode
-     */
-    public DotNode extend(SuperNode node, Trie nextTrie) {
-      ArrayList<SuperNode> nodes = (ArrayList<SuperNode>) antSuperNodes.clone();
-      nodes.add(node);
-      DotNode nextNode = new DotNode(i, node.end(), nextTrie, nodes, getSourcePath().extendNonTerminal());
-      return nextNode;
-    }
   }
-
 }
