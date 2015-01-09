@@ -1,0 +1,1 @@
+java -Xmx1200m -Xms1200m -cp bin -Djava.library.path=lib joshua.decoder.JoshuaDecoder ZMERT_example/config_ex2.txt ZMERT_example/src.txt ZMERT_example/nbest_ex2.out

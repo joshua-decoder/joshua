@@ -1,7 +1,0 @@
-lm			|||	1			Opt	0.1	+Inf	+0.5	+1.5
-phrasemodel pt 0	|||	0.5			Opt	-Inf	+Inf	-1	+1
-phrasemodel pt 1	|||	0.5			Opt	-Inf	+Inf	-1	+1
-phrasemodel pt 2	|||	0.5			Opt	-Inf	+Inf	-1	+1
-wordpenalty    		|||	-1			Opt	-Inf	+Inf	-5	0
-discriminative ./sparse_feat.example ||| 1.0	Opt	-Inf	+Inf	-5	5
-normalization = absval 1 lm

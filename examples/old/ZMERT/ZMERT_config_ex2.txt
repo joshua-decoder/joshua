@@ -1,0 +1,30 @@
+### Commonly used parameters
+-dir	ZMERT_example           # working directory (i.e. location of relevant files)
+#-s	src.txt                 # source sentences file name
+-r	ref                     # target sentences file name (in this case, file name prefix)
+-rps	4                       # references per sentence
+-p	params.txt              # parameter file
+-m	BLEU 4 closest          # evaluation metric and its options
+-maxIt	2                       # maximum MERT iterations
+-ipi	20                      # number of intermediate initial points per iteration
+-cmd	./decoder_command_ex2   # file containing commands to run decoder
+-decOut	nbest_ex2.out           # file prodcued by decoder
+-dcfg	config_ex2.txt          # decoder config file
+-N	300                     # size of N-best list generated each iteration
+-v	1                       # verbosity level (0-2; higher value => more verbose)
+-seed   12341234                # random number generator seed
+
+# Notice that comments are allowed
+
+### Other parameters (run "ZMERT -h" for default values)
+#-txtNrm  # text normalization method
+#-fin     # output file for final values
+#-prevIt  # previous MERT iterations from which to consider candidates (in addition to the current iteration)
+#-minIt   # minimum MERT iterations before considering an early exit
+#-stopIt  # number of consecutive iterations an early exit criterion must be satisfied before actually exiting
+#-stopSig # value over which a weight change is "significant" (for early exit purposes)
+#-save    # should MERT save intermediate config files or decoder output files? (or both? or neither?)
+#-opi     # should MERT modify at most one parameter per iteration?
+#-rand    # should first initial point (of first iteration) be initialized randomly?
+#-decExit # return value by decoder indicating success
+#-decV    # should decoder output be printed?

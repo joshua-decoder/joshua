@@ -1,5 +1,9 @@
-The examples in this directory are in various states of functionality.
+The examples in this directory demonstrate how to exercise different
+Joshua features.  If you have any comments, questions, or bug reports,
+please submit them to [our support
+list](https://groups.google.com/forum/#!topic/joshua_support).
 
-If you want to see working code and examples of usage, please consult the
-online documentation at joshua-decoder.org.  You should also find
-some useful examples in the pipeline script (the recommended way to use Joshua).
+The decoding examples and model training examples in the subdirectories of this
+directory assume you have downloaded the Fisher Spanish--English dataset, which
+contains speech-recognizer output paired with English translations. This data
+can be downloaded by running the `download.sh` script.
