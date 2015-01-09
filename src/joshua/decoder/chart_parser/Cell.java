@@ -24,17 +24,17 @@ import joshua.decoder.hypergraph.HyperEdge;
  */
 class Cell {
 
-  // ===============================================================
-  // Private instance fields
-  // ===============================================================
+  // The chart this cell belongs to
   private Chart chart = null;
 
-  private int goalSymID;
+  // The top-level (goal) symbol
+  private int goalSymbol;
 
   // to maintain uniqueness of nodes
   private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new HashMap<HGNode.Signature, HGNode>();
 
   // signature by lhs
+  private List<SuperNode> superNodesList = new ArrayList<SuperNode>();
   private Map<Integer, SuperNode> superNodesTbl = new HashMap<Integer, SuperNode>();
 
   /**
@@ -53,7 +53,7 @@ class Cell {
 
   public Cell(Chart chart, int goalSymID) {
     this.chart = chart;
-    this.goalSymID = goalSymID;
+    this.goalSymbol = goalSymID;
   }
 
   public Cell(Chart chart, int goal_sym_id, int constraint_symbol_id) {
@@ -84,7 +84,7 @@ class Cell {
     HGNode goalItem = null;
 
     for (HGNode antNode : bin.getSortedNodes()) {
-      if (antNode.lhs == this.goalSymID) {
+      if (antNode.lhs == this.goalSymbol) {
         float logP = antNode.bestHyperedge.getBestDerivationScore();
         List<HGNode> antNodes = new ArrayList<HGNode>();
         antNodes.add(antNode);
@@ -99,7 +99,7 @@ class Cell {
             previousItems, null);
 
         if (null == goalItem) {
-          goalItem = new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, logP
+          goalItem = new HGNode(0, sentenceLength + 1, this.goalSymbol, null, dt, logP
               + finalTransitionLogP);
           this.sortedNodes.add(goalItem);
         } else {

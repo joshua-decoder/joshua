@@ -424,6 +424,16 @@ class DotChart {
       return String.format("DOTNODE i=%d j=%d #rules=%d #tails=%d", i, j, size, antSuperNodes.size());
     }
     
+    /**
+     * Initialize a dot node with the span, grammar trie node, list of supernode tail pointers, and
+     * the lattice sourcepath.
+     * 
+     * @param i
+     * @param j
+     * @param trieNode
+     * @param antSuperNodes
+     * @param srcPath
+     */
     public DotNode(int i, int j, Trie trieNode, ArrayList<SuperNode> antSuperNodes, SourcePath srcPath) {
       this.i = i;
       this.j = j;
