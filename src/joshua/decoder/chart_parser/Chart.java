@@ -158,8 +158,6 @@ public class Chart {
       if (ff instanceof SourceDependentFF)
         ((SourceDependentFF) ff).setSource(sentence);
 
-    nonterminalMatcher = NonterminalMatcher.createNonterminalMatcher(logger, config2);
-
     Decoder.LOG(2, "Finished seeding chart.");
   }
 
