@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -68,17 +69,15 @@ public class LineReader implements Reader<String> {
       rawStream = null;
       stream = new FileInputStream(FileDescriptor.in);
     } else {
-      FileInputStream fis = new FileInputStream(filename);
-      totalBytes = (int) fis.getChannel().size();
-      rawStream = new ProgressInputStream(fis, totalBytes);
+      totalBytes = new File(filename).length();
+      rawStream = new ProgressInputStream(new FileInputStream(filename), totalBytes);
       
       try {
         stream = new GZIPInputStream(rawStream);
       } catch (ZipException e) {
         // GZIP ate a byte, so reset
-        fis = new FileInputStream(filename);
-        rawStream = new ProgressInputStream(fis, totalBytes);
-        stream = rawStream;
+        rawStream.close();
+        stream = rawStream = new ProgressInputStream(new FileInputStream(filename), totalBytes);
       }
     } 
     

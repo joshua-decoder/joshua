@@ -59,7 +59,6 @@ public class ProgressInputStream extends FilterInputStream {
    * @return progress through the file, as an integer (0..100).
    */
   public int progress() {
-    return (int)((float)bytesRead / (float)totalBytes * 100.0);
+    return (int)(100.0 * (float)bytesRead / (float)totalBytes);
   }
-
 }
