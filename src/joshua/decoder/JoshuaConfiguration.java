@@ -1,9 +1,6 @@
 package joshua.decoder;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -357,20 +354,46 @@ public class JoshuaConfiguration {
                 .finest(String.format("  hypergraph dump file format: %s", hypergraphFilePattern));
 
           } else if (parameter.equals(normalize_key("oov-list"))) {
-            String[] tokens = fds[1].trim().split("\\s+");
-            if (tokens.length % 2 != 0) {
-              System.err.println(String.format("* FATAL: invalid format for '%s'", fds[0]));
-              System.exit(1);
+            if (new File(fds[1]).exists()) {
+              oovList = new ArrayList<OOVItem>();
+              try {
+                File file = new File(fds[1]);
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                try {
+                  String str = br.readLine();
+                  while (str != null) {
+                    String[] tokens = str.trim().split("\\s+");
+
+                    oovList.add(new OOVItem(FormatUtils.markup(tokens[0]),
+                            (float) Math.log(Float.parseFloat(tokens[1]))));
+
+                    str = br.readLine();
+                  }
+                  br.close();
+                } catch(IOException e){
+                  System.out.println(e);
+                }
+              } catch(IOException e){
+                System.out.println(e);
+              }
+              Collections.sort(oovList);
+
+            } else {
+              String[] tokens = fds[1].trim().split("\\s+");
+              if (tokens.length % 2 != 0) {
+                  System.err.println(String.format("* FATAL: invalid format for '%s'", fds[0]));
+                  System.exit(1);
+                }
+
+              oovList = new ArrayList<OOVItem>();
+
+              for (int i = 0; i < tokens.length; i += 2)
+                oovList.add(new OOVItem(FormatUtils.markup(tokens[i]),
+                    (float) Math.log(Float.parseFloat(tokens[i + 1]))));
+
+              Collections.sort(oovList);
             }
 
-            oovList = new ArrayList<OOVItem>();
-
-            for (int i = 0; i < tokens.length; i += 2)
-              oovList.add(new OOVItem(FormatUtils.markup(tokens[i]), 
-                  (float) Math.log(Float.parseFloat(tokens[i + 1]))));
-            
-            Collections.sort(oovList);
-            
           } else if (parameter.equals(normalize_key("segment-oovs"))) {
             segment_oovs = true;
 
@@ -534,11 +557,11 @@ public class JoshuaConfiguration {
             n_best_file = tokens[0];
             if (tokens.length > 1)
               topN = Integer.parseInt(tokens[1]);
-            
+
           } else if (parameter.equals(normalize_key("input-file"))) {
-            // for Moses compatibility 
+            // for Moses compatibility
             input_file = fds[1];
-            
+
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
