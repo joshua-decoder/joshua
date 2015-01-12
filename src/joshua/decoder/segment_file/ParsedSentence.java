@@ -32,7 +32,7 @@ public class ParsedSentence extends Sentence {
     return input.matches("^\\(+[A-Z]+ .*");
   }
 
-  public String annotatedSource() {
+  public String fullSource() {
     return Vocabulary.getWords(this.intSentence());
   }
 }

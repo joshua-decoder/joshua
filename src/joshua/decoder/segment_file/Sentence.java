@@ -46,6 +46,93 @@ public class Sentence {
   protected Lattice<Integer> sourceLattice = null;
 
   private final List<ConstraintSpan> constraints;
+  
+  /* The annotations for this sentence */
+  protected Token[] annotations;
+  
+  /**
+   * Stores the identity of a word and its annotations in a sentence
+   * @author "Gaurav Kumar"
+   *
+   */
+  public class Token {
+    // The token without the annotations
+    String token; 
+    int tokenID;
+    // The annotation extracted from the raw token 
+    String type;
+    int typeID;
+    
+    /**
+     * Constructor : Creates a Token object from a raw word
+     * Extracts and assigns an annotation when available.
+     * The current convention for annotations is $TYPE_(TOKEN)
+     * For e.g., $num_(34) or $place_(Baltimore)
+     * Annotations can only be alphanumeric
+     * The annotation is set to -1 if there is no annotation for this token 
+     * 
+     * @param rawWord A word with annotation information (possibly)
+     *  
+     */
+    Token(String rawWord) {
+      // Matches a word with an annotation
+      // Check guidelines in constructor description
+      Pattern annotation = Pattern.compile("\\$([a-z0-9]+)_\\(([^)]+)\\)");
+      Matcher tag = annotation.matcher(rawWord);
+      if (tag.find()) {
+        // Annotation match found
+        token = tag.group(1);
+        type = tag.group(2);
+      }
+      else {
+        // No match found, which implies that this token does not have an 
+        // associated annotation
+        token = rawWord;
+        type = null;
+      }
+      // Get the Vocabulary ID for the token and the tyoe
+      // The type string is also in the vocabulary since the LM
+      // needs an integer version of the type. 
+      tokenID = Vocabulary.id(token);
+      typeID = type != null ? Vocabulary.id(type) : -1;
+    }
+    
+    /**
+     * Returns the word ID (vocab ID) for this token
+     * 
+     * @return int A word ID
+     */
+    public int getWord() {
+      return tokenID;
+    }
+    
+    /**
+     * Returns the string associated with this token
+     * @return String A word
+     */
+    public String getWordIdentity() {
+      return token;
+    }
+    
+    /**
+     * Returns the annotationID (vocab ID)
+     * associated with this token
+     * @return int A type ID
+     */
+    public int getAnnotation() {
+      return typeID;
+    }
+    
+    /**
+     * Returns the string version of the annotation
+     * associated with this token
+     * @return String A type
+     */
+    public String getTypeIdentity() {
+      return type;
+    }
+    
+  }
 
   // Matches the opening and closing <seg> tags, e.g.,
   // <seg id="72">this is a test input sentence</seg>.
@@ -61,9 +148,16 @@ public class Sentence {
    * @param id
    */
   public Sentence(String inputSentence, int id, JoshuaConfiguration joshuaConfiguration) {
-
+    
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
     
+    // Store annotations if available
+    this.annotations = new Token[inputSentence.length()];
+    String[] words = inputSentence.split("\\s+");
+    for (int i = 0; i < words.length; i++) {
+      this.annotations[i] = new Token(words[i]);
+    }
+
     constraints = new LinkedList<ConstraintSpan>();
     
     // Check if the sentence has SGML markings denoting the
@@ -104,6 +198,24 @@ public class Sentence {
    */
   public int length() {
     return this.intLattice().getShortestDistance();
+  }
+  
+  /**
+   * Returns the list of tokens which contain annotation information for this sentence
+   * @return A list of tokens
+   */
+  public Token[] getAnnotations() {
+    return this.annotations;
+  }
+  
+  /**
+   * Returns the annotations for a specific word (specified by an index) in the 
+   * sentence
+   * @param index The location of the word in the sentence
+   * @return The annotations associated with this word
+   */
+  public Token getAnnotation(int index) {
+    return this.annotations[index];
   }
 
   /**
@@ -251,7 +363,13 @@ public class Sentence {
     return sentence;
   }
 
-  public String annotatedSource() {
+  /**
+   * Returns a sentence with the start and stop symbols added to the 
+   * beginning and the end of the sentence respectively
+   * 
+   * @return String The input sentence with start and stop symbols
+   */
+  public String fullSource() {
     return Vocabulary.START_SYM + " " + sentence + " " + Vocabulary.STOP_SYM;
   }
 
@@ -274,7 +392,7 @@ public class Sentence {
   }
   
   public String source(int i, int j) {
-    StringTokenizer st = new StringTokenizer(annotatedSource());
+    StringTokenizer st = new StringTokenizer(fullSource());
     int index = 0;
     String substring = "";
     while (st.hasMoreTokens()) {
@@ -293,7 +411,7 @@ public class Sentence {
   }
 
   public int[] intSentence() {
-    return Vocabulary.addAll(annotatedSource());
+    return Vocabulary.addAll(fullSource());
   }
 
   public List<ConstraintSpan> constraints() {
