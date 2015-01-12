@@ -190,7 +190,7 @@ public abstract class Rule implements Comparator<Rule>, Comparable<Rule> {
    * @return
    */
   public boolean matches(Sentence sentence) {
-    boolean match = getPattern().matcher(sentence.annotatedSource()).find();
+    boolean match = getPattern().matcher(sentence.fullSource()).find();
     // System.err.println(String.format("match(%s,%s) = %s", Pattern.quote(getFrenchWords()),
     // sentence.annotatedSource(), match));
     return match;
