@@ -1,18 +1,56 @@
-Running the Joshua Decoder:
----------------------------
+Welcome to Joshua
+-----------------
 
-If you wish to run the complete machine translation pipeline, Joshua includes a
-black-box implementation that enables the entire pipeline to be run by typing
-a single restartable command.  See the documentation for a walkthrough and more
-information about the many options available to the pipeline.
+Joshua is a statistical machine translation toolkit for both
+phrase-based (new in version 6.0) and syntax-based decoding. It can be
+run with pre-built language packs available for download, and can also
+be used to build models for new language pairs. Among the many features of
+Joshua are:
 
-   - web:           http://joshua-decoder.org/5.0/pipeline.html 
-   - local mirror:  ./joshua-decoder.org/5.0/pipeline.html
+- Support for both phrase-based and syntax-based decoding models
+- Translation of weighted input lattices
+- [Thrax](http://joshua-decoder.org/6.0/thrax.html): a Hadoop-based, scalable
+  grammar extractor
+- A [sparse feature architecture](http://cs.jhu.edu/~post/joshua-docs/md_sparse_features.html)
+  supporting an arbitrary number of features
 
-Manually Running the Joshua Decoder:
-------------------------------------
+The latest release of Joshua is 6.0, released in January of 2014.
 
-To run the decoder, first set these environment variables:
+New in 6.0
+----------
+
+Joshua 6.0 includes the following new features:
+
+- A fast phrase-based decoder with the ability to read [Moses](http://statmt.org/moses) 
+  phrase tables
+- Large speed improvements compared to the previous syntax-based decoder
+- Special input handling
+- A host of bugfixes and stability improvements
+
+Working with "language packs"
+-----------------------------
+
+Joshua includes a number of "language packs", which are pre-built models that
+allow you to use the translation system as a black box, without worrying too
+much about how machine translation works. You can browse the models available
+for download on the [Joshua
+website](http://joshua-decoder.org/language-packs/).
+
+Building new models
+-------------------
+
+Joshua includes a pipeline script that allows you to build new models, provided
+you have training data.  This pipeline can be run (more or less) by invoking a
+single command, which handles data preparation, alignment, phrase-table or
+grammar construction, and tuning of the model parameters. See [the
+documentation](http://joshua-decoder.org/pipeline.html)
+for a walkthrough and more information about the many available options.
+
+Quick start
+-----------
+
+To run the decoder in any form requires setting a few basic environment
+variables: `$JAVA_HOME`, `$JOSHUA`, and potentially `$MOSES`.
 
     export JAVA_HOME=/path/to/java  # maybe /usr/java/home
     export JOSHUA=/path/to/joshua
@@ -25,62 +63,11 @@ You might also find it helpful to set these:
 Then, compile Joshua by typing:
 
     cd $JOSHUA
-    ant devel
-    ant all
-
-Some issues you may encounter:
-   1. You get a message stating: "no ken in java.library.path"
-     Symptoms: for some reason your Ken library didn't build.
-     Causes:   you are missing the boost library
-     Reference URLs:
-       https://groups.google.com/forum/#!topic/joshua_support/SiGO41tkpsw
-       http://stackoverflow.com/questions/12583080/c-library-in-using-boost-library
-     Corrective Action: 
-       Install Boost library: It may be as easy as sudo yum install boost-devel, otherwise, download boost from source, build and install.
+    ant
 
 The basic method for invoking the decoder looks like this:
 
-    cat SOURCE | JOSHUA -c CONFIG > OUTPUT
+    cat SOURCE | JOSHUA m MEM -c CONFIG OPTIONS > OUTPUT
 
-You can test this using the sample configuration files and inputs can be found 
-in the example/ directory.  For example, type:
-
-    cat examples/example/test.in | $JOSHUA/bin/decoder -c examples/example/joshua.config
-
-The decoder output will load the language model and translation models defined
-in the configuration file, and will then decode the five sentences in the
-example file.
-
-There are a variety of command line options that you can feed to Joshua.
-For example, you can enable multithreaded decoding with the -threads N flag:
-
-    cat examples/example/test.in | $JOSHUA/bin/decoder -c examples/example/joshua.config -threads 5
-
-The configuration file defines many additional parameters, all of which can be
-overridden on the command line by using the format -PARAMETER value.  For
-example, to output the top 10 hypotheses instead of just the top 1 specified in
-the configuration file, use -top-n N:
-
-    cat examples/example/test.in | $JOSHUA/bin/decoder -c examples/example/joshua.config -top-n 10
-
-Parameters, whether in the configuration file or on the command line, are
-converted to a canonical internal representation that ignores hyphens,
-underscores, and case.  So, for example, the following parameters are all
-equivalent:
-
-  {top-n, topN, top_n, TOP_N, t-o-p-N}
-  {poplimit, pop-limit, pop-limit, popLimit}
-
-and so on.  For an example of parameters, see the Joshua configuration file
-template in $JOSHUA/scripts/training/templates/tune/joshua.config or the online
-documentation at joshua-decoder.org/4.0/decoder.html.  There is a wealth of
-information in the online documentation.
-
-After you have successfully run the decoding example above, we recommend that
-you take a look at the Joshua pipeline script, which allows you to do full 
-end-to-end training of a translation model.  It is stored in
-
-    $JOSHUA/examples
-
- 
-
+Some example usage scenarios and scripts can be found in the `examples/`
+directory.
