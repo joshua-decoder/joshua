@@ -176,7 +176,8 @@ public class TER extends EvaluationMetric {
         stats[d][1] = (int) Double.parseDouble(strA[2]);
       }
 
-
+      inFile.close();
+      
       // 4) Delete TER files
 
       File fd;
@@ -417,6 +418,8 @@ public class TER extends EvaluationMetric {
             .println((int) Double.parseDouble(strA[1]) + " " + (int) Double.parseDouble(strA[2]));
         line = inFile.readLine(); // read info for next line
       }
+      
+      inFile.close();
     } catch (IOException e) {
       System.err.println("IOException in TER.copySS(String,PrintWriter): " + e.getMessage());
       System.exit(99902);

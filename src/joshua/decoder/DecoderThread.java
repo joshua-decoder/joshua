@@ -13,7 +13,6 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.hypergraph.ForestWalker;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.phrase.Stacks;
 import joshua.decoder.segment_file.Sentence;
 import joshua.corpus.Vocabulary;
@@ -106,7 +105,6 @@ public class DecoderThread extends Thread {
      * used for further processing (e.g., k-best extraction).
      */
     HyperGraph hypergraph = null;
-    KBestExtractor kBestExtractor = null;
     try {
 
       if (joshuaConfiguration.search_algorithm.equals("phrase")) {

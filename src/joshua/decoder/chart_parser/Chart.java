@@ -2,7 +2,6 @@ package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -10,7 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.corpus.syntax.SyntaxTree;
 import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.CubePruneState;
@@ -25,7 +23,6 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
@@ -83,8 +80,8 @@ public class Chart {
   private Lattice<Integer> inputLattice;
 
   private Sentence sentence = null;
-  private SyntaxTree parseTree;
-  private ManualConstraintsHandler manualConstraintsHandler;
+//  private SyntaxTree parseTree;
+//  private ManualConstraintsHandler manualConstraintsHandler;
   private StateConstraint stateConstraint;
 
   private static final Logger logger = Logger.getLogger(Chart.class.getName());
@@ -115,10 +112,10 @@ public class Chart {
 
     // TODO: OOV handling no longer handles parse tree input (removed after
     // commit 748eb69714b26dd67cba8e7c25a294347603bede)
-    this.parseTree = null;
-    if (sentence instanceof ParsedSentence)
-      this.parseTree = ((ParsedSentence) sentence).syntaxTree();
-
+//    this.parseTree = null;
+//    if (sentence instanceof ParsedSentence)
+//      this.parseTree = ((ParsedSentence) sentence).syntaxTree();
+//
     this.cells = new ChartSpan<Cell>(sourceLength, null);
 
     this.goalSymbolID = Vocabulary.id(goalSymbol);
@@ -143,9 +140,8 @@ public class Chart {
 
     // Begin to do initialization work
 
-    // TODO: I don't think this is really used
-    manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[grammars.length - 1],
-        sentence.constraints());
+//    manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[grammars.length - 1],
+//        sentence.constraints());
 
     stateConstraint = null;
     if (sentence.target() != null)

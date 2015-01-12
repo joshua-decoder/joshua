@@ -174,6 +174,8 @@ public class METEOR extends EvaluationMetric {
         stats[d][3] = (int) Double.parseDouble(strA[3]);
         stats[d][4] = (int) Double.parseDouble(strA[4]);
       }
+      
+      inFile.close();
     } catch (IOException e) {
       System.err.println("IOException in METEOR.suffStats(String[],int[]): " + e.getMessage());
       System.exit(99902);

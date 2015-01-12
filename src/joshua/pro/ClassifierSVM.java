@@ -1,14 +1,13 @@
 package joshua.pro;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Vector;
 
 import joshua.util.StreamGobbler;
+import joshua.util.io.LineReader;
 
 public class ClassifierSVM implements ClassifierInterface {
   @Override
@@ -61,12 +60,10 @@ public class ClassifierSVM implements ClassifierInterface {
       }
 
       // read the model file
-      BufferedReader wt = new BufferedReader(new FileReader(modelFilePath));
-      String line;
       boolean sv_start = false;
       double coef;
 
-      while ((line = wt.readLine()) != null) {
+      for (String line: new LineReader(modelFilePath)) {
         if (sv_start) // start reading support vectors and coefs
         {
           String[] val = line.split("\\s+");

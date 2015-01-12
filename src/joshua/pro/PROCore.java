@@ -1454,6 +1454,7 @@ public class PROCore {
 
         } // for (i)
 
+        inFile_statsMergedKnown.close();
         outFile_statsMerged.close();
 
         // TESTING

@@ -1071,7 +1071,6 @@ public class MertCore {
         BufferedReader inFile_statsMergedKnown =
             new BufferedReader(new InputStreamReader(instream_statsMergedKnown, "utf8"));
 
-
         for (int i = 0; i < numSentences; ++i) {
 
           // reprocess candidates from previous iterations
@@ -1219,9 +1218,8 @@ public class MertCore {
 
         } // for (i)
 
+        inFile_statsMergedKnown.close();
         outFile_statsMerged.close();
-
-
 
         println("", 1); // finish progress line
 

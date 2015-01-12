@@ -1,14 +1,13 @@
 package joshua.pro;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Vector;
 
 import joshua.util.StreamGobbler;
+import joshua.util.io.LineReader;
 
 // sparse feature representation version
 public class ClassifierMegaM implements ClassifierInterface {
@@ -68,9 +67,7 @@ public class ClassifierMegaM implements ClassifierInterface {
       }
 
       // read the weights
-      BufferedReader wt = new BufferedReader(new FileReader(weightFilePath));
-      String line;
-      while ((line = wt.readLine()) != null) {
+      for (String line: new LineReader(weightFilePath)) {
         String val[] = line.split("\\s+");
         lambda[Integer.parseInt(val[0])] = Double.parseDouble(val[1]);
       }

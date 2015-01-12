@@ -5,13 +5,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
+import joshua.util.io.LineReader;
 
 public class PackedGrammarServer {
 
@@ -59,9 +59,7 @@ public class PackedGrammarServer {
     JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
     PackedGrammarServer pgs = new PackedGrammarServer(args[0],joshuaConfiguration);
     
-    Scanner user = new Scanner(System.in);
-    while (user.hasNextLine()) {
-      String line = user.nextLine().trim();
+    for (String line: new LineReader(System.in)) {
       List<Rule> rules = pgs.get(line);
       if (rules == null) continue;
       for (Rule r : rules)

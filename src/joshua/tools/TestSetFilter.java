@@ -1,6 +1,5 @@
 package joshua.tools;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -71,13 +69,11 @@ public class TestSetFilter {
     RULE_LENGTH = value;
   }
 
-  private void loadTestSentences(String filename) {
+  private void loadTestSentences(String filename) throws IOException {
     int count = 0;
 
     try {
-      Scanner scanner = new Scanner(new File(filename), "UTF-8");
-      while (scanner.hasNextLine()) {
-        String line = scanner.nextLine();
+      for (String line: new LineReader(filename)) {
         filter.addSentence(line);
         count++;
       }
@@ -90,7 +86,8 @@ public class TestSetFilter {
   }
 
   /**
-   * Top-level filter, responsible for calling the fast or exact version.
+   * Top-level filter, responsible for calling the fast or exact version. Takes the source side 
+   * of a rule and determines whether there is any sentence in the test set that can match it.
    */
   public boolean inTestSet(String sourceSide) {
     if (!sourceSide.equals(lastSourceSide)) {
@@ -120,8 +117,11 @@ public class TestSetFilter {
   }
 
   private interface Filter {
+    /* Tell the filter about a sentence in the test set being filtered to */
     public void addSentence(String sentence);
-    public boolean permits(String source);
+    
+    /* Returns true if the filter permits the specified source side */
+    public boolean permits(String sourceSide);
   }
 
   private class FastFilter implements Filter {
@@ -215,18 +215,24 @@ public class TestSetFilter {
       addSentenceToWordHash(source, testSentences.size());
       testSentences.add(source);
     }
-    
+
+    /**
+     * Always permit abstract rules. Otherwise, query the fast filter, and if that passes, apply
+     * 
+     */
     @Override
-    public boolean permits(String source) {
-      if (fastFilter.permits(source)) {
-        Pattern pattern = getPattern(source);
-        for (int i : getSentencesForRule(source)) {
+    public boolean permits(String sourceSide) {
+      if (isAbstract(sourceSide))
+        return true;
+      
+      if (fastFilter.permits(sourceSide)) {
+        Pattern pattern = getPattern(sourceSide);
+        for (int i : getSentencesForRule(sourceSide)) {
           if (pattern.matcher(testSentences.get(i)).find()) {
             return true;
           }
         }
-        return isAbstract(source);
-      }
+      } 
       return false;
     }
     
@@ -252,13 +258,13 @@ public class TestSetFilter {
     
     private Set<Integer> getSentencesForRule(String source) {
       Set<Integer> sentences = null;
-      for (String t : source.split("\\s+")) {
-        if (!t.matches(NT_REGEX)) {
-          if (sentencesByWord.containsKey(t)) {
+      for (String token : source.split("\\s+")) {
+        if (!token.matches(NT_REGEX)) {
+          if (sentencesByWord.containsKey(token)) {
             if (sentences == null)
-              sentences = new HashSet<Integer>(sentencesByWord.get(t));
+              sentences = new HashSet<Integer>(sentencesByWord.get(token));
             else
-              sentences.retainAll(sentencesByWord.get(t));
+              sentences.retainAll(sentencesByWord.get(token));
           }
         }
       }

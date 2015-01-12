@@ -63,8 +63,8 @@ class DerivationTreeFrame extends JFrame {
   private JLabel oneBestLabel;
 
   /**
-   * A panel that holds the buttons, as well as labels to show which derivation is currently being
-   * displayed.
+   * A panel that holds the buttons, as well as labels to show which derivation
+   * is currently being displayed.
    */
   private JPanel controlPanel;
   /**
@@ -78,7 +78,8 @@ class DerivationTreeFrame extends JFrame {
   private DerivationViewer dv;
 
   /**
-   * Index to determine which data set (which n-best file) this frame brings its graphs from.
+   * Index to determine which data set (which n-best file) this frame brings its
+   * graphs from.
    */
   private final int dataSetIndex;
 
@@ -90,14 +91,14 @@ class DerivationTreeFrame extends JFrame {
    */
   private Color targetColor;
 
-	private JList mainList;
+  private JList mainList;
 
   /**
    * The default constructor.
    */
   public DerivationTreeFrame(int index, JList mainList) {
     super("Joshua Derivation Tree");
-		this.mainList = mainList;
+    this.mainList = mainList;
     setLayout(new BorderLayout());
     setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     controlPanel = new JPanel(new BorderLayout());
@@ -134,8 +135,9 @@ class DerivationTreeFrame extends JFrame {
    */
   private void layoutControl() {
     /*
-     * JPanel ctlLeft = new JPanel(new GridLayout(2, 1)); JPanel ctlCenter = new JPanel(new
-     * GridLayout(2, 1)); JPanel ctlRight = new JPanel(new GridLayout(2, 1));
+     * JPanel ctlLeft = new JPanel(new GridLayout(2, 1)); JPanel ctlCenter = new
+     * JPanel(new GridLayout(2, 1)); JPanel ctlRight = new JPanel(new
+     * GridLayout(2, 1));
      * 
      * controlPanel.add(ctlLeft, BorderLayout.WEST); controlPanel.add(ctlCenter,
      * BorderLayout.CENTER); controlPanel.add(ctlRight, BorderLayout.EAST);
@@ -160,16 +162,16 @@ class DerivationTreeFrame extends JFrame {
     nextSource.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         int index = mainList.getSelectedIndex();
-				mainList.setSelectedIndex(index + 1);
+        mainList.setSelectedIndex(index + 1);
         return;
       }
     });
     previousSource.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         int index = mainList.getSelectedIndex();
-				if (index > 0) {
-					mainList.setSelectedIndex(index - 1);
-				}
+        if (index > 0) {
+          mainList.setSelectedIndex(index - 1);
+        }
         return;
       }
     });
@@ -190,15 +192,15 @@ class DerivationTreeFrame extends JFrame {
   }
 
   /**
-   * Displays the derivation tree for the current candidate translation. The current candidate
-   * translation is whichever translation is currently highlighted in the Derivation Browser's
-   * chooser frame.
+   * Displays the derivation tree for the current candidate translation. The
+   * current candidate translation is whichever translation is currently
+   * highlighted in the Derivation Browser's chooser frame.
    */
   public void drawGraph(TranslationInfo ti) {
     viewPanel.removeAll();
     String src = ti.sourceSentence();
     Tree tgt = ti.translations().get(dataSetIndex);
-		String ref = ti.reference();
+    String ref = ti.reference();
 
     sourceLabel.setText(src);
     referenceLabel.setText(ref);
@@ -206,9 +208,8 @@ class DerivationTreeFrame extends JFrame {
 
     DerivationTree tree = new DerivationTree(tgt, src);
     if (dv == null) {
-      dv =
-          new DerivationViewer(tree, viewPanel.getSize(), targetColor,
-              DerivationViewer.AnchorType.ANCHOR_LEFTMOST_LEAF);
+      dv = new DerivationViewer(tree, viewPanel.getSize(), targetColor,
+          DerivationViewer.AnchorType.ANCHOR_LEFTMOST_LEAF);
     } else {
       dv.setGraph(tree);
     }
@@ -220,10 +221,10 @@ class DerivationTreeFrame extends JFrame {
   }
 
   /**
-   * Makes this frame unmodifiable, so that the tree it displays cannot be changed. In fact, all
-   * that happens is the title is update and the navigation buttons are disabled. This method is
-   * intended to prevent the user from modifying the frame, not to prevent other code from modifying
-   * it.
+   * Makes this frame unmodifiable, so that the tree it displays cannot be
+   * changed. In fact, all that happens is the title is update and the
+   * navigation buttons are disabled. This method is intended to prevent the
+   * user from modifying the frame, not to prevent other code from modifying it.
    */
   public void disableNavigationButtons() {
     setTitle(getTitle() + " (fixed)");

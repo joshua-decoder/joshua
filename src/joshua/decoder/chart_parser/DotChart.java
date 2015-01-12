@@ -406,7 +406,6 @@ class DotChart {
    */
   static class DotNode {
 
-    private DotNode previous = null;
     private int i, j;
     private Trie trieNode = null;
     

@@ -11,14 +11,12 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.zip.GZIPInputStream;
 
 /**
  * utility functions for file operations
@@ -35,16 +33,6 @@ public class FileUtility {
    * are aliases Java doesn't distinguish utf8 vs UTF-8 like Perl does
    */
   private static final Charset FILE_ENCODING = Charset.forName(DEFAULT_ENCODING);
-
-  /**
-   * @deprecated use {@link joshua.util.io.LineReader} instead.
-   */
-  @Deprecated
-  public static BufferedReader getReadFileStream(String filename) throws IOException {
-    FileInputStream fis = new FileInputStream(filename);
-    return new BufferedReader(new InputStreamReader(filename.endsWith(".gz") ? new GZIPInputStream(
-        fis) : fis, FILE_ENCODING));
-  }
 
   /** Warning, will truncate/overwrite existing files */
   public static BufferedWriter getWriteFileStream(String filename) throws IOException {

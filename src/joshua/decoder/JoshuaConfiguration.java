@@ -140,13 +140,6 @@ public class JoshuaConfiguration {
   // disk hg
   public String hypergraphFilePattern = "";
 
-  // hypergraph visualization
-  public boolean visualize_hypergraph = false;
-
-  // use google linear corpus gain?
-  public boolean useGoogleLinearCorpusGain = false;
-  public double[] linearCorpusGainThetas = null;
-
   /*
    * When true, _OOV is appended to all words that are passed through (useful for something like
    * transliteration on the target side
@@ -259,9 +252,6 @@ public class JoshuaConfiguration {
     outputFormat = "%i ||| %s ||| %f ||| %c";
     num_parallel_decoders = 1;
     hypergraphFilePattern = "";
-    visualize_hypergraph = false;
-    useGoogleLinearCorpusGain = false;
-    linearCorpusGainThetas = null;
     mark_oovs = true;
     // oracleFile = null;
     parse = false; // perform synchronous parsing
@@ -459,10 +449,6 @@ public class JoshuaConfiguration {
             }
             logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 
-          } else if (parameter.equals(normalize_key("visualize_hypergraph"))) {
-            visualize_hypergraph = Boolean.valueOf(fds[1]);
-            logger.finest(String.format("visualize_hypergraph: %s", visualize_hypergraph));
-
           } else if (parameter.equals(normalize_key("mark_oovs"))) {
             mark_oovs = Boolean.valueOf(fds[1]);
             logger.finest(String.format("mark_oovs: %s", mark_oovs));
@@ -470,23 +456,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("pop-limit"))) {
             pop_limit = Integer.valueOf(fds[1]);
             logger.finest(String.format("pop-limit: %s", pop_limit));
-
-          } else if (parameter.equals(normalize_key("useGoogleLinearCorpusGain"))) {
-            useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
-            logger
-                .finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));
-
-          } else if (parameter.equals(normalize_key("googleBLEUWeights"))) {
-            String[] googleWeights = fds[1].trim().split(";");
-            if (googleWeights.length != 5) {
-              logger.severe("wrong line=" + line);
-              System.exit(1);
-            }
-            linearCorpusGainThetas = new double[5];
-            for (int i = 0; i < 5; i++)
-              linearCorpusGainThetas[i] = new Double(googleWeights[i]);
-
-            logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));
 
           } else if (parameter.equals(normalize_key("server-port"))) {
             server_port = Integer.parseInt(fds[1]);
@@ -597,17 +566,6 @@ public class JoshuaConfiguration {
       }
     } finally {
       configReader.close();
-    }
-
-    if (useGoogleLinearCorpusGain) {
-      if (linearCorpusGainThetas == null) {
-        logger.info("linearCorpusGainThetas is null, did you set googleBLEUWeights properly?");
-        System.exit(1);
-      } else if (linearCorpusGainThetas.length != 5) {
-        logger
-            .info("linearCorpusGainThetas does not have five values, did you set googleBLEUWeights properly?");
-        System.exit(1);
-      }
     }
   }
 

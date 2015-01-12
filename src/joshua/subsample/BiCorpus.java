@@ -79,6 +79,7 @@ public class BiCorpus implements Iterable<PhrasePair> {
    * Iterate through the files represented by this <code>BiCorpus</code>, returning a
    * {@link PhrasePair} for each pair (or triple) of lines.
    */
+  @SuppressWarnings("resource")
   public Iterator<PhrasePair> iterator() {
     PhraseReader closureRF = null;
     PhraseReader closureRE = null;
@@ -96,7 +97,6 @@ public class BiCorpus implements Iterable<PhrasePair> {
     final PhraseReader rf = closureRF;
     final PhraseReader re = closureRE;
     final BufferedReader ra = closureRA;
-
 
     return new Iterator<PhrasePair>() { /* Local class definition */
       private Phrase nextForeignPhrase = null;

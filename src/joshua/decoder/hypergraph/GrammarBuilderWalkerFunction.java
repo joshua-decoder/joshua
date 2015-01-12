@@ -62,7 +62,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
 
   private static String getLabelWithSpanAsString(HGNode node) {
     String label = Vocabulary.word(node.lhs);
-    String cleanLabel = reader.cleanNonTerminal(label);
+    String cleanLabel = HieroFormatReader.cleanNonTerminal(label);
     String unBracketedCleanLabel = cleanLabel.substring(1, cleanLabel.length() - 1);
     return String.format("[%d-%s-%d]", node.i, unBracketedCleanLabel, node.j);
   }

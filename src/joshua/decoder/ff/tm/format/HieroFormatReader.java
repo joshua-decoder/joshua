@@ -1,7 +1,5 @@
 package joshua.decoder.ff.tm.format;
 
-import java.util.logging.Logger;	
-
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
@@ -14,8 +12,6 @@ import joshua.decoder.ff.tm.GrammarReader;
  */
 
 public class HieroFormatReader extends GrammarReader<BilingualRule> {
-
-  private static final Logger logger = Logger.getLogger(HieroFormatReader.class.getName());
 
   static {
     fieldDelimiter = "\\s\\|{3}\\s";

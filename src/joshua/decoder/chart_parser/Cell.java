@@ -34,7 +34,6 @@ class Cell {
   private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new HashMap<HGNode.Signature, HGNode>();
 
   // signature by lhs
-  private List<SuperNode> superNodesList = new ArrayList<SuperNode>();
   private Map<Integer, SuperNode> superNodesTbl = new HashMap<Integer, SuperNode>();
 
   /**

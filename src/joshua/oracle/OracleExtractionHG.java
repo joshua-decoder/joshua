@@ -1,6 +1,5 @@
 package joshua.oracle;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
 import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 
 /**
  * approximated BLEU (1) do not consider clipping effect (2) in the dynamic programming, do not
@@ -80,7 +80,7 @@ public class OracleExtractionHG extends SplitHg {
   /*
    * for 919 sent, time_on_reading: 148797 time_on_orc_extract: 580286
    */
-  @SuppressWarnings({ "deprecation", "unused" })
+  @SuppressWarnings({ "unused" })
   public static void main(String[] args) throws IOException {
     JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
     /*
@@ -126,16 +126,14 @@ public class OracleExtractionHG extends SplitHg {
     long start_time0 = System.currentTimeMillis();
     long time_on_reading = 0;
     long time_on_orc_extract = 0;
-    BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
     // DiskHyperGraph dhg_read = new DiskHyperGraph(baseline_lm_feat_id, true, null);
 
     // dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
 
     OracleExtractionHG orc_extractor = new OracleExtractionHG(baseline_lm_feat_id);
-    String ref_sent = null;
     long start_time = System.currentTimeMillis();
     int sent_id = 0;
-    while ((ref_sent = FileUtility.read_line_lzf(t_reader_ref)) != null) {
+    for (String ref_sent: new LineReader(f_ref_files)) {
       System.out.println("############Process sentence " + sent_id);
       start_time = System.currentTimeMillis();
       sent_id++;
@@ -171,7 +169,6 @@ public class OracleExtractionHG extends SplitHg {
       orc_out.write(orc_sent + "\n");
       System.out.println("orc bleu is " + orc_bleu);
     }
-    t_reader_ref.close();
     orc_out.close();
 
     System.out.println("time_on_reading: " + time_on_reading);

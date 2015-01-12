@@ -379,6 +379,8 @@ public class NbestMinRiskReranker {
       }
 
     }
+    
+    scanner.close();
 
     System.err.println("Total running time (seconds) is "
         + (System.currentTimeMillis() - startTime) / 1000.0);

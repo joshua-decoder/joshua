@@ -1,6 +1,7 @@
 package joshua.ui.tree_visualizer.browser;
 
 import joshua.ui.tree_visualizer.tree.Tree;
+import joshua.util.io.LineReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -75,10 +76,9 @@ public class Browser {
   }
 
   private static void readSourcesFromPath(String path) throws IOException {
-    Scanner scanner = new Scanner(new File(path), "UTF-8");
-    while (scanner.hasNextLine()) {
+    for (String line: new LineReader(path)) {
       TranslationInfo ti = new TranslationInfo();
-      ti.setSourceSentence("<s> " + scanner.nextLine() + " </s>");
+      ti.setSourceSentence("<s> " + line + " </s>");
       translations.add(ti);
     }
   }
@@ -90,6 +90,7 @@ public class Browser {
         ti.setReference(scanner.nextLine());
       }
     }
+    scanner.close();
   }
 
   private static void readTranslationsFromPath(String path) throws IOException {
@@ -107,6 +108,7 @@ public class Browser {
         }
       }
     }
+    scanner.close();
   }
 
   /**
