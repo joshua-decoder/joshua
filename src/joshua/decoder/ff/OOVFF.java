@@ -8,6 +8,7 @@ import joshua.decoder.JoshuaConfiguration.OOVItem;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 
@@ -46,7 +47,7 @@ public class OOVFF extends StatelessFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
     
     if (rule != null && this.ownerID == rule.getOwner()) {
       acc.add(name, getValue(rule.getLHS()));
@@ -63,7 +64,7 @@ public class OOVFF extends StatelessFF {
    * Important! estimateCost returns the *weighted* feature value.
    */
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     if (rule != null && this.ownerID == rule.getOwner())
       return weights.get(name) * getValue(rule.getLHS());
     return 0.0f;

@@ -87,7 +87,7 @@ public class ComputeNodeResult {
     for (FeatureFunction feature : featureFunctions) {
       FeatureFunction.ScoreAccumulator acc = feature.new ScoreAccumulator(); 
 
-      DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentence.id(), acc);
+      DPState newState = feature.compute(rule, tailNodes, i, j, sourcePath, sentence, acc);
       transitionCost += acc.getScore();
       
       if (Decoder.VERBOSE >= 4)
@@ -96,7 +96,7 @@ public class ComputeNodeResult {
             Decoder.weights.get(feature.getName()), acc.getScore()));
 
       if (feature.isStateful()) {
-        futureCostEstimate += feature.estimateFutureCost(rule, newState, sentID);
+        futureCostEstimate += feature.estimateFutureCost(rule, newState, sentence);
         allDPStates.add(((StatefulFF)feature).getStateIndex(), newState);
       }
     }
@@ -126,17 +126,17 @@ public class ComputeNodeResult {
    * the feature function interface).
    */
   public static float computeFinalCost(List<FeatureFunction> featureFunctions,
-      List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, int sentID) {
+      List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, Sentence sentence) {
 
     float cost = 0;
     for (FeatureFunction ff : featureFunctions) {
-      cost += ff.computeFinalCost(tailNodes.get(0), i, j, sourcePath, sentID);
+      cost += ff.computeFinalCost(tailNodes.get(0), i, j, sourcePath, sentence);
     }
     return cost;
   }
   
   public static FeatureVector computeTransitionFeatures(List<FeatureFunction> featureFunctions,
-      HyperEdge edge, int i, int j, int sentID) {
+      HyperEdge edge, int i, int j, Sentence sentence) {
 
     // Initialize the set of features with those that were present with the rule in the grammar.
     FeatureVector featureDelta = new FeatureVector();
@@ -145,9 +145,9 @@ public class ComputeNodeResult {
     for (FeatureFunction ff : featureFunctions) {
       // A null rule signifies the final transition.
       if (edge.getRule() == null)
-        featureDelta.add(ff.computeFinalFeatures(edge.getTailNodes().get(0), i, j, edge.getSourcePath(), sentID));
+        featureDelta.add(ff.computeFinalFeatures(edge.getTailNodes().get(0), i, j, edge.getSourcePath(), sentence));
       else {
-        featureDelta.add(ff.computeFeatures(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentID));
+        featureDelta.add(ff.computeFeatures(edge.getRule(), edge.getTailNodes(), i, j, edge.getSourcePath(), sentence));
       }
     }
     

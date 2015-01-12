@@ -10,6 +10,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 public class TargetBigram extends StatefulFF {
 
@@ -21,7 +22,7 @@ public class TargetBigram extends StatefulFF {
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
-      SourcePath sourcePath, int sentID, Accumulator acc) {
+      SourcePath sourcePath, Sentence sentence, Accumulator acc) {
     
     int[] enWords = rule.getEnglish();
     
@@ -69,13 +70,13 @@ public class TargetBigram extends StatefulFF {
   }
 
   @Override
-  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState state, Sentence sentence) {
     return 0.0f;
   }
 
   @Override
   public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
   
     NgramDPState state = (NgramDPState) tailNode.getDPState(stateIndex);
     int leftWord = state.getLeftLMStateWords()[0];
@@ -92,7 +93,7 @@ public class TargetBigram extends StatefulFF {
   }
 
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     return 0.0f;
   }
 

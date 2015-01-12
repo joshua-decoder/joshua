@@ -12,6 +12,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.KenLMState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * Wrapper for KenLM LMs with left-state minimization. We inherit from the regular
@@ -35,7 +36,7 @@ public class KenLMFF extends LanguageModelFF {
    * Most of this function implementation is redundant with compute().
    */
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     
     int[] ruleWords = rule.getEnglish();
 
@@ -65,7 +66,7 @@ public class KenLMFF extends LanguageModelFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     int[] ruleWords = rule.getEnglish();
 
@@ -86,7 +87,8 @@ public class KenLMFF extends LanguageModelFF {
         words[x] = id;
       }
     }
-
+    
+    int sentID = sentence.id();
     if (!poolMap.containsKey(sentID))
       poolMap.put(sentID, KenLM.createPool());
 
@@ -122,7 +124,7 @@ public class KenLMFF extends LanguageModelFF {
    * there's nothing that needs to be done.
    */
   @Override
-  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, Sentence sentence,
       Accumulator acc) {
 
     // KenLMState state = (KenLMState) tailNode.getDPState(getStateIndex());
@@ -139,7 +141,7 @@ public class KenLMFF extends LanguageModelFF {
    * states), so this doesn't need to do anything.
    */
   @Override
-  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState currentState, Sentence sentence) {
     return 0.0f;
   }
 }

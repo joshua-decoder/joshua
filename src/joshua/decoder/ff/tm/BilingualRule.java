@@ -275,7 +275,7 @@ public class BilingualRule extends Rule {
       if (Decoder.VERBOSE >= 4)
         System.err.println(String.format("estimateCost(%s ;; %s)", getFrenchWords(), getEnglishWords()));
       for (FeatureFunction ff : models) {
-        float val = ff.estimateCost(this, -1);
+        float val = ff.estimateCost(this, null);
         if (Decoder.VERBOSE >= 4) 
           System.err.println(String.format("  FEATURE %s -> %.3f", ff.getName(), val));
         this.estimatedCost += val; 

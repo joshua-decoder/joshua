@@ -52,7 +52,7 @@ public class Sentence {
   protected static final Pattern SEG_START = Pattern
       .compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
   protected static final Pattern SEG_END = Pattern.compile("\\s*</seg\\s*>\\s*$");
-
+  
   /**
    * Constructor. Receives a string representing the input sentence. This string may be a
    * string-encoded lattice or a plain text string for decoding.
@@ -63,9 +63,9 @@ public class Sentence {
   public Sentence(String inputSentence, int id, JoshuaConfiguration joshuaConfiguration) {
 
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
-
+    
     constraints = new LinkedList<ConstraintSpan>();
-
+    
     // Check if the sentence has SGML markings denoting the
     // sentence ID; if so, override the id passed in to the
     // constructor

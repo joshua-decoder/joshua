@@ -9,6 +9,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.phrase.Hypothesis;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  *  This feature just counts rules that are used. You can restrict it with a number of flags:
@@ -57,7 +58,7 @@ public class PhrasePenaltyFF extends StatelessFF {
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
@@ -71,7 +72,7 @@ public class PhrasePenaltyFF extends StatelessFF {
    * 
    */
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
       return weight * value;

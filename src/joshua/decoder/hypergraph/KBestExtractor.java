@@ -1018,7 +1018,7 @@ public class KBestExtractor {
         HyperEdge edge = state.edge;
 
         FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
-            parentNode.i, parentNode.j, sentence.id());
+            parentNode.i, parentNode.j, sentence);
 
 //        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, state,
 //            parentNode.i, parentNode.j, sentence);

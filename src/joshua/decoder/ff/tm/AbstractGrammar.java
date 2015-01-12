@@ -177,7 +177,7 @@ public abstract class AbstractGrammar implements Grammar {
       }
     }
 
-    for (int sourceWord: words)
+    for (int sourceWord: words) 
       grammar.addOOVRules(sourceWord, featureFunctions);
 
     // Sort all the rules (not much to actually do, this just marks it as sorted)

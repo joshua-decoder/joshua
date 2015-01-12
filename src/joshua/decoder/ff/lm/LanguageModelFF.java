@@ -14,6 +14,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class performs the following:
@@ -89,7 +90,7 @@ public class LanguageModelFF extends StatefulFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     NgramDPState newState = null;
     if (rule != null)
@@ -98,7 +99,8 @@ public class LanguageModelFF extends StatefulFF {
     return newState;
   }
 
-  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
+  @Override
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, Sentence sentence,
       Accumulator acc) {
     return computeFinalTransition((NgramDPState) tailNode.getDPState(stateIndex), acc);
   }
@@ -108,7 +110,7 @@ public class LanguageModelFF extends StatefulFF {
    * n-grams on the left-hand side.
    */
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
 
     float estimate = 0.0f;
     boolean considerIncompleteNgrams = true;
@@ -142,7 +144,7 @@ public class LanguageModelFF extends StatefulFF {
    * costs of the leftmost k-grams, k = [1..n-1].
    */
   @Override
-  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState currentState, Sentence sentence) {
     NgramDPState state = (NgramDPState) currentState;
 
     float estimate = 0.0f;

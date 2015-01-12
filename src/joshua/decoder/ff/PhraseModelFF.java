@@ -7,6 +7,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This feature handles the list of features that are found with grammar rules in the grammar file.
@@ -60,7 +61,7 @@ public class PhraseModelFF extends StatelessFF {
    * feature functions.
    */
   @Override
-  public float estimateCost(final Rule rule, int sentID) {
+  public float estimateCost(final Rule rule, Sentence sentence) {
     
     if (rule != null && rule.getOwner() == ownerID) {
       if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY)
@@ -77,7 +78,7 @@ public class PhraseModelFF extends StatelessFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     if (rule != null && rule.getOwner() == ownerID) {
       /*

@@ -7,6 +7,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  *  This feature just counts rules that are used. You can restrict it with a number of flags:
@@ -58,7 +59,7 @@ public class RuleFF extends StatelessFF {
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     if (owner > 0 && rule.getOwner() == owner) {
       String ruleString = getRuleString(rule);

@@ -17,6 +17,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * Feature function that reads in a list of language model fragments and matches them against the
@@ -170,7 +171,7 @@ public class FragmentLMFF extends StatefulFF {
     numFragments++;
   }
   
-  /*
+  /**
    * This function computes the features that fire when the current rule is applied. The features
    * that fire are any LM fragments that match the fragment associated with the current rule. LM
    * fragments may recurse over the tail nodes, following 1-best backpointers until the fragment
@@ -178,7 +179,7 @@ public class FragmentLMFF extends StatefulFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, 
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     /*
      * Get the fragment associated with the target side of this rule.
@@ -265,20 +266,20 @@ public class FragmentLMFF extends StatefulFF {
   }
 
   @Override
-  public DPState computeFinal(HGNode tailNodes, int i, int j, SourcePath sourcePath, int sentID,
+  public DPState computeFinal(HGNode tailNodes, int i, int j, SourcePath sourcePath, Sentence sentence,
       Accumulator acc) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState state, Sentence sentence) {
     // TODO Auto-generated method stub
     return 0;
   }
 
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     // TODO Auto-generated method stub
     return 0;
   }

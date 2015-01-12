@@ -60,12 +60,10 @@ public class Chart {
   int nAdded = 0;
   int nDotitemAdded = 0; // note: there is no pruning in dot-item
 
-  public int sentenceID() {
-    if (sentence != null)
-      return sentence.id();
-    return -1;
+  public Sentence getSentence() {
+    return this.sentence;
   }
-
+  
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================

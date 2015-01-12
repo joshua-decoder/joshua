@@ -7,6 +7,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.phrase.Hypothesis;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * 
@@ -29,7 +30,7 @@ public final class WordPenaltyFF extends StatelessFF {
   
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
     
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE)
       acc.add(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
@@ -38,7 +39,7 @@ public final class WordPenaltyFF extends StatelessFF {
   }
   
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     if (rule != null)
       return weights.get(name) * OMEGA * (rule.getEnglish().length - rule.getArity());
     return 0.0f;

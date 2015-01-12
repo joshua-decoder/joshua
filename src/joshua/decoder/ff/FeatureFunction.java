@@ -6,6 +6,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class defines Joshua's feature function interface, for both sparse and
@@ -107,7 +108,7 @@ public abstract class FeatureFunction {
    * @return the new dynamic programming state (null for stateless features)
    */
   public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID, Accumulator acc);
+      SourcePath sourcePath, Sentence sentence, Accumulator acc);
 
   /**
    * This is a convenience function for retrieving the features fired when
@@ -128,10 +129,10 @@ public abstract class FeatureFunction {
    * @return an *unweighted* feature delta
    */
   public final FeatureVector computeFeatures(Rule rule, List<HGNode> tailNodes, int i, int j,
-      SourcePath sourcePath, int sentID) {
+      SourcePath sourcePath, Sentence sentence) {
 
     FeatureAccumulator features = new FeatureAccumulator();
-    compute(rule, tailNodes, i, j, sourcePath, sentID, features);
+    compute(rule, tailNodes, i, j, sourcePath, sentence, features);
     return features.getFeatures();
   }
 
@@ -149,10 +150,10 @@ public abstract class FeatureFunction {
    * @return a *weighted* feature cost
    */
   public final float computeFinalCost(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID) {
+      Sentence sentence) {
 
     ScoreAccumulator score = new ScoreAccumulator();
-    computeFinal(tailNode, i, j, sourcePath, sentID, score);
+    computeFinal(tailNode, i, j, sourcePath, sentence, score);
     return score.getScore();
   }
 
@@ -168,10 +169,10 @@ public abstract class FeatureFunction {
    * @return
    */
   public final FeatureVector computeFinalFeatures(HGNode tailNode, int i, int j,
-      SourcePath sourcePath, int sentID) {
+      SourcePath sourcePath, Sentence sentence) {
 
     FeatureAccumulator features = new FeatureAccumulator();
-    computeFinal(tailNode, i, j, sourcePath, sentID, features);
+    computeFinal(tailNode, i, j, sourcePath, sentence, features);
     return features.getFeatures();
   }
 
@@ -188,7 +189,7 @@ public abstract class FeatureFunction {
    * @return the DPState (null if none)
    */
   public abstract DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc);
+      Sentence sentence, Accumulator acc);
 
   /**
    * This function is called when sorting rules for cube pruning. It must return
@@ -202,7 +203,7 @@ public abstract class FeatureFunction {
    * 
    * @return the *weighted* cost of applying the feature.
    */
-  public abstract float estimateCost(Rule rule, int sentID);
+  public abstract float estimateCost(Rule rule, Sentence sentence);
 
   /**
    * This feature is called to produce a *weighted estimate* of the future cost
@@ -212,15 +213,15 @@ public abstract class FeatureFunction {
    * 
    * @param rule
    * @param state
-   * @param sentID
+   * @param sentence
    * @return the *weighted* future cost estimate of applying this rule in
    *         context.
    */
-  public abstract float estimateFutureCost(Rule rule, DPState state, int sentID);
+  public abstract float estimateFutureCost(Rule rule, DPState state, Sentence sentence);
 
   /**
    * This function could be implemented to process the feature-line arguments in
-   * a generic way, if so desired.
+   * a generic way, for all feature functions, if so desired.
    * 
    * TODO: implement this.
    */
@@ -233,8 +234,6 @@ public abstract class FeatureFunction {
    * ScoreAccumulator takes (feature,value) pairs and simple stores the weighted
    * sum (for decoding). FeatureAccumulator records the named feature values
    * (for k-best extraction).
-   * 
-   * @author Matt Post <post@cs.jhu.edu>
    */
 
   public interface Accumulator {

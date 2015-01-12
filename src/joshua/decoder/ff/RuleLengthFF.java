@@ -6,6 +6,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /*
  * This feature computes three feature templates: a feature indicating the length of the rule's
@@ -19,7 +20,7 @@ public class RuleLengthFF extends StatelessFF {
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
     int sourceLen = rule.getFrench().length;
     int targetLen = rule.getEnglish().length;
     acc.add(String.format("%s_sourceLength%d", name, sourceLen), 1);

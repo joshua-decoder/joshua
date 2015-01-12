@@ -56,8 +56,9 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     serverReply = new BufferedReader(new InputStreamReader(socket.getInputStream()));
   }
 
+  @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     float value = computeScore(rule, tailNodes);
     acc.add(name, value);
@@ -67,7 +68,8 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     return new NgramDPState(new int[1], new int[1]);
   }
   
-  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath path, int sentID, Accumulator acc) {
+  @Override
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath path, Sentence sentence, Accumulator acc) {
     return null;
   }
 
@@ -157,9 +159,8 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     return getSimilarity(batch);
   }
 
-  
-  
-  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+  @Override
+  public float estimateFutureCost(Rule rule, DPState currentState, Sentence sentence) {
     return 0.0f;
   }
 
@@ -181,7 +182,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   }
 
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     return 0.0f;
   }
 

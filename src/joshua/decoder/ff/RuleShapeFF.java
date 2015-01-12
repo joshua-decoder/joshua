@@ -6,6 +6,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /*
  * Implements the RuleShape feature for source, target, and paired source+target sides.
@@ -41,7 +42,7 @@ public class RuleShapeFF extends StatelessFF {
   
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i_, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
     String sourceShape = pattern(rule.getFrench());
     String targetShape = pattern(rule.getEnglish());
     acc.add(String.format("%s_source_%s", name, sourceShape), 1);

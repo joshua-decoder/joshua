@@ -1,10 +1,12 @@
 package joshua.decoder.ff;
 
-import java.util.List;
+import java.util.List;	
+
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 public class LabelCombinationFF extends StatelessFF {
 
@@ -30,7 +32,7 @@ public class LabelCombinationFF extends StatelessFF {
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
     if (rule != null)
       acc.add(computeRuleLabelCombinationDescriptor(rule), 1);
 
