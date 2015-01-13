@@ -201,6 +201,9 @@ my $MIRA_ITERATIONS = 15;
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
 
+# location of the ner tagger wrapper script for annotation
+my $NER_TAGGER = undef;
+
 # Allows the user to set a temp dir for various tasks
 my $TMPDIR = "/tmp";
 
@@ -285,6 +288,7 @@ my $retval = GetOptions(
   "nbest=i"           => \$NBEST,
   "reordering-limit=i" => \$REORDERING_LIMIT,
   "num-translation-options=i" => \$NUM_TRANSLATION_OPTIONS,
+  "ner-tagger=s"   => \$NER_TAGGER,
 );
 
 if (! $retval) {
@@ -660,6 +664,10 @@ if (defined $TUNE and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
   $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
   $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
+  my $ner_return = ner_annotate("$TUNE{source}", "$TUNE{source}.ner");
+  if ($ner_return == 2) {
+    $TUNE{source} = "$TUNE{source}.ner";
+  }
   $PREPPED{TUNE} = 1;
 }
 
@@ -667,6 +675,10 @@ if (defined $TEST and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
   $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
   $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
+  my $ner_return = ner_annotate("$TEST{source}", "$TEST{source}.ner");
+  if ($ner_return == 2) {
+    $TEST{source} = "$TEST{source}.ner";
+  }
   $PREPPED{TEST} = 1;
 }
 
@@ -1169,16 +1181,30 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
                   $TRAIN{target},
                   "$TRAIN{target}.uniq");
 
+  # If an NER Tagger is specified, use that to annotate the corpus before 
+  # sending it off to the LM
+  my $ner_return = ner_annotate("$TRAIN{target}.uniq", "$TRAIN{target}.uniq.ner");
+  if ($ner_return == 2) {
+    $TRAIN{ner_lm} = 1;
+  }
+
+  my $lm_input = "$TRAIN{target}.uniq";
+  # Choose LM input based on whether an annotated corpus was created
+  if (defined $TRAIN{ner_lm}) {
+    #TODO:GAURAV
+    $lm_input = replace_tokens_with_types("$TRAIN{target}.uniq.ner");
+  }
+
   if ($LM_GEN eq "srilm") {
 		my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 		$cachepipe->cmd("srilm",
 										"$SRILM -order $LM_ORDER -interpolate $smoothing -unk -gt3min 1 -gt4min 1 -gt5min 1 -text $TRAIN{target}.uniq $LM_OPTIONS -lm lm.gz",
-                    "$TRAIN{target}.uniq",
+                    "$lm_input",
 										$lmfile);
   } elsif ($LM_GEN eq "berkeleylm") {
 		$cachepipe->cmd("berkeleylm",
 										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}.uniq",
-                    "$TRAIN{target}.uniq",
+                    "$lm_input",
 										$lmfile);
   } else {
     # Make sure it exists
@@ -2168,4 +2194,29 @@ sub is_packed {
   }
 
   return 0;
+}
+
+sub ner_annotate {
+  my ($inputfile, $outputfile) = @_;
+  if (defined $NER_TAGGER) {
+    # Check if NER tagger exists
+    if (! -e $NER_TAGGER) {
+      print "* FATAL: The specified NER tagger was not found";
+      exit(1);
+    }
+    $cachepipe->cmd("ner-annotate", "$NER_TAGGER $inputfile $outputfile");
+    # Check if annotated file exists
+    if (! -e "$outputfile") {
+      print "* FATAL : The NER tagger did not create the required annotated file : $outputfile";
+      exit(1);
+    }
+    return 2;
+  }
+  return 0;
+}
+
+sub replace_tokens_with_types {
+  # Replace the tokens with types
+  my ($inputfile) = @_;
+  qx{sed -ir 's:\$([A-Za-z0-9]+)_\([^)]+\):\1:g' $inputfile}
 }
