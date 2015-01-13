@@ -386,8 +386,7 @@ public class Chart {
           continue;
 
         for (int g = 0; g < this.grammars.length; g++) {
-          // System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i,
-          // j, g));
+          // System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i, j, g));
 
           if (j == i + 1) {
             /* Handle terminals */

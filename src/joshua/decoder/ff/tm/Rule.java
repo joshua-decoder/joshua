@@ -364,7 +364,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
    * with position i indexing the source and i+1 the target.
    */
   public byte[] getAlignment() {
-    if (alignment == null) {
+    if (alignment == null && getAlignmentString() != null) {
       String[] tokens = getAlignmentString().split("[-\\s]+");
       alignment = new byte[tokens.length];
       for (int i = 0; i < tokens.length; i++)

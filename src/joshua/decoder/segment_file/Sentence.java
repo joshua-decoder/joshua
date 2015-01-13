@@ -77,12 +77,12 @@ public class Sentence {
     Token(String rawWord) {
       // Matches a word with an annotation
       // Check guidelines in constructor description
-      Pattern annotation = Pattern.compile("\\$([a-z0-9]+)_\\(([^)]+)\\)");
+      Pattern annotation = Pattern.compile("\\$(\\S+)_\\(([^)]+)\\)");
       Matcher tag = annotation.matcher(rawWord);
       if (tag.find()) {
         // Annotation match found
-        token = tag.group(1);
-        type = tag.group(2);
+        type = tag.group(1);
+        token = tag.group(2);
       }
       else {
         // No match found, which implies that this token does not have an 
@@ -151,13 +151,6 @@ public class Sentence {
     
     inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
     
-    // Store annotations if available
-    this.annotations = new Token[inputSentence.length()];
-    String[] words = inputSentence.split("\\s+");
-    for (int i = 0; i < words.length; i++) {
-      this.annotations[i] = new Token(words[i]);
-    }
-
     constraints = new LinkedList<ConstraintSpan>();
     
     // Check if the sentence has SGML markings denoting the
@@ -183,6 +176,13 @@ public class Sentence {
         sentence = inputSentence;
       }
       this.id = id;
+    }
+    
+    // Store annotations if available
+    String[] words = sentence.split("\\s+");
+    annotations = new Token[words.length + 2]; // 2 extra for <s> and </s>
+    for (int i = 1; i < annotations.length - 1; i++) {
+      this.annotations[i] = new Token(words[i-1]);
     }
 
     // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
@@ -214,8 +214,8 @@ public class Sentence {
    * @param index The location of the word in the sentence
    * @return The annotations associated with this word
    */
-  public Token getAnnotation(int index) {
-    return this.annotations[index];
+  public int getAnnotation(int index) {
+    return this.annotations[index].getAnnotation();
   }
 
   /**
@@ -359,8 +359,16 @@ public class Sentence {
     return id;
   }
 
+  /**
+   * Returns the raw string (with annotations --- if any --- stripped off)
+   * 
+   * @return
+   */
   public String source() {
-    return sentence;
+    String str = "";
+    for (int i = 1; i < annotations.length - 1; i++)
+      str += annotations[i].getWordIdentity() + " ";
+    return str.trim();
   }
 
   /**
@@ -370,7 +378,7 @@ public class Sentence {
    * @return String The input sentence with start and stop symbols
    */
   public String fullSource() {
-    return Vocabulary.START_SYM + " " + sentence + " " + Vocabulary.STOP_SYM;
+    return String.format("%s %s %s", Vocabulary.START_SYM , source(), Vocabulary.STOP_SYM); 
   }
 
   /**
@@ -410,6 +418,11 @@ public class Sentence {
     return references;
   }
 
+  /**
+   * Transforms a sentence into an array of word IDs.
+   * 
+   * @return
+   */
   public int[] intSentence() {
     return Vocabulary.addAll(fullSource());
   }

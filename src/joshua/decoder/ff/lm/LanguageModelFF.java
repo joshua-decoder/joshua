@@ -94,8 +94,7 @@ public class LanguageModelFF extends StatefulFF {
 
     NgramDPState newState = null;
     if (rule != null)
-//      newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
-      newState = computeTransition(rule.getEnglish(), tailNodes, acc);
+      newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
 
     return newState;
   }
@@ -110,17 +109,20 @@ public class LanguageModelFF extends StatefulFF {
     int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
     byte[] alignments = rule.getAlignment();
 
+
     /* For each token, project it to each of its source-language alignments. If any of those
      * are annotated, take the first annotation.
      */
-    for (int i = 0; i < tokens.length; i++) {
-      if (tokens[i] > 0) {
-        for (int j = 0; j < alignments.length; j += 2) {
-          if (alignments[j] == i) {
-            int annotation = sentence.getAnnotation((int)alignments[i] + begin).getAnnotation();
-            if (annotation != -1) {
-              tokens[i] = annotation;
-              break;
+    if (alignments != null) {
+      for (int i = 0; i < tokens.length; i++) {
+        if (tokens[i] > 0) {
+          for (int j = 0; j < alignments.length; j += 2) {
+            if (alignments[j] == i) {
+              int annotation = sentence.getAnnotation((int)alignments[i] + begin);
+              if (annotation != -1) {
+                tokens[i] = annotation;
+                break;
+              }
             }
           }
         }
