@@ -664,7 +664,7 @@ if (defined $TUNE and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
   $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
   $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
-  my $ner_return = ner_annotate("$TUNE{source}", "$TUNE{source}.ner");
+  my $ner_return = ner_annotate("$TUNE{source}", "$TUNE{source}.ner", $SOURCE);
   if ($ner_return == 2) {
     $TUNE{source} = "$TUNE{source}.ner";
   }
@@ -675,7 +675,7 @@ if (defined $TEST and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
   $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
   $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
-  my $ner_return = ner_annotate("$TEST{source}", "$TEST{source}.ner");
+  my $ner_return = ner_annotate("$TEST{source}", "$TEST{source}.ner", $SOURCE);
   if ($ner_return == 2) {
     $TEST{source} = "$TEST{source}.ner";
   }
@@ -1183,7 +1183,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 
   # If an NER Tagger is specified, use that to annotate the corpus before 
   # sending it off to the LM
-  my $ner_return = ner_annotate("$TRAIN{target}.uniq", "$TRAIN{target}.uniq.ner");
+  my $ner_return = ner_annotate("$TRAIN{target}.uniq", "$TRAIN{target}.uniq.ner", $TARGET);
   if ($ner_return == 2) {
     $TRAIN{ner_lm} = 1;
   }
@@ -2197,14 +2197,14 @@ sub is_packed {
 }
 
 sub ner_annotate {
-  my ($inputfile, $outputfile) = @_;
+  my ($inputfile, $outputfile, $lang) = @_;
   if (defined $NER_TAGGER) {
     # Check if NER tagger exists
     if (! -e $NER_TAGGER) {
       print "* FATAL: The specified NER tagger was not found";
       exit(1);
     }
-    $cachepipe->cmd("ner-annotate", "$NER_TAGGER $inputfile $outputfile");
+    $cachepipe->cmd("ner-annotate", "$NER_TAGGER $inputfile $outputfile $lang");
     # Check if annotated file exists
     if (! -e "$outputfile") {
       print "* FATAL : The NER tagger did not create the required annotated file : $outputfile";
