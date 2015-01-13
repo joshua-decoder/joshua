@@ -16,7 +16,6 @@ import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.segment_file.Sentence;
@@ -79,7 +78,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
 
     // System.err.println("RULE [" + spanStart + ", " + spanEnd + "]: " + rule.toString());
 
-    int[] target = ((BilingualRule) rule).getEnglish();
+    int[] target = rule.getEnglish();
     int lm_state_size = 0;
     for (HGNode node : tailNodes) {
       NgramDPState state = (NgramDPState) node.getDPState(stateIndex);

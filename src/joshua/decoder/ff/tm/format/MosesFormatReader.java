@@ -1,7 +1,6 @@
 package joshua.decoder.ff.tm.format;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.MosesPhraseRule;
 import joshua.util.io.LineReader;
 
@@ -89,7 +88,7 @@ public class MosesFormatReader extends HieroFormatReader {
   public static void main(String[] args) {
     MosesFormatReader reader = new MosesFormatReader();
     for (String line: new LineReader(System.in)) {
-      BilingualRule rule = reader.parseLine(line);
+      MosesPhraseRule rule = reader.parseLine(line);
       System.out.println(rule.textFormat());
     }    
   }

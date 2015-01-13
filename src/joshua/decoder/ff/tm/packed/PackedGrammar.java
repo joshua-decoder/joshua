@@ -54,7 +54,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BasicRuleCollection;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
@@ -529,7 +528,7 @@ public class PackedGrammar extends AbstractGrammar {
           rules[i] = rule_position + 2 + 3 * i;
           block_id = source[rules[i]];
 
-          BilingualRule rule = new BilingualRule(source[rule_position + 3 * i], src,
+          Rule rule = new Rule(source[rule_position + 3 * i], src,
               getTarget(target_address), getFeatures(block_id), arity, owner);
           estimated[block_id] = rule.estimateRuleCost(models);
           precomputable[block_id] = rule.getPrecomputableCost();

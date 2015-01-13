@@ -94,7 +94,8 @@ public class LanguageModelFF extends StatefulFF {
 
     NgramDPState newState = null;
     if (rule != null)
-      newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
+//      newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
+      newState = computeTransition(rule.getEnglish(), tailNodes, acc);
 
     return newState;
   }

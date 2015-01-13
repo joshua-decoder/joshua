@@ -5,7 +5,6 @@ import java.util.HashSet;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
@@ -47,7 +46,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
   public void apply(HGNode node) {
     // System.err.printf("VISITING NODE: %s\n", getLabelWithSpan(node));
     for (HyperEdge e : node.hyperedges) {
-      BilingualRule r = getRuleWithSpans(e, node);
+      Rule r = getRuleWithSpans(e, node);
       if (r != null && !rules.contains(r)) {
         if (outStream != null) outStream.println(r);
         grammar.addRule(r);
@@ -71,10 +70,10 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     return node.lhs == goalSymbol;
   }
 
-  private BilingualRule getRuleWithSpans(HyperEdge edge, HGNode head) {
-    BilingualRule edgeRule = (BilingualRule)edge.getRule();
+  private Rule getRuleWithSpans(HyperEdge edge, HGNode head) {
+    Rule edgeRule = edge.getRule();
     // System.err.printf("EdgeRule: %s\n", edgeRule);
-    if (!(edgeRule instanceof BilingualRule)) {
+    if (!(edgeRule instanceof Rule)) {
       // System.err.println("edge rule is not a bilingual rule");
       return null;
     }
@@ -88,14 +87,14 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     // if this would be unary abstract, getNewSource will be null
     if (source == null) return null;
     int[] target = getNewTargetFromSource(source);
-    BilingualRule result =
-			new BilingualRule(headLabel, source, target, edgeRule.getFeatureString(), edgeRule.getArity());
+    Rule result =
+        new Rule(headLabel, source, target, edgeRule.getFeatureString(), edgeRule.getArity());
     // System.err.printf("new rule is %s\n", result);
     return result;
   }
 
   private static int[] getNewSource(boolean isGlue, HyperEdge edge) {
-    BilingualRule rule = (BilingualRule) edge.getRule();
+    Rule rule = edge.getRule();
     int[] english = rule.getEnglish();
     // if this is a unary abstract rule, just return null
     // TODO: except glue rules!

@@ -12,7 +12,7 @@ package joshua.decoder.ff.tm;
  * @author Matt Post
  *
  */
-public class MosesPhraseRule extends BilingualRule {
+public class MosesPhraseRule extends Rule {
 
   public MosesPhraseRule(int lhs, int[] french, int[] english, String sparse_features, int arity,
       String alignment) {

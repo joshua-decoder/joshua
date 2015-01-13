@@ -12,7 +12,6 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
@@ -292,13 +291,13 @@ public class FragmentLMFF extends StatefulFF {
   
     Tree fragment = Tree.fromString("(S NP (VP (VBD \"said\") SBAR) (. \".\"))");
   
-    BilingualRule ruleS = new HieroFormatReader()
+    Rule ruleS = new HieroFormatReader()
         .parseLine("[S] ||| the man [VP,1] [.,2] ||| the man [VP,1] [.,2] ||| 0");
-    BilingualRule ruleVP = new HieroFormatReader()
+    Rule ruleVP = new HieroFormatReader()
         .parseLine("[VP] ||| said [SBAR,1] ||| said [SBAR,1] ||| 0");
-    BilingualRule ruleSBAR = new HieroFormatReader()
+    Rule ruleSBAR = new HieroFormatReader()
         .parseLine("[SBAR] ||| that he was done ||| that he was done ||| 0");
-    BilingualRule rulePERIOD = new HieroFormatReader().parseLine("[.] ||| . ||| . ||| 0");
+    Rule rulePERIOD = new HieroFormatReader().parseLine("[.] ||| . ||| . ||| 0");
   
     ruleS.setOwner(0);
     ruleVP.setOwner(0);
