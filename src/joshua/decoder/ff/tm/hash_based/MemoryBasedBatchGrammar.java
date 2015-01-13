@@ -257,7 +257,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
 
     int[] sourceWords = { sourceWord };
     int[] targetWords = { targetWord };
-    final byte[] oovAlignment = { 0, 0 };
+    final String oovAlignment = "0-0";
     
     if (this.joshuaConfiguration.oovList != null && this.joshuaConfiguration.oovList.size() != 0) {
       for (OOVItem item: this.joshuaConfiguration.oovList) {

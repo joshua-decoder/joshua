@@ -94,9 +94,39 @@ public class LanguageModelFF extends StatefulFF {
 
     NgramDPState newState = null;
     if (rule != null)
-      newState = computeTransition(rule.getEnglish(), tailNodes, acc);
+      newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
 
     return newState;
+  }
+
+  /**
+   * Input sentences can be tagged with information specific to the language model. This looks for
+   * such annotations by following a word's alignments back to the source words, checking for
+   * annotations, and replacing the surface word if such annotations are found.
+   * 
+   */
+  protected int[] getTags(Rule rule, int begin, int end, Sentence sentence) {
+    int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
+    byte[] alignments = rule.getAlignment();
+
+    /* For each token, project it to each of its source-language alignments. If any of those
+     * are annotated, take the first annotation.
+     */
+    for (int i = 0; i < tokens.length; i++) {
+      if (tokens[i] > 0) {
+        for (int j = 0; j < alignments.length; j += 2) {
+          if (alignments[j] == i) {
+            int annotation = sentence.getAnnotation((int)alignments[i] + begin).getAnnotation();
+            if (annotation != -1) {
+              tokens[i] = annotation;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    return tokens;
   }
 
   @Override

@@ -62,36 +62,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     }
 
     String sparse_features = (fields.length > 3 ? fields[3] : "");
-
-    byte[] alignment = null;
-    if (fields.length > 4) { // alignments are included
-      alignment = readAlignment(fields[4]);
-    } else {
-      alignment = null;
-    }
+    String alignment = (fields.length > 4) ? fields[4] : null;
 
     return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
-  }
-
-  /**
-   * Reads in a string alignment as a space-delimited list of hyphen-delimited integer pairs "i-j",
-   * where i denotes a zero-based index into the source string and j into the target string.
-   * @param s
-   * @return
-   */
-  public static byte[] readAlignment(String s) {
-    String[] indices = s.replaceAll("-", " ").split("\\s+");
-    byte[] result = new byte[indices.length];
-    int j = 0;
-    for (String i : indices) {
-      try {
-        result[j] = Byte.parseByte(i);
-      } catch (NumberFormatException e) {
-        return null; // malformed alignment; just ignore it.
-      }
-      j++;
-    }
-    return result;
   }
 
   @Override

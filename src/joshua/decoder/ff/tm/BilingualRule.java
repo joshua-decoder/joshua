@@ -47,7 +47,9 @@ public class BilingualRule extends Rule {
 
   private int[] english;
 
-  private byte [] alignment;
+  // The alignment string, e.g., 0-0 0-1 1-1 2-1
+  private String alignmentString;
+  protected byte[] alignment = null;
 
   // ===============================================================
   // Constructors
@@ -86,9 +88,9 @@ public class BilingualRule extends Rule {
     this.english = targetRhs;
   }
 
-  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, byte [] alignment) {
+  public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, String alignment) {
     this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
-    this.alignment = alignment;
+    this.alignmentString = alignment;
   }
   
   public BilingualRule() {
@@ -330,7 +332,7 @@ public class BilingualRule extends Rule {
     }
     sb.append(" |||");
     sb.append(" " + getFeatureString());
-    if (getAlignment() != null)
+    if (getAlignmentString() != null)
       sb.append(" ||| " + getAlignmentString());
     return sb.toString();
   }
@@ -339,16 +341,22 @@ public class BilingualRule extends Rule {
     return sparseFeatures;
   }
   
+  /**
+   * Returns an alignment as a sequence of integers. The integers at positions i and i+1 are paired,
+   * with position i indexing the source and i+1 the target.
+   */
   @Override
   public byte[] getAlignment() {
+    if (alignment == null) {
+      String[] tokens = getAlignmentString().split("[-\\s]+");
+      alignment = new byte[tokens.length];
+      for (int i = 0; i < tokens.length; i++)
+        alignment[i] = (byte) Short.parseShort(tokens[i]);
+    }
     return alignment;
   }
   
   public String getAlignmentString() {
-    StringBuffer sb = new StringBuffer();
-    if (getAlignment() != null)
-      for (int i = 0; i < getAlignment().length; i += 2)
-        sb.append(String.format("%d-%d ", getAlignment()[i], getAlignment()[i+1]));
-    return sb.toString().trim();
+    return alignmentString;
   }
 }
