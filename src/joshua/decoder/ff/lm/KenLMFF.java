@@ -25,8 +25,8 @@ public class KenLMFF extends LanguageModelFF {
   // maps from sentence numbers to KenLM-side pools used to allocate state
   private static final ConcurrentHashMap<Integer, Long> poolMap = new ConcurrentHashMap<Integer, Long>();
 
-  public KenLMFF(FeatureVector weights, String featureName, KenLM lm) {
-    super(weights, featureName, lm);
+  public KenLMFF(FeatureVector weights, KenLM lm) {
+    super(weights, lm);
   }
 
   /**
