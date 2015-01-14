@@ -209,7 +209,7 @@ public class KBestExtractor {
    * @param hg the hypergraph to extract from
    * @param featureFunctions the feature functions to use
    * @param topN how many to extract
-   * @param sentence the input sentence
+   * @param source the input sentence
    * @param out object to write to
    * @throws IOException
    */

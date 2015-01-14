@@ -6,11 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.segment_file.Token;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -68,7 +70,7 @@ class DotChart {
   private final int sentLen;
 
   /* Represents the input sentence being translated. */
-  private final Lattice<Integer> input;
+  private final Lattice<Token> input;
 
   /* If enabled, rule terminals are treated as regular expressions. */
   private final boolean regexpMatching;
@@ -104,7 +106,7 @@ class DotChart {
 
 
 
-  public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart,
+  public DotChart(Lattice<Token> input, Grammar grammar, Chart chart,
       NonterminalMatcher nonTerminalMatcher, boolean regExpMatching) {
 
     this.dotChart = chart;
@@ -116,24 +118,8 @@ class DotChart {
     this.nonTerminalMatcher = nonTerminalMatcher;
     this.regexpMatching = regExpMatching;
 
-    // seeding the dotChart
     seed();
   }
-
-
-  /*
-   * public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart, boolean
-   * useRegexpMatching) { this.dotChart = chart; this.pGrammar = grammar; this.input = input;
-   * this.sentLen = input.size(); this.dotcells = new ChartSpan<DotCell>(sentLen, null);
-   * 
-   * // seeding the dotChart seed();
-   * 
-   * this.regexpMatching = useRegexpMatching; }
-   */
-
-  // ===============================================================
-  // Package-protected methods
-  // ===============================================================
 
   /**
    * Add initial dot items: dot-items pointer to the root of the grammar trie.
@@ -188,10 +174,10 @@ class DotChart {
      * (2) If the the dot-item is looking for a source-side terminal symbol, we simply match against
      * the input sentence and advance the dot.
      */
-    Node<Integer> node = input.getNode(j - 1);
-    for (Arc<Integer> arc : node.getOutgoingArcs()) {
+    Node<Token> node = input.getNode(j - 1);
+    for (Arc<Token> arc : node.getOutgoingArcs()) {
 
-      int last_word = arc.getLabel();
+      int last_word = arc.getLabel().getWord();
       int arc_len = arc.getHead().getNumber() - arc.getTail().getNumber();
 
       // int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //

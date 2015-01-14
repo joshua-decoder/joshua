@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.segment_file.Token;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -153,18 +154,18 @@ public abstract class AbstractGrammar implements Grammar {
    * @param inputLattice the lattice representing the input sentence
    * @param featureFunctions a list of feature functions used for scoring
    */
-  public static void addOOVRules(Grammar grammar, Lattice<Integer> inputLattice, List<FeatureFunction> featureFunctions,
-      boolean onlyTrue) {
+  public static void addOOVRules(Grammar grammar, Lattice<Token> inputLattice, 
+      List<FeatureFunction> featureFunctions, boolean onlyTrue) {
     /*
      * Add OOV rules; This should be called after the manual constraints have
      * been set up.
      */
     HashSet<Integer> words = new HashSet<Integer>();
-    for (Node<Integer> node : inputLattice) {
-      for (Arc<Integer> arc : node.getOutgoingArcs()) {
+    for (Node<Token> node : inputLattice) {
+      for (Arc<Token> arc : node.getOutgoingArcs()) {
         // create a rule, but do not add into the grammar trie
         // TODO: which grammar should we use to create an OOV rule?
-        int sourceWord = arc.getLabel();
+        int sourceWord = arc.getLabel().getWord();
         if (sourceWord == Vocabulary.id(Vocabulary.START_SYM)
             || sourceWord == Vocabulary.id(Vocabulary.STOP_SYM))
           continue;

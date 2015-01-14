@@ -167,8 +167,10 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
    * From SourceDependentFF interface.
    */
   @Override
-  public void setSource(Sentence source) {
-    this.source = source.intSentence();
+  public void setSource(Sentence sentence) {
+    if (! sentence.isLinearChain())
+      throw new RuntimeException("EdgePhraseSimilarity not defined for lattices");
+    this.source = sentence.getWordIDs();
   }
 
   public EdgePhraseSimilarityFF clone() {

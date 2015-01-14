@@ -76,7 +76,7 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    Decoder.LOG(1, String.format("Input %d: %s", sentence.id(), sentence.source()));
+    Decoder.LOG(1, String.format("Input %d: %s", sentence.id(), sentence.fullSource()));
 
     if (sentence.target() != null)
       Decoder.LOG(1, String.format("Input %d: Constraining to target sentence '%s'", 
