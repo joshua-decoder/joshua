@@ -490,6 +490,8 @@ public class Decoder {
 
   /**
    * Retained to maintain backward compatibility
+   * Uses the lm lines in the Joshua config file which are not 
+   * defined as feature functions to create new LMs
    * @param args
    * @throws IOException
    */
@@ -516,6 +518,11 @@ public class Decoder {
     }
   }
   
+  /**
+   * Initializes a language model and adds it as a feature
+   * @param argMap A map of arguments supplied top the lm feature function
+   *        throught the Joshua config file
+   */
   private void initializeLanguageModel(HashMap<String, String> argMap) {
     if (this.languageModels == null) {
       this.languageModels = new ArrayList<NGramLanguageModel>();
