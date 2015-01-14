@@ -56,6 +56,15 @@
     <!-- </if> -->
   </target>
 
+  <!-- Set git version -->
+  <target name="git-version" description="Store latest git commit ID">
+    <exec executable="git">
+      <arg value="rev-parse"/>
+      <arg value="--short"/>
+      <arg value="HEAD"/>
+    </exec>
+  </target>
+
   <target name="set-joshua-version" unless="env.JOSHUA_VERSION">
     <fail message="Please set the $JOSHUA_VERSION environment variable." />
   </target>
@@ -386,3 +395,4 @@
   </target>
 
 </project>
+
