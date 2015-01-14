@@ -9,8 +9,6 @@ src/joshua/decoder/ff/lm/srilm/srilm.o
 src/joshua/decoder/ff/lm/srilm/srilmJNI.java
 src/joshua/decoder/ff/lm/srilm/srilm_java_wrap.cxx
 src/joshua/decoder/ff/lm/srilm/srilm_java_wrap.o
-example/example.nbest.srilm.out
-example_constrained/
 .DS_Store
 src/.DS_Store
 src/joshua/.DS_Store
@@ -18,6 +16,8 @@ src/joshua/decoder/.DS_Store
 src/joshua/decoder/ff/.DS_Store
 src/joshua/decoder/ff/lm/.DS_Store
 
+examples/fisher-callhome*
+examples/tree_visualizer/tree_visualizer.jar
 
 *.out
 *.o
@@ -32,16 +32,6 @@ src/joshua/decoder/ff/lm/kenlm/libken.dylib
 src/joshua/decoder/ff/lm/kenlm/ngram_query
 src/joshua/decoder/ff/lm/kenlm/query
 src/joshua/decoder/ff/lm/kenlm/lmplz
-examples/example2/example2.1best
-examples/example2/example2.1best.sgm
-examples/example2/example2.config.kenlm
-examples/example2/example2.kenlm.1best
-examples/example2/example2.kenlm.nbest
-examples/example2/example2.nbest
-examples/example2/example2.packed.1best
-examples/example2/example2.packed.nbest
-examples/example2/example2.ref.all
-examples/example2/example2.refs.sgm
 test/bn-en/hiero/diff
 test/bn-en/hiero/log
 test/bn-en/hiero/output
@@ -100,3 +90,5 @@ scripts/training/MGIZA/
 bin/lmplz
 
 *~
+
+.philog.LOGFILE
