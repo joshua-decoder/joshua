@@ -1424,7 +1424,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
       s/<FEATURE_FUNCTIONS>/$feature_functions/g;
-			s/<SEARCH>/$SEARCH_ALGORITHM/g;
+			s/<SEARCH_ALGORITHM>/$SEARCH_ALGORITHM/g;
 			s/<OTHERWEIGHTS>/$otherweights/g;
 			s/<OTHERPARAMS>/$otherparams/g;
 			s/<LMFILE>/$LMFILES[0]/g;
