@@ -31,6 +31,7 @@ import joshua.decoder.segment_file.Sentence;
  */
 public class LanguageModelFF extends StatefulFF {
 
+  private static int LM_INDEX = 0;
   public static int START_SYM_ID;
   public static int STOP_SYM_ID;
 
@@ -63,8 +64,8 @@ public class LanguageModelFF extends StatefulFF {
   /**
    *
    */
-  public LanguageModelFF(FeatureVector weights, String featureName, NGramLanguageModel lm) {
-    super(weights, featureName);
+  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm) {
+    super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++));
     this.languageModel = lm;
     this.ngramOrder = lm.getOrder();
     LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);

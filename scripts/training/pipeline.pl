@@ -1191,7 +1191,6 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
   my $lm_input = "$TRAIN{target}.uniq";
   # Choose LM input based on whether an annotated corpus was created
   if (defined $TRAIN{ner_lm}) {
-    #TODO:GAURAV
     $lm_input = replace_tokens_with_types("$TRAIN{target}.uniq.ner");
   }
 
@@ -1339,7 +1338,7 @@ my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "lm = $LM_TYPE $LM_ORDER $LM_STATE_MINIMIZATION false 100 $lmfile";
+  my $configstring = "feature-function = LanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -minimizing $LM_STATE_MINIMIZATION -lm_file $lmfile";
   push (@configstrings, $configstring);
 
   my $weightstring = "lm_$i 1.0";

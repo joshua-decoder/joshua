@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -26,6 +28,7 @@ import joshua.decoder.ff.RuleLengthFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.fragmentlm.FragmentLMFF;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
@@ -485,50 +488,71 @@ public class Decoder {
     return this;
   }
 
+  /**
+   * Retained to maintain backward compatibility
+   * @param args
+   * @throws IOException
+   */
   private void initializeLanguageModels() throws IOException {
-
-    this.languageModels = new ArrayList<NGramLanguageModel>();
-
+    
+    logger.warning("You seem to be using an old version of the Joshua config file");
+    logger.warning("Language models should be defined as regular feature functions.");
+    // Only initialize if necessary
+    if (this.languageModels == null) {
+      this.languageModels = new ArrayList<NGramLanguageModel>();
+    }
     // lm = kenlm 5 0 0 100 file
     for (String lmLine : joshuaConfiguration.lms) {
-
       String[] tokens = lmLine.trim().split("\\s+");
 
       Decoder.LOG(1, "lm line: " + tokens);
-      String lm_type = tokens[0];
-      int lm_order = Integer.parseInt(tokens[1]);
-      boolean minimizing = Boolean.parseBoolean(tokens[2]);
-      String lm_file = tokens[5];
-
-      if (lm_type.equals("kenlm")) {
-        KenLM lm = new KenLM(lm_order, lm_file, minimizing);
-        this.languageModels.add(lm);
-        Vocabulary.registerLanguageModel(lm);
-        Vocabulary.id(joshuaConfiguration.default_non_terminal);
-
-      } else if (lm_type.equals("berkeleylm")) {
-        LMGrammarBerkeley lm = new LMGrammarBerkeley(lm_order, lm_file);
-        this.languageModels.add(lm);
-        Vocabulary.registerLanguageModel(lm);
-        Vocabulary.id(joshuaConfiguration.default_non_terminal);
-
-      } else if (lm_type.equals("none")) {
-        ; // do nothing
-
-      } else {
-        logger.warning("WARNING: using built-in language model; you probably didn't intend this");
-        logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'none'");
-      }
+      
+      HashMap<String, String> argMap= new HashMap<String, String>();
+      argMap.put("lm_type", tokens[0]);
+      argMap.put("lm_order", tokens[1]);
+      argMap.put("minimizing", tokens[2]);
+      argMap.put("lm_file", tokens[5]);
+      initializeLanguageModel(argMap);
     }
+  }
+  
+  private void initializeLanguageModel(HashMap<String, String> argMap) {
+    if (this.languageModels == null) {
+      this.languageModels = new ArrayList<NGramLanguageModel>();
+    }
+    String lm_type = argMap.get("lm_type");
+    int lm_order = Integer.parseInt(argMap.get("lm_order"));
+    boolean minimizing = Boolean.parseBoolean(argMap.get("minimizing"));
+    String lm_file = argMap.get("lm_file");
+    
+    if (lm_type.equals("kenlm")) {
+      KenLM lm = new KenLM(lm_order, lm_file, minimizing);
+      this.languageModels.add(lm);
+      Vocabulary.registerLanguageModel(lm);
+      Vocabulary.id(joshuaConfiguration.default_non_terminal);
+      addLMFeature(lm);
 
-    for (int i = 0; i < this.languageModels.size(); i++) {
-      NGramLanguageModel lm = this.languageModels.get(i);
+    } else if (lm_type.equals("berkeleylm")) {
+      LMGrammarBerkeley lm = new LMGrammarBerkeley(lm_order, lm_file);
+      this.languageModels.add(lm);
+      Vocabulary.registerLanguageModel(lm);
+      Vocabulary.id(joshuaConfiguration.default_non_terminal);
+      addLMFeature(lm);
 
-      if (lm instanceof KenLM && lm.isMinimizing()) {
-        this.featureFunctions.add(new KenLMFF(weights, String.format("lm_%d", i), (KenLM) lm));
-      } else {
-        this.featureFunctions.add(new LanguageModelFF(weights, String.format("lm_%d", i), lm));
-      }
+    } else if (lm_type.equals("none")) {
+      ; // do nothing
+
+    } else {
+      logger.warning("WARNING: using built-in language model; you probably didn't intend this");
+      logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'none'");
+    }
+  }
+  
+  private void addLMFeature(NGramLanguageModel lm) {
+    if (lm instanceof KenLM && lm.isMinimizing()) {
+      this.featureFunctions.add(new KenLMFF(weights, (KenLM) lm));
+    } else {
+      this.featureFunctions.add(new LanguageModelFF(weights, lm));
     }
   }
 
@@ -672,6 +696,16 @@ public class Decoder {
       if (feature.equals("latticecost") || feature.equals("sourcepath")) {
         this.featureFunctions.add(new SourcePathFF(Decoder.weights));
       }
+      
+      // allows language models to be used as feature functions with arguments
+      else if (feature.equals("languagemodel")) {
+        // Add some point, all feature functions should accept arguments this way
+        String rawArgs = "";
+        for (int i = 1; i < fields.length; i++) {
+          rawArgs = fields[i] + " ";
+        }
+        initializeLanguageModel(parseFeatureArgs(rawArgs.trim()));
+      }
 
       else if (feature.equals("arityphrasepenalty") || feature.equals("aritypenalty")) {
         String owner = fields[1];
@@ -745,6 +779,43 @@ public class Decoder {
     for (FeatureFunction feature : featureFunctions) {
       Decoder.LOG(1, String.format("FEATURE: %s", feature.logString()));
     }
+  }
+  
+  /**
+   * Parses the arguments passed to a feature function in the Joshua config file
+   * TODO: Replace this with a proper CLI library at some point
+   * Expects key value pairs in the form : -argname value
+   * Any key without a value is added with an empty string as value
+   * Multiple values for the same key are not parsed. The first one is used.
+   * @param rawArgs A string with the raw arguments and their names
+   * @return A hash with the keys and the values of the string
+   */
+  private HashMap<String, String> parseFeatureArgs(String rawArgs) {
+    HashMap<String, String> parsedArgs = new HashMap<String, String>(); 
+    String[] args = rawArgs.split("\\s+");
+    boolean lookingForValue = false;
+    String currentKey = "";
+    for (int i = 0; i < args.length; i++) {
+      if (args[i].startsWith("-")) {
+        // This is a key
+        // First check to see if there is a key that is waiting to be written
+        if (lookingForValue) {
+          // This is a key with no specified value
+          parsedArgs.put(currentKey, "");
+        }
+        // Now store the new key and look for its value
+        currentKey = args[i].substring(1);
+        lookingForValue = true;
+      }
+      else {
+        // This is a value
+        if (lookingForValue) {
+          parsedArgs.put(currentKey, args[i]);
+          lookingForValue = false;
+        }
+      }
+    }
+    return parsedArgs; 
   }
 
   public static boolean VERBOSE(int i) {
