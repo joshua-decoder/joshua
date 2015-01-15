@@ -491,8 +491,10 @@ public class Decoder {
    */
   private void initializeLanguageModels() throws IOException {
     
-    Decoder.LOG(1, "You seem to be using an old version of the Joshua config file");
-    Decoder.LOG(1, "Language models should be defined as regular feature functions.");
+    if (joshuaConfiguration.lms.size() != 0) {
+      Decoder.LOG(1, "You seem to be using an old version of the Joshua config file");
+      Decoder.LOG(1, "Language models should be defined as regular feature functions.");
+    }
 
     // Only initialize if necessary
     if (this.languageModels == null) {
@@ -702,7 +704,7 @@ public class Decoder {
         // Add some point, all feature functions should accept arguments this way
         String rawArgs = "";
         for (int i = 1; i < fields.length; i++) {
-          rawArgs = fields[i] + " ";
+          rawArgs += fields[i] + " ";
         }
         initializeLanguageModel(parseFeatureArgs(rawArgs.trim()));
       }
