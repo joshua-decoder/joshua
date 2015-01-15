@@ -107,7 +107,7 @@ public class DecoderThread extends Thread {
     HyperGraph hypergraph = null;
     try {
 
-      if (joshuaConfiguration.search_algorithm.equals("phrase")) {
+      if (joshuaConfiguration.search_algorithm.equals("stack")) {
         Stacks stacks = new Stacks(sentence, this.featureFunctions, grammars, joshuaConfiguration);
         
         hypergraph = stacks.search();
