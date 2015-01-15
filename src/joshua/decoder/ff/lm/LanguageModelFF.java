@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
@@ -61,13 +62,18 @@ public class LanguageModelFF extends StatefulFF {
    */
   protected float weight;
 
+  /* The config */
+  protected JoshuaConfiguration config;
+
   /**
    *
    */
-  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm) {
+  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm, JoshuaConfiguration config) {
     super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++));
     this.languageModel = lm;
     this.ngramOrder = lm.getOrder();
+    this.config = config;
+    
     LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
     LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
 
@@ -95,7 +101,9 @@ public class LanguageModelFF extends StatefulFF {
 
     NgramDPState newState = null;
     if (rule != null)
-      newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
+      newState = config.source_annotations 
+          ? computeTransition(getTags(rule, i, j, sentence), tailNodes, acc) 
+          : computeTransition(rule.getEnglish(), tailNodes, acc);
 
     return newState;
   }
@@ -110,17 +118,20 @@ public class LanguageModelFF extends StatefulFF {
     int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
     byte[] alignments = rule.getAlignment();
 
-
-    /* For each token, project it to each of its source-language alignments. If any of those
-     * are annotated, take the first annotation.
+//    System.err.println(String.format("getTags() %s", rule.getRuleString()));
+    
+    /* For each target-side token, project it to each of its source-language alignments. If any of those
+     * are annotated, take the first annotation and quit.
      */
     if (alignments != null) {
       for (int i = 0; i < tokens.length; i++) {
-        if (tokens[i] > 0) {
+        if (tokens[i] > 0) { // skip nonterminals
           for (int j = 0; j < alignments.length; j += 2) {
             if (alignments[j] == i) {
               int annotation = sentence.getAnnotation((int)alignments[i] + begin);
               if (annotation != -1) {
+//                System.err.println(String.format("  word %d source %d abs %d annotation %d/%s", 
+//                    i, alignments[i], alignments[i] + begin, annotation, Vocabulary.word(annotation)));
                 tokens[i] = annotation;
                 break;
               }
@@ -221,8 +232,6 @@ public class LanguageModelFF extends StatefulFF {
     float transitionLogP = 0.0f;
     int[] left_context = null;
     
-//    System.err.println(String.format("LanguageModel::computeTransition(%s)", Arrays.toString(enWords)));
-
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
 

@@ -128,7 +128,7 @@ public class Sentence {
    * @return The annotations associated with this word
    */
   public int getAnnotation(int index) {
-    return getTokens().get(index).getWord();
+    return getTokens().get(index).getAnnotation();
   }
 
   /**
@@ -280,8 +280,9 @@ public class Sentence {
    */
   public String source() {
     String str = "";
-    for (int id: getWordIDs())
-      str += Vocabulary.word(id) + " ";
+    int[] ids = getWordIDs();
+    for (int i = 1; i < ids.length - 1; i++)
+      str += Vocabulary.word(ids[i]) + " ";
     return str.trim();
   }
 

@@ -215,6 +215,9 @@ public class JoshuaConfiguration {
   
   /* Write n-best output to this file */
   public String n_best_file = null;
+
+  /* Whether to look at source side for special annotations */
+  public boolean source_annotations = false;
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -535,6 +538,10 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("input-file"))) {
             // for Moses compatibility
             input_file = fds[1];
+            
+          } else if (parameter.equals(normalize_key("source-annotations"))) {
+            // Check source sentence
+            source_annotations = true;
 
           } else {
 

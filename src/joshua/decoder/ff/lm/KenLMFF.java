@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
@@ -25,8 +26,8 @@ public class KenLMFF extends LanguageModelFF {
   // maps from sentence numbers to KenLM-side pools used to allocate state
   private static final ConcurrentHashMap<Integer, Long> poolMap = new ConcurrentHashMap<Integer, Long>();
 
-  public KenLMFF(FeatureVector weights, KenLM lm) {
-    super(weights, lm);
+  public KenLMFF(FeatureVector weights, KenLM lm, JoshuaConfiguration config) {
+    super(weights, lm, config);
   }
 
   /**
@@ -68,7 +69,9 @@ public class KenLMFF extends LanguageModelFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       Sentence sentence, Accumulator acc) {
 
-    int[] ruleWords = rule.getEnglish();
+    int[] ruleWords = config.source_annotations 
+        ? getTags(rule, i, j, sentence)
+        : rule.getEnglish();
 
     // The IDs we'll pass to KenLM
     long[] words = new long[ruleWords.length];

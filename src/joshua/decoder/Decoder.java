@@ -6,13 +6,11 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
@@ -28,7 +26,6 @@ import joshua.decoder.ff.RuleLengthFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.fragmentlm.FragmentLMFF;
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.KenLMFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
@@ -96,9 +93,6 @@ public class Decoder {
 
   /* The feature weights. */
   public static FeatureVector weights;
-
-  /** Logger for this class. */
-  private static final Logger logger = Logger.getLogger(Decoder.class.getName());
 
   public static int VERBOSE = 1;
 
@@ -497,8 +491,9 @@ public class Decoder {
    */
   private void initializeLanguageModels() throws IOException {
     
-    logger.warning("You seem to be using an old version of the Joshua config file");
-    logger.warning("Language models should be defined as regular feature functions.");
+    Decoder.LOG(1, "You seem to be using an old version of the Joshua config file");
+    Decoder.LOG(1, "Language models should be defined as regular feature functions.");
+
     // Only initialize if necessary
     if (this.languageModels == null) {
       this.languageModels = new ArrayList<NGramLanguageModel>();
@@ -507,8 +502,6 @@ public class Decoder {
     for (String lmLine : joshuaConfiguration.lms) {
       String[] tokens = lmLine.trim().split("\\s+");
 
-      Decoder.LOG(1, "lm line: " + tokens);
-      
       HashMap<String, String> argMap= new HashMap<String, String>();
       argMap.put("lm_type", tokens[0]);
       argMap.put("lm_order", tokens[1]);
@@ -550,16 +543,16 @@ public class Decoder {
       ; // do nothing
 
     } else {
-      logger.warning("WARNING: using built-in language model; you probably didn't intend this");
-      logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'none'");
+      Decoder.LOG(1, "WARNING: using built-in language model; you probably didn't intend this");
+      Decoder.LOG(1, "Valid lm types are 'kenlm', 'berkeleylm', 'none'");
     }
   }
   
   private void addLMFeature(NGramLanguageModel lm) {
     if (lm instanceof KenLM && lm.isMinimizing()) {
-      this.featureFunctions.add(new KenLMFF(weights, (KenLM) lm));
+      this.featureFunctions.add(new KenLMFF(weights, (KenLM) lm, joshuaConfiguration));
     } else {
-      this.featureFunctions.add(new LanguageModelFF(weights, lm));
+      this.featureFunctions.add(new LanguageModelFF(weights, lm, joshuaConfiguration));
     }
   }
 
@@ -620,7 +613,7 @@ public class Decoder {
       }
 
     } else {
-      logger.warning("* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
+      Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       // TODO: this should initialize the grammar dynamically so that the goal
       // symbol and default
       // non terminal match
@@ -672,7 +665,7 @@ public class Decoder {
       System.exit(1);
     }
 
-    logger.info(String.format("Read %d weights from file '%s'", weights.size(), fileName));
+    Decoder.LOG(1, String.format("Read %d weights from file '%s'", weights.size(), fileName));
 
     return weights;
   }
@@ -751,11 +744,9 @@ public class Decoder {
         weights.put(String.format("tm_%s_%s", owner, index), weight);
 
       } else if (feature.equals("fragmentlm")) {
-        // logger.info(String.format("FEATURE: FragmentLMFF %s", featureLine));
         this.featureFunctions.add(new FragmentLMFF(Decoder.weights, featureLine));
 
       } else if (feature.equals("rule")) {
-        // logger.info(String.format("FEATURE: RuleFF %s", featureLine));
         this.featureFunctions.add(new RuleFF(Decoder.weights, featureLine));
 
       } else if (feature.equals("phrasepenalty")) {
