@@ -515,8 +515,9 @@ public class Decoder {
    * 
    * @param argMap A map of arguments supplied top the lm feature function throught the Joshua
    *          config file
+   * @throws IOException 
    */
-  private void initializeLanguageModel(HashMap<String, String> argMap) {
+  private void initializeLanguageModel(HashMap<String, String> argMap) throws IOException {
     if (this.languageModels == null) {
       this.languageModels = new ArrayList<NGramLanguageModel>();
     }
@@ -530,14 +531,21 @@ public class Decoder {
       this.languageModels.add(lm);
       Vocabulary.registerLanguageModel(lm);
       Vocabulary.id(joshuaConfiguration.default_non_terminal);
-      addLMFeature(lm);
+      
+      if (argMap.containsKey("lm_class") && argMap.containsKey("class_map")) {
+        // This is a Class LM 
+        addLMFeature(lm, true, argMap.get("class_map"));
+      }
+      else {
+        addLMFeature(lm, false, null);
+      }
 
     } else if (lm_type.equals("berkeleylm")) {
       LMGrammarBerkeley lm = new LMGrammarBerkeley(lm_order, lm_file);
       this.languageModels.add(lm);
       Vocabulary.registerLanguageModel(lm);
       Vocabulary.id(joshuaConfiguration.default_non_terminal);
-      addLMFeature(lm);
+      addLMFeature(lm, false, null);
 
     } else if (lm_type.equals("none")) {
       ; // do nothing
@@ -548,11 +556,15 @@ public class Decoder {
     }
   }
 
-  private void addLMFeature(NGramLanguageModel lm) {
+  private void addLMFeature(NGramLanguageModel lm, boolean isClass, String classFile)
+      throws IOException {
     if (lm instanceof KenLM && lm.isMinimizing()) {
-      this.featureFunctions.add(new KenLMFF(weights, (KenLM) lm, joshuaConfiguration));
+      KenLMFF newFeatureFunction = new KenLMFF(weights, (KenLM) lm, joshuaConfiguration, isClass);
+      newFeatureFunction.setClassMap(classFile);
+      this.featureFunctions.add(newFeatureFunction);
+      
     } else {
-      this.featureFunctions.add(new LanguageModelFF(weights, lm, joshuaConfiguration));
+      this.featureFunctions.add(new LanguageModelFF(weights, lm, joshuaConfiguration, false));
     }
   }
 

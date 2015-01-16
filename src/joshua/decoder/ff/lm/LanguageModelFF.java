@@ -1,7 +1,12 @@
 package joshua.decoder.ff.lm;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -64,15 +69,61 @@ public class LanguageModelFF extends StatefulFF {
 
   /* The config */
   protected JoshuaConfiguration config;
+  
+  /**
+   * 
+   */
+  private boolean isClassLM;
+  private ClassMap classMap;
+  
+  protected class ClassMap {
+
+    private HashMap<Integer, Integer> classMap;
+
+    public ClassMap(String file_name) throws IOException {
+      this.classMap = new HashMap<Integer, Integer>();
+      read(file_name);
+    }
+
+    public int getClassID(int wordID) {
+      if (this.classMap.containsKey(wordID)) {
+        return this.classMap.get(wordID);
+      } else {
+        // OOV wrt the class map
+        return -1;
+      }
+    }
+
+    /**
+     * Reads a class map from file.
+     * 
+     * @param file_name
+     * @throws IOException
+     */
+    private void read(String file_name) throws IOException {
+
+      File class_file = new File(file_name);
+      BufferedReader br = new BufferedReader(new FileReader(class_file));
+      String line;
+
+      while ((line = br.readLine()) != null) {
+        String[] lineComp = line.trim().split("\\s+");
+        this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+      }
+      br.close();
+    }
+
+  }
 
   /**
    *
    */
-  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm, JoshuaConfiguration config) {
+  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm, JoshuaConfiguration config, boolean isClassLM) {
     super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++));
     this.languageModel = lm;
     this.ngramOrder = lm.getOrder();
     this.config = config;
+    this.isClassLM = isClassLM;
     
     LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
     LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
@@ -100,11 +151,25 @@ public class LanguageModelFF extends StatefulFF {
       Sentence sentence, Accumulator acc) {
 
     NgramDPState newState = null;
-    if (rule != null)
-      newState = config.source_annotations 
-          ? computeTransition(getTags(rule, i, j, sentence), tailNodes, acc) 
-          : computeTransition(rule.getEnglish(), tailNodes, acc);
-
+    if (rule != null) {
+      if (config.source_annotations) {
+        // Get source side annotations and project them to the target side
+        newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
+      }
+      else {
+        if (this.isClassLM) {
+          // Use a class language model
+          // Return target side classes
+          newState = computeTransition(getClasses(rule), tailNodes, acc);
+        }
+        else {
+          // Default LM 
+          newState = computeTransition(rule.getEnglish(), tailNodes, acc);
+        }
+      }
+    
+    }
+    
     return newState;
   }
 
@@ -141,6 +206,34 @@ public class LanguageModelFF extends StatefulFF {
       }
     }
     
+    return tokens;
+  }
+  
+  /** 
+   * Sets the class map if this is a class LM 
+   * @param classMap
+   * @throws IOException 
+   */
+  public void setClassMap(String fileName) throws IOException {
+    this.classMap = new ClassMap(fileName);
+  }
+  
+  
+  /**
+   * Gets the target side classes for the class LM
+   * 
+   */
+  protected int[] getClasses(Rule rule) {
+    if (this.classMap == null) {
+      System.err.println("The class map is not set. Cannot use the class LM ");
+      System.exit(2);
+    }
+    int[] tokens = rule.getEnglish();
+    for (int i = 0; i < tokens.length; i++) {
+      if (tokens[i] > 0 ) {
+        tokens[i] = this.classMap.getClassID(tokens[i]);
+      }
+    }
     return tokens;
   }
 
@@ -224,7 +317,7 @@ public class LanguageModelFF extends StatefulFF {
    * code, including the use of the computeFinal* family of functions, which correct this fact for
    * sentences that are too short on the final transition.
    */
-  private NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
+  protected NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
 
     int[] current = new int[this.ngramOrder];
     int[] shadow = new int[this.ngramOrder];
