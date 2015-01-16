@@ -517,36 +517,6 @@ public class Decoder {
         ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
   }
 
-  /**
-   * Create and add a feature function for each tm owner, the first time we see each owner. Warning!
-   * This needs to be done *after* initializing the grammars, in case there is a packed grammar,
-   * since it resets the vocabulary.
-   * 
-   * @param ownersSeen A translation model owner
-   * @throws IOException
-   */
-  private void intializeTMOwners(HashSet<String> ownersSeen) throws IOException {
-
-    if (ownersSeen.size() != 0) {
-      for (String owner : ownersSeen) {
-        this.featureFunctions.add(new PhraseModelFF(weights, new String[] { "tm", "-owner", owner },
-            joshuaConfiguration));
-      }
-    } else {
-      Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
-      // TODO: this should initialize the grammar dynamically so that the goal
-      // symbol and default
-      // non terminal match
-      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
-          "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
-          joshuaConfiguration.default_non_terminal, -1, joshuaConfiguration);
-      this.grammars.add(glueGrammar);
-    }
-
-    Decoder.LOG(1, String.format("Memory used %.1f MB",
-        ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
-  }
-
   /*
    * This function reads the weights for the model. Feature names and their weights are listed one
    * per line in the following format:
