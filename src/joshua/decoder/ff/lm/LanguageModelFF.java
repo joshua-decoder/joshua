@@ -1,7 +1,12 @@
 package joshua.decoder.ff.lm;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -67,15 +72,63 @@ public class LanguageModelFF extends StatefulFF {
   protected String type;
   protected String path;
 
-  /**
-   *
-   */
+  /* Whether this is a class-based LM */
+  private boolean isClassLM;
+  private ClassMap classMap;
+  
+  protected class ClassMap {
+
+    private final int OOV_id = 10;
+    private HashMap<Integer, Integer> classMap;
+
+    public ClassMap(String file_name) throws IOException {
+      this.classMap = new HashMap<Integer, Integer>();
+      read(file_name);
+    }
+
+    public int getClassID(int wordID) {
+      if (this.classMap.containsKey(wordID)) {
+        return this.classMap.get(wordID);
+      } else {
+        return OOV_id;
+      }
+    }
+
+    /**
+     * Reads a class map from file.
+     * 
+     * @param file_name
+     * @throws IOException
+     */
+    private void read(String file_name) throws IOException {
+
+      File class_file = new File(file_name);
+      BufferedReader br = new BufferedReader(new FileReader(class_file));
+      String line;
+
+      while ((line = br.readLine()) != null) {
+        String[] lineComp = line.trim().split("\\s+");
+        this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+      }
+      br.close();
+    }
+
+  }
+
   public LanguageModelFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++), args, config);
-    
+
     this.type = parsedArgs.get("lm_type");
     this.ngramOrder = Integer.parseInt(parsedArgs.get("lm_order")); 
     this.path = parsedArgs.get("lm_file");
+    this.isClassLM = parsedArgs.containsKey("lm_class");
+    if (isClassLM && parsedArgs.containsKey("class_map"))
+      try {
+        this.classMap = new ClassMap(parsedArgs.get("class_map"));
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
 
     this.weight = weights.get(name);
     
@@ -128,11 +181,25 @@ public class LanguageModelFF extends StatefulFF {
       Sentence sentence, Accumulator acc) {
 
     NgramDPState newState = null;
-    if (rule != null)
-      newState = config.source_annotations 
-          ? computeTransition(getTags(rule, i, j, sentence), tailNodes, acc) 
-          : computeTransition(rule.getEnglish(), tailNodes, acc);
-
+    if (rule != null) {
+      if (config.source_annotations) {
+        // Get source side annotations and project them to the target side
+        newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
+      }
+      else {
+        if (this.isClassLM) {
+          // Use a class language model
+          // Return target side classes
+          newState = computeTransition(getClasses(rule), tailNodes, acc);
+        }
+        else {
+          // Default LM 
+          newState = computeTransition(rule.getEnglish(), tailNodes, acc);
+        }
+      }
+    
+    }
+    
     return newState;
   }
 
@@ -143,6 +210,7 @@ public class LanguageModelFF extends StatefulFF {
    * 
    */
   protected int[] getTags(Rule rule, int begin, int end, Sentence sentence) {
+    /* Very important to make a copy here, so the original rule is not modified */
     int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
     byte[] alignments = rule.getAlignment();
 
@@ -169,6 +237,35 @@ public class LanguageModelFF extends StatefulFF {
       }
     }
     
+    return tokens;
+  }
+  
+  /** 
+   * Sets the class map if this is a class LM 
+   * @param classMap
+   * @throws IOException 
+   */
+  public void setClassMap(String fileName) throws IOException {
+    this.classMap = new ClassMap(fileName);
+  }
+  
+  
+  /**
+   * Gets the target side classes for the class LM
+   * 
+   */
+  protected int[] getClasses(Rule rule) {
+    if (this.classMap == null) {
+      System.err.println("The class map is not set. Cannot use the class LM ");
+      System.exit(2);
+    }
+    /* Very important to make a copy here, so the original rule is not modified */
+    int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
+    for (int i = 0; i < tokens.length; i++) {
+      if (tokens[i] > 0 ) {
+        tokens[i] = this.classMap.getClassID(tokens[i]);
+      }
+    }
     return tokens;
   }
 
