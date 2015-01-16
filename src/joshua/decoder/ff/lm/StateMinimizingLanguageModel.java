@@ -4,11 +4,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM.StateProbPair;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -30,8 +28,6 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
 
   public StateMinimizingLanguageModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, args, config);
-    this.name = "StateMinimizingLanguageModel";
-
     this.type = "kenlm";
   }
 
