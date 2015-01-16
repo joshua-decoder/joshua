@@ -317,7 +317,7 @@ public class LanguageModelFF extends StatefulFF {
    * code, including the use of the computeFinal* family of functions, which correct this fact for
    * sentences that are too short on the final transition.
    */
-  protected NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
+  private NgramDPState computeTransition(int[] enWords, List<HGNode> tailNodes, Accumulator acc) {
 
     int[] current = new int[this.ngramOrder];
     int[] shadow = new int[this.ngramOrder];
