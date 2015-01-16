@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM.StateProbPair;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -21,15 +23,38 @@ import joshua.decoder.segment_file.Sentence;
  * @author Matt Post <post@cs.jhu.edu>
  * @author Juri Ganitkevitch <juri@cs.jhu.edu>
  */
-public class KenLMFF extends LanguageModelFF {
+public class StateMinimizingLanguageModel extends LanguageModelFF {
 
   // maps from sentence numbers to KenLM-side pools used to allocate state
   private static final ConcurrentHashMap<Integer, Long> poolMap = new ConcurrentHashMap<Integer, Long>();
 
-  public KenLMFF(FeatureVector weights, KenLM lm, JoshuaConfiguration config) {
-    super(weights, lm, config);
+  public StateMinimizingLanguageModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, args, config);
+    this.name = "StateMinimizingLanguageModel";
+
+    this.type = "kenlm";
   }
 
+  /**
+   * Initializes the underlying language model.
+   * 
+   * @param config
+   * @param type
+   * @param path
+   */
+  @Override
+  public void initializeLM() {
+    
+    // Override type (only KenLM supports left-state minimization)
+    this.languageModel = new KenLM(ngramOrder, path);
+
+    Vocabulary.registerLanguageModel(this.languageModel);
+    Vocabulary.id(config.default_non_terminal);
+    
+    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
+    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
+  }
+  
   /**
    * Estimates the cost of a rule. We override here since KenLM can do it more efficiently
    * than the default {@link LanguageModelFF} class.

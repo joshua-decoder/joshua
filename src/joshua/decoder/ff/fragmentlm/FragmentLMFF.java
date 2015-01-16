@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
@@ -89,39 +90,15 @@ public class FragmentLMFF extends StatefulFF {
    * @param name
    * @param stateComputer
    */
-  public FragmentLMFF(FeatureVector weights, String argString) {
-    super(weights, "FragmentLMFF");
+  public FragmentLMFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "FragmentLMFF", args, config);
 
     lmFragments = new HashMap<String, ArrayList<Tree>>();
 
-    // Process the args for the owner, minimum, and maximum.
-    String args[] = argString.split("\\s+");
-    int i = 0;
-    try {
-      while (i < args.length) {
-        if (args[i].startsWith("-")) {
-          String key = args[i].substring(1);
-          if (key.equals("lm")) {
-            fragmentLMFile = args[i + 1];
-          } else if (key.equals("build-depth") || key.equals("depth")) {
-            BUILD_DEPTH = Integer.parseInt(args[i + 1]);
-          } else if (key.equals("max-depth")) {
-            MAX_DEPTH = Integer.parseInt(args[i + 1]);
-          } else if (key.equals("min-lex-depth")) {
-            MIN_LEX_DEPTH = Integer.parseInt(args[i + 1]);
-          } else {
-            System.err.println(String.format("* FATAL: invalid FragmentLMFF argument '%s'", key));
-            System.exit(1);
-          }
-          i += 2;
-        } else {
-          i++;
-        }
-      }
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.err.println("* FATAL: Error processing FragmentLMFF features");
-      System.exit(1);
-    }
+    fragmentLMFile = parsedArgs.get("lm");
+    BUILD_DEPTH = Integer.parseInt(parsedArgs.get("build-depth"));
+    MAX_DEPTH = Integer.parseInt(parsedArgs.get("max-depth"));
+    MIN_LEX_DEPTH = Integer.parseInt(parsedArgs.get("min-lex-depth"));
 
     /* Read in the language model fragments */
     try {
@@ -287,7 +264,7 @@ public class FragmentLMFF extends StatefulFF {
     /* Add an LM fragment, then create a dummy multi-level hypergraph to match the fragment against. */
     // FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(), (StateComputer) null, "");
     FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(),
-        "-lm test/fragments.txt -map test/mapping.txt");
+        new String[] {"-lm", "test/fragments.txt", "-map", "test/mapping.txt"}, null);
   
     Tree fragment = Tree.fromString("(S NP (VP (VBD \"said\") SBAR) (. \".\"))");
   

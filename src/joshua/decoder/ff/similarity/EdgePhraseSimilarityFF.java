@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
@@ -37,12 +38,11 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   private final int MAX_PHRASE_LENGTH = 4;
   private final int GAP = 0;
 
-  public EdgePhraseSimilarityFF(FeatureVector weights, String host, int port)
-      throws NumberFormatException, UnknownHostException, IOException {
-    super(weights, "EdgePhraseSimilarity");
+  public EdgePhraseSimilarityFF(FeatureVector weights, String[] args, JoshuaConfiguration config) throws NumberFormatException, UnknownHostException, IOException {
+    super(weights, "EdgePhraseSimilarity", args, config);
 
-    this.host = host;
-    this.port = port;
+    this.host = parsedArgs.get("host");
+    this.port = Integer.parseInt(parsedArgs.get("port"));
 
     initializeConnection();
   }
@@ -175,7 +175,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
 
   public EdgePhraseSimilarityFF clone() {
     try {
-      return new EdgePhraseSimilarityFF(this.weights, host, port);
+      return new EdgePhraseSimilarityFF(this.weights, args, config);
     } catch (Exception e) {
       e.printStackTrace();
       return null;

@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -12,10 +13,10 @@ import joshua.decoder.segment_file.Sentence;
  * This feature computes three feature templates: a feature indicating the length of the rule's
  * source side, its target side, and a feature that pairs them.
  */
-public class RuleLengthFF extends StatelessFF {
+public class RuleLength extends StatelessFF {
 
-  public RuleLengthFF(FeatureVector weights) {
-    super(weights, "RuleLength");
+  public RuleLength(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "RuleLength", args, config);
   }
 
   @Override

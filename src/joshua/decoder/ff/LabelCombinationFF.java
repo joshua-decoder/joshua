@@ -1,7 +1,12 @@
 package joshua.decoder.ff;
 
+/***
+ * @author Gideon Wenniger
+ */
+
 import java.util.List;	
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -10,17 +15,15 @@ import joshua.decoder.segment_file.Sentence;
 
 public class LabelCombinationFF extends StatelessFF {
 
-  private static final String LABEL_COMINATION_FEATURE_FUNCTION_NAME = "LabelCombination";
-
-  public LabelCombinationFF(FeatureVector weights) {
-    super(weights, getLowerCasedFeatureName());
+  public LabelCombinationFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "LabelCombination", args, config);
   }
 
-  public static String getLowerCasedFeatureName() {
-    return LABEL_COMINATION_FEATURE_FUNCTION_NAME.toLowerCase();
+  public String getLowerCasedFeatureName() {
+    return name.toLowerCase();
   }
 
-  private static final String computeRuleLabelCombinationDescriptor(Rule rule) {
+  private final String computeRuleLabelCombinationDescriptor(Rule rule) {
     String result = getLowerCasedFeatureName() + "_";
     result += RulePropertiesQuerying.getLHSAsString(rule);
     // System.out.println("Rule: " + rule);

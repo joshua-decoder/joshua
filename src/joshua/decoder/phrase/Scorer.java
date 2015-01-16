@@ -13,7 +13,7 @@ public class Scorer {
   public Scorer(String lm_file, String weights_file) {
     weights = Decoder.weights;
 
-    this.model = new KenLM(5, lm_file, true);
+    this.model = new KenLM(5, lm_file);
 
     // The global vocabulary needs to know about language models so that it can map from the 
     // global IDs to the LM's private vocabulary

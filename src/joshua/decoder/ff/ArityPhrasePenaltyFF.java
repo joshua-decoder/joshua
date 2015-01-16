@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
@@ -24,17 +25,12 @@ public class ArityPhrasePenaltyFF extends StatelessFF {
   private final int minArity;
   private final int maxArity;
 
-  public ArityPhrasePenaltyFF(final FeatureVector weights, String argString) {
-    super(weights, "ArityPenalty", argString);
+  public ArityPhrasePenaltyFF(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "ArityPenalty", args, config);
 
-    // Process the args for the owner, minimum, and maximum.
-
-    // TODO: This should be done in a general way by FeatureFunction::processArgs, in a way that
-    // allows any feature to have arguments.
-    String args[] = argString.split("\\s+");
-    this.owner = Vocabulary.id(args[0]);
-    this.minArity = Integer.parseInt(args[1]);
-    this.maxArity = Integer.parseInt(args[2]);
+    this.owner = Vocabulary.id(parsedArgs.get("owner"));
+    this.minArity = Integer.parseInt(parsedArgs.get("min-arity"));
+    this.maxArity = Integer.parseInt(parsedArgs.get("max-arity"));
 
     if (!weights.containsKey(name))
       System.err.println("WARNING: no weight found for feature '" + name + "'");

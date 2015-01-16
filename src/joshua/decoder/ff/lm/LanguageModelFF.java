@@ -6,11 +6,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
+import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
@@ -50,7 +53,7 @@ public class LanguageModelFF extends StatefulFF {
    * </ul>
    * </li>
    */
-  protected final NGramLanguageModel languageModel;
+  protected NGramLanguageModel languageModel;
 
   /**
    * We always use this order of ngram, though the LMGrammar may provide higher order probability.
@@ -61,23 +64,48 @@ public class LanguageModelFF extends StatefulFF {
    * We cache the weight of the feature since there is only one.
    */
   protected float weight;
-
-  /* The config */
-  protected JoshuaConfiguration config;
+  protected String type;
+  protected String path;
 
   /**
    *
    */
-  public LanguageModelFF(FeatureVector weights, NGramLanguageModel lm, JoshuaConfiguration config) {
-    super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++));
-    this.languageModel = lm;
-    this.ngramOrder = lm.getOrder();
-    this.config = config;
+  public LanguageModelFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++), args, config);
+    
+    this.type = parsedArgs.get("lm_type");
+    this.ngramOrder = Integer.parseInt(parsedArgs.get("lm_order")); 
+    this.path = parsedArgs.get("lm_file");
+
+    this.weight = weights.get(name);
+    
+    initializeLM();
+  }
+
+  /**
+   * Initializes the underlying language model.
+   * 
+   * @param config
+   * @param type
+   * @param path
+   */
+  public void initializeLM() {
+    if (type.equals("kenlm")) {
+      this.languageModel = new KenLM(ngramOrder, path);
+    
+    } else if (type.equals("berkeleylm")) {
+      this.languageModel = new LMGrammarBerkeley(ngramOrder, path);
+
+    } else {
+      Decoder.LOG(1, "WARNING: using built-in language model; you probably didn't intend this");
+      Decoder.LOG(1, "Valid lm types are 'kenlm', 'berkeleylm', 'none'");
+    }
+
+    Vocabulary.registerLanguageModel(this.languageModel);
+    Vocabulary.id(config.default_non_terminal);
     
     LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
     LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
-
-    this.weight = weights.get(name);
   }
 
   public NGramLanguageModel getLM() {

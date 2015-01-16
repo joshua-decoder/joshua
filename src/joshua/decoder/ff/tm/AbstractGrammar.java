@@ -43,6 +43,11 @@ public abstract class AbstractGrammar implements Grammar {
    * within.
    */
   protected int owner = -1;
+  
+  @Override
+  public int getOwner() {
+    return owner;
+  }
 
   /* The maximum span of the input this rule can be applied to. */
   protected int spanLimit = 1;

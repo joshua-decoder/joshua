@@ -6,35 +6,15 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.ArityPhrasePenaltyFF;
-import joshua.decoder.ff.LabelCombinationFF;
-import joshua.decoder.ff.LabelSubstitutionFF;
-import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
-import joshua.decoder.ff.PhrasePenaltyFF;
-import joshua.decoder.ff.RuleFF;
-import joshua.decoder.ff.RuleLengthFF;
-import joshua.decoder.ff.SourcePathFF;
-import joshua.decoder.ff.WordPenaltyFF;
-import joshua.decoder.ff.fragmentlm.FragmentLMFF;
-import joshua.decoder.ff.lm.KenLMFF;
-import joshua.decoder.ff.lm.LanguageModelFF;
-import joshua.decoder.ff.lm.NGramLanguageModel;
-import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
-import joshua.decoder.ff.phrase.DistortionFF;
-import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
@@ -80,7 +60,6 @@ public class Decoder {
    */
   private List<Grammar> grammars;
   private ArrayList<FeatureFunction> featureFunctions;
-  private ArrayList<NGramLanguageModel> languageModels;
 
   /*
    * A sorted list of the feature names (so they can be output in the order they were read in)
@@ -93,8 +72,6 @@ public class Decoder {
   public static int VERBOSE = 1;
 
   private BlockingQueue<DecoderThread> threadPool = null;
-
-  public static boolean usingNonlocalFeatures = false;
 
   // ===============================================================
   // Constructors
@@ -391,10 +368,6 @@ public class Decoder {
        */
       Decoder.weights = this.readWeights(joshuaConfiguration.weights_file);
 
-      // Keeps track of the translation model owners that are seen while initializing
-      // so that they can be added as features later.
-      HashSet<String> tmOwnersSeen = new HashSet<String>();
-
       for (int i = 0; i < joshuaConfiguration.weights.size(); i++) {
         String pair[] = joshuaConfiguration.weights.get(i).split("\\s+");
 
@@ -435,21 +408,15 @@ public class Decoder {
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
 
-      // Initialize and load grammars.
-      this.initializeTranslationGrammars(tmOwnersSeen);
-      // TODO: Remove at some point, grammar loading happens through feature functions
-      // and this does not make sense anymore
+      // Initialize and load grammars. This must happen first, since the vocab gets defined by
+      // the packed grammar (if any)
+      this.initializeTranslationGrammars();
+
       Decoder.LOG(1, String.format("Grammar loading took: %d seconds.",
           (System.currentTimeMillis() - pre_load_time) / 1000));
 
-      // Initialize the LM.
-      initializeLanguageModels();
-
       // Initialize the features: requires that LM model has been initialized.
-      this.initializeFeatureFunctions(tmOwnersSeen);
-      // Initialize the TM owners. This can only be done after the grammars have been
-      // initialized
-      this.intializeTMOwners(tmOwnersSeen);
+      this.initializeFeatureFunctions();
 
       // Sort the TM grammars (needed to do cube pruning)
       if (joshuaConfiguration.amortized_sorting) {
@@ -480,95 +447,15 @@ public class Decoder {
   }
 
   /**
-   * Retained to maintain backward compatibility Uses the lm lines in the Joshua config file which
-   * are not defined as feature functions to create new LMs
-   * 
-   * @param args
-   * @throws IOException
-   */
-  private void initializeLanguageModels() throws IOException {
-
-    if (joshuaConfiguration.lms.size() > 0) {
-      Decoder.LOG(1, "You seem to be using an old version of the Joshua config file");
-      Decoder.LOG(1, "Language models should be defined as regular feature functions.");
-
-      // Only initialize if necessary
-      if (this.languageModels == null) {
-        this.languageModels = new ArrayList<NGramLanguageModel>();
-      }
-      // lm = kenlm 5 0 0 100 file
-      for (String lmLine : joshuaConfiguration.lms) {
-        String[] tokens = lmLine.trim().split("\\s+");
-
-        HashMap<String, String> argMap = new HashMap<String, String>();
-        argMap.put("lm_type", tokens[0]);
-        argMap.put("lm_order", tokens[1]);
-        argMap.put("minimizing", tokens[2]);
-        argMap.put("lm_file", tokens[5]);
-        initializeLanguageModel(argMap);
-      }
-    }
-  }
-
-  /**
-   * Initializes a language model and adds it as a feature
-   * 
-   * @param argMap A map of arguments supplied top the lm feature function throught the Joshua
-   *          config file
-   */
-  private void initializeLanguageModel(HashMap<String, String> argMap) {
-    if (this.languageModels == null) {
-      this.languageModels = new ArrayList<NGramLanguageModel>();
-    }
-    String lm_type = argMap.get("lm_type");
-    int lm_order = Integer.parseInt(argMap.get("lm_order"));
-    boolean minimizing = Boolean.parseBoolean(argMap.get("minimizing"));
-    String lm_file = argMap.get("lm_file");
-
-    if (lm_type.equals("kenlm")) {
-      KenLM lm = new KenLM(lm_order, lm_file, minimizing);
-      this.languageModels.add(lm);
-      Vocabulary.registerLanguageModel(lm);
-      Vocabulary.id(joshuaConfiguration.default_non_terminal);
-      addLMFeature(lm);
-
-    } else if (lm_type.equals("berkeleylm")) {
-      LMGrammarBerkeley lm = new LMGrammarBerkeley(lm_order, lm_file);
-      this.languageModels.add(lm);
-      Vocabulary.registerLanguageModel(lm);
-      Vocabulary.id(joshuaConfiguration.default_non_terminal);
-      addLMFeature(lm);
-
-    } else if (lm_type.equals("none")) {
-      ; // do nothing
-
-    } else {
-      Decoder.LOG(1, "WARNING: using built-in language model; you probably didn't intend this");
-      Decoder.LOG(1, "Valid lm types are 'kenlm', 'berkeleylm', 'none'");
-    }
-  }
-
-  private void addLMFeature(NGramLanguageModel lm) {
-    if (lm instanceof KenLM && lm.isMinimizing()) {
-      this.featureFunctions.add(new KenLMFF(weights, (KenLM) lm, joshuaConfiguration));
-    } else {
-      this.featureFunctions.add(new LanguageModelFF(weights, lm, joshuaConfiguration));
-    }
-  }
-
-  /**
    * Initializes translation grammars Retained for backward compatibility
    * 
    * @param ownersSeen Records which PhraseModelFF's have been instantiated (one is needed for each
    *          owner)
    * @throws IOException
    */
-  private void initializeTranslationGrammars(HashSet<String> ownersSeen) throws IOException {
-
+  private void initializeTranslationGrammars() throws IOException {
+    
     if (joshuaConfiguration.tms.size() > 0) {
-
-      Decoder.LOG(1, "You seem to be using an old version of the Joshua config file");
-      Decoder.LOG(1, "Translation models should be defined as regular feature functions.");
 
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
       for (String tmLine : joshuaConfiguration.tms) {
@@ -576,14 +463,14 @@ public class Decoder {
         String[] tokens = tmLine.trim().split("\\s+");
 
         String tm_format = tokens[0];
-        String tm_owner = tokens[1];
+        String owner = tokens[1];
         int span_limit = Integer.parseInt(tokens[2]);
         String tm_file = tokens[3];
 
         Grammar grammar = null;
         if (tm_format.equals("packed") || new File(tm_file).isDirectory()) {
           try {
-            grammar = new PackedGrammar(tm_file, span_limit, tm_owner, joshuaConfiguration);
+            grammar = new PackedGrammar(tm_file, span_limit, owner, joshuaConfiguration);
           } catch (FileNotFoundException e) {
             System.err.println(String.format("Couldn't load packed grammar from '%s'", tm_file));
             System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
@@ -593,65 +480,41 @@ public class Decoder {
         } else if (tm_format.equals("phrase")) {
 
           joshuaConfiguration.search_algorithm = "stack";
-          grammar = new PhraseTable(tm_file, tm_owner, joshuaConfiguration);
+          grammar = new PhraseTable(tm_file, owner, joshuaConfiguration);
 
         } else {
           // thrax, hiero, samt
-          grammar = new MemoryBasedBatchGrammar(tm_format, tm_file, tm_owner,
+          grammar = new MemoryBasedBatchGrammar(tm_format, tm_file, owner,
               joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
         }
 
         this.grammars.add(grammar);
-
-        // Record the owner so we can create a feature function for her.
-        ownersSeen.add(tm_owner);
-
       }
-    }
-  }
-
-  /**
-   * 
-   * @param ownersSeen Records which PhraseModelFF's have been instantiated (one is needed for each
-   *          owner)
-   * @throws IOException
-   */
-  private void initializeTranslationGrammar(HashMap<String, String> argMap,
-      HashSet<String> ownersSeen) throws IOException {
-
-    // tm_format = {thrax/hiero,packed,samt} OWNER LIMIT FILE
-    
-    String tm_format = argMap.get("tm_format");
-    String tm_owner = argMap.get("tm_owner");
-    int span_limit = Integer.parseInt(argMap.get("span_limit"));
-    String tm_file = argMap.get("tm_file");
-
-    Grammar grammar = null;
-    if (tm_format.equals("packed") || new File(tm_file).isDirectory()) {
-      try {
-        grammar = new PackedGrammar(tm_file, span_limit, tm_owner, joshuaConfiguration);
-      } catch (FileNotFoundException e) {
-        System.err.println(String.format("Couldn't load packed grammar from '%s'", tm_file));
-        System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
-        System.exit(2);
-      }
-
-    } else if (tm_format.equals("phrase")) {
-
-      joshuaConfiguration.search_algorithm = "stack";
-      grammar = new PhraseTable(tm_file, tm_owner, joshuaConfiguration);
-
     } else {
-      // thrax, hiero, samt
-      grammar = new MemoryBasedBatchGrammar(tm_format, tm_file, tm_owner,
-          joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
+      Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
+      // TODO: this should initialize the grammar dynamically so that the goal
+      // symbol and default
+      // non terminal match
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
+          "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
+          joshuaConfiguration.default_non_terminal, -1, joshuaConfiguration);
+      this.grammars.add(glueGrammar);
     }
 
-    this.grammars.add(grammar);
+    /* Now create a feature function for each owner */
+    HashSet<String> ownersSeen = new HashSet<String>();
 
-    // Record the owner so we can create a feature function for her.
-    ownersSeen.add(tm_owner);
-
+    for (Grammar grammar: this.grammars) {
+      String owner = Vocabulary.word(grammar.getOwner());
+      if (! ownersSeen.contains(owner)) {
+        this.featureFunctions.add(new PhraseModelFF(weights, new String[] { "tm", "-owner", owner },
+            joshuaConfiguration));
+        ownersSeen.add(owner);
+      }
+    }
+      
+    Decoder.LOG(1, String.format("Memory used %.1f MB",
+        ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
   }
 
   /**
@@ -666,7 +529,8 @@ public class Decoder {
 
     if (ownersSeen.size() != 0) {
       for (String owner : ownersSeen) {
-        this.featureFunctions.add(new PhraseModelFF(weights, owner));
+        this.featureFunctions.add(new PhraseModelFF(weights, new String[] { "tm", "-owner", owner },
+            joshuaConfiguration));
       }
     } else {
       Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
@@ -739,106 +603,26 @@ public class Decoder {
    * @throws IOException
    * 
    */
-  private void initializeFeatureFunctions(HashSet<String> tmOwnersSeen) throws IOException {
-
-    usingNonlocalFeatures = true;
+  private void initializeFeatureFunctions() throws IOException {
 
     for (String featureLine : joshuaConfiguration.features) {
+      // feature-function = NAME args
+      // 1. create new class named NAME, pass it config, weights, and the args
 
       // Get rid of the leading crap.
       featureLine = featureLine.replaceFirst("^feature_function\\s*=\\s*", "");
 
       String fields[] = featureLine.split("\\s+");
       String featureName = fields[0];
-      String feature = featureName.toLowerCase();
-
-      if (feature.equals("latticecost") || feature.equals("sourcepath")) {
-        this.featureFunctions.add(new SourcePathFF(Decoder.weights));
-      }
-
-      // allows language models to be used as feature functions with arguments
-      else if (feature.equals("languagemodel")) {
-        // Add some point, all feature functions should accept arguments this way
-        String rawArgs = "";
-        for (int i = 1; i < fields.length; i++) {
-          rawArgs += fields[i] + " ";
-        }
-        initializeLanguageModel(parseFeatureArgs(rawArgs.trim()));
-      }
-
-      // allows translation models to be used as feature functions with arguments
-      else if (feature.equals("translationmodel")) {
-        String rawArgs = "";
-        for (int i = 1; i < fields.length; i++) {
-          rawArgs += fields[i] + " ";
-        }
-        initializeTranslationGrammar(parseFeatureArgs(rawArgs.trim()), tmOwnersSeen);
-      }
-
-      else if (feature.equals("arityphrasepenalty") || feature.equals("aritypenalty")) {
-        String owner = fields[1];
-        int startArity = Integer.parseInt(fields[2].trim());
-        int endArity = Integer.parseInt(fields[3].trim());
-
-        this.featureFunctions.add(new ArityPhrasePenaltyFF(weights, String.format("%s %d %d",
-            owner, startArity, endArity)));
-
-      } else if (feature.equals("wordpenalty")) {
-        this.featureFunctions.add(new WordPenaltyFF(weights));
-
-      } else if (feature.equals("oovpenalty")) {
-        this.featureFunctions.add(new OOVFF(weights, joshuaConfiguration));
-
-      } else if (feature.equals("rulelength")) {
-        this.featureFunctions.add(new RuleLengthFF(weights));
-
-      } else if (feature.equals("edgephrasesimilarity")) {
-        String host = fields[1].trim();
-        int port = Integer.parseInt(fields[2].trim());
-
-        try {
-          this.featureFunctions.add(new EdgePhraseSimilarityFF(weights, host, port));
-
-        } catch (Exception e) {
-          e.printStackTrace();
-          System.exit(1);
-        }
-
-      } else if (feature.equals("phrasemodel") || feature.equals("tm")) {
-        String owner = fields[1].trim();
-        String index = fields[2].trim();
-        Float weight = Float.parseFloat(fields[3]);
-
-        weights.put(String.format("tm_%s_%s", owner, index), weight);
-
-      } else if (feature.equals("fragmentlm")) {
-        this.featureFunctions.add(new FragmentLMFF(Decoder.weights, featureLine));
-
-      } else if (feature.equals("rule")) {
-        this.featureFunctions.add(new RuleFF(Decoder.weights, featureLine));
-
-      } else if (feature.equals("phrasepenalty")) {
-        this.featureFunctions.add(new PhrasePenaltyFF(Decoder.weights, featureLine));
-
-      } else if (feature.equals(LabelCombinationFF.getLowerCasedFeatureName())) {
-        this.featureFunctions.add(new LabelCombinationFF(weights));
-
-      } else if (feature.equals(LabelSubstitutionFF.getLowerCasedFeatureName())) {
-        this.featureFunctions.add(new LabelSubstitutionFF(weights));
-
-      } else if (feature.equals("distortion")) {
-        this.featureFunctions.add(new DistortionFF(weights));
-
-      } else {
-        try {
-          Class<?> clas = Class.forName(String.format("joshua.decoder.ff.%sFF", featureName));
-          Constructor<?> constructor = clas.getConstructor(FeatureVector.class, String[].class);
-          this.featureFunctions.add((FeatureFunction) constructor.newInstance(weights, fields));
-        } catch (Exception e) {
-          e.printStackTrace();
-          System.err.println("* WARNING: invalid feature '" + featureLine + "'");
-          System.exit(1);
-        }
+      try {
+        Class<?> clas = getClass(featureName);
+        Constructor<?> constructor = clas.getConstructor(FeatureVector.class,
+            String[].class, JoshuaConfiguration.class);
+        this.featureFunctions.add((FeatureFunction) constructor.newInstance(weights, fields, joshuaConfiguration));
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.err.println("* WARNING: could not find a feature '" + featureLine + "'");
+        System.exit(1);
       }
     }
 
@@ -848,42 +632,30 @@ public class Decoder {
   }
 
   /**
-   * Parses the arguments passed to a feature function in the Joshua config file TODO: Replace this
-   * with a proper CLI library at some point Expects key value pairs in the form : -argname value
-   * Any key without a value is added with an empty string as value Multiple values for the same key
-   * are not parsed. The first one is used.
+   * Searches a list of predefined paths for classes, and returns the first one found. Meant for
+   * instantiating feature functions.
    * 
-   * @param rawArgs A string with the raw arguments and their names
-   * @return A hash with the keys and the values of the string
+   * @param name
+   * @return the class, found in one of the search paths
+   * @throws ClassNotFoundException
    */
-  private HashMap<String, String> parseFeatureArgs(String rawArgs) {
-    HashMap<String, String> parsedArgs = new HashMap<String, String>();
-    String[] args = rawArgs.split("\\s+");
-    boolean lookingForValue = false;
-    String currentKey = "";
-    for (int i = 0; i < args.length; i++) {
-      
-      Pattern argKeyPattern = Pattern.compile("^-[a-zA-Z]\\S+");
-      Matcher argKey = argKeyPattern.matcher(args[i]);
-      if (argKey.find()) {
-        // This is a key
-        // First check to see if there is a key that is waiting to be written
-        if (lookingForValue) {
-          // This is a key with no specified value
-          parsedArgs.put(currentKey, "");
-        }
-        // Now store the new key and look for its value
-        currentKey = args[i].substring(1);
-        lookingForValue = true;
-      } else {
-        // This is a value
-        if (lookingForValue) {
-          parsedArgs.put(currentKey, args[i]);
-          lookingForValue = false;
+  private Class<?> getClass(String featureName) {
+    Class<?> clas = null;
+    String[] packages = { "joshua.decoder.ff", "joshua.decoder.ff.lm", "joshua.decoder.ff.phrase" };
+    for (String path : packages) {
+      try {
+        clas = Class.forName(String.format("%s.%s", path, featureName));
+        break;
+      } catch (ClassNotFoundException e) {
+        try {
+          clas = Class.forName(String.format("%s.%sFF", path, featureName));
+          break;
+        } catch (ClassNotFoundException e2) {
+          // do nothing
         }
       }
     }
-    return parsedArgs;
+    return clas;
   }
 
   public static boolean VERBOSE(int i) {
@@ -894,5 +666,4 @@ public class Decoder {
     if (VERBOSE(i))
       System.err.println(msg);
   }
-
 }

@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -11,10 +12,10 @@ import joshua.decoder.segment_file.Sentence;
 /*
  * Implements the RuleShape feature for source, target, and paired source+target sides.
  */
-public class RuleShapeFF extends StatelessFF {
+public class RuleShape extends StatelessFF {
 
-  public RuleShapeFF(FeatureVector weights, String[] args) {
-    super(weights, "RuleShape");
+  public RuleShape(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "RuleShape", args, config);
   }
 
   private int gettype(int id) {

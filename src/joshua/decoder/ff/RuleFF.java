@@ -3,6 +3,7 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -26,35 +27,14 @@ public class RuleFF extends StatelessFF {
   private int owner = 0;
   private Sides sides = Sides.BOTH;
   
-  public RuleFF(FeatureVector weights, String argString) {
-    super(weights, "RuleFF");
+  public RuleFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "RuleFF", args, config);
     
-    String args[] = argString.split("\\s+");
-    int i = 0;
-    try {
-      while (i < args.length) {
-        if (args[i].startsWith("-")) {
-          String key = args[i].substring(1);
-          if (key.equals("owner")) {
-            owner = Vocabulary.id(args[i+1]);
-            System.err.println("RuleFF: Setting owner to " + args[i+1]);
-          } else if (key.equals("source")) {
-            sides = Sides.SOURCE;
-          } else if (key.equals("target")) {
-            sides = Sides.TARGET;
-          } else {
-            System.err.println(String.format("* FATAL: invalid FragmentLMFF argument '%s'", key));
-            System.exit(1);
-          }
-          i += 2;
-        } else {
-          i++;
-        }
-      }
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.err.println("* FATAL: Error processing RuleFF features");
-      System.exit(1);
-    }
+    owner = Vocabulary.id(parsedArgs.get("owner"));
+    if (parsedArgs.containsKey("source"))
+      sides = Sides.SOURCE;
+    else if (parsedArgs.containsKey("target"))
+      sides = Sides.TARGET;
   }
 
   @Override

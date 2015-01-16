@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -14,10 +15,8 @@ import joshua.decoder.segment_file.Sentence;
 
 public class TargetBigram extends StatefulFF {
 
-  public TargetBigram(FeatureVector weights, String name) {
-    super(weights, name);
-
-    // TODO Auto-generated constructor stub
+  public TargetBigram(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "TargetBigram", args, config);
   }
 
   @Override

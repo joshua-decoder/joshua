@@ -47,9 +47,8 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   public final static native long createPool();
   public final static native void destroyPool(long pointer);
 
-  public KenLM(int order, String file_name, boolean minimizing) {
+  public KenLM(int order, String file_name) {
     ngramOrder = order;
-    this.minimizing = minimizing;
 
     pointer = construct(file_name);
     N = order(pointer);
@@ -160,10 +159,5 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
   @Override
   public float ngramLogProbability(int[] ngram) {
     return prob(ngram);
-  }
-
-  @Override
-  public boolean isMinimizing() {
-    return minimizing;
   }
 }

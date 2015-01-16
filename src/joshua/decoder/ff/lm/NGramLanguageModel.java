@@ -52,15 +52,4 @@ public interface NGramLanguageModel {
   float ngramLogProbability(int[] ngram, int order);
 
   float ngramLogProbability(int[] ngram);
-
-  /**
-   * Returns true if the language model supports left-state minimization.
-   * 
-   * Currently this is only supported by KenLMFF (and not its parent implementating this interface,
-   * LanguageModelFF).
-   * 
-   * @return
-   */
-
-  boolean isMinimizing();
 }

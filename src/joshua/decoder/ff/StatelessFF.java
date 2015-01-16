@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -18,12 +19,8 @@ import joshua.decoder.segment_file.Sentence;
 
 public abstract class StatelessFF extends FeatureFunction {
 
-  public StatelessFF(FeatureVector weights, String name) {
-    super(weights, name);
-  }
-
-  public StatelessFF(FeatureVector weights, String name, String args) {
-    super(weights, name, args);
+  public StatelessFF(FeatureVector weights, String name, String[] args, JoshuaConfiguration config) {
+    super(weights, name, args, config);
   }
 
   public final boolean isStateful() {

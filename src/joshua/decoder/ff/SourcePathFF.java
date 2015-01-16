@@ -2,6 +2,7 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -20,8 +21,8 @@ public final class SourcePathFF extends StatelessFF {
   /*
    * This is a single-value feature template, so we cache the weight here.
    */
-  public SourcePathFF(FeatureVector weights) {
-    super(weights, "SourcePath", ""); // this sets name
+  public SourcePathFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "SourcePath", args, config);
   }
   
   @Override

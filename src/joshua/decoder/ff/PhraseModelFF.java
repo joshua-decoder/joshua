@@ -3,6 +3,7 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -27,8 +28,11 @@ public class PhraseModelFF extends StatelessFF {
   
   private float[] phrase_weights = null;
 
-  public PhraseModelFF(FeatureVector weights, String owner) {
-    super(weights, "tm_" + owner, "");
+  public PhraseModelFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "tm_", args, config);
+
+    String owner = parsedArgs.get("owner");
+    this.name = String.format("tm_%s", owner);
 
     /*
      * This is an efficiency hack; we cache the full dot product of the weights with the dense

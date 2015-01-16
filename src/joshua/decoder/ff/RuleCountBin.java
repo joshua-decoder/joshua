@@ -3,6 +3,7 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
@@ -13,18 +14,13 @@ import joshua.decoder.segment_file.Sentence;
  * This feature computes a bin for the rule and activates a feature for it. It requires access to
  * the index of the RarityPenalty field, from which the rule count can be computed.
  */
-public class RuleCountBinFF extends StatelessFF {
+public class RuleCountBin extends StatelessFF {
   private int field = -1;
 
-  public RuleCountBinFF(FeatureVector weights, String[] args) {
-    super(weights, "RuleCountBin");
+  public RuleCountBin(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "RuleCountBin", args, config);
 
-    if (args.length != 3 || !args[1].equals("-field")) {
-      System.err.println("* FATAL: RuleCountBin: need -field N, N the RarityPenalty field");
-      System.exit(-1);
-    }
-
-    field = Integer.parseInt(args[2]);
+    field = Integer.parseInt(parsedArgs.get("field"));
   }
 
   @Override

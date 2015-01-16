@@ -26,8 +26,6 @@ import joshua.util.io.LineReader;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class JoshuaConfiguration {
-  // List of language models to load
-  public ArrayList<String> lms = new ArrayList<String>();
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
@@ -235,7 +233,6 @@ public class JoshuaConfiguration {
     logger.info("\n\tResetting the StatefullFF global state index ...");
     logger.info("\n\t...done");
     StatefulFF.resetGlobalStateIndex();
-    lms = new ArrayList<String>();
     tms = new ArrayList<String>();
     weights_file = "";
     default_non_terminal = "[X]";
@@ -334,7 +331,28 @@ public class JoshuaConfiguration {
           String parameter = normalize_key(fds[0]);
 
           if (parameter.equals(normalize_key("lm"))) {
-            lms.add(fds[1]);
+            /* This is deprecated. This support old LM lines of the form
+             * 
+             *   lm = berkeleylm 5 false false 100 lm.gz
+             * 
+             * LMs are now loaded as general feature functions, so we transform that to either
+             * 
+             *   feature-function = LanguageModel -lm_order 5 -lm_type berkeleylm -lm_file lm.gz
+             * 
+             * If the line were state minimizing:
+             * 
+             *   lm = kenlm 5 true false 100 lm.gz
+             *              
+             * feature-function = StateMinimizingLanguageModel -lm_order 5 -lm_file lm.gz
+             */
+            
+            String[] tokens = fds[1].split("\\s+");
+            if (tokens[2].equals("true"))
+              features.add(String.format("feature_function = StateMinimizingLanguageModel -lm_type kenlm -lm_order %s -lm_file %s",
+                  tokens[1], tokens[5]));
+            else
+              features.add(String.format("feature_function = LanguageModel -lm_type %s -lm_order %s -lm_file %s",
+                  tokens[0], tokens[1], tokens[5]));
 
           } else if (parameter.equals(normalize_key("tm"))) {
             tms.add(fds[1]);

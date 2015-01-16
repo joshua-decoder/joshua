@@ -177,9 +177,4 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
   public float ngramLogProbability(int[] ngram, int order) {
     return ngramLogProbability(ngram);
   }
-
-  @Override
-  public boolean isMinimizing() {
-    return false;
-  }
 }

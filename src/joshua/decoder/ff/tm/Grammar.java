@@ -81,6 +81,11 @@ public interface Grammar {
    * @return true if the grammar's rules may contain regular expressions.
    */
   boolean isRegexpGrammar();
-    
+
+  /**
+   * Return the grammar's owner.
+   */
+  int getOwner();
+  
   void addOOVRules(int word, List<FeatureFunction> featureFunctions);
 }

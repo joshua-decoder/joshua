@@ -22,15 +22,15 @@ import joshua.decoder.chart_parser.SourcePath;
  * 
  * @author Matt Post <post@cs.jhu.edu>
  */
-public class OOVFF extends StatelessFF {
+public class OOVPenalty extends StatelessFF {
   private int ownerID = -1;
   
   /* The default value returned for OOVs. Can be overridden with -oov-list */
   private float defaultValue = -100f;
   private HashMap<Integer,Float> oovWeights = null;
 
-  public OOVFF(FeatureVector weights, JoshuaConfiguration config) {
-    super(weights, "OOVPenalty");
+  public OOVPenalty(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "OOVPenalty", args, config);
 
     ownerID = Vocabulary.id("oov");
     oovWeights = new HashMap<Integer,Float>();
