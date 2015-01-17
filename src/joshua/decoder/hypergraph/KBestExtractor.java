@@ -1020,8 +1020,6 @@ public class KBestExtractor {
         FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
             parentNode.i, parentNode.j, sentence);
 
-//        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, state,
-//            parentNode.i, parentNode.j, sentence);
         features.add(transitionCosts);
       }
     }

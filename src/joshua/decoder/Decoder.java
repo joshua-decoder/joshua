@@ -65,6 +65,11 @@ public class Decoder {
    * A sorted list of the feature names (so they can be output in the order they were read in)
    */
   public static ArrayList<String> feature_names = new ArrayList<String>();
+  
+  /*
+   * Just the dense features.
+   */
+  public static ArrayList<String> dense_feature_names = new ArrayList<String>();
 
   /* The feature weights. */
   public static FeatureVector weights;
@@ -362,12 +367,12 @@ public class Decoder {
 
       long pre_load_time = System.currentTimeMillis();
 
-      /*
-       * Weights can be listed in a separate file (denoted by parameter "weights-file") or directly
+      /* Weights can be listed in a separate file (denoted by parameter "weights-file") or directly
        * in the Joshua config file. Config file values take precedent.
        */
-      Decoder.weights = this.readWeights(joshuaConfiguration.weights_file);
+      this.readWeights(joshuaConfiguration.weights_file);
 
+      /* Read the weights found in the config file */
       for (int i = 0; i < joshuaConfiguration.weights.size(); i++) {
         String pair[] = joshuaConfiguration.weights.get(i).split("\\s+");
 
@@ -384,6 +389,11 @@ public class Decoder {
         }
 
         feature_names.add(pair[0]);
+        if (FeatureVector.isDense(pair[0]))
+          dense_feature_names.add(pair[0]);
+
+        System.err.println("READ FEATURE NAME " + pair[0]);
+        
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
 
@@ -397,13 +407,8 @@ public class Decoder {
       if (!weights.containsKey("BLEU"))
         Decoder.weights.put("BLEU", 0.0f);
 
-      int num_dense = 0;
-      for (String feature : feature_names)
-        if (FeatureVector.isDense(feature))
-          num_dense++;
-
       Decoder.LOG(1, String.format("Read %d sparse and %d dense weights", weights.size()
-          - num_dense, num_dense));
+          - dense_feature_names.size(), dense_feature_names.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -523,11 +528,11 @@ public class Decoder {
    * 
    * FEATURE_NAME WEIGHT
    */
-  private FeatureVector readWeights(String fileName) {
-    FeatureVector weights = new FeatureVector();
+  private void readWeights(String fileName) {
+    Decoder.weights = new FeatureVector();
 
     if (fileName.equals(""))
-      return new FeatureVector();
+      return;
 
     try {
       LineReader lineReader = new LineReader(fileName);
@@ -545,6 +550,9 @@ public class Decoder {
 
         weights.put(feature, value);
         feature_names.add(feature);
+        if (FeatureVector.isDense(feature))
+          dense_feature_names.add(feature);
+
       }
     } catch (FileNotFoundException ioe) {
       System.err.println("* FATAL: Can't find weights-file '" + fileName + "'");
@@ -556,8 +564,6 @@ public class Decoder {
     }
 
     Decoder.LOG(1, String.format("Read %d weights from file '%s'", weights.size(), fileName));
-
-    return weights;
   }
 
   /**
