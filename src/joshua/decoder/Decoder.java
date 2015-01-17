@@ -14,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
@@ -507,7 +507,7 @@ public class Decoder {
     for (Grammar grammar: this.grammars) {
       String owner = Vocabulary.word(grammar.getOwner());
       if (! ownersSeen.contains(owner)) {
-        this.featureFunctions.add(new PhraseModelFF(weights, new String[] { "tm", "-owner", owner },
+        this.featureFunctions.add(new PhraseModel(weights, new String[] { "tm", "-owner", owner },
             joshuaConfiguration));
         ownersSeen.add(owner);
       }

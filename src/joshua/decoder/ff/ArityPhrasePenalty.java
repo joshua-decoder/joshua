@@ -18,14 +18,14 @@ import joshua.corpus.Vocabulary;
  * @author Matt Post <post@cs.jhu.edu
  * @author Zhifei Li <zhifei.work@gmail.com>
  */
-public class ArityPhrasePenaltyFF extends StatelessFF {
+public class ArityPhrasePenalty extends StatelessFF {
 
   // when the rule.arity is in the range, then this feature is activated
   private final int owner;
   private final int minArity;
   private final int maxArity;
 
-  public ArityPhrasePenaltyFF(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
+  public ArityPhrasePenalty(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "ArityPenalty", args, config);
 
     this.owner = Vocabulary.id(parsedArgs.get("owner"));

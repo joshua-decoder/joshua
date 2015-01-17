@@ -21,14 +21,14 @@ import joshua.decoder.segment_file.Sentence;
  * @author Zhifei Li <zhifei.work@gmail.com>
  */
 
-public class PhraseModelFF extends StatelessFF {
+public class PhraseModel extends StatelessFF {
 
   /* The owner of the grammar. */
   private int ownerID;
   
   private float[] phrase_weights = null;
 
-  public PhraseModelFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+  public PhraseModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "tm_", args, config);
 
     String owner = parsedArgs.get("owner");
