@@ -180,7 +180,7 @@ public class FeatureVector {
     
     for (String key: features.keySet())
       if (! printed_keys.contains(key))
-        outputString += String.format("%s=%.3f", key, features.get(key));
+        outputString += String.format("%s=%.3f ", key, features.get(key));
 
     return outputString.trim();
   }
