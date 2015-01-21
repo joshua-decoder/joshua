@@ -1,6 +1,5 @@
-
-Sparse features background
-==========================
+Sparse features
+===============
 
 Historically, most decoders have had only on the order of tens of features whose weights are tuned
 in a linear model. Recently, the introduction of large-scale discriminative tuners have enabled
@@ -8,25 +7,6 @@ decoders to use many, many more features. Efficiently decoding with large featur
 sparse feature representations that are a bit more general than a set of more-or-less hard-coded
 feature sets of the past, that perhaps mostly varied by the number of features associated with rules
 in the grammar.
-
-A useful distinction is between stateless and stateful features, which indicates whether a feature
-contributes state to the dynamic programming chart beyond the coverage vector needed by the decoder
-to ensure coherent translations. *Stateful* features contribute state. This is usually because they
-are functions of the (hypothesized) decoder output, and therefore require that the dynamic
-programming state of the decoding algorithm be extended with sufficient information to compute
-them. For example, the target-side language model must maintain enough target words to compute
-language model probabilities when states are combined as the result of applying new rules.
-
-*Stateless* do not contribute state. They depend only on the basic information needed for CKY
- parsing: the span of the input, the rule being applied, and the rule's antecedents or tail
- nodes. They can also be functions of the entire input, since that is fixed. Basically, this is any
- portion of the input sentence of portions of the hypergraph that have already been assembled (and
- can therefore be assumed to be fixed along with the input). Examples of stateless feature functions
- include an OOV penalty (which counts untranslatable words) and the WordPenalty feature (which
- counts the number of words).
-
-Sparse features in Joshua 6.0
------------------------------
 
 Joshua uses a sparse feature implementation backed by hash tables for all features in the
 decoder. Features are triggered and grouped together with feature functions, each of which can
@@ -66,10 +46,22 @@ Feature functions are arranged into the following hierarchy, found in `$JOSHUA/s
         
 `FeatureFunction` is an abstract class which provides some basic functionality, such as the ability
 to parse arguments passed into each feature function. `StatelessFF` and `StatefulFF` are subclasses
-that provide further details fore ach kind of function. Functionally, the interface for both types
-is the same; a Stateless FF is simply one that returns `null` when asked to compute a new state. The
-complete interface can be found in the documentation for joshua.decoder.ff.FeatureFunction. There
-are four important functions, and most feature functions implement just one or two of them:
+that provide further details fore ach kind of function. *Stateful* features contribute state. This
+is usually because they are functions of the (hypothesized) decoder output, and therefore require
+that the dynamic programming state of the decoding algorithm be extended with sufficient information
+to compute them. For example, the target-side language model must maintain enough target words to
+compute language model probabilities when states are combined as the result of applying new rules.
+*Stateless* do not contribute state. They depend only on the basic information needed for CKY
+parsing: the span of the input, the rule being applied, and the rule's antecedents or tail
+nodes. They can also be functions of the entire input, since that is fixed. Basically, this is any
+portion of the input sentence of portions of the hypergraph that have already been assembled (and
+can therefore be assumed to be fixed along with the input). Examples of stateless feature functions
+include an OOV penalty (which counts untranslatable words) and the WordPenalty feature (which counts
+the number of words).  Functionally, the interface for both types is the same; a Stateless FF is
+simply one that returns `null` when asked to compute a new state. The complete interface can be
+found in the documentation for joshua.decoder.ff.FeatureFunction.
+
+There are four important functions, and most feature functions implement just one or two of them:
 
 1. `compute(rule, tailNodes, i, j, sentence, accumulator)`
 
