@@ -24,6 +24,7 @@ import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.segment_file.Sentence;
+import joshua.decoder.segment_file.Token;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -60,12 +61,10 @@ public class Chart {
   int nAdded = 0;
   int nDotitemAdded = 0; // note: there is no pruning in dot-item
 
-  public int sentenceID() {
-    if (sentence != null)
-      return sentence.id();
-    return -1;
+  public Sentence getSentence() {
+    return this.sentence;
   }
-
+  
   // ===============================================================
   // Private instance fields (maybe could be protected instead)
   // ===============================================================
@@ -77,7 +76,7 @@ public class Chart {
                                 // associated with it
   private Cell goalBin;
   private int goalSymbolID = -1;
-  private Lattice<Integer> inputLattice;
+  private Lattice<Token> inputLattice;
 
   private Sentence sentence = null;
 //  private SyntaxTree parseTree;
@@ -104,7 +103,7 @@ public class Chart {
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
       String goalSymbol, JoshuaConfiguration config2) {
     this.config = config2;
-    this.inputLattice = sentence.intLattice();
+    this.inputLattice = sentence.getLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
 
@@ -127,7 +126,7 @@ public class Chart {
       this.grammars[i + 1] = grammars[i];
 
     MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config2);
-    AbstractGrammar.addOOVRules(oovGrammar, sentence.intLattice(), featureFunctions,
+    AbstractGrammar.addOOVRules(oovGrammar, sentence.getLattice(), featureFunctions,
         config.true_oovs_only);
     this.grammars[0] = oovGrammar;
 
@@ -388,14 +387,13 @@ public class Chart {
           continue;
 
         for (int g = 0; g < this.grammars.length; g++) {
-          // System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i,
-          // j, g));
+          // System.err.println(String.format("\n*** I=%d J=%d GRAMMAR=%d", i, j, g));
 
           if (j == i + 1) {
             /* Handle terminals */
-            Node<Integer> node = sentence.getNode(i);
-            for (Arc<Integer> arc : node.getOutgoingArcs()) {
-              int word = arc.getLabel();
+            Node<Token> node = sentence.getNode(i);
+            for (Arc<Token> arc : node.getOutgoingArcs()) {
+              int word = arc.getLabel().getWord();
               // disallow lattice decoding for now
               assert arc.getHead().id() == j;
               Trie trie = this.grammars[g].getTrieRoot().match(word);
@@ -459,9 +457,9 @@ public class Chart {
       // might be decoding
       // a lattice. For sentence decoding, this is trivial: there is only one
       // outgoing arc.
-      Node<Integer> inputNode = sentence.getNode(j);
-      for (Arc<Integer> arc : inputNode.getOutgoingArcs()) {
-        int word = arc.getLabel();
+      Node<Token> inputNode = sentence.getNode(j);
+      for (Arc<Token> arc : inputNode.getOutgoingArcs()) {
+        int word = arc.getLabel().getWord();
         Trie nextTrie;
         if ((nextTrie = trie.match(word)) != null) {
           // add to chart item over (i, l)

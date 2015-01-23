@@ -1,10 +1,9 @@
 package joshua.decoder.phrase;
 
-import java.util.List;
+import java.util.List;	
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
@@ -24,8 +23,8 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   // The hypothesis' coverage vector
   private Coverage coverage;
 
-  public static BilingualRule BEGIN_RULE = new HieroFormatReader().parseLine("[X] ||| <s> ||| <s> |||   ||| 0-0");
-  public static BilingualRule END_RULE = new HieroFormatReader().parseLine("[GOAL] ||| [X,1] </s> ||| [X,1] </s> |||   ||| 0-0 1-1");
+  public static Rule BEGIN_RULE = new HieroFormatReader().parseLine("[X] ||| <s> ||| <s> |||   ||| 0-0");
+  public static Rule END_RULE = new HieroFormatReader().parseLine("[GOAL] ||| [X,1] </s> ||| [X,1] </s> |||   ||| 0-0 1-1");
 
   public String toString() {
     StringBuffer sb = new StringBuffer();

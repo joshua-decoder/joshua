@@ -1,7 +1,7 @@
 package joshua.decoder.ff.tm.format;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.MosesPhraseRule;
 import joshua.util.io.LineReader;
 
 /***
@@ -36,15 +36,15 @@ public class MosesFormatReader extends HieroFormatReader {
   /**
    * This munges a Moses-style phrase table into a grammar.
    * 
-   *    mots francaises ||| French words ||| 1 2 3
+   *    mots francaises ||| French words ||| 1 2 3 ||| 0-1 1-0
    *    
    * becomes
    * 
-   *    [X] ||| [X,1] mots francaises ||| [X,1] French words ||| 1 2 3
+   *    [X] ||| [X,1] mots francaises ||| [X,1] French words ||| 1 2 3  ||| 0-1 1-0
    * 
    */
   @Override
-  public BilingualRule parseLine(String line) {
+  public MosesPhraseRule parseLine(String line) {
     String[] fields = line.split(fieldDelimiter);
 
     int arity = 1;
@@ -72,18 +72,12 @@ public class MosesFormatReader extends HieroFormatReader {
       values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
     }
     String sparse_features = values.toString().trim();
+//  System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
 
     // alignments
-    byte[] alignment = null;
-    if (fields.length > 3) { // alignments are included
-      alignment = readAlignment(fields[3]);
-    } else {
-      alignment = null;
-    }
-    
-//    System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
+    String alignment = (fields.length > 3) ? fields[3] : null;
 
-    return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
+    return new MosesPhraseRule(lhs, french, english, sparse_features, arity, alignment);
   }
   
   /**
@@ -94,7 +88,7 @@ public class MosesFormatReader extends HieroFormatReader {
   public static void main(String[] args) {
     MosesFormatReader reader = new MosesFormatReader();
     for (String line: new LineReader(System.in)) {
-      BilingualRule rule = reader.parseLine(line);
+      MosesPhraseRule rule = reader.parseLine(line);
       System.out.println(rule.textFormat());
     }    
   }

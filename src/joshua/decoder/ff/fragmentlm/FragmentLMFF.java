@@ -8,15 +8,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * Feature function that reads in a list of language model fragments and matches them against the
@@ -89,39 +90,15 @@ public class FragmentLMFF extends StatefulFF {
    * @param name
    * @param stateComputer
    */
-  public FragmentLMFF(FeatureVector weights, String argString) {
-    super(weights, "FragmentLMFF");
+  public FragmentLMFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "FragmentLMFF", args, config);
 
     lmFragments = new HashMap<String, ArrayList<Tree>>();
 
-    // Process the args for the owner, minimum, and maximum.
-    String args[] = argString.split("\\s+");
-    int i = 0;
-    try {
-      while (i < args.length) {
-        if (args[i].startsWith("-")) {
-          String key = args[i].substring(1);
-          if (key.equals("lm")) {
-            fragmentLMFile = args[i + 1];
-          } else if (key.equals("build-depth") || key.equals("depth")) {
-            BUILD_DEPTH = Integer.parseInt(args[i + 1]);
-          } else if (key.equals("max-depth")) {
-            MAX_DEPTH = Integer.parseInt(args[i + 1]);
-          } else if (key.equals("min-lex-depth")) {
-            MIN_LEX_DEPTH = Integer.parseInt(args[i + 1]);
-          } else {
-            System.err.println(String.format("* FATAL: invalid FragmentLMFF argument '%s'", key));
-            System.exit(1);
-          }
-          i += 2;
-        } else {
-          i++;
-        }
-      }
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.err.println("* FATAL: Error processing FragmentLMFF features");
-      System.exit(1);
-    }
+    fragmentLMFile = parsedArgs.get("lm");
+    BUILD_DEPTH = Integer.parseInt(parsedArgs.get("build-depth"));
+    MAX_DEPTH = Integer.parseInt(parsedArgs.get("max-depth"));
+    MIN_LEX_DEPTH = Integer.parseInt(parsedArgs.get("min-lex-depth"));
 
     /* Read in the language model fragments */
     try {
@@ -170,7 +147,7 @@ public class FragmentLMFF extends StatefulFF {
     numFragments++;
   }
   
-  /*
+  /**
    * This function computes the features that fire when the current rule is applied. The features
    * that fire are any LM fragments that match the fragment associated with the current rule. LM
    * fragments may recurse over the tail nodes, following 1-best backpointers until the fragment
@@ -178,7 +155,7 @@ public class FragmentLMFF extends StatefulFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath, 
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     /*
      * Get the fragment associated with the target side of this rule.
@@ -265,20 +242,20 @@ public class FragmentLMFF extends StatefulFF {
   }
 
   @Override
-  public DPState computeFinal(HGNode tailNodes, int i, int j, SourcePath sourcePath, int sentID,
+  public DPState computeFinal(HGNode tailNodes, int i, int j, SourcePath sourcePath, Sentence sentence,
       Accumulator acc) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState state, Sentence sentence) {
     // TODO Auto-generated method stub
     return 0;
   }
 
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     // TODO Auto-generated method stub
     return 0;
   }
@@ -287,17 +264,17 @@ public class FragmentLMFF extends StatefulFF {
     /* Add an LM fragment, then create a dummy multi-level hypergraph to match the fragment against. */
     // FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(), (StateComputer) null, "");
     FragmentLMFF fragmentLMFF = new FragmentLMFF(new FeatureVector(),
-        "-lm test/fragments.txt -map test/mapping.txt");
+        new String[] {"-lm", "test/fragments.txt", "-map", "test/mapping.txt"}, null);
   
     Tree fragment = Tree.fromString("(S NP (VP (VBD \"said\") SBAR) (. \".\"))");
   
-    BilingualRule ruleS = new HieroFormatReader()
+    Rule ruleS = new HieroFormatReader()
         .parseLine("[S] ||| the man [VP,1] [.,2] ||| the man [VP,1] [.,2] ||| 0");
-    BilingualRule ruleVP = new HieroFormatReader()
+    Rule ruleVP = new HieroFormatReader()
         .parseLine("[VP] ||| said [SBAR,1] ||| said [SBAR,1] ||| 0");
-    BilingualRule ruleSBAR = new HieroFormatReader()
+    Rule ruleSBAR = new HieroFormatReader()
         .parseLine("[SBAR] ||| that he was done ||| that he was done ||| 0");
-    BilingualRule rulePERIOD = new HieroFormatReader().parseLine("[.] ||| . ||| . ||| 0");
+    Rule rulePERIOD = new HieroFormatReader().parseLine("[.] ||| . ||| . ||| 0");
   
     ruleS.setOwner(0);
     ruleVP.setOwner(0);

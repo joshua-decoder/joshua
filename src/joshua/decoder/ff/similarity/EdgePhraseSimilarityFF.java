@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.segment_file.Sentence;
@@ -38,12 +38,11 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   private final int MAX_PHRASE_LENGTH = 4;
   private final int GAP = 0;
 
-  public EdgePhraseSimilarityFF(FeatureVector weights, String host, int port)
-      throws NumberFormatException, UnknownHostException, IOException {
-    super(weights, "EdgePhraseSimilarity");
+  public EdgePhraseSimilarityFF(FeatureVector weights, String[] args, JoshuaConfiguration config) throws NumberFormatException, UnknownHostException, IOException {
+    super(weights, "EdgePhraseSimilarity", args, config);
 
-    this.host = host;
-    this.port = port;
+    this.host = parsedArgs.get("host");
+    this.port = Integer.parseInt(parsedArgs.get("port"));
 
     initializeConnection();
   }
@@ -56,8 +55,9 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     serverReply = new BufferedReader(new InputStreamReader(socket.getInputStream()));
   }
 
+  @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     float value = computeScore(rule, tailNodes);
     acc.add(name, value);
@@ -67,7 +67,8 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     return new NgramDPState(new int[1], new int[1]);
   }
   
-  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath path, int sentID, Accumulator acc) {
+  @Override
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath path, Sentence sentence, Accumulator acc) {
     return null;
   }
 
@@ -77,7 +78,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
 
     // System.err.println("RULE [" + spanStart + ", " + spanEnd + "]: " + rule.toString());
 
-    int[] target = ((BilingualRule) rule).getEnglish();
+    int[] target = rule.getEnglish();
     int lm_state_size = 0;
     for (HGNode node : tailNodes) {
       NgramDPState state = (NgramDPState) node.getDPState(stateIndex);
@@ -157,9 +158,8 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     return getSimilarity(batch);
   }
 
-  
-  
-  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+  @Override
+  public float estimateFutureCost(Rule rule, DPState currentState, Sentence sentence) {
     return 0.0f;
   }
 
@@ -167,13 +167,15 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
    * From SourceDependentFF interface.
    */
   @Override
-  public void setSource(Sentence source) {
-    this.source = source.intSentence();
+  public void setSource(Sentence sentence) {
+    if (! sentence.isLinearChain())
+      throw new RuntimeException("EdgePhraseSimilarity not defined for lattices");
+    this.source = sentence.getWordIDs();
   }
 
   public EdgePhraseSimilarityFF clone() {
     try {
-      return new EdgePhraseSimilarityFF(this.weights, host, port);
+      return new EdgePhraseSimilarityFF(this.weights, args, config);
     } catch (Exception e) {
       e.printStackTrace();
       return null;
@@ -181,7 +183,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
   }
 
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     return 0.0f;
   }
 

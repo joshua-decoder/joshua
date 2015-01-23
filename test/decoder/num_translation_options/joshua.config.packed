@@ -1,0 +1,30 @@
+num_translation_options = 3
+
+lm = kenlm 5 false false 100 lm.gz
+
+tm = thrax pt 12 grammar.packed
+tm = thrax glue -1 glue-grammar
+
+mark_oovs = false
+
+default-non-terminal = X
+goalSymbol = GOAL
+
+#pruning config
+pop-limit = 100
+
+output-format = %c ||| %s ||| %f
+
+#nbest config
+use_unique_nbest = true
+top_n = 5
+
+feature-function = WordPenalty
+feature-function = OOVPenalty
+
+lm_0 1.2373676802179452
+
+tm_pt_0 1
+tm_glue_0 1
+WordPenalty 1
+OOVPenalty 1.0

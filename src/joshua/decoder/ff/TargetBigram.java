@@ -1,33 +1,39 @@
 package joshua.decoder.ff;
 
-import java.util.LinkedList;
+import java.util.LinkedList;	
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
+
+/***
+ * The RuleBigram feature is an indicator feature that counts target word bigrams that are created when
+ * a rule is applied. 
+ */
 
 public class TargetBigram extends StatefulFF {
 
-  public TargetBigram(FeatureVector weights, String name) {
-    super(weights, name);
-
-    // TODO Auto-generated constructor stub
+  public TargetBigram(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "TargetBigram", args, config);
   }
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int spanStart, int spanEnd,
-      SourcePath sourcePath, int sentID, Accumulator acc) {
-    
-    int[] enWords = rule.getEnglish();
-    
-    List<Integer> currentNgram = new LinkedList<Integer>();
-    FeatureVector features = new FeatureVector();
+      SourcePath sourcePath, Sentence sentence, Accumulator acc) {
 
+    int[] enWords = rule.getEnglish();
+
+    int left = -1;
+    int right = -1;
+    
+    List<String> currentNgram = new LinkedList<String>();
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
 
@@ -38,70 +44,81 @@ public class TargetBigram extends StatefulFF {
         int[] rightContext = state.getRightLMStateWords();
 
         // Left context.
-        for (int t : leftContext) {
-          currentNgram.add(t);
+        for (int token : leftContext) {
+          currentNgram.add(Vocabulary.word(token));
+          if (left == -1)
+            left = token;
+          right = token;
           if (currentNgram.size() == 2) {
             String ngram = join(currentNgram);
-            if (features.containsKey(ngram))
-              features.put(ngram, 1);
-            else
-              features.put(ngram, features.get(ngram) + 1);
+            acc.add(String.format("%s_%s", name, ngram), 1);
+//            System.err.println(String.format("ADDING %s_%s", name, ngram));
             currentNgram.remove(0);
           }
         }
         // Replace right context.
         int tSize = currentNgram.size();
         for (int i = 0; i < rightContext.length; i++)
-          currentNgram.set(tSize - rightContext.length + i, rightContext[i]);
+          currentNgram.set(tSize - rightContext.length + i, Vocabulary.word(rightContext[i]));
 
       } else { // terminal words
-        currentNgram.add(curID);
+        currentNgram.add(Vocabulary.word(curID));
+        if (left == -1)
+          left = curID;
+        right = curID;
         if (currentNgram.size() == 2) {
           String ngram = join(currentNgram);
-          acc.add(ngram, 1);
+          acc.add(String.format("%s_%s", name, ngram), 1);
+//          System.err.println(String.format("ADDING %s_%s", name, ngram));
           currentNgram.remove(0);
         }
       }
     }
 
-    // TODO 07/2013: use a real state here!
-    return null;
+    NgramDPState state = new NgramDPState(new int[] { left }, new int[] { right });
+//    System.err.println(String.format("RULE %s -> state %s", rule.getRuleString(), state));
+    return state;
   }
 
+  /**
+   * We don't compute a future cost.
+   */
   @Override
-  public float estimateFutureCost(Rule rule, DPState state, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState state, Sentence sentence) {
     return 0.0f;
   }
 
+  /**
+   * There is nothing to be done here, since <s> and </s> are included in rules that are part
+   * of the grammar. We simply return the DP state of the tail node.
+   */
   @Override
   public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
-  
-    NgramDPState state = (NgramDPState) tailNode.getDPState(stateIndex);
-    int leftWord = state.getLeftLMStateWords()[0];
-    int[] rightContext = state.getRightLMStateWords();
-    int rightWord = rightContext[rightContext.length - 1];
+      Sentence sentence, Accumulator acc) {
     
-    FeatureVector features = new FeatureVector();
-    features.put("<s> " + leftWord, 1.0f);
-    features.put(rightWord + " </s>", 1.0f);
-    
-    int[] left = new int[1];   left[0] = LanguageModelFF.START_SYM_ID; 
-    int[] right = new int[1]; right[0] = LanguageModelFF.STOP_SYM_ID; 
-    return new NgramDPState(left, right);
+    return tailNode.getDPState(stateIndex);
   }
 
+  /**
+   * TargetBigram features are only computed across hyperedges, so there is nothing to be done here. 
+   */
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
     return 0.0f;
   }
 
-  private String join(List<Integer> list) {
+  /**
+   * Join a list with the _ character. I am sure this is in a library somewhere.
+   * 
+   * @param list a list of strings
+   * @return the joined String
+   */
+  private String join(List<String> list) {
     StringBuilder sb = new StringBuilder();
-    for (Integer item : list) {
-      sb.append(item.toString() + " ");
+    for (String item : list) {
+      sb.append(item.toString() + "_");
     }
 
-    return sb.toString().trim();
+    return sb.substring(0, sb.length() - 1);
   }
 }

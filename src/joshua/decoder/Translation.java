@@ -6,7 +6,7 @@ import java.io.StringWriter;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.lm.KenLMFF;
+import joshua.decoder.ff.lm.StateMinimizingLanguageModel;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
@@ -109,8 +109,8 @@ public class Translation {
      * objects for this sentence.
      */
     for (FeatureFunction feature : featureFunctions) {
-      if (feature instanceof KenLMFF) {
-        ((KenLMFF) feature).destroyPool(getSourceSentence().id());
+      if (feature instanceof StateMinimizingLanguageModel) {
+        ((StateMinimizingLanguageModel) feature).destroyPool(getSourceSentence().id());
         break;
       }
     }

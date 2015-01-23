@@ -6,7 +6,7 @@ import java.util.List;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
@@ -77,7 +77,7 @@ public class PhraseTable extends MemoryBasedBatchGrammar {
         : sourceWord;   
 
     int nt_i = Vocabulary.id(this.joshuaConfiguration.default_non_terminal);
-    BilingualRule oovRule = new BilingualRule(nt_i, new int[] { nt_i, sourceWord },
+    Rule oovRule = new Rule(nt_i, new int[] { nt_i, sourceWord },
         new int[] { -1, targetWord }, "", 1, null);
     addRule(oovRule);
     oovRule.estimateRuleCost(featureFunctions);

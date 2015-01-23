@@ -10,9 +10,8 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaConfiguration.OOVItem;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.AbstractGrammar;
-import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.format.MosesFormatReader;
@@ -46,7 +45,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   /* The file containing the grammar. */
   private String grammarFile;
 
-  private GrammarReader<BilingualRule> modelReader;
+  private GrammarReader<Rule> modelReader;
   
   /* Maximum source phrase length */
   protected int maxSourcePhraseLength = 0;
@@ -73,7 +72,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     this.owner = Vocabulary.id(owner);
   }
 
-  public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr,JoshuaConfiguration joshuaConfiguration) {
+  public MemoryBasedBatchGrammar(GrammarReader<Rule> gr,JoshuaConfiguration joshuaConfiguration) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
     this(joshuaConfiguration);
@@ -94,7 +93,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     this.modelReader = createReader(formatKeyword, grammarFile);
     if (modelReader != null) {
       modelReader.initialize();
-      for (BilingualRule rule : modelReader)
+      for (Rule rule : modelReader)
         if (rule != null) {
           addRule(rule);
         }
@@ -106,7 +105,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     this.printGrammar();
   }
 
-  protected GrammarReader<BilingualRule> createReader(String format, String grammarFile) {
+  protected GrammarReader<Rule> createReader(String format, String grammarFile) {
 
     if (grammarFile != null) {
       if ("hiero".equals(format) || "thrax".equals(format) || "regexp".equals(format)) {
@@ -162,7 +161,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   /**
    * Adds a rule to the grammar
    */
-  public void addRule(BilingualRule rule) {
+  public void addRule(Rule rule) {
 
     // TODO: Why two increments?
     this.qtyRulesRead++;
@@ -257,11 +256,11 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
 
     int[] sourceWords = { sourceWord };
     int[] targetWords = { targetWord };
-    final byte[] oovAlignment = { 0, 0 };
+    final String oovAlignment = "0-0";
     
     if (this.joshuaConfiguration.oovList != null && this.joshuaConfiguration.oovList.size() != 0) {
       for (OOVItem item: this.joshuaConfiguration.oovList) {
-        BilingualRule oovRule = new BilingualRule(
+        Rule oovRule = new Rule(
             Vocabulary.id(item.label), sourceWords, targetWords, "", 0,
             oovAlignment);
         addRule(oovRule);
@@ -269,7 +268,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
       }
     } else {
       int nt_i = Vocabulary.id(this.joshuaConfiguration.default_non_terminal);
-      BilingualRule oovRule = new BilingualRule(nt_i, sourceWords, targetWords, "", 0,
+      Rule oovRule = new Rule(nt_i, sourceWords, targetWords, "", 0,
           oovAlignment);
       addRule(oovRule);
       oovRule.estimateRuleCost(featureFunctions);

@@ -1,8 +1,8 @@
 package joshua.decoder.ff.tm.format;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
+import joshua.decoder.ff.tm.Rule;
 
 /**
  * This class implements reading files in the format defined by David Chiang for Hiero. 
@@ -11,7 +11,7 @@ import joshua.decoder.ff.tm.GrammarReader;
  * @author Matt Post <post@cs.jhu.edu>
  */
 
-public class HieroFormatReader extends GrammarReader<BilingualRule> {
+public class HieroFormatReader extends GrammarReader<Rule> {
 
   static {
     fieldDelimiter = "\\s\\|{3}\\s";
@@ -31,7 +31,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
   }
 
   @Override
-  public BilingualRule parseLine(String line) {
+  public Rule parseLine(String line) {
     String[] fields = line.split(fieldDelimiter);
     if (fields.length < 3) {
       throw new RuntimeException(String.format("Rule '%s' does not have four fields", line));
@@ -62,40 +62,13 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
     }
 
     String sparse_features = (fields.length > 3 ? fields[3] : "");
+    String alignment = (fields.length > 4) ? fields[4] : null;
 
-    byte[] alignment = null;
-    if (fields.length > 4) { // alignments are included
-      alignment = readAlignment(fields[4]);
-    } else {
-      alignment = null;
-    }
-
-    return new BilingualRule(lhs, french, english, sparse_features, arity, alignment);
-  }
-
-  /**
-   * Reads in a string alignment as a space-delimited list of hyphen-delimited integer pairs "i-j",
-   * where i denotes a zero-based index into the source string and j into the target string.
-   * @param s
-   * @return
-   */
-  public static byte[] readAlignment(String s) {
-    String[] indices = s.replaceAll("-", " ").split("\\s+");
-    byte[] result = new byte[indices.length];
-    int j = 0;
-    for (String i : indices) {
-      try {
-        result[j] = Byte.parseByte(i);
-      } catch (NumberFormatException e) {
-        return null; // malformed alignment; just ignore it.
-      }
-      j++;
-    }
-    return result;
+    return new Rule(lhs, french, english, sparse_features, arity, alignment);
   }
 
   @Override
-  public String toWords(BilingualRule rule) {
+  public String toWords(Rule rule) {
     StringBuffer sb = new StringBuffer("");
     sb.append(Vocabulary.word(rule.getLHS()));
     sb.append(" ||| ");
@@ -109,7 +82,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
   }
 
   @Override
-  public String toWordsWithoutFeatureScores(BilingualRule rule) {
+  public String toWordsWithoutFeatureScores(Rule rule) {
     StringBuffer sb = new StringBuffer();
     sb.append(rule.getLHS());
     sb.append(" ||| ");

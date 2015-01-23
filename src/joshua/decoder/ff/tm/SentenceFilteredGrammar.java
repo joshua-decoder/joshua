@@ -33,7 +33,7 @@ public class SentenceFilteredGrammar extends MemoryBasedBatchGrammar {
     super(baseGrammar.joshuaConfiguration);
     this.baseGrammar = baseGrammar;
     this.sentence = sentence;
-    this.tokens = sentence.intSentence();
+    this.tokens = sentence.getWordIDs();
 
     int origCount = getNumRules(baseGrammar.getTrieRoot());
     long startTime = System.currentTimeMillis();
@@ -282,7 +282,7 @@ public class SentenceFilteredGrammar extends MemoryBasedBatchGrammar {
      * Constructor.
      * 
      * @param trieRoot
-     * @param sentence
+     * @param source
      */
     public SentenceFilteredTrie(Trie unfilteredTrieNode) {
       this.unfilteredTrieNode = unfilteredTrieNode;

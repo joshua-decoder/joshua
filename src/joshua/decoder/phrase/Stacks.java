@@ -60,7 +60,7 @@ public class Stacks {
     phraseTables[phraseTables.length - 2].addRule(Hypothesis.END_RULE);
     
     phraseTables[phraseTables.length - 1] = new PhraseTable("oov", config);
-    AbstractGrammar.addOOVRules(phraseTables[phraseTables.length - 1], sentence.intLattice(), featureFunctions, config.true_oovs_only);
+    AbstractGrammar.addOOVRules(phraseTables[phraseTables.length - 1], sentence.getLattice(), featureFunctions, config.true_oovs_only);
     
     this.chart = new PhraseChart(phraseTables, featureFunctions, sentence, config.num_translation_options);
   }
@@ -208,7 +208,7 @@ public class Stacks {
       List<HGNode> tailNodes = new ArrayList<HGNode>();
       tailNodes.add(hyp);
       
-      float finalTransitionScore = ComputeNodeResult.computeFinalCost(featureFunctions, tailNodes, 0, sentence.length(), null, sentence.id());
+      float finalTransitionScore = ComputeNodeResult.computeFinalCost(featureFunctions, tailNodes, 0, sentence.length(), null, sentence);
 
       if (null == this.end)
         this.end = new Hypothesis(null, score + finalTransitionScore, hyp, sentence.length(), null);

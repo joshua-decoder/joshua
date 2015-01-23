@@ -13,7 +13,7 @@ public class ParsedSentence extends Sentence {
     super(input, id, joshuaConfiguration);
   }
 
-  public int[] intSentence() {
+  public int[] getWordIDs() {
     int[] terminals = syntaxTree().getTerminals();
     int[] annotated = new int[terminals.length + 2];
     System.arraycopy(terminals, 0, annotated, 1, terminals.length);
@@ -32,7 +32,7 @@ public class ParsedSentence extends Sentence {
     return input.matches("^\\(+[A-Z]+ .*");
   }
 
-  public String annotatedSource() {
-    return Vocabulary.getWords(this.intSentence());
+  public String fullSource() {
+    return Vocabulary.getWords(this.getWordIDs());
   }
 }

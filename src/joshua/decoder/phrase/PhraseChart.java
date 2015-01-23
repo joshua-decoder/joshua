@@ -63,7 +63,7 @@ public class PhraseChart {
         if (source.hasPath(begin, end)) {
           for (PhraseTable table : tables)
             addToRange(begin, end,
-                table.getPhrases(Arrays.copyOfRange(source.intSentence(), begin, end)));
+                table.getPhrases(Arrays.copyOfRange(source.getWordIDs(), begin, end)));
         }
 
       }

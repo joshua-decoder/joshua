@@ -2,7 +2,10 @@ package joshua.decoder.ff;
 
 import joshua.decoder.Decoder;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -168,15 +171,24 @@ public class FeatureVector {
    */
   public String toString() {
     String outputString = "";
-
-    for (String key: Decoder.feature_names) {
-      if (features.containsKey(key) || isDense(key)) {
-        float value = features.containsKey(key) ? features.get(key) : 0.0f;
-        outputString += String.format("%s%s=%.3f", (outputString.length() > 0) ? " " : "", key, value);
-      }
+    
+    HashSet<String> printed_keys = new HashSet<String>();
+    
+    // First print all the dense feature names in order
+    for (String key: Decoder.dense_feature_names) {
+      float value = features.containsKey(key) ? features.get(key) : 0.0f;
+      outputString += String.format("%s=%.3f ", key, value);
+      printed_keys.add(key);
     }
     
-    return outputString;
+    // Now print the rest of the features
+    ArrayList<String> keys = new ArrayList<String>(features.keySet());
+    Collections.sort(keys);
+    for (String key: keys)
+      if (! printed_keys.contains(key))
+        outputString += String.format("%s=%.3f ", key, features.get(key));
+
+    return outputString.trim();
   }
 
   public static boolean isDense(String feature) {

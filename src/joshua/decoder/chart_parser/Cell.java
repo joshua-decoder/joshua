@@ -89,7 +89,7 @@ class Cell {
         antNodes.add(antNode);
 
         float finalTransitionLogP = ComputeNodeResult.computeFinalCost(featureFunctions, antNodes,
-            0, sentenceLength, null, this.chart.sentenceID());
+            0, sentenceLength, null, this.chart.getSentence());
 
         List<HGNode> previousItems = new ArrayList<HGNode>();
         previousItems.add(antNode);

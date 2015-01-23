@@ -3,10 +3,10 @@ package joshua.decoder.ff.tm.format;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.GrammarReader;
 
-public class SamtFormatReader extends GrammarReader<BilingualRule> {
+public class SamtFormatReader extends GrammarReader<Rule> {
 
   private static final Logger logger = Logger.getLogger(SamtFormatReader.class.getName());
 
@@ -30,7 +30,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
   // @VZ-HD @APPR-DA+ART-DA minutes#@2 protokoll @1#@PP-MO+VZ-HD#0 1 1 -0 0.5 -0
 
   @Override
-  protected BilingualRule parseLine(String line) {
+  protected Rule parseLine(String line) {
     String[] fields = line.split(fieldDelimiter);
     if (fields.length != 4) {
       logger.severe("Rule line does not have four fields: " + line);
@@ -68,7 +68,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
     // feature scores
     String sparseFeatures = fields[3];
 
-    return new BilingualRule(lhs, french, english, sparseFeatures, arity);
+    return new Rule(lhs, french, english, sparseFeatures, arity);
   }
 
   protected String cleanSamtNonTerminal(String word) {
@@ -91,7 +91,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
   }
 
   @Override
-  public String toWords(BilingualRule rule) {
+  public String toWords(Rule rule) {
     StringBuffer sb = new StringBuffer();
     sb.append(Vocabulary.word(rule.getLHS()));
     sb.append(" ||| ");
@@ -104,7 +104,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
   }
 
   @Override
-  public String toWordsWithoutFeatureScores(BilingualRule rule) {
+  public String toWordsWithoutFeatureScores(Rule rule) {
     StringBuffer sb = new StringBuffer();
     sb.append(Vocabulary.word(rule.getLHS()));
     sb.append(" ||| ");

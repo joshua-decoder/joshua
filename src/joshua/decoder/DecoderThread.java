@@ -76,7 +76,7 @@ public class DecoderThread extends Thread {
    */
   public Translation translate(Sentence sentence) {
 
-    Decoder.LOG(1, String.format("Input %d: %s", sentence.id(), sentence.source()));
+    Decoder.LOG(1, String.format("Input %d: %s", sentence.id(), sentence.fullSource()));
 
     if (sentence.target() != null)
       Decoder.LOG(1, String.format("Input %d: Constraining to target sentence '%s'", 
@@ -107,7 +107,7 @@ public class DecoderThread extends Thread {
     HyperGraph hypergraph = null;
     try {
 
-      if (joshuaConfiguration.search_algorithm.equals("phrase")) {
+      if (joshuaConfiguration.search_algorithm.equals("stack")) {
         Stacks stacks = new Stacks(sentence, this.featureFunctions, grammars, joshuaConfiguration);
         
         hypergraph = stacks.search();

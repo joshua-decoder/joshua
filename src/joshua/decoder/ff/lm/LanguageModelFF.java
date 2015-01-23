@@ -1,19 +1,29 @@
 package joshua.decoder.ff.lm;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
+import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class performs the following:
@@ -30,6 +40,7 @@ import joshua.decoder.hypergraph.HGNode;
  */
 public class LanguageModelFF extends StatefulFF {
 
+  private static int LM_INDEX = 0;
   public static int START_SYM_ID;
   public static int STOP_SYM_ID;
 
@@ -47,7 +58,7 @@ public class LanguageModelFF extends StatefulFF {
    * </ul>
    * </li>
    */
-  protected final NGramLanguageModel languageModel;
+  protected NGramLanguageModel languageModel;
 
   /**
    * We always use this order of ngram, though the LMGrammar may provide higher order probability.
@@ -58,18 +69,96 @@ public class LanguageModelFF extends StatefulFF {
    * We cache the weight of the feature since there is only one.
    */
   protected float weight;
+  protected String type;
+  protected String path;
 
-  /**
-   *
-   */
-  public LanguageModelFF(FeatureVector weights, String featureName, NGramLanguageModel lm) {
-    super(weights, featureName);
-    this.languageModel = lm;
-    this.ngramOrder = lm.getOrder();
-    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
-    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
+  /* Whether this is a class-based LM */
+  private boolean isClassLM;
+  private ClassMap classMap;
+  
+  protected class ClassMap {
+
+    private final int OOV_id = 10;
+    private HashMap<Integer, Integer> classMap;
+
+    public ClassMap(String file_name) throws IOException {
+      this.classMap = new HashMap<Integer, Integer>();
+      read(file_name);
+    }
+
+    public int getClassID(int wordID) {
+      if (this.classMap.containsKey(wordID)) {
+        return this.classMap.get(wordID);
+      } else {
+        return OOV_id;
+      }
+    }
+
+    /**
+     * Reads a class map from file.
+     * 
+     * @param file_name
+     * @throws IOException
+     */
+    private void read(String file_name) throws IOException {
+
+      File class_file = new File(file_name);
+      BufferedReader br = new BufferedReader(new FileReader(class_file));
+      String line;
+
+      while ((line = br.readLine()) != null) {
+        String[] lineComp = line.trim().split("\\s+");
+        this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+      }
+      br.close();
+    }
+
+  }
+
+  public LanguageModelFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, String.format("lm_%d", LanguageModelFF.LM_INDEX++), args, config);
+
+    this.type = parsedArgs.get("lm_type");
+    this.ngramOrder = Integer.parseInt(parsedArgs.get("lm_order")); 
+    this.path = parsedArgs.get("lm_file");
+    this.isClassLM = parsedArgs.containsKey("lm_class");
+    if (isClassLM && parsedArgs.containsKey("class_map"))
+      try {
+        this.classMap = new ClassMap(parsedArgs.get("class_map"));
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
 
     this.weight = weights.get(name);
+    
+    initializeLM();
+  }
+
+  /**
+   * Initializes the underlying language model.
+   * 
+   * @param config
+   * @param type
+   * @param path
+   */
+  public void initializeLM() {
+    if (type.equals("kenlm")) {
+      this.languageModel = new KenLM(ngramOrder, path);
+    
+    } else if (type.equals("berkeleylm")) {
+      this.languageModel = new LMGrammarBerkeley(ngramOrder, path);
+
+    } else {
+      Decoder.LOG(1, "WARNING: using built-in language model; you probably didn't intend this");
+      Decoder.LOG(1, "Valid lm types are 'kenlm', 'berkeleylm', 'none'");
+    }
+
+    Vocabulary.registerLanguageModel(this.languageModel);
+    Vocabulary.id(config.default_non_terminal);
+    
+    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
+    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
   }
 
   public NGramLanguageModel getLM() {
@@ -89,16 +178,99 @@ public class LanguageModelFF extends StatefulFF {
    */
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
 
     NgramDPState newState = null;
-    if (rule != null)
-      newState = computeTransition(rule.getEnglish(), tailNodes, acc);
-
+    if (rule != null) {
+      if (config.source_annotations) {
+        // Get source side annotations and project them to the target side
+        newState = computeTransition(getTags(rule, i, j, sentence), tailNodes, acc);
+      }
+      else {
+        if (this.isClassLM) {
+          // Use a class language model
+          // Return target side classes
+          newState = computeTransition(getClasses(rule), tailNodes, acc);
+        }
+        else {
+          // Default LM 
+          newState = computeTransition(rule.getEnglish(), tailNodes, acc);
+        }
+      }
+    
+    }
+    
     return newState;
   }
 
-  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, int sentID,
+  /**
+   * Input sentences can be tagged with information specific to the language model. This looks for
+   * such annotations by following a word's alignments back to the source words, checking for
+   * annotations, and replacing the surface word if such annotations are found.
+   * 
+   */
+  protected int[] getTags(Rule rule, int begin, int end, Sentence sentence) {
+    /* Very important to make a copy here, so the original rule is not modified */
+    int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
+    byte[] alignments = rule.getAlignment();
+
+//    System.err.println(String.format("getTags() %s", rule.getRuleString()));
+    
+    /* For each target-side token, project it to each of its source-language alignments. If any of those
+     * are annotated, take the first annotation and quit.
+     */
+    if (alignments != null) {
+      for (int i = 0; i < tokens.length; i++) {
+        if (tokens[i] > 0) { // skip nonterminals
+          for (int j = 0; j < alignments.length; j += 2) {
+            if (alignments[j] == i) {
+              int annotation = sentence.getAnnotation((int)alignments[i] + begin);
+              if (annotation != -1) {
+//                System.err.println(String.format("  word %d source %d abs %d annotation %d/%s", 
+//                    i, alignments[i], alignments[i] + begin, annotation, Vocabulary.word(annotation)));
+                tokens[i] = annotation;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return tokens;
+  }
+  
+  /** 
+   * Sets the class map if this is a class LM 
+   * @param classMap
+   * @throws IOException 
+   */
+  public void setClassMap(String fileName) throws IOException {
+    this.classMap = new ClassMap(fileName);
+  }
+  
+  
+  /**
+   * Gets the target side classes for the class LM
+   * 
+   */
+  protected int[] getClasses(Rule rule) {
+    if (this.classMap == null) {
+      System.err.println("The class map is not set. Cannot use the class LM ");
+      System.exit(2);
+    }
+    /* Very important to make a copy here, so the original rule is not modified */
+    int[] tokens = Arrays.copyOf(rule.getEnglish(), rule.getEnglish().length);
+    for (int i = 0; i < tokens.length; i++) {
+      if (tokens[i] > 0 ) {
+        tokens[i] = this.classMap.getClassID(tokens[i]);
+      }
+    }
+    return tokens;
+  }
+
+  @Override
+  public DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath, Sentence sentence,
       Accumulator acc) {
     return computeFinalTransition((NgramDPState) tailNode.getDPState(stateIndex), acc);
   }
@@ -108,7 +280,7 @@ public class LanguageModelFF extends StatefulFF {
    * n-grams on the left-hand side.
    */
   @Override
-  public float estimateCost(Rule rule, int sentID) {
+  public float estimateCost(Rule rule, Sentence sentence) {
 
     float estimate = 0.0f;
     boolean considerIncompleteNgrams = true;
@@ -142,7 +314,7 @@ public class LanguageModelFF extends StatefulFF {
    * costs of the leftmost k-grams, k = [1..n-1].
    */
   @Override
-  public float estimateFutureCost(Rule rule, DPState currentState, int sentID) {
+  public float estimateFutureCost(Rule rule, DPState currentState, Sentence sentence) {
     NgramDPState state = (NgramDPState) currentState;
 
     float estimate = 0.0f;
@@ -185,8 +357,6 @@ public class LanguageModelFF extends StatefulFF {
     float transitionLogP = 0.0f;
     int[] left_context = null;
     
-//    System.err.println(String.format("LanguageModel::computeTransition(%s)", Arrays.toString(enWords)));
-
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
 

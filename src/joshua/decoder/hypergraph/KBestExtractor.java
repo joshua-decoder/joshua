@@ -209,7 +209,7 @@ public class KBestExtractor {
    * @param hg the hypergraph to extract from
    * @param featureFunctions the feature functions to use
    * @param topN how many to extract
-   * @param sentence the input sentence
+   * @param source the input sentence
    * @param out object to write to
    * @throws IOException
    */
@@ -1018,10 +1018,8 @@ public class KBestExtractor {
         HyperEdge edge = state.edge;
 
         FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, edge,
-            parentNode.i, parentNode.j, sentence.id());
+            parentNode.i, parentNode.j, sentence);
 
-//        FeatureVector transitionCosts = ComputeNodeResult.computeTransitionFeatures(models, state,
-//            parentNode.i, parentNode.j, sentence);
         features.add(transitionCosts);
       }
     }

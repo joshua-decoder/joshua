@@ -1,5 +1,6 @@
 package joshua.decoder.chart_parser;
 
+import joshua.decoder.segment_file.Token;
 import joshua.lattice.Arc;
 
 /**
@@ -25,7 +26,7 @@ public class SourcePath {
     return pathCost;
   }
 
-  public SourcePath extend(Arc<Integer> srcEdge) {
+  public SourcePath extend(Arc<Token> srcEdge) {
     float tcost = (float) srcEdge.getCost();
     if (tcost == 0.0)
       return this;

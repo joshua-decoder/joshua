@@ -111,7 +111,7 @@ public class HyperGraph {
               }
 
               FeatureVector edgeFeatures = ComputeNodeResult.computeTransitionFeatures(
-                  model, e, node.i, node.j, sentID);
+                  model, e, node.i, node.j, sentence);
               out.println(String.format("||| %s", edgeFeatures));
             }
           }

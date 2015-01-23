@@ -541,9 +541,4 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
     }
     return wittenBell(lm_ngram, order);
   }
-  
-  @Override
-  public boolean isMinimizing() {
-    return false;
-  }
 }

@@ -6,13 +6,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;	
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.JoshuaConfiguration;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -20,16 +20,15 @@ import joshua.util.ChartSpan;
 import joshua.util.Regex;
 
 /**
- * This class represents a basic input sentence. A sentence is a sequence of UTF-8 characters
- * denoting a string of source language words. The sequence can optionally be wrapped in <seg
- * id="N">...</seg> tags, which are then used to set the sentence number (a 0-indexed ID).
+ * This class represents lattice input. The lattice is contained on a single line and is represented
+ * in PLF (Python Lattice Format), e.g.,
+ * 
+ * ((('ein',0.1,1),('dieses',0.2,1),('haus',0.4,2),),(('haus',0.8,1),),)
  * 
  * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class Sentence {
-
-  private static final Logger logger = Logger.getLogger(Sentence.class.getName());
 
   /* The sentence number. */
   private int id = -1;
@@ -38,46 +37,40 @@ public class Sentence {
    * The source and target sides of the input sentence. Target sides are present when doing
    * alignment or forced decoding.
    */
-  protected String sentence;
+  protected String source = null;
   protected String target = null;
   protected String[] references = null;
 
   /* Lattice representation of the source sentence. */
-  protected Lattice<Integer> sourceLattice = null;
+  protected Lattice<Token> sourceLattice = null;
 
+  /* List of constraints */
   private final List<ConstraintSpan> constraints;
-
-  // Matches the opening and closing <seg> tags, e.g.,
-  // <seg id="72">this is a test input sentence</seg>.
-  protected static final Pattern SEG_START = Pattern
-      .compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
-  protected static final Pattern SEG_END = Pattern.compile("\\s*</seg\\s*>\\s*$");
 
   /**
    * Constructor. Receives a string representing the input sentence. This string may be a
    * string-encoded lattice or a plain text string for decoding.
    * 
-   * @param inputSentence
+   * @param inputString
    * @param id
    */
-  public Sentence(String inputSentence, int id, JoshuaConfiguration joshuaConfiguration) {
-
-    inputSentence = Regex.spaces.replaceAll(inputSentence, " ").trim();
-
-    constraints = new LinkedList<ConstraintSpan>();
-
+  public Sentence(String inputString, int id, JoshuaConfiguration joshuaConfiguration) {
+  
+    inputString = Regex.spaces.replaceAll(inputString, " ").trim();
+    this.constraints = new LinkedList<ConstraintSpan>();
+  
     // Check if the sentence has SGML markings denoting the
     // sentence ID; if so, override the id passed in to the
     // constructor
-    Matcher start = SEG_START.matcher(inputSentence);
+    Matcher start = SEG_START.matcher(inputString);
     if (start.find()) {
-      sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
+      source = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
       String idstr = start.group(1);
       this.id = Integer.parseInt(idstr);
     } else {
-      if (inputSentence.indexOf(" ||| ") != -1) {
-        String[] pieces = inputSentence.split("\\s?\\|{3}\\s?");
-        sentence = pieces[0];
+      if (inputString.indexOf(" ||| ") != -1) {
+        String[] pieces = inputString.split("\\s?\\|{3}\\s?");
+        source = pieces[0];
         target = pieces[1];
         if (target.equals(""))
           target = null;
@@ -86,15 +79,37 @@ public class Sentence {
           System.arraycopy(pieces, 2, references, 0, pieces.length - 2);
         }
       } else {
-        sentence = inputSentence;
+        source = inputString;
       }
       this.id = id;
     }
-
+  
+    // Store annotations if available
+//    String[] words = source.split("\\s+");
+//    annotations = new Token[words.length + 2]; // 2 extra for <s> and </s>
+//    for (int i = 1; i < annotations.length - 1; i++) {
+//      this.annotations[i] = new Token(words[i-1]);
+//    }
+  
     // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
-    if (joshuaConfiguration.maxlen != 0 && !this.intLattice().hasMoreThanOnePath())
+    if (joshuaConfiguration.maxlen != 0 && isLinearChain())
       adjustForLength(joshuaConfiguration.maxlen);
   }
+  
+  /**
+   * Indicates whether the underlying lattice is a linear chain, i.e., a sentence.
+   * 
+   * @return true if this is a linear chain, false otherwise
+   */
+  public boolean isLinearChain() {
+    return ! this.getLattice().hasMoreThanOnePath();
+  }
+
+  // Matches the opening and closing <seg> tags, e.g.,
+  // <seg id="72">this is a test input sentence</seg>.
+  protected static final Pattern SEG_START = Pattern
+      .compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
+  protected static final Pattern SEG_END = Pattern.compile("\\s*</seg\\s*>\\s*$");
 
   /**
    * Returns the length of the sentence. For lattices, the length is the shortest path through the
@@ -103,7 +118,17 @@ public class Sentence {
    * @return number of input tokens + 2 (for start and end of sentence markers)
    */
   public int length() {
-    return this.intLattice().getShortestDistance();
+    return this.getLattice().getShortestDistance();
+  }
+
+  /**
+   * Returns the annotations for a specific word (specified by an index) in the 
+   * sentence
+   * @param index The location of the word in the sentence
+   * @return The annotations associated with this word
+   */
+  public int getAnnotation(int index) {
+    return getTokens().get(index).getAnnotation();
   }
 
   /**
@@ -116,7 +141,7 @@ public class Sentence {
    * @param grammars a list of grammars to consult to find in- and out-of-vocabulary items
    */
   public void segmentOOVs(Grammar[] grammars) {
-    Lattice<Integer> oldLattice = this.intLattice();
+    Lattice<Token> oldLattice = this.getLattice();
 
     /* Build a list of terminals across all grammars */
     HashSet<Integer> vocabulary = new HashSet<Integer>();
@@ -126,41 +151,41 @@ public class Sentence {
         vocabulary.add(iterator.next());
     }
 
-    List<Node<Integer>> oldNodes = oldLattice.getNodes();
+    List<Node<Token>> oldNodes = oldLattice.getNodes();
 
     /* Find all the subwords that appear in the vocabulary, and create the lattice */
     for (int nodeid = oldNodes.size() - 3; nodeid >= 1; nodeid -= 1) {
       if (oldNodes.get(nodeid).getOutgoingArcs().size() == 1) {
-        Arc<Integer> arc = oldNodes.get(nodeid).getOutgoingArcs().get(0);
-        String word = Vocabulary.word(arc.getLabel());
+        Arc<Token> arc = oldNodes.get(nodeid).getOutgoingArcs().get(0);
+        String word = Vocabulary.word(arc.getLabel().getWord());
         if (!vocabulary.contains(arc.getLabel())) {
           // System.err.println(String.format("REPL: '%s'", word));
-          List<Arc<Integer>> savedArcs = oldNodes.get(nodeid).getOutgoingArcs();
+          List<Arc<Token>> savedArcs = oldNodes.get(nodeid).getOutgoingArcs();
 
           char[] chars = word.toCharArray();
           ChartSpan<Boolean> wordChart = new ChartSpan<Boolean>(chars.length + 1, false);
-          ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(chars.length + 1);
+          ArrayList<Node<Token>> nodes = new ArrayList<Node<Token>>(chars.length + 1);
           nodes.add(oldNodes.get(nodeid));
           for (int i = 1; i < chars.length; i++)
-            nodes.add(new Node<Integer>(i));
+            nodes.add(new Node<Token>(i));
           nodes.add(oldNodes.get(nodeid + 1));
           for (int width = 1; width <= chars.length; width++) {
             for (int i = 0; i <= chars.length - width; i++) {
               int j = i + width;
               if (width != chars.length) {
-                Integer id = Vocabulary.id(word.substring(i, j));
+                Token token = new Token(word.substring(i, j));
                 if (vocabulary.contains(id)) {
-                  nodes.get(i).addArc(nodes.get(j), 0.0f, id);
+                  nodes.get(i).addArc(nodes.get(j), 0.0f, token);
                   wordChart.set(i, j, true);
-//                  System.err.println(String.format("  FOUND '%s' at (%d,%d)", word.substring(i, j),
-//                      i, j));
+                  //                    System.err.println(String.format("  FOUND '%s' at (%d,%d)", word.substring(i, j),
+                  //                        i, j));
                 }
               }
 
               for (int k = i + 1; k < j; k++) {
                 if (wordChart.get(i, k) && wordChart.get(k, j)) {
                   wordChart.set(i, j, true);
-//                  System.err.println(String.format("    PATH FROM %d-%d-%d", i, k, j));
+                  //                    System.err.println(String.format("    PATH FROM %d-%d-%d", i, k, j));
                 }
               }
             }
@@ -168,10 +193,8 @@ public class Sentence {
 
           /* If there's a path from beginning to end */
           if (wordChart.get(0, chars.length)) {
-//            System.err.println(String.format("  THERE IS A PATH"));
-//
             // Remove nodes not part of a complete path
-            HashSet<Node<Integer>> deletedNodes = new HashSet<Node<Integer>>();
+            HashSet<Node<Token>> deletedNodes = new HashSet<Node<Token>>();
             for (int k = 1; k < nodes.size() - 1; k++)
               if (!(wordChart.get(0, k) && wordChart.get(k, chars.length)))
                 nodes.set(k, null);
@@ -184,26 +207,22 @@ public class Sentence {
               } else
                 delIndex++;
 
-//            System.err.println("  REMAINING NODES:");
-            for (Node<Integer> node : nodes) {
-//              System.err.println("    NODE: " + node.id());
+            for (Node<Token> node : nodes) {
               int arcno = 0;
               while (arcno != node.getOutgoingArcs().size()) {
-                Arc<Integer> delArc = node.getOutgoingArcs().get(arcno);
+                Arc<Token> delArc = node.getOutgoingArcs().get(arcno);
                 if (deletedNodes.contains(delArc.getHead()))
                   node.getOutgoingArcs().remove(arcno);
                 else {
                   arcno++;
-//                  System.err.println("           ARC: " + Vocabulary.word(delArc.getLabel()));
+                  //                    System.err.println("           ARC: " + Vocabulary.word(delArc.getLabel()));
                 }
               }
             }
 
             // Insert into the main lattice
-            this.intLattice().insert(nodeid, nodeid + 1, nodes);
+            this.getLattice().insert(nodeid, nodeid + 1, nodes);
           } else {
-//            System.err.println(String.format("  NO PATH from %d-%d", 0, chars.length));
-
             nodes.get(0).setOutgoingArcs(savedArcs);
           }
         }
@@ -220,18 +239,18 @@ public class Sentence {
    * 
    * @param length
    */
-  private void adjustForLength(int length) {
-    int size = this.intLattice().size() - 2; // subtract off the start- and end-of-sentence tokens
+  protected void adjustForLength(int length) {
+    int size = this.getLattice().size() - 2; // subtract off the start- and end-of-sentence tokens
 
     if (size > length) {
-      logger.warning(String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
+      Decoder.LOG(1, String.format("* WARNING: sentence %d too long (%d), truncating to length %d",
           id(), size, length));
 
-      // Replace the input sentence (and target)
-      String[] tokens = source().split("\\s+");
-      sentence = tokens[0];
+      // Replace the input sentence (and target) -- use the raw string, not source()
+      String[] tokens = source.split("\\s+");
+      source = tokens[0];
       for (int i = 1; i < length; i++)
-        sentence += " " + tokens[i];
+        source += " " + tokens[i];
       sourceLattice = null;
       if (target != null) {
         target = "";
@@ -240,19 +259,41 @@ public class Sentence {
   }
 
   public boolean isEmpty() {
-    return sentence.matches("^\\s*$");
+    return source.matches("^\\s*$");
   }
 
   public int id() {
     return id;
   }
 
+  /**
+   * Returns the raw source-side input string.
+   */
+  public String rawSource() {
+    return source;
+  }
+  
+  /**
+   * Returns the source-side string with annotations --- if any --- stripped off.
+   * 
+   * @return
+   */
   public String source() {
-    return sentence;
+    String str = "";
+    int[] ids = getWordIDs();
+    for (int i = 1; i < ids.length - 1; i++)
+      str += Vocabulary.word(ids[i]) + " ";
+    return str.trim();
   }
 
-  public String annotatedSource() {
-    return Vocabulary.START_SYM + " " + sentence + " " + Vocabulary.STOP_SYM;
+  /**
+   * Returns a sentence with the start and stop symbols added to the 
+   * beginning and the end of the sentence respectively
+   * 
+   * @return String The input sentence with start and stop symbols
+   */
+  public String fullSource() {
+    return String.format("%s %s %s", Vocabulary.START_SYM , source(), Vocabulary.STOP_SYM); 
   }
 
   /**
@@ -268,13 +309,13 @@ public class Sentence {
   public String target() {
     return target;
   }
-  
+
   public String fullTarget() {
     return String.format("<s> %s </s>", target());
   }
-  
+
   public String source(int i, int j) {
-    StringTokenizer st = new StringTokenizer(annotatedSource());
+    StringTokenizer st = new StringTokenizer(fullSource());
     int index = 0;
     String substring = "";
     while (st.hasMoreTokens()) {
@@ -292,17 +333,54 @@ public class Sentence {
     return references;
   }
 
-  public int[] intSentence() {
-    return Vocabulary.addAll(annotatedSource());
+  /**
+   * Returns the sequence of tokens comprising the sentence. This assumes you've done the checking
+   * to makes sure the input string (the source side) isn't a PLF waiting to be parsed.
+   * 
+   * @return
+   */
+  public List<Token> getTokens() {
+    assert isLinearChain();
+    List<Token> tokens = new ArrayList<Token>();
+    for (Node<Token> node: getLattice().getNodes())
+      if (node.getOutgoingArcs().size() > 0) 
+        tokens.add(node.getOutgoingArcs().get(0).getLabel());
+    return tokens;
+  }
+  
+  /**
+   * Returns the sequence of word IDs comprising the input sentence. Assumes this is not a general
+   * lattice, but a linear chain.
+   */
+  public int[] getWordIDs() {
+    List<Token> tokens = getTokens();
+    int[] ids = new int[tokens.size()];
+    for (int i = 0; i < tokens.size(); i++)
+      ids[i] = tokens.get(i).getWord();
+    return ids;
+  }
+  
+  /**
+   * Returns the sequence of word ids comprising the sentence. Assumes this is a sentence and
+   * not a lattice.
+   *  
+   * @return
+   */
+  public Lattice<String> stringLattice() {
+    assert isLinearChain();
+    return Lattice.createStringLatticeFromString(source());
   }
 
   public List<ConstraintSpan> constraints() {
     return constraints;
   }
 
-  public Lattice<Integer> intLattice() {
+  public Lattice<Token> getLattice() {
     if (this.sourceLattice == null)
-      this.sourceLattice = Lattice.createIntLattice(intSentence());
+      this.sourceLattice = (rawSource().startsWith("((("))
+        ? Lattice.createTokenLatticeFromPLF(rawSource())
+        : Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
+            rawSource(), Vocabulary.STOP_SYM));
     return this.sourceLattice;
   }
 
@@ -316,10 +394,10 @@ public class Sentence {
   }
 
   public boolean hasPath(int begin, int end) {
-    return intLattice().distance(begin, end) != -1;
+    return getLattice().distance(begin, end) != -1;
   }
 
-  public Node<Integer> getNode(int i) {
-    return intLattice().getNode(i);
+  public Node<Token> getNode(int i) {
+    return getLattice().getNode(i);
   }
 }

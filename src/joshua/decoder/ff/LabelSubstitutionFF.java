@@ -1,26 +1,32 @@
 package joshua.decoder.ff;
 
+/***
+ * @author Gideon Wenniger
+ */
+
 import java.util.List;
+
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.segment_file.Sentence;
 import joshua.util.ListUtil;
 
 public class LabelSubstitutionFF extends StatelessFF {
-  private static final String LABEL_SUBSTITUTION_FEATURE_FUNCTION_NAME = "LabelSubstitution";
   private static final String MATCH_SUFFIX = "MATCH";
   private static final String NO_MATCH_SUFFIX = "NOMATCH";
 
-  public LabelSubstitutionFF(FeatureVector weights) {
-    super(weights, getLowerCasedFeatureName());
+  public LabelSubstitutionFF(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+    super(weights, "LabelSubstitution", args, config);
   }
 
-  public static String getLowerCasedFeatureName() {
-    return LABEL_SUBSTITUTION_FEATURE_FUNCTION_NAME.toLowerCase();
+  public String getLowerCasedFeatureName() {
+    return name.toLowerCase();
   }
 
-  public static String getMatchFeatureSuffix(String ruleNonterminal, String substitutionNonterminal) {
+  public String getMatchFeatureSuffix(String ruleNonterminal, String substitutionNonterminal) {
     if (ruleNonterminal.equals(substitutionNonterminal)) {
       return MATCH_SUFFIX;
     } else {
@@ -32,14 +38,14 @@ public class LabelSubstitutionFF extends StatelessFF {
     return substitutionNonterminal + "_substitutes_" + ruleNonterminal;
   }
 
-  private static final String computeLabelMatchingFeature(String ruleNonterminal,
+  private final String computeLabelMatchingFeature(String ruleNonterminal,
       String substitutionNonterminal) {
     String result = getLowerCasedFeatureName() + "_";
     result += getMatchFeatureSuffix(ruleNonterminal, substitutionNonterminal);
     return result;
   }
 
-  private static final String computeLabelSubstitutionFeature(String ruleNonterminal,
+  private final String computeLabelSubstitutionFeature(String ruleNonterminal,
       String substitutionNonterminal) {
     String result = getLowerCasedFeatureName() + "_";
     result += getSubstitutionSuffix(ruleNonterminal, substitutionNonterminal);
@@ -77,7 +83,7 @@ public class LabelSubstitutionFF extends StatelessFF {
     return result;
   }
 
-  public static final String getGapLabelsForRuleSubstitutionSuffix(Rule rule, List<HGNode> tailNodes) {
+  public final String getGapLabelsForRuleSubstitutionSuffix(Rule rule, List<HGNode> tailNodes) {
     String result = getLowerCasedFeatureName() + "_";
     result += getRuleLabelsDescriptorString(rule);
     result += getSubstitutionsDescriptorString(tailNodes);
@@ -86,7 +92,7 @@ public class LabelSubstitutionFF extends StatelessFF {
 
   @Override
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
-      int sentID, Accumulator acc) {
+      Sentence sentence, Accumulator acc) {
     if (rule != null && (tailNodes != null)) {
 
       List<String> ruleSourceNonterminals = RulePropertiesQuerying
