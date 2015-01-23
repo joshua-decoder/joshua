@@ -162,11 +162,11 @@ while (my $line = <STDIN>) {
           }
         }
         my $span_limit = $span_limits[$grammar_no] || 1000;
-        my $owner = "phrase";
+        my $owner = "moses";
         print "tm = $owner owner${grammar_no} $span_limit $grammar_file\n";
         print "num_translation_options = $table_limit\n";
         $grammar_no++;
-#        print STDERR "TODO: You need to convert the grammar manually and edit the 'tm = ...' line\n";
+
       } elsif ($key eq "KENLM") {
         my $str = join(" ", @rest);
         my $order = $str; $order =~ s/.*order=(\d+).*/$1/;
