@@ -45,8 +45,6 @@ public class ComputeNodeResult {
   public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule, List<HGNode> tailNodes,
       int i, int j, SourcePath sourcePath, Sentence sentence) {
 
-    int sentID = sentence.id();
-    
     // The total Viterbi cost of this edge. This is the Viterbi cost of the tail nodes, plus
     // whatever costs we incur applying this rule to create a new hyperedge.
     float viterbiCost = 0.0f;
