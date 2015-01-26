@@ -146,7 +146,7 @@ while (my $line = <STDIN>) {
       } elsif ($key eq "WordPenalty") {
         print "feature-function = WordPenalty\n";
       } elsif ($key eq "PhrasePenalty") {
-        print "feature-function = PhrasePenalty\n";
+        print "feature-function = PhrasePenalty -owner owner0\n";
       } elsif ($key eq "Distortion") {
         print "feature-function = Distortion\n";
       } elsif ($key =~ /^PhraseDictionary/) {
