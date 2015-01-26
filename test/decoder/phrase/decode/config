@@ -1,5 +1,6 @@
 tm = phrase pt 0 rules.1.gz
-lm = kenlm 5 true false 100 lm.1.gz
+#lm = kenlm 5 true false 100 lm.1.gz
+feature-function = StateMinimizingLanguageModel -lm_order 5 -lm_file lm.1.gz
 
 search = stack
 

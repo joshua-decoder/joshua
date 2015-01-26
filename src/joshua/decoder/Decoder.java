@@ -392,8 +392,6 @@ public class Decoder {
         if (FeatureVector.isDense(pair[0]))
           dense_feature_names.add(pair[0]);
 
-        System.err.println("READ FEATURE NAME " + pair[0]);
-        
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
 
