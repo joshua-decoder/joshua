@@ -1338,8 +1338,13 @@ my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
-  my $configstring = "feature-function = LanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -minimizing $LM_STATE_MINIMIZATION -lm_file $lmfile";
-  push (@configstrings, $configstring);
+  if ($LM_STATE_MINIMIZATION) {
+    my $configstring = "feature-function = StateMinimizingLanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -lm_file $lmfile";
+    push (@configstrings, $configstring);
+  } else {
+    my $configstring = "feature-function = LanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -lm_file $lmfile";
+    push (@configstrings, $configstring);
+  }
 
   my $weightstring = "lm_$i 1.0";
   push (@lmweightstrings, $weightstring);
