@@ -42,27 +42,6 @@ public class FileUtility {
             filename, false), FILE_ENCODING));
   }
 
-  // Currently unused, but maybe desirable to keep on hand
-  public static BufferedWriter getAppendFileStream(String filename) throws IOException {
-    return new BufferedWriter(new OutputStreamWriter(
-    // TODO: add GZIP (Is that safe? or will it garble?)
-        new FileOutputStream(filename, true), FILE_ENCODING));
-  }
-
-  /**
-   * @deprecated use {@link joshua.util.io.LineReader} instead.
-   */
-  @Deprecated
-  public static String read_line_lzf(BufferedReader in) {
-    String str = "";
-    try {
-      str = in.readLine();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return str;
-  }
-
   /**
    * Recursively delete the specified file or directory.
    * 

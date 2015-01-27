@@ -9,6 +9,7 @@
 #include "util/murmur_hash.hh"
 
 #include <assert.h>
+#include <math.h>
 
 namespace lm { namespace builder {
 namespace {
@@ -39,7 +40,7 @@ class OutputQ {
       } else {
         q_del = full_backoff;
       }
-      out.prob = log10(out.prob * q_del);
+      out.prob = log10f(out.prob * q_del);
       // TODO: stop wastefully outputting this!
       out.backoff = 0.0;
     }
@@ -56,16 +57,18 @@ class OutputProbBackoff {
     explicit OutputProbBackoff(std::size_t /*order*/) {}
 
     void Gram(unsigned /*order_minus_1*/, float full_backoff, ProbBackoff &out) const {
-      out.prob = log10(out.prob);
-      out.backoff = log10(full_backoff);
+      // Correcting for numerical precision issues.  Take that IRST.
+      out.prob = std::min(0.0f, log10f(out.prob));
+      out.backoff = log10f(full_backoff);
     }
 };
 
 template <class Output> class Callback {
   public:
-    Callback(float uniform_prob, const util::stream::ChainPositions &backoffs, const std::vector<uint64_t> &prune_thresholds)
+    Callback(float uniform_prob, const util::stream::ChainPositions &backoffs, const std::vector<uint64_t> &prune_thresholds, bool prune_vocab)
       : backoffs_(backoffs.size()), probs_(backoffs.size() + 2),
         prune_thresholds_(prune_thresholds),
+        prune_vocab_(prune_vocab),
         output_(backoffs.size() + 1 /* order */) {
       probs_[0] = uniform_prob;
       for (std::size_t i = 0; i < backoffs.size(); ++i) {
@@ -75,7 +78,7 @@ template <class Output> class Callback {
 
     ~Callback() {
       for (std::size_t i = 0; i < backoffs_.size(); ++i) {
-        if(prune_thresholds_[i + 1] > 0)
+        if(prune_vocab_ || prune_thresholds_[i + 1] > 0)
           while(backoffs_[i])
             ++backoffs_[i];
         
@@ -92,8 +95,8 @@ template <class Output> class Callback {
       probs_[order_minus_1 + 1] = pay.complete.prob;
 
       float out_backoff;
-      if (order_minus_1 < backoffs_.size() && *(gram.end() - 1) != kUNK && *(gram.end() - 1) != kEOS) {
-        if(prune_thresholds_[order_minus_1 + 1] > 0) {
+      if (order_minus_1 < backoffs_.size() && *(gram.end() - 1) != kUNK && *(gram.end() - 1) != kEOS && backoffs_[order_minus_1]) {
+        if(prune_vocab_ || prune_thresholds_[order_minus_1 + 1] > 0) {
           //Compute hash value for current context
           uint64_t current_hash = util::MurmurHashNative(gram.begin(), gram.Order() * sizeof(WordIndex));
           
@@ -127,22 +130,31 @@ template <class Output> class Callback {
 
     std::vector<float> probs_;
     const std::vector<uint64_t>& prune_thresholds_;
+    bool prune_vocab_;
 
     Output output_;
 };
 } // namespace
 
-Interpolate::Interpolate(uint64_t vocab_size, const util::stream::ChainPositions &backoffs, const std::vector<uint64_t>& prune_thresholds)
+Interpolate::Interpolate(uint64_t vocab_size, const util::stream::ChainPositions &backoffs, const std::vector<uint64_t>& prune_thresholds, bool prune_vocab, bool output_q)
   : uniform_prob_(1.0 / static_cast<float>(vocab_size)), // Includes <unk> but excludes <s>.
     backoffs_(backoffs),
-    prune_thresholds_(prune_thresholds) {}
+    prune_thresholds_(prune_thresholds),
+    prune_vocab_(prune_vocab),
+    output_q_(output_q) {}
 
 // perform order-wise interpolation
 void Interpolate::Run(const util::stream::ChainPositions &positions) {
   assert(positions.size() == backoffs_.size() + 1);
-  typedef Callback<OutputProbBackoff> C;
-  C callback(uniform_prob_, backoffs_, prune_thresholds_);
-  JointOrder<C, SuffixOrder>(positions, callback);
+  if (output_q_) {
+    typedef Callback<OutputQ> C;
+    C callback(uniform_prob_, backoffs_, prune_thresholds_, prune_vocab_);
+    JointOrder<C, SuffixOrder>(positions, callback);
+  } else {
+    typedef Callback<OutputProbBackoff> C;
+    C callback(uniform_prob_, backoffs_, prune_thresholds_, prune_vocab_);
+    JointOrder<C, SuffixOrder>(positions, callback);
+  }
 }
 
 }} // namespaces
