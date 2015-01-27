@@ -170,6 +170,13 @@ my $LM_ORDER = 5;
 # corpus when manually-specified LM files are passed with --lmfile.
 my $DO_BUILD_LM_FROM_CORPUS = 1;
 
+# Whether to build and include an LM from the target-side of the
+# corpus when manually-specified LM files are passed with --lmfile.
+my $DO_BUILD_CLASS_LM = 0;
+my $CLASS_LM_CORPUS = undef;
+my $CLASS_MAP = undef;
+my $CLASS_LM_ORDER = 9;
+
 # whether to tokenize and lowercase training, tuning, and test data
 my $DO_PREPARE_CORPORA = 1;
 
@@ -289,6 +296,9 @@ my $retval = GetOptions(
   "reordering-limit=i" => \$REORDERING_LIMIT,
   "num-translation-options=i" => \$NUM_TRANSLATION_OPTIONS,
   "ner-tagger=s"   => \$NER_TAGGER,
+  "class-lm!"     => \$DO_BUILD_CLASS_LM,
+  "class-lm-corpus=s"   => \$CLASS_LM_CORPUS,
+  "class-map"     => \$CLASS_MAP,
 );
 
 if (! $retval) {
@@ -1229,6 +1239,33 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
   }
 }
 
+if ($DO_BUILD_CLASS_LM) {
+  # Build a Class LM
+  # First check to see if an class map and class corpus are defined
+  if (! defined $CLASS_LM_CORPUS or ! defined $CLASS_MAP) {
+    print "* FATAL: A class LM corpus (--class-lm-corpus) and a class map (--class-map) are required with the --class-lm switch";
+    exit 1;
+  }
+  if (! -e $CLASS_LM_CORPUS or ! -e $CLASS_MAP) {
+    print "* FATAL: Could not find the Class LM corpus or map";
+    exit 1;
+  }
+  if (! -e "$JOSHUA/bin/lmplz") {
+    print "* FATAL: $JOSHUA/bin/lmplz (for building LMs) does not exist.\n";
+    print "  This is often a problem with the boost libraries (particularly threaded\n";
+    print "  versus unthreaded).\n";
+    exit 1;
+  }
+
+  # Needs to be capitalized
+  my $mem = uc $BUILDLM_MEM;
+  my $class_lmfile = "class_lm.gz";
+  $cachepipe->cmd("kenlm",
+                  "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --discount_fallback=0.5 1 1.5 --verbose_header --text $CLASS_LM_CORPUS $LM_OPTIONS | gzip -9n > lm.gz",
+                  "$CLASS_LM_CORPUS",
+                  $class_lmfile);
+}
+
 if ($MERGE_LMS) {
   # Merge @LMFILES.
   my $merged_lm = "lm-merged.gz";
@@ -1337,13 +1374,25 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 my (@configstrings, @lmweightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
-
+  #GAURAV:TODO: Add case for when a Class LM is specified
   if ($LM_STATE_MINIMIZATION) {
     my $configstring = "feature-function = StateMinimizingLanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -lm_file $lmfile";
     push (@configstrings, $configstring);
   } else {
     my $configstring = "feature-function = LanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -lm_file $lmfile";
     push (@configstrings, $configstring);
+  }
+
+  # Add the Class LM as a feature function to the Joshua config file if available
+  if ($DO_BUILD_CLASS_LM) {
+    if (-e "class_lm.gz") {
+      my $configstring = "feature-function = LanguageModel -lm_type kenlm -lm_order $CLASS_LM_ORDER -minimizing false -lm_file class_lm.gz -lm_class -class_map $CLASS_MAP";
+      push (@configstrings, $configstring);
+    }
+    else {
+      print "The class lm flag was set but the class lm was not found";
+      exit 1;
+    }
   }
 
   my $weightstring = "lm_$i 1.0";
