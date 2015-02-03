@@ -1,0 +1,4 @@
+The scripts here demonstrate how to use the pipeline to build different types of
+models (including GHKM, Hiero, SAMT, and traditional phrase-based models).
+
+They all use the data that is downloaded with the ../download.sh script.
