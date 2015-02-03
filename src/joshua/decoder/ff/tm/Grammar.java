@@ -69,9 +69,15 @@ public interface Grammar {
    * This is used to construct a manual rule supported from outside the grammar, but the owner
    * should be the same as the grammar. Rule ID will the same as OOVRuleId, and no lattice cost
    */
-  Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores,
-      int aritity);
+  @Deprecated
+  Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int arity);
 
+  /**
+   * Dump the grammar to disk.
+   * 
+   * @param file
+   */
+  @Deprecated
   void writeGrammarOnDisk(String file);
 
   /**
@@ -87,5 +93,11 @@ public interface Grammar {
    */
   int getOwner();
   
+  /**
+   * Add an OOV rule for the requested word for the grammar.
+   * 
+   * @param word
+   * @param featureFunctions
+   */
   void addOOVRules(int word, List<FeatureFunction> featureFunctions);
 }

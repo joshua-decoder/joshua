@@ -72,7 +72,7 @@ public class MosesFormatReader extends HieroFormatReader {
       values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
     }
     String sparse_features = values.toString().trim();
-//  System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
+//    System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
 
     // alignments
     String alignment = (fields.length > 3) ? fields[3] : null;

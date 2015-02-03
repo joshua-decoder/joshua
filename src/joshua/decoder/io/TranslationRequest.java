@@ -53,9 +53,6 @@ public class TranslationRequest {
 
       if (line != null) {
         sentenceNo++;
-
-        // TODO: This should be replace with a single Input object type that knows about all kinds
-        // of expected inputs
         nextSentence = new Sentence(line, sentenceNo, joshuaConfiguration);
 //        } else if (ParsedSentence.matches(line)) {
 //          nextSentence = new ParsedSentence(line, sentenceNo, joshuaConfiguration);
