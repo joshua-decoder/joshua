@@ -1,0 +1,41 @@
+tm = thrax pt 1 ../../lattice/grammar.test
+tm = thrax glue -1 ../../lattice/glue-grammar
+
+#lm config
+lm = kenlm 3 false false 100 ../../lattice/test.lm
+
+#tm config
+default_non_terminal=X
+goalSymbol=GOAL
+
+#pruning config
+pop-limit = 100
+
+#nbest config
+use_unique_nbest = true 
+include-align-index = false
+top_n = 300
+
+# this shouldn't apply to the lattice
+maxlen = 1
+
+feature-function = OOVPenalty
+feature-function = WordPenalty
+feature-function = SourcePath
+
+###### model weights
+#lm order weight
+lm_0 0.0
+
+#phrasemodel owner column(0-indexed) weight
+tm_pt_0 0.2
+tm_pt_1 0.3
+tm_pt_2 0.5
+
+tm_glue_0 0.0
+
+#wordpenalty weight
+WordPenalty -1.0
+SourcePath 1.0
+
+OOVPenalty 1.0

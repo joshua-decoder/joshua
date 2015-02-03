@@ -1,0 +1,82 @@
+0 ||| a g o lf ho le ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 ||| 3.406
+0 ||| a g o lf hole ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 ||| 2.972
+0 ||| a go lf ho le ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 ||| 2.972
+0 ||| a go lf hole ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.606 SourcePath=0.000 ||| 2.537
+0 ||| a golf hole ||| lm_0=-203.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=2.000 WordPenalty=-2.171 SourcePath=0.000 ||| 2.103
+0 ||| ein_OOV g o lf ho le ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-100.000 ||| -96.526
+0 ||| a g_OOV o lf ho le ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-100.000 ||| -96.594
+0 ||| a g o lf ho ch_OOV ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-100.000 ||| -96.594
+0 ||| a g o_OOV lf ho le ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-100.000 ||| -96.594
+0 ||| ein_OOV g o lf hole ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -96.960
+0 ||| ein_OOV go lf ho le ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -96.960
+0 ||| a go_OOV lf ho le ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.028
+0 ||| a g_OOV o lf hole ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.028
+0 ||| a go lf ho ch_OOV ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.028
+0 ||| a g o lflo_OOV le ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.028
+0 ||| a g o_OOV lf hole ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.028
+0 ||| ein_OOV go lf hole ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.394
+0 ||| a go_OOV lf hole ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.463
+0 ||| a g o lfloch_OOV ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.463
+0 ||| a go lflo_OOV le ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.463
+0 ||| ein_OOV golf hole ||| lm_0=-302.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.829
+0 ||| a golf_OOV hole ||| lm_0=-203.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.897
+0 ||| a go lfloch_OOV ||| lm_0=-203.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.897
+0 ||| a golf loch_OOV ||| lm_0=-203.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=2.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-100.000 ||| -97.897
+0 ||| a golfloch_OOV ||| lm_0=-103.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=2.000 WordPenalty=-1.737 SourcePath=0.000 OOVPenalty=-100.000 ||| -98.331
+0 ||| ein_OOV g o lf ho ch_OOV ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.526
+0 ||| ein_OOV g o_OOV lf ho le ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.526
+0 ||| ein_OOV g_OOV o lf ho le ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.526
+0 ||| a g_OOV o lf ho ch_OOV ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.594
+0 ||| a g_OOV o_OOV lf ho le ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.594
+0 ||| a g o_OOV lf ho ch_OOV ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.594
+0 ||| ein_OOV g o lflo_OOV le ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.960
+0 ||| ein_OOV go lf ho ch_OOV ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.960
+0 ||| ein_OOV go_OOV lf ho le ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.960
+0 ||| ein_OOV g o_OOV lf hole ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.960
+0 ||| ein_OOV g_OOV o lf hole ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -196.960
+0 ||| a g_OOV o lflo_OOV le ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.028
+0 ||| a g o lflo_OOV ch_OOV ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.028
+0 ||| a g o_OOV lflo_OOV le ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.028
+0 ||| a go_OOV lf ho ch_OOV ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.028
+0 ||| a g_OOV o_OOV lf hole ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.028
+0 ||| ein_OOV go_OOV lf hole ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.394
+0 ||| ein_OOV go lflo_OOV le ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.394
+0 ||| ein_OOV g o lfloch_OOV ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.394
+0 ||| a g_OOV o lfloch_OOV ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.463
+0 ||| a go lflo_OOV ch_OOV ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.463
+0 ||| a g o_OOV lfloch_OOV ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.463
+0 ||| a go_OOV lflo_OOV le ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.463
+0 ||| ein_OOV go lfloch_OOV ||| lm_0=-302.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.829
+0 ||| ein_OOV golf loch_OOV ||| lm_0=-302.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.829
+0 ||| ein_OOV golf_OOV hole ||| lm_0=-302.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.829
+0 ||| a golf_OOV loch_OOV ||| lm_0=-203.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.897
+0 ||| a go_OOV lfloch_OOV ||| lm_0=-203.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-200.000 ||| -197.897
+0 ||| ein_OOV golfloch_OOV ||| lm_0=-202.125 tm_pt_0=0.000 tm_pt_1=0.000 tm_pt_2=0.000 tm_glue_0=2.000 WordPenalty=-1.737 SourcePath=0.000 OOVPenalty=-200.000 ||| -198.263
+0 ||| ein_OOV g_OOV o_OOV lf ho le ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.526
+0 ||| ein_OOV g o_OOV lf ho ch_OOV ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.526
+0 ||| ein_OOV g_OOV o lf ho ch_OOV ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.526
+0 ||| a g_OOV o_OOV lf ho ch_OOV ||| lm_0=-503.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.594
+0 ||| ein_OOV g o lflo_OOV ch_OOV ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.960
+0 ||| ein_OOV g_OOV o lflo_OOV le ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.960
+0 ||| ein_OOV g_OOV o_OOV lf hole ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.960
+0 ||| ein_OOV go_OOV lf ho ch_OOV ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.960
+0 ||| ein_OOV g o_OOV lflo_OOV le ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -296.960
+0 ||| a g_OOV o lflo_OOV ch_OOV ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.028
+0 ||| a g_OOV o_OOV lflo_OOV le ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.028
+0 ||| a g o_OOV lflo_OOV ch_OOV ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.028
+0 ||| ein_OOV g_OOV o lfloch_OOV ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.394
+0 ||| ein_OOV go lflo_OOV ch_OOV ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.394
+0 ||| ein_OOV g o_OOV lfloch_OOV ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.394
+0 ||| ein_OOV go_OOV lflo_OOV le ||| lm_0=-402.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.394
+0 ||| a go_OOV lflo_OOV ch_OOV ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.463
+0 ||| a g_OOV o_OOV lfloch_OOV ||| lm_0=-303.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.463
+0 ||| ein_OOV golf_OOV loch_OOV ||| lm_0=-302.125 tm_pt_0=0.000 tm_pt_1=0.000 tm_pt_2=0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.829
+0 ||| ein_OOV go_OOV lfloch_OOV ||| lm_0=-302.125 tm_pt_0=0.000 tm_pt_1=0.000 tm_pt_2=0.000 tm_glue_0=3.000 WordPenalty=-2.171 SourcePath=0.000 OOVPenalty=-300.000 ||| -297.829
+0 ||| ein_OOV g_OOV o_OOV lf ho ch_OOV ||| lm_0=-602.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.474 SourcePath=0.000 OOVPenalty=-400.000 ||| -396.526
+0 ||| ein_OOV g_OOV o_OOV lflo_OOV le ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-400.000 ||| -396.960
+0 ||| ein_OOV g_OOV o lflo_OOV ch_OOV ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-400.000 ||| -396.960
+0 ||| ein_OOV g o_OOV lflo_OOV ch_OOV ||| lm_0=-502.125 tm_pt_0=-0.000 tm_pt_1=-0.000 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-400.000 ||| -396.960
+0 ||| a g_OOV o_OOV lflo_OOV ch_OOV ||| lm_0=-403.040 tm_pt_0=-0.000 tm_pt_1=-0.228 tm_pt_2=-0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-400.000 ||| -397.028
+0 ||| ein_OOV go_OOV lflo_OOV ch_OOV ||| lm_0=-402.125 tm_pt_0=0.000 tm_pt_1=0.000 tm_pt_2=0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-400.000 ||| -397.394
+0 ||| ein_OOV g_OOV o_OOV lfloch_OOV ||| lm_0=-402.125 tm_pt_0=0.000 tm_pt_1=0.000 tm_pt_2=0.000 tm_glue_0=4.000 WordPenalty=-2.606 SourcePath=0.000 OOVPenalty=-400.000 ||| -397.394
+0 ||| ein_OOV g_OOV o_OOV lflo_OOV ch_OOV ||| lm_0=-502.125 tm_pt_0=0.000 tm_pt_1=0.000 tm_pt_2=0.000 tm_glue_0=5.000 WordPenalty=-3.040 SourcePath=0.000 OOVPenalty=-500.000 ||| -496.960
