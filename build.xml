@@ -148,7 +148,10 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-  <target name="all" depends="init, thrax, java, giza, kenlm, parallelize">
+  <target name="all" depends="jar, giza, kenlm, parallelize">
+  </target>
+
+  <target name="devel" depends="init, thrax, java, giza, kenlm, parallelize">
   </target>
 
   <!-- Compile the Java code. -->
@@ -274,7 +277,8 @@
   </target>
 
 
-  <!-- Delete *all* generated files, including files and directories not tracked by git -->
+  <!-- Delete *all* generated files,
+       including files and directories not tracked by git -->
   <target name="devel-clean">
 
     <input
