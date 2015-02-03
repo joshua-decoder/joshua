@@ -80,7 +80,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   }
 
   public MemoryBasedBatchGrammar(String formatKeyword, String grammarFile, String owner,
-      String defaultLHSSymbol, int spanLimit,JoshuaConfiguration joshuaConfiguration) throws IOException {
+      String defaultLHSSymbol, int spanLimit, JoshuaConfiguration joshuaConfiguration) throws IOException {
 
     this(joshuaConfiguration);
     this.owner = Vocabulary.id(owner);
@@ -112,7 +112,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
         return new HieroFormatReader(grammarFile);
       } else if ("samt".equals(format)) {
         return new SamtFormatReader(grammarFile);
-      } else if ("phrase".equals(format)) {
+      } else if ("phrase".equals(format) || "moses".equals(format)) {
         return new MosesFormatReader(grammarFile);
       } else {
         throw new RuntimeException(String.format("* FATAL: unknown grammar format '%s'", format));
@@ -157,9 +157,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     return this.root;
   }
 
-
   /**
-   * Adds a rule to the grammar
+   * Adds a rule to the grammar.
    */
   public void addRule(Rule rule) {
 

@@ -480,7 +480,7 @@ public class Decoder {
             System.exit(2);
           }
 
-        } else if (tm_format.equals("phrase")) {
+        } else if (tm_format.equals("phrase") || tm_format.equals("moses")) {
 
           joshuaConfiguration.search_algorithm = "stack";
           grammar = new PhraseTable(tm_file, owner, joshuaConfiguration);

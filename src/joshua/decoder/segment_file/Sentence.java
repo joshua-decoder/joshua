@@ -84,13 +84,6 @@ public class Sentence {
       this.id = id;
     }
   
-    // Store annotations if available
-//    String[] words = source.split("\\s+");
-//    annotations = new Token[words.length + 2]; // 2 extra for <s> and </s>
-//    for (int i = 1; i < annotations.length - 1; i++) {
-//      this.annotations[i] = new Token(words[i-1]);
-//    }
-  
     // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
     if (joshuaConfiguration.maxlen != 0 && isLinearChain())
       adjustForLength(joshuaConfiguration.maxlen);
