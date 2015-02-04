@@ -20,10 +20,24 @@ public class FormatUtils {
     cache = new HashMap<String, String>();
   }
 
+  /**
+   * Determines whether the string is a nonterminal by checking that the first character is [
+   * and the last character is ].
+   * 
+   * @param token
+   * @return true if it's a nonterminal symbol, false otherwise
+   */
   public static boolean isNonterminal(String token) {
     return (token.charAt(0) == '[') && (token.charAt(token.length() - 1) == ']');
   }
 
+  /**
+   * Nonterminals are stored in the vocabulary in square brackets. This removes them when you 
+   * just want the raw nonterminal word.
+   * 
+   * @param nt the nonterminal, e.g., "[GOAL]"
+   * @return the cleaned nonterminal, e.g., "GOAL"
+   */
   public static String cleanNonterminal(String nt) {
     if (isNonterminal(nt))
       return nt.substring(1, nt.length() - 1);

@@ -1,6 +1,6 @@
 package joshua.decoder;
 
-import java.io.BufferedWriter;
+import java.io.BufferedWriter;	
 import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
@@ -495,12 +495,9 @@ public class Decoder {
       }
     } else {
       Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
-      // TODO: this should initialize the grammar dynamically so that the goal
-      // symbol and default
-      // non terminal match
-      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("thrax", String.format(
-          "%s/data/glue-grammar", System.getenv().get("JOSHUA")), "glue",
-          joshuaConfiguration.default_non_terminal, -1, joshuaConfiguration);
+      MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("glue", joshuaConfiguration);
+      glueGrammar.setSpanLimit(-1);
+      glueGrammar.addGlueRules(featureFunctions);
       this.grammars.add(glueGrammar);
     }
 

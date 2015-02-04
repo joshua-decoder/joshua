@@ -1,6 +1,7 @@
 package joshua.decoder.ff.tm.hash_based;
 
 import java.io.IOException;	
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.format.MosesFormatReader;
 import joshua.decoder.ff.tm.format.SamtFormatReader;
+import joshua.util.FormatUtils;
 
 /**
  * This class implements a memory-based bilingual BatchGrammar.
@@ -164,7 +166,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
 
     // TODO: Why two increments?
     this.qtyRulesRead++;
-
+    
 //    if (owner == -1) {
 //      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
 //      System.exit(1);
@@ -198,7 +200,6 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
       }
       pos = nextLayer;
     }
-
 
     // === add the rule into the trie node
     if (!pos.hasRules()) {
@@ -271,6 +272,33 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
           oovAlignment);
       addRule(oovRule);
       oovRule.estimateRuleCost(featureFunctions);
+    }
+  }
+  
+  /**
+   * Adds a default set of glue rules.
+   * 
+   * @param featureFunctions 
+   */
+  public void addGlueRules(ArrayList<FeatureFunction> featureFunctions) {
+    HieroFormatReader reader = new HieroFormatReader();
+
+    String goalNT = FormatUtils.cleanNonterminal(joshuaConfiguration.goal_symbol);
+    String defaultNT = FormatUtils.cleanNonterminal(joshuaConfiguration.default_non_terminal);
+    
+    String[] ruleStrings = new String[] {
+        String.format("[%s] ||| %s ||| %s ||| 0", goalNT, Vocabulary.START_SYM,
+            Vocabulary.START_SYM),
+        String.format("[%s] ||| [%s,1] [%s,2] ||| [%s,1] [%s,2] ||| -1", 
+            goalNT, goalNT, defaultNT, goalNT, defaultNT),
+        String.format("[%s] ||| [%s,1] %s ||| [%s,1] %s ||| 0", 
+            goalNT, goalNT, Vocabulary.STOP_SYM, goalNT, Vocabulary.STOP_SYM)
+    };
+    
+    for (String ruleString: ruleStrings) {
+      Rule rule = reader.parseLine(ruleString);
+      addRule(rule);
+      rule.estimateRuleCost(featureFunctions);
     }
   }
 }

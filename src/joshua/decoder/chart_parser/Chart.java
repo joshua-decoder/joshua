@@ -418,7 +418,8 @@ public class Chart {
     if (null == this.cells.get(0, sourceLength)
         || !this.goalBin.transitToGoal(this.cells.get(0, sourceLength), this.featureFunctions,
             this.sourceLength)) {
-      Decoder.LOG(1, String.format("Input %d: parse failure (no valid derivations or too aggressive pruning"));
+      Decoder.LOG(1, String.format("Input %d: Parse failure (either no derivations exist or pruning is too aggressive",
+          sentence.id()));
       return null;
     }
 
@@ -610,9 +611,8 @@ public class Chart {
     if (null == this.cells.get(0, sourceLength)
         || !this.goalBin.transitToGoal(this.cells.get(0, sourceLength), this.featureFunctions,
             this.sourceLength)) {
-      logger.severe("No complete item in the Cell[0," + sourceLength + "]; possible reasons: "
-          + "(1) your grammar does not have any valid derivation for the source sentence; "
-          + "(2) too aggressive pruning.");
+      Decoder.LOG(1, String.format("Input %d: Parse failure (either no derivations exist or pruning is too aggressive",
+          sentence.id()));
       return null;
     }
 

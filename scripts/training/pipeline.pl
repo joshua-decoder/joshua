@@ -568,7 +568,7 @@ my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "itg" or $GRAMMAR_TYPE e
 
 # The phrasal system should use the ITG grammar, allowing for limited distortion
 if ($GRAMMAR_TYPE eq "phrasal") {
-  $GLUE_GRAMMAR_FILE = get_absolute_path("$JOSHUA/data/glue-grammar.itg");
+  $GLUE_GRAMMAR_FILE = get_absolute_path("$JOSHUA/scripts/training/templates/glue-grammar.itg");
 }
 
 # use this default unless it's already been defined by a command-line argument
