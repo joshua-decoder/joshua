@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
@@ -72,8 +71,7 @@ public abstract class NonterminalMatcher {
     return result;
   }
 
-  public static NonterminalMatcher createNonterminalMatcher(Logger logger,
-      JoshuaConfiguration joshuaConfiguration) {
+  public static NonterminalMatcher createNonterminalMatcher(JoshuaConfiguration joshuaConfiguration) {
     List<Integer> allNonterminalIndicesExceptForGoalAndOOV = getAllNonterminalIndicesExceptForGoalAndOOV(joshuaConfiguration);
 
     if (allNonterminalIndicesExceptForGoalAndOOV.isEmpty()) {
@@ -82,11 +80,11 @@ public abstract class NonterminalMatcher {
     }
 
     if (joshuaConfiguration.fuzzy_matching) {
-      return new StandardNonterminalMatcherSoftConstraints(logger, joshuaConfiguration,
+      return new StandardNonterminalMatcherSoftConstraints(joshuaConfiguration,
           allNonterminalIndicesExceptForGoalAndOOV,
           useTargetdQuerying(allNonterminalIndicesExceptForGoalAndOOV));
     } else {
-      return new StandardNonterminalMatcherStrict(logger, joshuaConfiguration,
+      return new StandardNonterminalMatcherStrict(joshuaConfiguration,
           allNonterminalIndicesExceptForGoalAndOOV,
           useTargetdQuerying(allNonterminalIndicesExceptForGoalAndOOV));
     }
@@ -97,14 +95,12 @@ public abstract class NonterminalMatcher {
   // soft syntactic matching
   private final List<Integer> nonterminalIndicesExceptForGoalAndOOV;
 
-  protected final Logger logger;
   protected final JoshuaConfiguration joshuaConfiguration;
   private final boolean useTargetQueryingToCollectAlternateNonterminals;
 
-  protected NonterminalMatcher(Logger logger, JoshuaConfiguration joshuaConfiguration,
+  protected NonterminalMatcher(JoshuaConfiguration joshuaConfiguration,
       List<Integer> nonterminalIndicesExceptForGoalAndOOV,
       boolean useTargetQueryingToCollectAlternateNonterminals) {
-    this.logger = logger;
     this.joshuaConfiguration = joshuaConfiguration;
     this.nonterminalIndicesExceptForGoalAndOOV = nonterminalIndicesExceptForGoalAndOOV;
     this.useTargetQueryingToCollectAlternateNonterminals = useTargetQueryingToCollectAlternateNonterminals;
@@ -200,21 +196,20 @@ public abstract class NonterminalMatcher {
 
   protected abstract static class StandardNonterminalMatcher extends NonterminalMatcher {
 
-    protected StandardNonterminalMatcher(Logger logger, JoshuaConfiguration joshuaConfiguration,
+    protected StandardNonterminalMatcher(JoshuaConfiguration joshuaConfiguration,
         List<Integer> nonterminalIndicesExceptForGoalAndOOV,
         boolean useTargetQueryingToCollectAlternateNonterminals) {
-      super(logger, joshuaConfiguration, nonterminalIndicesExceptForGoalAndOOV,
+      super(joshuaConfiguration, nonterminalIndicesExceptForGoalAndOOV,
           useTargetQueryingToCollectAlternateNonterminals);
     }
   }
 
   protected static class StandardNonterminalMatcherStrict extends StandardNonterminalMatcher {
 
-    protected StandardNonterminalMatcherStrict(Logger logger,
-        JoshuaConfiguration joshuaConfiguration,
+    protected StandardNonterminalMatcherStrict(JoshuaConfiguration joshuaConfiguration,
         List<Integer> nonterminalIndicesExceptForGoalAndOOV,
         boolean useTargetQueryingToCollectAlternateNonterminals) {
-      super(logger, joshuaConfiguration, nonterminalIndicesExceptForGoalAndOOV,
+      super(joshuaConfiguration, nonterminalIndicesExceptForGoalAndOOV,
           useTargetQueryingToCollectAlternateNonterminals);
     }
 
@@ -230,14 +225,12 @@ public abstract class NonterminalMatcher {
 
     /**
      * 
-     * @param logger
      * @param joshuaConfiguration
      */
-    protected StandardNonterminalMatcherSoftConstraints(Logger logger,
-        JoshuaConfiguration joshuaConfiguration,
+    protected StandardNonterminalMatcherSoftConstraints(JoshuaConfiguration joshuaConfiguration,
         List<Integer> nonterminalIndicesExceptForGoalAndOOV,
         boolean useTargetQueryingToCollectAlternateNonterminals) {
-      super(logger, joshuaConfiguration, nonterminalIndicesExceptForGoalAndOOV,
+      super(joshuaConfiguration, nonterminalIndicesExceptForGoalAndOOV,
           useTargetQueryingToCollectAlternateNonterminals);
     }
 

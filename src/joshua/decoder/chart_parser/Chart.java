@@ -134,7 +134,7 @@ public class Chart {
     this.dotcharts = new DotChart[this.grammars.length];
     for (int i = 0; i < this.grammars.length; i++)
       this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this,
-          NonterminalMatcher.createNonterminalMatcher(logger, config2),
+          NonterminalMatcher.createNonterminalMatcher(config2),
           this.grammars[i].isRegexpGrammar());
 
     // Begin to do initialization work
@@ -418,9 +418,7 @@ public class Chart {
     if (null == this.cells.get(0, sourceLength)
         || !this.goalBin.transitToGoal(this.cells.get(0, sourceLength), this.featureFunctions,
             this.sourceLength)) {
-      logger.severe("No complete item in the Cell[0," + sourceLength + "]; possible reasons: "
-          + "(1) your grammar does not have any valid derivation for the source sentence; "
-          + "(2) too aggressive pruning.");
+      Decoder.LOG(1, String.format("Input %d: parse failure (no valid derivations or too aggressive pruning"));
       return null;
     }
 
