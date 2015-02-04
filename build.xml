@@ -146,18 +146,31 @@
       skipexisting="true" />
   </target>
 
+    <!-- Determines whether the "devel" target needs to be built, which
+       is conditioned on the presence of the .git subdirectory -->
+  <condition property="devel-env">
+    <and>
+      <available file=".git"/>
+    </and>
+  </condition>
+
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-  <target name="all" depends="jar, giza, kenlm, parallelize">
+  <target name="all" depends="setup, jar, giza, kenlm, parallelize">
   </target>
 
-  <target name="devel" depends="init, thrax, java, giza, kenlm, parallelize">
+  <!-- The setup target does some downloading of files. These files
+       are packaged into releases, so this step only needs to be run if
+       we're in a development environment -->
+  <target name="setup" if="devel-env">
+    <antcall inheritAll="true" inheritRefs="true" target="init"/>
+    <antcall inheritAll="true" inheritRefs="true" target="thrax"/>
   </target>
 
   <!-- Compile the Java code. -->
   <target name="java" depends="check-joshua-home">
     <mkdir dir="${build}" />
-    <javac compiler="javac1.5" srcdir="${src}" destdir="${build}" classpathref="compile.all.classpath" debug="on" encoding="utf8" sourcepath="" includeantruntime="false">
+    <javac compiler="javac1.7" srcdir="${src}" destdir="${build}" classpathref="compile.all.classpath" debug="on" encoding="utf8" sourcepath="" includeantruntime="false">
       <!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
       <include name="**/*.java" />
 
@@ -304,7 +317,7 @@
   <target name="javadoc">
     <mkdir dir="${doc}" />
     <javadoc packagenames="joshua.*" classpath="${cli}" sourcepath="${src}" destdir="${doc}" author="true" version="true" charset="utf-8" overview="src/overview.html">
-      <link href="http://java.sun.com/j2se/1.5.0/docs/api" />
+      <link href="http://docs.oracle.com/javase/7/docs/api/" />
       <link href="http://commons.apache.org/cli/api-release" />
     </javadoc>
   </target>
