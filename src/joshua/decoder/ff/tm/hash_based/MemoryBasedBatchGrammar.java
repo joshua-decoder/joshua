@@ -235,8 +235,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
    * @return the longest source phrase read (nonterminal + terminal symbols).
    */
   public int getMaxSourcePhraseLength() {
-    /* We added a nonterminal to all source sides, so subtract that off. */
-    return maxSourcePhraseLength - 1;
+    return maxSourcePhraseLength;
   }
   
   /***
