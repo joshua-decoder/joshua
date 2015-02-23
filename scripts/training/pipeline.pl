@@ -216,7 +216,7 @@ my $TMPDIR = "/tmp";
 
 # Enable forest rescoring
 my $RESCORE_FOREST = 0;
-my $LM_STATE_MINIMIZATION = "true";
+my $LM_STATE_MINIMIZATION = 1;
 
 my $NBEST = 300;
 
@@ -308,7 +308,7 @@ if (! $retval) {
 
 # Forest rescoring doesn't work with LM state minimization
 if ($RESCORE_FOREST) {
-  $LM_STATE_MINIMIZATION = "false";
+  $LM_STATE_MINIMIZATION = 0;
 }
 
 $RUNDIR = get_absolute_path($RUNDIR);
@@ -516,6 +516,10 @@ if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley" and $ALIGNER ne "jacana") {
 if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
   print "* FATAL: lm type (--lm) must be one of 'kenlm' or 'berkeleylm'\n";
   exit 1;
+}
+
+if ($LM_TYPE ne "kenlm") {
+  $LM_STATE_MINIMIZATION = 0;
 }
 
 if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm" and $LM_GEN ne "kenlm") {
@@ -1376,7 +1380,7 @@ for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
   #GAURAV:TODO: Add case for when a Class LM is specified
   if ($LM_STATE_MINIMIZATION) {
-    my $configstring = "feature-function = StateMinimizingLanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -lm_file $lmfile";
+    my $configstring = "feature-function = StateMinimizingLanguageModel -lm_order $LM_ORDER -lm_file $lmfile";
     push (@configstrings, $configstring);
   } else {
     my $configstring = "feature-function = LanguageModel -lm_type $LM_TYPE -lm_order $LM_ORDER -lm_file $lmfile";

@@ -150,8 +150,9 @@ public class LanguageModelFF extends StatefulFF {
       this.languageModel = new LMGrammarBerkeley(ngramOrder, path);
 
     } else {
-      Decoder.LOG(1, "WARNING: using built-in language model; you probably didn't intend this");
-      Decoder.LOG(1, "Valid lm types are 'kenlm', 'berkeleylm', 'none'");
+      System.err.println(String.format("* FATAL: Invalid backend lm_type '%s' for LanguageModel", type));
+      System.err.println(String.format("*        Permissible values for 'lm_type' are 'kenlm' and 'berkeleylm'"));
+      System.exit(-1);
     }
 
     Vocabulary.registerLanguageModel(this.languageModel);

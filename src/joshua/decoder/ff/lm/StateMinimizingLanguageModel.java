@@ -29,6 +29,11 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
   public StateMinimizingLanguageModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, args, config);
     this.type = "kenlm";
+    if (parsedArgs.containsKey("lm_type") && ! parsedArgs.get("lm_type").equals("kenlm")) {
+      System.err.println("* FATAL: StateMinimizingLanguageModel only supports 'kenlm' lm_type backend");
+      System.err.println("*        Remove lm_type from line or set to 'kenlm'");
+      System.exit(-1);
+    }
   }
 
   /**
