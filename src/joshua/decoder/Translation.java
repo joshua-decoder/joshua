@@ -48,13 +48,23 @@ public class Translation {
         // without checking
         Decoder.weights.put("BLEU", 0);
 
-        String translation = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-        translation = translation.substring(translation.indexOf(' ') + 1, translation.lastIndexOf(' '));
+        String best = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
+        best = best.substring(best.indexOf(' ') + 1, best.lastIndexOf(' '));
         
         Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
-            translation));
+            best));
         
         if (joshuaConfiguration.topN == 0) {
+          
+          /* Setting topN to 0 turns off k-best extraction, in which case we need to parse through
+           * the output-string, with the understanding that we can only substitute variables 
+           * for the output string, sentence number, and model score.
+           */
+          String translation = joshuaConfiguration.outputFormat
+              .replace("%s", best)
+              .replace("%c", String.format("%.3f", hypergraph.goalNode.getScore()))
+              .replace("%i", String.format("%d", source.id()));
+
           out.write(translation);
           out.newLine();
         } else  {
