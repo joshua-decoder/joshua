@@ -10,6 +10,7 @@ import joshua.decoder.ff.lm.StateMinimizingLanguageModel;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
+import joshua.decoder.io.DeNormalize;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -56,12 +57,13 @@ public class Translation {
         
         if (joshuaConfiguration.topN == 0) {
           
-          /* Setting topN to 0 turns off k-best extraction, in which case we need to parse through
-           * the output-string, with the understanding that we can only substitute variables 
-           * for the output string, sentence number, and model score.
+          /*
+           * Setting topN to 0 turns off k-best extraction, in which case we need to parse through
+           * the output-string, with the understanding that we can only substitute variables for the
+           * output string, sentence number, and model score.
            */
-          String translation = joshuaConfiguration.outputFormat
-              .replace("%s", best)
+          String translation = joshuaConfiguration.outputFormat.replace("%s", best)
+              .replace("%S", DeNormalize.processSingleLine(best))
               .replace("%c", String.format("%.3f", hypergraph.goalNode.getScore()))
               .replace("%i", String.format("%d", source.id()));
 
