@@ -57,18 +57,14 @@ import joshua.decoder.segment_file.Sentence;
  * 
  * and so on.
  * 
- * Technical notes (from before):
+ * The configuration parameter `output-format` controls what exactly is extracted from the forest.
+ * See documentation for that below. Note that Joshua does not store individual feature values while 
+ * decoding, but only the cost of each edge (in the form of a float). Therefore, if you request
+ * the features values (`%f` in `output-format`), the feature functions must be replayed, which
+ * is expensive.
  * 
- * To seed the kbest extraction, it only needs that each hyperedge should have the best_cost
- * properly set, and it does not require any list being sorted. Instead, the priority queue
- * heap_cands will do internal sorting. In fact, the real crucial cost is the transition-cost at
- * each hyperedge. We store the best-cost instead of the transition cost since it is easy to do
- * pruning and find one-best. Moreover, the transition cost can be recovered by
- * get_transition_cost(), though somewhat expensive.
- * 
- * To recover the model cost for each individual model, we should either have access to the model,
- * or store the model cost in the hyperedge. (For example, in the case of disk-hypergraph, we need
- * to store all these model cost at each hyperedge.)
+ * The configuration parameter `top-n` controls how many items are returned. If this is set to 0,
+ * k-best extraction should be turned off entirely.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author Matt Post <post@cs.jhu.edu>
@@ -206,10 +202,14 @@ public class KBestExtractor {
    * the results to the BufferedWriter passed in. If you want intermediate access to the k-best
    * derivations, you'll want to call getKthHyp() or getKthDerivation() directly.
    * 
+   * The number of derivations that are looked for is controlled by the `top-n` parameter.
+   * Note that when `top-n` is set to 0, k-best extraction is disabled entirely, and only things 
+   * like the viterbi string and the model score are available to the decoder. Since k-best
+   * extraction involves the recomputation of features to get the component values, turning off
+   * that extraction saves a lot of time when only the 1-best string is desired.
+   * 
    * @param hg the hypergraph to extract from
-   * @param featureFunctions the feature functions to use
    * @param topN how many to extract
-   * @param source the input sentence
    * @param out object to write to
    * @throws IOException
    */
@@ -220,10 +220,9 @@ public class KBestExtractor {
     if (null == hg.goalNode)
       return;
 
-    for (int k = 1;; k++) {
+    for (int k = 1; k <= topN; k++) {
       String hypStr = getKthHyp(hg.goalNode, k);
-
-      if (null == hypStr || k > topN)
+      if (null == hypStr)
         break;
 
       out.write(hypStr);
