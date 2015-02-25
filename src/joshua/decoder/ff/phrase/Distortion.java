@@ -16,6 +16,12 @@ public class Distortion extends StatelessFF {
 
   public Distortion(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "Distortion", args, config);
+    
+    if (! config.search_algorithm.equals("stack")) {
+      System.err.println("* FATAL: Distortion feature only application for phrase-based decoding");
+      System.err.println("         Use -search phrase or remove this feature");
+      System.exit(1);
+    }
   }
 
   @Override
