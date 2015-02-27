@@ -64,6 +64,10 @@ public class Decoder {
 
   private final JoshuaConfiguration joshuaConfiguration;
 
+  public JoshuaConfiguration getJoshuaConfiguration() {
+    return joshuaConfiguration;
+  }
+
   /*
    * Many of these objects themselves are global objects. We pass them in when constructing other
    * objects, so that they all share pointers to the same object. This is good because it reduces

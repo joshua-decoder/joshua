@@ -1,8 +1,11 @@
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Arrays;  
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
@@ -410,6 +413,39 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
       if (id < 0)
         nts[index++] = -id;
     return nts;
+  }
+  
+  /**
+   * Returns an array of size getArity() containing the source indeces of non terminals.
+   */
+  public int[] getNonTerminalSourcePositions() {
+    int[] nonTerminalPositions = new int[getArity()];
+    int ntPos = 0;
+    for (int sourceIdx = 0; sourceIdx < getFrench().length; sourceIdx++) {
+      if (getFrench()[sourceIdx] < 0)
+        nonTerminalPositions[ntPos++] = sourceIdx;
+    }
+    return nonTerminalPositions;
+  }
+  
+  /**
+   * Parses the Alignment byte[] into a Map from target to (possibly a list of) source positions.
+   * Used by the WordAlignmentExtractor.
+   */
+  public Map<Integer, List<Integer>> getAlignmentMap() {
+    byte[] alignmentArray = getAlignment();
+    Map<Integer, List<Integer>> alignmentMap = new HashMap<Integer, List<Integer>>();
+    if (alignmentArray != null) {
+      for (int alignmentIdx = 0; alignmentIdx < alignmentArray.length; alignmentIdx += 2 ) {
+        int s = alignmentArray[alignmentIdx];
+        int t = alignmentArray[alignmentIdx + 1];
+        List<Integer> values = alignmentMap.get(t);
+        if (values == null)
+          alignmentMap.put(t, values = new ArrayList<Integer>());
+        values.add(s);
+      }
+    }
+    return alignmentMap;
   }
 
   /**

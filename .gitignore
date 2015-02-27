@@ -51,3 +51,9 @@ bin
 *~
 
 .philog.LOGFILE
+build
+**.history
+.settings
+/eclipse-bin/
+.classpath
+/target/

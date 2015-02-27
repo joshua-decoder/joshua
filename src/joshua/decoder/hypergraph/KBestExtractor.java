@@ -188,6 +188,12 @@ public class KBestExtractor {
       if (joshuaConfiguration.outputFormat.contains("%d")) {
         outputString = outputString.replace("%d", derivationState.getDerivation());
       }
+      
+      /* %a causes output of word level alignments between input and output hypothesis */
+      if (joshuaConfiguration.outputFormat.contains("%a")) {
+        outputString = outputString.replace("%a",  derivationState.getWordAlignment());
+      }
+      
     }
 
     return outputString;
@@ -579,6 +585,10 @@ public class KBestExtractor {
       cost = c;
       edgePos = pos;
       bleu = 0.0f;
+    }
+
+    public String getWordAlignment() {
+      return visit(new WordAlignmentExtractor()).toString();
     }
 
     /**

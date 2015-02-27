@@ -29,6 +29,9 @@ import joshua.util.io.LineReader;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class JoshuaConfiguration {
+  
+  // whether to use structured output
+  public Boolean use_structured_output = false;
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
