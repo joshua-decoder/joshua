@@ -414,17 +414,11 @@ public class JoshuaConfiguration {
             segment_oovs = true;
 
           } else if (parameter.equals(normalize_key("default-non-terminal"))) {
-            default_non_terminal = "[" + fds[1].trim() + "]";
-            // default_non_terminal = fds[1].trim();
+            default_non_terminal = String.format("[%s]", FormatUtils.cleanNonterminal(fds[1].trim()));
             logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 
           } else if (parameter.equals(normalize_key("goal-symbol"))) {
-            goal_symbol = fds[1].trim();
-
-            // If the goal symbol was not enclosed in square brackets, then add them
-            if (!goal_symbol.matches("\\[.*\\]"))
-              goal_symbol = "[" + goal_symbol + "]";
-
+            goal_symbol = String.format("[%s]", FormatUtils.cleanNonterminal(fds[1].trim()));
             logger.finest("goalSymbol: " + goal_symbol);
 
           } else if (parameter.equals(normalize_key("weights-file"))) {
