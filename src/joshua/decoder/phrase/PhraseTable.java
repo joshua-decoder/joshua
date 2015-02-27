@@ -99,7 +99,7 @@ public class PhraseTable implements Grammar {
         ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
         : sourceWord;   
 
-    int nt_i = Vocabulary.id(this.config.default_non_terminal);
+    int nt_i = Vocabulary.id("[X]");
     Rule oovRule = new Rule(nt_i, new int[] { nt_i, sourceWord },
         new int[] { -1, targetWord }, "", 1, null);
     addRule(oovRule);
