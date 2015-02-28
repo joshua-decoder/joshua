@@ -2011,6 +2011,13 @@ sub prepare_data {
     }
   }
 
+  foreach my $lang ($TARGET, $SOURCE) {
+    $cachepipe->cmd("$label-vocab-$lang",
+                    "cat $DATA_DIRS{$label}/corpus.$lang | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{$label}/vocab.$lang",
+                    "$DATA_DIRS{$label}/corpus.$lang",
+                    "$DATA_DIRS{$label}/vocab.$lang");
+  }
+
   return \%prefixes;
 }
 
