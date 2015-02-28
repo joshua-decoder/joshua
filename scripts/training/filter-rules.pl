@@ -27,19 +27,18 @@ my %skipped = (
   unlex_scope => 0
 );
 while (my $line = <>) {
-  my ($source);
+  my ($source, $target);
   if ($line =~ /^\[/) {
     # hierarchical grammars
-    (undef, $source) = split(/ \|\|\| /, $line);
+    (undef, $source, $target) = split(/ \|\|\| /, $line);
   } else {
     # phrase table
-    ($source) = split(/ \|\|\| /, $line);
+    ($source, $target) = split(/ \|\|\| /, $line);
   }
-
   $total++;
 
   if ($opts{b}) {
-    if ($line =~ /\|\|\|\s+\|\|\|/) {
+    if ($source =~ /^\s*$/ or $target =~ /^\s*$/) {
       $skipped{blanks}++;
       $skipped++;
       next;
