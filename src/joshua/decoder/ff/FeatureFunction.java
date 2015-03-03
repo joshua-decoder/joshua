@@ -80,7 +80,7 @@ public abstract class FeatureFunction {
     this.args = args;
     this.config = config;
 
-    parseArgs();
+    this.parsedArgs = FeatureFunction.parseArgs(args);
   }
 
   public String logString() {
@@ -113,6 +113,21 @@ public abstract class FeatureFunction {
    */
   public abstract DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j,
       SourcePath sourcePath, Sentence sentence, Accumulator acc);
+
+  /**
+   * Feature functions must overrided this. StatefulFF and StatelessFF provide
+   * reasonable defaults since most features do not fire on the goal node.
+   * 
+   * @param tailNode
+   * @param i
+   * @param j
+   * @param sourcePath
+   * @param sentID
+   * @param acc
+   * @return the DPState (null if none)
+   */
+  public abstract DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath,
+      Sentence sentence, Accumulator acc);
 
   /**
    * This is a convenience function for retrieving the features fired when
@@ -181,21 +196,6 @@ public abstract class FeatureFunction {
   }
 
   /**
-   * Feature functions must overrided this. StatefulFF and StatelessFF provide
-   * reasonable defaults since most features do not fire on the goal node.
-   * 
-   * @param tailNode
-   * @param i
-   * @param j
-   * @param sourcePath
-   * @param sentID
-   * @param acc
-   * @return the DPState (null if none)
-   */
-  public abstract DPState computeFinal(HGNode tailNode, int i, int j, SourcePath sourcePath,
-      Sentence sentence, Accumulator acc);
-
-  /**
    * This function is called when sorting rules for cube pruning. It must return
    * the *weighted* estimated cost of applying a feature. This need not be the
    * actual cost of applying the rule in context. Basically, it's the inner
@@ -232,8 +232,8 @@ public abstract class FeatureFunction {
    * @param rawArgs A string with the raw arguments and their names
    * @return A hash with the keys and the values of the string
    */
-  private HashMap<String, String> parseArgs() {
-    parsedArgs = new HashMap<String, String>();
+  public static HashMap<String, String> parseArgs(String[] args) {
+    HashMap<String, String> parsedArgs = new HashMap<String, String>();
     boolean lookingForValue = false;
     String currentKey = "";
     for (int i = 0; i < args.length; i++) {

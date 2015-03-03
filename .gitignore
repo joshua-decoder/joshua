@@ -1,5 +1,4 @@
 class/
-lib/libsrilm.dylib
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Ngram.java
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Vocab.java
 src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_unsigned_int.java
@@ -32,62 +31,20 @@ src/joshua/decoder/ff/lm/kenlm/libken.dylib
 src/joshua/decoder/ff/lm/kenlm/ngram_query
 src/joshua/decoder/ff/lm/kenlm/query
 src/joshua/decoder/ff/lm/kenlm/lmplz
-test/bn-en/hiero/diff
-test/bn-en/hiero/log
-test/bn-en/hiero/output
-test/bn-en/hiero/output.bleu
-test/bn-en/hiero/reference.en.all
 scripts/training/symal/symal
 doc/html
 doc/latex
-test/bn-en/packed/log
-test/bn-en/samt/1best_default
-test/bn-en/samt/1best_packed
-test/bn-en/samt/diff
-test/bn-en/samt/log
-test/bn-en/samt/log_default
-test/bn-en/samt/log_packed
-test/bn-en/samt/output
-test/bn-en/samt/output.bleu
-test/bn-en/samt/output_default
-test/bn-en/samt/output_default.bleu
-test/bn-en/samt/output_packed
-test/bn-en/samt/output_packed.bleu
-test/bn-en/samt/reference.en.all
 *.class
 doxygen_*.tmp
 *.so
-test/scripts/tokenization/diff
-test/scripts/tokenization/output
 .cachepipe
 
 joshua-decoder.org
 release
-test/bn-en/samt/output.scores
-test/decoder/n-ary/diff
-test/decoder/n-ary/log
-test/decoder/n-ary/output
-test/decoder/n-ary/output.scores
-debug.txt
 
 scripts/training/MGIZA/
 
-/test/bn-en/hiero/log.filter
-/test/bn-en/hiero/output.filter
-/test/bn-en/packed/output.scores
-/test/decoder/left-state/diff
-/test/decoder/left-state/log
-/test/decoder/left-state/output
-/test/decoder/left-state/output.scores
-/test/thrax/extraction/.grammar.gz.crc
-/test/*/log*
-/test/*/output*
-/test/*/diff*
-/test/*/*/*/log*
-/test/*/*/*/output*
-/test/*/*.log
-
-bin/lmplz
+bin
 
 *~
 

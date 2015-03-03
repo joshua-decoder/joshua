@@ -402,13 +402,7 @@ foreach my $lmfile (@LMFILES) {
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
 
 if ($GRAMMAR_TYPE eq "phrase") {
-  if ($DO_PACK_GRAMMARS) {
-    print "* Turning off grammar packing for phrase translation (currently unsupported)\n";
-    $DO_PACK_GRAMMARS = 0;
-  }
-
   $SEARCH_ALGORITHM = "stack";
-
   $MAXSPAN = 0;
 }
 

@@ -24,7 +24,7 @@ public class PhraseTable implements Grammar {
   
   private JoshuaConfiguration config;
   private Grammar backend;
-  private int maxSourcePhraseLength;
+  private int maxSourcePhraseLength = -1;
   
   /**
    * Chain to the super with a number of defaults. For example, we only use a single nonterminal,
@@ -35,12 +35,20 @@ public class PhraseTable implements Grammar {
    * @param config
    * @throws IOException
    */
-  public PhraseTable(String grammarFile, String owner, JoshuaConfiguration config) throws IOException {
+  public PhraseTable(String grammarFile, String owner, JoshuaConfiguration config, int maxSource) 
+      throws IOException {
     this.config = config;
     int spanLimit = 0;
     
     if (new File(grammarFile).isDirectory()) {
       this.backend = new PackedGrammar(grammarFile, spanLimit, owner, config);
+      if (maxSource == -1) {
+        System.err.println("FATAL: Using a packed grammar for a phrase table backend requires");
+        System.err.println("       you to specify -max-source-len in the tm line");
+        System.exit(-1);
+      }
+      setMaxSourcePhraseLength(maxSource);
+
     } else {
       this.backend = new MemoryBasedBatchGrammar("moses", grammarFile, owner, "[X]", spanLimit, config);
     }
@@ -51,14 +59,28 @@ public class PhraseTable implements Grammar {
     
     this.backend = new MemoryBasedBatchGrammar(owner, config);
   }
+  
+  /**
+   * The maximum length of a source phrase found in the grammar.
+   * 
+   * @param max
+   */
+  public void setMaxSourcePhraseLength(int max) {
+    this.maxSourcePhraseLength = max;
+  }
       
   /**
    * Returns the longest source phrase read, subtracting off the nonterminal that was added.
+   * The {@link MemoryBasedBatchGrammar} computes this as the grammar is read in, whereas
+   * a {@link PackedGrammar} has to be told the maximum length via the config file.
    * 
    * @return
    */
   public int getMaxSourcePhraseLength() {
-    return ((MemoryBasedBatchGrammar)backend).getMaxSourcePhraseLength() - 1;
+    if (backend instanceof MemoryBasedBatchGrammar)
+      return ((MemoryBasedBatchGrammar)backend).getMaxSourcePhraseLength() - 1;
+    else
+      return this.maxSourcePhraseLength;
   }
 
   /**
@@ -128,9 +150,12 @@ public class PhraseTable implements Grammar {
     return backend.isSorted();
   }
 
+  /**
+   * This should never be called. 
+   */
   @Override
   public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
-    return backend.hasRuleForSpan(startIndex, endIndex, pathLength);
+    return true;
   }
 
   @Override
