@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -463,31 +464,36 @@ public class Decoder {
       // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
       for (String tmLine : joshuaConfiguration.tms) {
 
-        String[] tokens = tmLine.trim().split("\\s+");
+        String type = tmLine.substring(0,  tmLine.indexOf(' '));
+        String[] args = tmLine.substring(tmLine.indexOf(' ')).trim().split("\\s+");
+        HashMap<String, String> parsedArgs = FeatureFunction.parseArgs(args);
 
-        String tm_format = tokens[0];
-        String owner = tokens[1];
-        int span_limit = Integer.parseInt(tokens[2]);
-        String tm_file = tokens[3];
+        String owner = parsedArgs.get("owner");
+        int span_limit = Integer.parseInt(parsedArgs.get("maxspan"));
+        String path = parsedArgs.get("path");
 
         Grammar grammar = null;
-        if (tm_format.equals("packed") || new File(tm_file).isDirectory()) {
+        if (type.equals("packed") || (type.equals("thrax") && new File(path).isDirectory())) {
           try {
-            grammar = new PackedGrammar(tm_file, span_limit, owner, joshuaConfiguration);
+            grammar = new PackedGrammar(path, span_limit, owner, joshuaConfiguration);
           } catch (FileNotFoundException e) {
-            System.err.println(String.format("Couldn't load packed grammar from '%s'", tm_file));
+            System.err.println(String.format("Couldn't load packed grammar from '%s'", path));
             System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
             System.exit(2);
           }
 
-        } else if (tm_format.equals("phrase") || tm_format.equals("moses")) {
+        } else if (type.equals("phrase") || type.equals("moses")) {
+          
+          int maxSourceLen = parsedArgs.containsKey("max-source-len") 
+              ? Integer.parseInt(parsedArgs.get("max-source-len"))
+              : -1;
 
           joshuaConfiguration.search_algorithm = "stack";
-          grammar = new PhraseTable(tm_file, owner, joshuaConfiguration);
+          grammar = new PhraseTable(path, owner, joshuaConfiguration, maxSourceLen);
 
         } else {
           // thrax, hiero, samt
-          grammar = new MemoryBasedBatchGrammar(tm_format, tm_file, owner,
+          grammar = new MemoryBasedBatchGrammar(type, path, owner,
               joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
         }
 

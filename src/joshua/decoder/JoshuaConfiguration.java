@@ -355,7 +355,19 @@ public class JoshuaConfiguration {
                   tokens[0], tokens[1], tokens[5]));
 
           } else if (parameter.equals(normalize_key("tm"))) {
-            tms.add(fds[1]);
+            /* If found, convert old format:
+             *   tm = TYPE OWNER MAXSPAN PATH
+             * to new format
+             *   tm = TYPE -owner OWNER -maxspan MAXSPAN -path PATH    
+             */
+            String tmLine = fds[1];
+            
+            String[] tokens = fds[1].split("\\s+");
+            if (! tokens[1].startsWith("-")) { // old format
+              tmLine = String.format("%s -owner %s -maxspan %s -path %s", tokens[0], tokens[1], tokens[2], tokens[3]);
+              Decoder.LOG(1, String.format("WARNING: Converting deprecated TM line from '%s' -> '%s'", fds[1], tmLine));
+            }
+            tms.add(tmLine);
             
           } else if (parameter.equals("v")) {
             Decoder.VERBOSE = Integer.parseInt(fds[1]);
