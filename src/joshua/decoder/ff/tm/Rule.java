@@ -202,7 +202,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
      */
 
     FeatureVector features = (owner != -1)
-        ? new FeatureVector(sparseFeatures, "tm_" + Vocabulary.word(owner) + "_")
+        ? new FeatureVector(getFeatureString(), "tm_" + Vocabulary.word(owner) + "_")
         : new FeatureVector();
 
     return features;
@@ -241,8 +241,8 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
     int denseFeatureIndex = 0;
     float cost = 0.0f;
     
-    if (!sparseFeatures.trim().equals("")) {
-      StringTokenizer st = new StringTokenizer(sparseFeatures);
+    if (!getFeatureString().trim().equals("")) {
+      StringTokenizer st = new StringTokenizer(getFeatureString());
       while (st.hasMoreTokens()) {
         String token = st.nextToken();
         if (token.indexOf('=') == -1) {

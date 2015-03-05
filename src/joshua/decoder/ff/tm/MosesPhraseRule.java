@@ -9,16 +9,40 @@ package joshua.decoder.ff.tm;
  * the alignments are off by 1. We do not want to fix those when reading in due to the expense,
  * so instead we use this rule which adjust the alignments on the fly.
  * 
+ * Also, we only convert the Moses dense features on the fly, via this class.
+ * 
+ * TODO: this class should also be responsible for prepending the nonterminals.
+ * 
  * @author Matt Post
  *
  */
 public class MosesPhraseRule extends Rule {
 
+  private String mosesFeatureString = null;
+  
   public MosesPhraseRule(int lhs, int[] french, int[] english, String sparse_features, int arity,
       String alignment) {
-    super(lhs, french, english, sparse_features, arity, alignment);
+    super(lhs, french, english, null, arity, alignment);
+    mosesFeatureString = sparse_features;
   }
 
+  /** 
+   * Moses features are probabilities; we need to convert them here by taking the negative log prob.
+   * We do this only when the rule is used to amortize.
+   */
+  @Override
+  public String getFeatureString() {
+    if (sparseFeatures == null) {
+      StringBuffer values = new StringBuffer();
+      for (String value: mosesFeatureString.split(" ")) {
+        float f = Float.parseFloat(value);
+        values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
+      }
+      sparseFeatures = values.toString().trim();
+    }
+    return sparseFeatures;
+  }
+  
   /**
    * This is the exact same as the parent implementation, but we need to add 1 to each alignment
    * point to account for the nonterminal [X] that was prepended to each rule. 

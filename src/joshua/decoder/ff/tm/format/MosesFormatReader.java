@@ -66,12 +66,8 @@ public class MosesFormatReader extends HieroFormatReader {
     }
 
     // transform feature values
-    StringBuffer values = new StringBuffer();
-    for (String value: fields[2].split(" ")) {
-      float f = Float.parseFloat(value);
-      values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
-    }
-    String sparse_features = values.toString().trim();
+    String sparse_features = fields[2];
+
 //    System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
 
     // alignments
