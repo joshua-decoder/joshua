@@ -1484,7 +1484,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   system("mkdir -p $tunedir") unless -d $tunedir;
 
   my $tmtype = "thrax";
-  $tmtype = "phrase" if $GRAMMAR_TYPE eq "phrase";
+  $tmtype = "moses" if $GRAMMAR_TYPE eq "phrase";
 
   foreach my $key (keys %TUNEFILES) {
 		my $file = $TUNEFILES{$key};
