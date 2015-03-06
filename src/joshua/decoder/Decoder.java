@@ -461,7 +461,7 @@ public class Decoder {
     
     if (joshuaConfiguration.tms.size() > 0) {
 
-      // tm = {thrax/hiero,packed,samt} OWNER LIMIT FILE
+      // tm = {thrax/hiero,packed,samt,moses} OWNER LIMIT FILE
       for (String tmLine : joshuaConfiguration.tms) {
 
         String type = tmLine.substring(0,  tmLine.indexOf(' '));
@@ -473,28 +473,29 @@ public class Decoder {
         String path = parsedArgs.get("path");
 
         Grammar grammar = null;
-        if (type.equals("packed") || (type.equals("thrax") && new File(path).isDirectory())) {
-          try {
-            grammar = new PackedGrammar(path, span_limit, owner, joshuaConfiguration);
-          } catch (FileNotFoundException e) {
-            System.err.println(String.format("Couldn't load packed grammar from '%s'", path));
-            System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
-            System.exit(2);
+        if (! type.equals("moses")) {
+          if (new File(path).isDirectory()) {
+            try {
+              grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+            } catch (FileNotFoundException e) {
+              System.err.println(String.format("Couldn't load packed grammar from '%s'", path));
+              System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
+              System.exit(2);
+            }
+          } else {
+            // thrax, hiero, samt
+            grammar = new MemoryBasedBatchGrammar(type, path, owner,
+                joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
           }
-
-        } else if (type.equals("phrase") || type.equals("moses")) {
           
+        } else {
+
           int maxSourceLen = parsedArgs.containsKey("max-source-len") 
               ? Integer.parseInt(parsedArgs.get("max-source-len"))
               : -1;
 
           joshuaConfiguration.search_algorithm = "stack";
           grammar = new PhraseTable(path, owner, joshuaConfiguration, maxSourceLen);
-
-        } else {
-          // thrax, hiero, samt
-          grammar = new MemoryBasedBatchGrammar(type, path, owner,
-              joshuaConfiguration.default_non_terminal, span_limit, joshuaConfiguration);
         }
 
         this.grammars.add(grammar);

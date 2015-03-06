@@ -18,7 +18,7 @@ public class PackedGrammarServer {
   private PackedGrammar grammar;
 
   public PackedGrammarServer(String packed_directory,JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
-    grammar = new PackedGrammar(packed_directory, -1, "owner", joshuaConfiguration);
+    grammar = new PackedGrammar(packed_directory, -1, "owner", "thrax", joshuaConfiguration);
   }
 
   public List<Rule> get(String source) {
@@ -57,7 +57,7 @@ public class PackedGrammarServer {
   
   public static void main(String[] args) throws FileNotFoundException, IOException {
     JoshuaConfiguration joshuaConfiguration = new JoshuaConfiguration();
-    PackedGrammarServer pgs = new PackedGrammarServer(args[0],joshuaConfiguration);
+    PackedGrammarServer pgs = new PackedGrammarServer(args[0], joshuaConfiguration);
     
     for (String line: new LineReader(System.in)) {
       List<Rule> rules = pgs.get(line);

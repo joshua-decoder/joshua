@@ -1,7 +1,4 @@
-#tm = moses pt 0 rules.1.gz
-tm = moses -owner pt -maxspan 0 -path rules.packed -max-source-len 6
-
-#lm = kenlm 5 true false 100 lm.1.gz
+tm = moses -owner pt -maxspan 0 -path rules.packed -max-source-len 5
 feature-function = StateMinimizingLanguageModel -lm_order 5 -lm_file lm.1.gz
 
 search = stack

@@ -51,7 +51,7 @@ public class MosesPhraseRule extends Rule {
   public byte[] getAlignment() {
     if (alignment == null) {
       String[] tokens = getAlignmentString().split("[-\\s]+");
-      alignment = new byte[tokens.length];
+      alignment = new byte[tokens.length + 2];
       alignment[0] = alignment[1] = 0;
       for (int i = 0; i < tokens.length; i++)
         alignment[i + 2] = (byte) (Short.parseShort(tokens[i]) + 1);

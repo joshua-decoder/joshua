@@ -41,7 +41,7 @@ public class PhraseTable implements Grammar {
     int spanLimit = 0;
     
     if (new File(grammarFile).isDirectory()) {
-      this.backend = new PackedGrammar(grammarFile, spanLimit, owner, config);
+      this.backend = new PackedGrammar(grammarFile, spanLimit, owner, "moses", config);
       if (maxSource == -1) {
         System.err.println("FATAL: Using a packed grammar for a phrase table backend requires");
         System.err.println("       you to specify -max-source-len in the tm line");
@@ -91,7 +91,9 @@ public class PhraseTable implements Grammar {
    */
   public RuleCollection getPhrases(int[] sourceWords) {
     if (sourceWords.length != 0) {
-      Trie pointer = getTrieRoot().match(Vocabulary.id("[X]"));
+      Trie pointer = getTrieRoot();
+      if (! (backend instanceof PackedGrammar))
+        pointer = pointer.match(Vocabulary.id("[X]"));
       int i = 0;
       while (pointer != null && i < sourceWords.length)
         pointer = pointer.match(sourceWords[i++]);

@@ -1,4 +1,4 @@
-tm = phrase pt 0 ../decode/rules.1.gz
+tm = moses pt 0 ../decode/rules.1.gz
 tm = thrax pt 0 glue.grammar
 lm = kenlm 5 true false 100 ../decode/lm.1.gz
 

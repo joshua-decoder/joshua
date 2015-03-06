@@ -47,6 +47,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
@@ -68,10 +69,14 @@ public class PackedGrammar extends AbstractGrammar {
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
-  public PackedGrammar(String grammar_dir, int span_limit, String owner,
+  // The grammar specification keyword (e.g., "thrax" or "moses")
+  private String type;
+
+  public PackedGrammar(String grammar_dir, int span_limit, String owner, String type,
       JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
     super(joshuaConfiguration);
     this.spanLimit = span_limit;
+    this.type = type;
 
     // Read the vocabulary.
     String vocabFile = grammar_dir + File.separator + "vocabulary";
@@ -464,10 +469,12 @@ public class PackedGrammar extends AbstractGrammar {
         return children;
       }
 
+      @Override
       public boolean hasExtensions() {
         return (source[position] != 0);
       }
 
+      @Override
       public ArrayList<? extends Trie> getExtensions() {
         int num_children = source[position];
         ArrayList<PackedTrie> tries = new ArrayList<PackedTrie>(num_children);
@@ -481,15 +488,18 @@ public class PackedGrammar extends AbstractGrammar {
         return tries;
       }
 
+      @Override
       public boolean hasRules() {
         int num_children = source[position];
         return (source[position + 1 + 2 * num_children] != 0);
       }
 
+      @Override
       public RuleCollection getRuleCollection() {
         return this;
       }
 
+      @Override
       public List<Rule> getRules() {
         int num_children = source[position];
         int rule_position = position + 2 * (num_children + 1);
@@ -497,7 +507,10 @@ public class PackedGrammar extends AbstractGrammar {
 
         ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
         for (int i = 0; i < num_rules; i++) {
-          rules.add(new PackedRule(rule_position + 3 * i));
+          if (type.equals("moses"))
+            rules.add(new PackedPhrasePair(rule_position + 3 * i));
+          else
+            rules.add(new PackedRule(rule_position + 3 * i));
         }
         return rules;
       }
@@ -630,11 +643,83 @@ public class PackedGrammar extends AbstractGrammar {
           throw new UnsupportedOperationException();
         }
       }
+      
+      /**
+       * A packed phrase pair represents a rule of the form of a phrase pair, packed with the
+       * grammar-packer.pl script, which simply adds a nonterminal [X] to the left-hand side of
+       * all phrase pairs (and converts the Moses features). The packer then packs these. We have
+       * to then put a nonterminal on the source and target sides to treat the phrase pairs like
+       * left-branching rules, which is how Joshua deals with phrase decoding. 
+       * 
+       * @author Matt Post <post@cs.jhu.edu>
+       *
+       */
+      public final class PackedPhrasePair extends PackedRule {
+        public PackedPhrasePair(int address) {
+          super(address);
+        }
 
-      public final class PackedRule extends Rule {
-        private final int address;
+        @Override
+        public int getArity() {
+          return PackedTrie.this.getArity() + 1;
+        }
+        
+        /**
+         * Take the English phrase of the underlying rule and prepend an [X].
+         * 
+         * @return
+         */
+        @Override
+        public int[] getEnglish() {
+          if (tgt == null) {
+            int[] phrase = getTarget(source[address + 1]);
+            tgt = new int[phrase.length + 1];
+            tgt[0] = -1;
+            for (int i = 0; i < phrase.length; i++)
+              tgt[i+1] = phrase[i];
+          }
+          return tgt;
+        }
 
-        private int[] tgt = null;
+        
+        /**
+         * Take the French phrase of the underlying rule and prepend an [X].
+         * 
+         * @return
+         */
+        @Override
+        public int[] getFrench() {
+          int phrase[] = new int[src.length + 1];
+          int ntid = Vocabulary.id(PackedGrammar.this.joshuaConfiguration.default_non_terminal);
+          phrase[0] = ntid;
+          System.arraycopy(src,  0, phrase, 1, src.length);
+          return phrase;
+        }
+        
+        /**
+         * Similarly the alignment array needs to be shifted over by one.
+         * 
+         * @return
+         */
+        @Override
+        public byte[] getAlignment() {
+          // alignments is the underlying raw alignment data
+          if (alignments != null) {
+            byte[] a = getAlignmentArray(source[address + 2]);
+            byte[] points = new byte[a.length + 2];
+            points[0] = points[1] = 0;
+            for (int i = 0; i < a.length; i++)
+              points[i + 2] = (byte) (a[i] + 1);
+            return points;
+          }
+          return null;
+        }
+      }
+
+      public class PackedRule extends Rule {
+        protected final int address;
+
+        protected int[] tgt = null;
         private FeatureVector features = null;
 
         public PackedRule(int address) {

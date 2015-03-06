@@ -11,8 +11,6 @@ while (my $line = <>) {
   my @tokens = split(/ \|\|\| /, $line);
 
   unshift(@tokens, "[X]");
-  $tokens[1] = "[X,1] $tokens[1]";
-  $tokens[2] = "[X,1] $tokens[2]";
   $tokens[3] = join(" ", map { -log($_) } split(' ', $tokens[3]));
 
   print join(" ||| ", @tokens);
