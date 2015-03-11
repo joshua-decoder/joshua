@@ -69,7 +69,7 @@ public class PhraseModel extends StatelessFF {
     
     if (rule != null && rule.getOwner() == ownerID) {
       if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY)
-        rule.setPrecomputableCost(phrase_weights);
+        rule.setPrecomputableCost(phrase_weights, weights);
         
       return rule.getPrecomputableCost();
     }
@@ -93,7 +93,7 @@ public class PhraseModel extends StatelessFF {
       if (acc instanceof ScoreAccumulator) {
         if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
 //          float score = rule.getFeatureVector().innerProduct(weights);
-          rule.setPrecomputableCost(phrase_weights);
+          rule.setPrecomputableCost(phrase_weights, weights);
         }
         acc.add(name, rule.getPrecomputableCost());
       } else {

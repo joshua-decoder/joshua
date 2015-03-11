@@ -237,7 +237,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
     return precomputableCost;
   }
 
-  public void setPrecomputableCost(float[] weights) {
+  public void setPrecomputableCost(float[] phrase_weights, FeatureVector weights) {
     int denseFeatureIndex = 0;
     float cost = 0.0f;
     
@@ -248,7 +248,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
         if (token.indexOf('=') == -1) {
 //          System.err.println(String.format("VALUE(%s) = %.5f", token, -Float.parseFloat(token)));
           try {
-            cost += weights[denseFeatureIndex++] * -Float.parseFloat(token);
+            cost += phrase_weights[denseFeatureIndex++] * -Float.parseFloat(token);
           } catch (java.lang.ArrayIndexOutOfBoundsException e) {
             /* This occurs if there are more values stored in the rule than there are weights
              * found in the config file. Consistent with treating unfound weights as have a value
@@ -257,14 +257,10 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
             ;
           }
         } else {
-          if (! token.startsWith("tm_"))
-            throw new RuntimeException("FATAL: we don't support arbitrary named features in the grammar file");
-
           int splitPoint = token.indexOf('=');
           String name = token.substring(0, splitPoint);
           float value = Float.parseFloat(token.substring(splitPoint + 1));
-          int index = Integer.parseInt(name.replace(String.format("tm_%s_", Vocabulary.word(owner)), ""));
-          cost += weights[index] * value;
+          cost += weights.get(name) * value;
         }
       }
     }
