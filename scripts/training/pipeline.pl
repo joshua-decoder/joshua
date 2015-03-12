@@ -1120,6 +1120,12 @@ if (! defined $GRAMMAR_FILE) {
     }
 
     $GRAMMAR_FILE = "grammar.gz";
+  } else {
+
+    print STDERR "* FATAL: There was no way to build a grammar, and none was passed in\n";
+    print STDERR "*        Please try one of the following:\n";
+    print STDERR "*        - Specify a grammar with --grammar /path/to/grammar\n";
+    print STDERR "*        - Delete any existing grammar named 'grammar.gz'\n";
   }
 }
 
