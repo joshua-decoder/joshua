@@ -1,5 +1,22 @@
 package joshua.decoder.phrase;
 
+/***
+ * Entry point for phrase-based decoding, analogous to {@link Chart} for the CKY algorithm. This
+ * class organizes all the stacks used for decoding, and is responsible for building them. Stack
+ * construction is stack-centric: that is, we loop over the number of source words in increasing sizes;
+ * at each step of this iteration, we break the search between smaller stack sizes and source-side
+ * phrase sizes.
+ * 
+ * The end result of decoding is a {@link Hypergraph} with the same format as hierarchical decoding.
+ * Phrases are treating as left-branching rules, and the span information (i,j) is overloaded so
+ * that i means nothing and j represents the index of the last-translated source word in each
+ * hypothesis. This means that most hypergraph code can work without modification. The algorithm 
+ * ensures that the coverage vector is consistent but the resulting hypergraph may not be projective,
+ * which is different from the CKY algorithm, which does produce projective derivations. 
+ * 
+ * Lattice decoding is not yet supported (March 2015).
+ */
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,18 +44,20 @@ public class Stacks {
 
   private Sentence sentence;
 
-  private PhraseChart chart;
-
   private JoshuaConfiguration config;
 
+  /* Contains all the phrase tables */
+  private PhraseChart chart;
+  
   /**
+   * Entry point. Initialize everything. Create pass-through (OOV) phrase table and glue phrase
+   * table (with start-of-sentence and end-of-sentence rules).
    * 
-   * 
-   * @param context
-   * @param chart
+   * @param sentence
    * @param featureFunctions
+   * @param grammars
+   * @param config
    */
-//  public Stacks(Context context, Chart chart, List<FeatureFunction> featureFunctions) {
   public Stacks(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars, 
       JoshuaConfiguration config) {
 
@@ -80,31 +99,32 @@ public class Stacks {
     
     // <s> counts as the first word. Pushing null lets us count from one.
     stacks.add(null);
-    for (int i = 1; i <= sentence.length(); i++)
-      stacks.add(new Stack());
 
     // Initialize root hypothesis with <s> context and future cost for everything.
     ComputeNodeResult result = new ComputeNodeResult(this.featureFunctions, Hypothesis.BEGIN_RULE,
         null, -1, 1, null, this.sentence);
-    stacks.get(1).add(new Hypothesis(result.getDPStates(), future.Full()));
+    Stack firstStack = new Stack(featureFunctions, sentence, config);
+    firstStack.add(new Hypothesis(result.getDPStates(), future.Full()));
+    stacks.add(firstStack);
     
     // Decode with increasing numbers of source words. 
     for (int source_words = 2; source_words <= sentence.length(); ++source_words) {
-      EdgeGenerator gen = new EdgeGenerator(sentence, featureFunctions, config);
+      Stack targetStack = new Stack(featureFunctions, sentence, config);
+      stacks.add(targetStack);
 
       // Iterate over stacks to continue from.
       for (int phrase_length = 1; phrase_length <= Math.min(source_words - 1, chart.MaxSourcePhraseLength());
           phrase_length++) {
         int from_stack = source_words - phrase_length;
-        Stack stack = stacks.get(from_stack);
+        Stack tailStack = stacks.get(from_stack);
         
         if (Decoder.VERBOSE >= 3)
           System.err.println(String.format("\n  WORDS %d MAX %d (STACK %d phrase_length %d)", source_words,
               chart.MaxSourcePhraseLength(), from_stack, phrase_length));
         
         // Iterate over antecedents in this stack.
-        for (Coverage coverage: stack.getCoverages()) {
-          ArrayList<Hypothesis> hypotheses = stack.get(coverage); 
+        for (Coverage coverage: tailStack.getCoverages()) {
+          ArrayList<Hypothesis> hypotheses = tailStack.get(coverage); 
           
           // the index of the starting point of the first possible phrase
           int begin = coverage.firstZero();
@@ -143,7 +163,7 @@ public class Stacks {
              * augment the hypothesis score with a future cost.
              */
             Candidate cand = new Candidate(hypotheses, phrases, span, future_delta);
-            gen.addCandidate(cand);
+            targetStack.addCandidate(cand);
           }
         }
       }
@@ -158,9 +178,7 @@ public class Stacks {
       
 //      System.err.println(String.format("\nBuilding cube-pruning chart for %d words", source_words));
 
-      Stack nextStack = stacks.get(source_words);
-      EdgeOutput output = new EdgeOutput(nextStack);
-      gen.Search(output);
+      targetStack.search();
     }
     
     Decoder.LOG(1, String.format("Input %d: Search took %.3f seconds", sentence.id(),
@@ -200,6 +218,14 @@ public class Stacks {
   }
 
 
+  /**
+   * Searches through the goal stack, calling the final transition function on each node, and then returning
+   * the best item. Usually the final transition code doesn't add anything, because all features
+   * have already computed everything they need to. The standard exception is language models that
+   * have not yet computed their prefix probabilities (which is not the case with KenLM, the default).
+   * 
+   * @return
+   */
   private HyperGraph createGoalNode() {
     Stack lastStack = stacks.get(sentence.length());
     
@@ -218,31 +244,5 @@ public class Stacks {
     }
     
     return new HyperGraph(end, -1, -1, this.sentence);
-  }
-
-  
-  /**
-   * Creates a new hypothesis and adds it to the stack.
-   * 
-   * Duplication-checking is done elsewhere. For regular decoding, an {@link EdgeOutput} keeps
-   * track of added edges and combines the last item, after this call completes.
-   * 
-   * @param complete the candidate used to build the hypothesis
-   * @param out the stack to place it on
-   */
-  public static void AppendToStack(Candidate complete, Stack out) {
-    
-    Hypothesis h = new Hypothesis(complete);
-    out.add(h);
-
-    /*
-    out.add(new Hypothesis(0, // complete.CompletedState().right,
-          complete.GetScore(), // TODO: call scorer to adjust for last of lexro?
-          (Hypothesis)(complete.NT()[0].End().get()),
-          source_range.start,
-          source_range.end,
-          (Phrase)complete.NT()[1].End().get()));
-     */
-//    out.add(h);
   }
 }
