@@ -77,8 +77,8 @@ public class Future {
    * Calculate change in rest cost when the given coverage is to be covered.
    */                       
   public float Change(Coverage coverage, int begin, int end) {
-    int left = coverage.LeftOpen(begin);
-    int right = coverage.RightOpen(end, sentlen);
+    int left = coverage.leftOpening(begin);
+    int right = coverage.rightOpening(end, sentlen);
 //    System.err.println(String.format("Future::Change(%s, %d, %d) left %d right %d %.3f %.3f %.3f", coverage, begin, end, left, right,
 //        Entry(left, begin), Entry(end, right), Entry(left, right)));
     return getEntry(left, begin) + getEntry(end, right) - getEntry(left, right);

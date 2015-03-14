@@ -62,9 +62,9 @@ public class Stack extends ArrayList<Hypothesis> {
   @Override
   public boolean add(Hypothesis hyp) {
     
-    if (! coverages.containsKey((hyp.GetCoverage())))
-      coverages.put(hyp.GetCoverage(), new ArrayList<Hypothesis>()); 
-    coverages.get(hyp.GetCoverage()).add(hyp);
+    if (! coverages.containsKey((hyp.getCoverage())))
+      coverages.put(hyp.getCoverage(), new ArrayList<Hypothesis>()); 
+    coverages.get(hyp.getCoverage()).add(hyp);
     
     return super.add(hyp);
   }
@@ -77,7 +77,7 @@ public class Stack extends ArrayList<Hypothesis> {
     boolean found = super.remove(obj);
     if (found) {
       Hypothesis item = (Hypothesis) obj;
-      Coverage cov = item.GetCoverage();
+      Coverage cov = item.getCoverage();
       assert coverages.get(cov).remove(obj);
       if (coverages.get(cov).size() == 0)
         coverages.remove(cov);

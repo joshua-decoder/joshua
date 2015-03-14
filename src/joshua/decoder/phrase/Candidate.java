@@ -1,5 +1,11 @@
 package joshua.decoder.phrase;
 
+/*** 
+ * A candidate is basically a cube prune state. It contains a list of hypotheses and target
+ * phrases, and an instantiated candidate is a pair of indices that index these two lists. This
+ * is the "cube prune" position.
+ */
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -130,20 +136,31 @@ public class Candidate implements Comparable<Candidate> {
     return Float.compare(other.score(), score());
   }
 
+  /**
+   * Returns the input span from which the phrases for this candidates were gathered.
+   * 
+   * @return the span object
+   */
   public Span getSpan() {
     return this.span;
   }
   
+  /**
+   * A candidate is a (hypothesis, target phrase) pairing. The hypothesis and target phrase are
+   * drawn from a list that is indexed by (ranks[0], ranks[1]), respectively. This is a shortcut
+   * to return the hypothesis of the candidate pair.
+   * 
+   * @return the hypothesis at position ranks[0]
+   */
   public Hypothesis getHypothesis() {
     return this.hypotheses.get(ranks[0]);
   }
   
   /**
-   * It is sometimes useful to think of a phrase pair like a syntax-based rule. This function returns
-   * a Rule view of the candidate by returning the Phrase (which extends Rule) marked by the currently
-   * selected rank.
+   * This returns the target side {@link Phrase}, which is a {@link Rule} object. This is just a
+   * convenience function that works by returning the phrase indexed in ranks[1].
    * 
-   * @return
+   * @return the phrase at position ranks[1]
    */
   public Rule getRule() {
     return phrases.get(ranks[1]);
@@ -161,10 +178,22 @@ public class Candidate implements Comparable<Candidate> {
     return tailNodes;
   }
   
+  /**
+   * Returns the bit vector of this hypothesis. The bit vector is computed by ORing the coverage
+   * vector of the tail node (hypothesis) and the source span of phrases in this candidate.
+   * @return
+   */
   public Coverage getCoverage() {
-    return getHypothesis().GetCoverage().or(getSpan());
+    Coverage cov = new Coverage(getHypothesis().getCoverage());
+    cov.set(getSpan());
+    return cov;
   }
 
+  /**
+   * Sets the result of a candidate (should just be moved to the constructor).
+   * 
+   * @param result
+   */
   public void setResult(ComputeNodeResult result) {
     this.result = result;
   }

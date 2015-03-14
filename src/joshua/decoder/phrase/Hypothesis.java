@@ -54,10 +54,10 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   public Hypothesis(List<DPState> states, float score, Hypothesis previous, int source_end, Rule target) {
     super(-1, source_end, -1, null, null, score);
     this.coverage = previous.coverage;
-    this.coverage.Set(source_end - 1, source_end);
+    this.coverage.set(source_end - 1, source_end);
   }
 
-  public Coverage GetCoverage() {
+  public Coverage getCoverage() {
     return coverage;
   }
 
@@ -78,7 +78,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   @Override
   public int hashCode() {
     int hash = 0;
-    hash = 31 * LastSourceIndex() + 19 * GetCoverage().hashCode();
+    hash = 31 * LastSourceIndex() + 19 * getCoverage().hashCode();
     if (null != dpStates && dpStates.size() > 0)
       for (DPState dps: dpStates)
         hash *= 57 + dps.hashCode();
@@ -95,7 +95,7 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
     if (obj instanceof Hypothesis) {
       Hypothesis other = (Hypothesis) obj;
 
-      if (LastSourceIndex() != other.LastSourceIndex() || ! GetCoverage().equals(other.GetCoverage()))
+      if (LastSourceIndex() != other.LastSourceIndex() || ! getCoverage().equals(other.getCoverage()))
         return false;
       
       if (dpStates == null)

@@ -64,14 +64,19 @@ public class Coverage {
    * @param begin
    * @param end
    */
-  public void Set(int begin, int end) {
+  public void set(int begin, int end) {
     assert compatible(begin, end);
+
 //    StringBuffer sb = new StringBuffer();
 //    sb.append(String.format("SET(%d,%d) %s", begin, end, this));
+    
     if (begin == firstZero) {
+      // A concatenation. 
       firstZero = end;
       bits >>= (end - begin);
       while ((bits & 1) != 0) {
+        // We might have exactly covered a gap, in which case we need to adjust shift
+        // firstZero and the bits until we reach the new end
         ++firstZero;
         bits >>= 1;
       }
@@ -81,6 +86,13 @@ public class Coverage {
 
 //    sb.append(String.format(" -> %s", this));
 //    System.err.println(sb);
+  }
+  
+  /**
+   * Convenience function.
+   */
+  public final void set(Span span) {
+    set(span.start, span.end);
   }
 
   /**
@@ -102,17 +114,19 @@ public class Coverage {
   }
 
   /**
-   * The following two functions find gaps.                                                        
-   * When a phrase [begin, end) is to be covered,                                                  
-   *   [LeftOpen(begin), RightOpen(end, sentence_length))                                          
-   * indicates the larger gap in which the phrase sits.                                            
-   * Find the left bound of the gap in which the phrase [begin, ...) sits.                         
-   * TODO: integer log2 optimization?   
+   * LeftOpen() and RightOpen() find the larger gap in which a new source phrase pair sits.
+   * When using a phrase pair covering (begin, end), the pair
    * 
-   * @param begin
+   *     (LeftOpen(begin), RightOpen(end, sentence_length))  
+   *     
+   * provides this gap.                                           
+
+   * Find the left bound of the gap in which the phrase [begin, ...) sits.                         
+   * 
+   * @param begin the start index of the phrase being applied.
    * @return
    */
-  public int LeftOpen(int begin) {
+  public int leftOpening(int begin) {
     for (int i = begin - firstZero; i > 0; --i) {
       if (((bits & (1L << i)) != 0)) {
         assert compatible(i + firstZero + 1, begin);
@@ -126,10 +140,16 @@ public class Coverage {
   }
 
   /**
-   * Find the right bound of the gap in which the phrase [..., end) sits. This
-   * bit is a 1 or end of sentence.
+   * LeftOpen() and RightOpen() find the larger gap in which a new source phrase pair sits.
+   * When using a phrase pair covering (begin, end), the pair
+   * 
+   *     (LeftOpen(begin), RightOpen(end, sentence_length))  
+   *     
+   * provides this gap.                                           
+   * 
+   * Finds the right bound of the enclosing gap, or the end of sentence, whichever is less.
    */
-  public int RightOpen(int end, int sentenceLength) {
+  public int rightOpening(int end, int sentenceLength) {
     for (int i = end - firstZero; i < Math.min(64, sentenceLength - firstZero); i++) {
       if ((bits & (1L << i)) != 0) {
         return i + firstZero;
@@ -155,20 +175,7 @@ public class Coverage {
   public long getCoverage() {
     return bits;
   }
-
-  /**
-   * Computes the or bitwise operation of the current coverage vector against a new span. Does
-   * not check for compatibility. 
-   * 
-   * @param span
-   * @return
-   */
-  public Coverage or(Span span) {
-    Coverage c = new Coverage(this);
-    c.Set(span.start, span.end);
-    return c;
-  }
-
+  
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Coverage) {
@@ -182,5 +189,9 @@ public class Coverage {
   @Override
   public int hashCode() {
     return (int) getCoverage() * firstZero();
+  }
+  
+  public static void main(String[] args) {
+    
   }
 }
