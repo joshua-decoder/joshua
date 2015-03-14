@@ -54,7 +54,6 @@ public class Hypothesis extends HGNode implements Comparable<Hypothesis> {
   public Hypothesis(List<DPState> states, float score, Hypothesis previous, int source_end, Rule target) {
     super(-1, source_end, -1, null, null, score);
     this.coverage = previous.coverage;
-    this.coverage.set(source_end - 1, source_end);
   }
 
   public Coverage getCoverage() {

@@ -1,12 +1,13 @@
 package joshua.decoder.phrase;
 
+import java.util.BitSet;
+
 import joshua.corpus.Span;
 
 /**
  * Represents a coverage vector. The vector is relative to a hypothesis. {firstZero} denotes the
  * first uncovered word of the sentence, and {bits} contains the coverage vector of all the words
- * after it, with the first zero removed. Since {bits} is 64 bits, this means we have a hard-coded
- * rule that reordering distance + max phrase length <= 64.
+ * after it, with the first zero removed. 
  */
 
 public class Coverage {
@@ -17,8 +18,21 @@ public class Coverage {
   // Bits with the first zero removed.                                                             
   // We also assume anything beyond this is zero due to the reordering window.                     
   // Lowest bits correspond to next word.    
-  private long bits;
+  private BitSet bits;
 
+  // Default bit vector length
+  private static int INITIAL_LENGTH = 10;
+
+  public Coverage() {
+    firstZero = 0;
+    bits = new BitSet(INITIAL_LENGTH);
+  }
+  
+  public Coverage(int firstZero) {
+    this.firstZero = firstZero;
+    bits = new BitSet(INITIAL_LENGTH);
+  }
+  
   /**
    * Pretty-prints the coverage vector, making a guess about the length
    */
@@ -27,34 +41,22 @@ public class Coverage {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("%d ", firstZero));
 
-    long mask = 1L;
-    for (int i = 0; i < 10; i++) { // only display first 10 bits
-      sb.append((bits & mask) > 0 ? "x" : ".");
-      mask <<= 1;
+    for (int i = 0; i < Math.max(INITIAL_LENGTH, bits.length()); i++) { // only display first 10 bits
+      sb.append(bits.get(i) ? "x" : ".");
     }
 
     return sb.toString();
   }
 
-  public Coverage() {
-    firstZero = 0;
-    bits = 0;
-  }
-  
-  public Coverage(int firstZero) {
-    this.firstZero = firstZero;
-    bits = 0;
-  }
-
   /**
-   * Initialize a coverage vector from another Coverage vector.
+   * Initialize a coverage vector from another Coverage vector, creating a separate object.
    * 
    * @param firstZero
    * @param bits
    */
   public Coverage(Coverage other) {
     this.firstZero = other.firstZero;
-    this.bits = other.bits;
+    this.bits = (BitSet) other.bits.clone();
   }
 
   /**
@@ -69,19 +71,21 @@ public class Coverage {
 
 //    StringBuffer sb = new StringBuffer();
 //    sb.append(String.format("SET(%d,%d) %s", begin, end, this));
-    
+
     if (begin == firstZero) {
       // A concatenation. 
       firstZero = end;
-      bits >>= (end - begin);
-      while ((bits & 1) != 0) {
+      bits = bits.get(end - begin, Math.max(end - begin, bits.length()));
+      int firstClear = bits.nextClearBit(0);
+      if (firstClear != 0) {
         // We might have exactly covered a gap, in which case we need to adjust shift
         // firstZero and the bits until we reach the new end
-        ++firstZero;
-        bits >>= 1;
+        firstZero += firstClear;
+        bits = bits.get(firstClear,  bits.length());
       }
     } else {
-      bits |= pattern(begin, end);
+      // Set the bits relative to the currenS
+      bits.or(pattern(begin, end));
     }
 
 //    sb.append(String.format(" -> %s", this));
@@ -96,19 +100,28 @@ public class Coverage {
   }
 
   /**
-   * A span is compatible with the current coverage vector if it begins at or after the first zero
-   * and there is no overlap with currently covered bits. Recall that {firstZero} is an absolute
-   * index marking where in the input the bit vector begins, while {bits} is the coverage vector
-   * for positions [{firstZero+1}..{firstZero+64+1})
+   * Tests whether a new range is compatible with the current coverage vector. It must be after
+   * the first uncovered word, obviously, and must not conflict with spans after the first
+   * uncovered word.
    * 
    * @param begin the begin index (absolute)
    * @param end the end index (absolute)
    * @return true if the span is compatible with the coverage vector
    */
   public boolean compatible(int begin, int end) {
-    return (begin >= firstZero) && ((pattern(begin, end) & bits) == 0L);
+    if (begin >= firstZero) {
+      BitSet pattern = new BitSet();
+      pattern.set(begin - firstZero, end - firstZero);
+      return ! bits.intersects(pattern);
+    }
+    return false;
   }
-
+  
+  /**
+   * Returns the source sentence index of the first uncovered word.
+   * 
+   * @return the index
+   */
   public int firstZero() {
     return firstZero;
   }
@@ -128,7 +141,7 @@ public class Coverage {
    */
   public int leftOpening(int begin) {
     for (int i = begin - firstZero; i > 0; --i) {
-      if (((bits & (1L << i)) != 0)) {
+      if (bits.get(i)) {
         assert compatible(i + firstZero + 1, begin);
         assert !compatible(i + firstZero, begin);
         return i + firstZero + 1;
@@ -151,13 +164,13 @@ public class Coverage {
    */
   public int rightOpening(int end, int sentenceLength) {
     for (int i = end - firstZero; i < Math.min(64, sentenceLength - firstZero); i++) {
-      if ((bits & (1L << i)) != 0) {
+      if (bits.get(i)) {
         return i + firstZero;
       }
     }
     return sentenceLength;
   }
-
+  
   /**
    * Creates a bit vector with the same offset as the current coverage vector, flipping on
    * bits begin..end.
@@ -166,13 +179,20 @@ public class Coverage {
    * @param end the end index (absolute)
    * @return a bit vector (relative) with positions [begin..end) on
    */
-  public long pattern(int begin, int end) {
+  public BitSet pattern(int begin, int end) {
+//    System.err.println(String.format("pattern(%d,%d) %d %s %s", begin, end, firstZero, begin >= firstZero, toString()));
     assert begin >= firstZero;
-    assert end - firstZero < 64;
-    return (1L << (end - firstZero)) - (1L << (begin - firstZero));
+    BitSet pattern = new BitSet(INITIAL_LENGTH);
+    pattern.set(begin - firstZero, end - firstZero);
+    return pattern;
   }
 
-  public long getCoverage() {
+  /**
+   * Returns the underlying coverage bits.
+   * 
+   * @return
+   */
+  public BitSet getCoverage() {
     return bits;
   }
   
@@ -180,7 +200,7 @@ public class Coverage {
   public boolean equals(Object obj) {
     if (obj instanceof Coverage) {
       Coverage other = (Coverage) obj;
-      return getCoverage() == other.getCoverage() && firstZero() == other.firstZero();
+      return getCoverage().equals(other.getCoverage()) && firstZero() == other.firstZero();
     }
 
     return false;
@@ -188,10 +208,6 @@ public class Coverage {
 
   @Override
   public int hashCode() {
-    return (int) getCoverage() * firstZero();
-  }
-  
-  public static void main(String[] args) {
-    
+    return getCoverage().hashCode() * firstZero();
   }
 }
