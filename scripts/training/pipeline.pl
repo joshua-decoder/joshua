@@ -962,6 +962,13 @@ if (! defined $ALIGNMENT) {
   exit(1);
 }
 
+# Look for a pre-existing grammar, since building it is expensive, and something we want to
+# avoid if this is a rerun
+if (-e "grammar.gz" && ! -z "grammar.gz") {
+  chomp(my $is_empty = `gzip -cd grammar.gz | head | wc -l`);
+  $GRAMMAR_FILE = "grammar.gz" unless ($is_empty == 0);
+}
+
 # If the grammar file wasn't specified
 if (! defined $GRAMMAR_FILE) {
 
@@ -1057,7 +1064,7 @@ if (! defined $GRAMMAR_FILE) {
 
     $GRAMMAR_FILE = "model/phrase-table.gz";
 
-  } elsif (! -e "grammar.gz" && ! -z "grammar.gz") {
+  } elsif ($GRAMMAR_TYPE eq "samt" or $GRAMMAR_TYPE eq "hiero") {
 
     # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
     # sure that this is the right behavior.
@@ -1126,6 +1133,8 @@ if (! defined $GRAMMAR_FILE) {
     print STDERR "*        Please try one of the following:\n";
     print STDERR "*        - Specify a grammar with --grammar /path/to/grammar\n";
     print STDERR "*        - Delete any existing grammar named 'grammar.gz'\n";
+
+    exit 1;
   }
 }
 
