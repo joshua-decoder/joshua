@@ -72,12 +72,20 @@ public class JoshuaDecoder {
       if (translation == null)
         break;
 
+      /**
+       * We need to munge the feature value outputs in order to be compatible with Moses tuners.
+       * Whereas Joshua writes to STDOUT whatever is specified in the `output-format` parameter,
+       * Moses expects the simple translation on STDOUT and the n-best list in a file with a fixed
+       * format.
+       */
       String text;
       if (joshuaConfiguration.moses) {
         text = translation.toString().replaceAll("=", "= ");
+        // Write the complete formatted string to STDOUT
         if (joshuaConfiguration.n_best_file != null)
           out.write(text);
         
+        // Extract just the translation and output that to STDOUT
         text = text.substring(0,  text.indexOf('\n'));
         String[] fields = text.split(" \\|\\|\\| ");
         text = fields[1] + "\n";

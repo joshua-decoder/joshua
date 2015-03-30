@@ -169,7 +169,7 @@ public class KBestExtractor {
           .replace("%s", hypothesis)
           .replace("%S", DeNormalize.processSingleLine(hypothesis))
           .replace("%i", Integer.toString(sentence.id()))
-          .replace("%f", features.toString())
+          .replace("%f", joshuaConfiguration.moses ? features.mosesString() : features.toString())
           .replace("%c", String.format("%.3f", derivationState.cost));
 
       if (joshuaConfiguration.outputFormat.contains("%t")) {

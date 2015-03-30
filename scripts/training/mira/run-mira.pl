@@ -54,6 +54,8 @@ use File::Path;
 use File::Spec;
 use Cwd;
 
+my $JOSHUA = $ENV{JOSHUA};
+
 my $SCRIPTS_ROOTDIR = $RealBin;
 $SCRIPTS_ROOTDIR =~ s/\/training$//;
 $SCRIPTS_ROOTDIR = $ENV{"SCRIPTS_ROOTDIR"} if defined($ENV{"SCRIPTS_ROOTDIR"});
@@ -79,13 +81,13 @@ my $___JOBS = undef; # if parallel, number of jobs to use (undef or 0 -> serial)
 my $___DECODER_FLAGS = ""; # additional parametrs to pass to the decoder
 my $continue = 0; # should we try to continue from the last saved step?
 my $skip_decoder = 0; # and should we skip the first decoder run (assuming we got interrupted during mert)
-my $___FILTER_PHRASE_TABLE = 1; # filter phrase table
+my $___FILTER_PHRASE_TABLE = 0; # filter phrase table
 my $___PREDICTABLE_SEEDS = 0;
 my $___START_WITH_HISTORIC_BESTS = 0; # use best settings from all previous iterations as starting points [Foster&Kuhn,2009]
 my $___RANDOM_DIRECTIONS = 0; # search in random directions only
 my $___NUM_RANDOM_DIRECTIONS = 0; # number of random directions, also works with default optimizer [Cer&al.,2008]
 my $___RANDOM_RESTARTS = 20;
-my $___RETURN_BEST_DEV = 0; # return the best weights according to dev, not the last
+my $___RETURN_BEST_DEV = 1; # return the best weights according to dev, not the last
 
 # Flags related to PRO (Hopkins & May, 2011)
 my $___PAIRWISE_RANKED_OPTIMIZER = 0; # flag to enable PRO.
@@ -343,7 +345,7 @@ $moses_parallel_cmd = File::Spec->catfile($SCRIPTS_ROOTDIR, "generic", "moses-pa
   if !defined $moses_parallel_cmd;
 
 if (!defined $mertdir) {
-  $mertdir = File::Spec->catfile(File::Basename::dirname($SCRIPTS_ROOTDIR), "bin");
+  $mertdir = File::Spec->catfile(File::Basename::dirname($JOSHUA), "bin");
   die "mertdir does not exist: $mertdir" if ! -x $mertdir;
   print STDERR "Assuming --mertdir=$mertdir\n";
 }
@@ -773,7 +775,8 @@ while (1) {
 
 
   # In case something dies later, we might wish to have a copy
-  create_config($___CONFIG, "./run$run.moses.ini", $featlist, $run, (defined $devbleu ? $devbleu : "--not-estimated--"), $sparse_weights_file);
+  #  create_config($___CONFIG, "./run$run.moses.ini", $featlist, $run, (defined $devbleu ? $devbleu : "--not-estimated--"), $sparse_weights_file);
+  create_config_joshua($___CONFIG, "./run$run.joshua.config", $featlist, $run, (defined $devbleu ? $devbleu : "--not-estimated--"), $sparse_weights_file);
 
   # Save dense weights to simplify best dev recovery
   {
@@ -791,6 +794,7 @@ while (1) {
   if (! $skip_decoder) {
     print "($run) run decoder to produce n-best lists\n";
     ($nbest_file, $lsamp_file, $hypergraph_dir) = run_decoder($featlist, $run, $need_to_normalize);
+
     $need_to_normalize = 0;
     if ($___LATTICE_SAMPLES) {
       my $combined_file = "$nbest_file.comb";
@@ -1148,7 +1152,7 @@ if($___RETURN_BEST_DEV) {
     }
     close $fh;
   }
-  print "opying weights from best iteration ($bestit, bleu=$bestbleu) to moses.ini\n";
+  print "copying weights from best iteration ($bestit, bleu=$bestbleu) to moses.ini\n";
   my $best_sparse_file = undef;
   if(defined $sparse_weights_file) {
       $best_sparse_file = "run$bestit.sparse-weights";
@@ -1157,11 +1161,13 @@ if($___RETURN_BEST_DEV) {
   $best_featlist->{"untuneables"} = $featlist->{"untuneables"};
   $best_featlist->{"allcomponentsuntuneable"} = $featlist->{"allcomponentsuntuneable"};
   $best_featlist->{"skippeduntuneablecomponents"} = $featlist->{"skippeduntuneablecomponents"};
-  create_config($___CONFIG_ORIG, "./moses.ini", $best_featlist,
+  # create_config($___CONFIG_ORIG, "./moses.ini", $best_featlist,
+  #               $bestit, $bestbleu, $best_sparse_file);
+  create_config_joshua($___CONFIG_ORIG, "./joshua.config", $best_featlist,
                 $bestit, $bestbleu, $best_sparse_file);
 }
 else {
-  create_config($___CONFIG_ORIG, "./moses.ini", $featlist, $run, $devbleu, $sparse_weights_file);
+  create_config_joshua($___CONFIG_ORIG, "./joshua.config", $featlist, $run, $devbleu, $sparse_weights_file);
 }
 
 # just to be sure that we have the really last finished step marked
@@ -1459,7 +1465,7 @@ sub get_order_of_scores_from_nbestlist {
   foreach my $tok (split /\s+/, $scores) {
     if ($tok =~ /.+_.+=/) {
       $sparse = 1;
-    } elsif ($tok =~ /^([a-z][0-9a-z]*)=/i) {
+    } elsif ($tok =~ /^([a-z][0-9a-z\-]*)=/i) {
       $label = $1;
     } elsif ($tok =~ /^-?[-0-9.\-e]+$/) {
       if (!$sparse) {
@@ -1641,6 +1647,16 @@ sub create_config {
   print STDERR "Saved: $outfn\n";
 }
 
+sub unmunge {
+  my $feature = shift;
+  $feature =~ s/-/_/g if ($feature =~ /^tm/ or $feature =~ /^lm/);
+  return $feature;
+}
+
+# Reads in the previous / original Joshua config, replacing all existing feature values
+# with the new values, and then adding new feature weights that weren't present in the old.
+# This function also copies the sparse weights file directly into the new config file,
+# since Joshua prefers to use a single config file.
 sub create_config_joshua {
   # TODO: too many arguments. you might want to consider using hashes
   my $infn                = shift; # source config
@@ -1648,40 +1664,32 @@ sub create_config_joshua {
   my $featlist            = shift; # the lambdas we should write
   my $iteration           = shift;  # just for verbosity
   my $bleu_achieved       = shift; # just for verbosity
-
-  my @keep_weights = ();
-
-  for (my $i = 0; $i < scalar(@{$featlist->{"names"}}); $i++) {
-    my $name = $featlist->{"names"}->[$i];
-    my $val = $featlist->{"values"}->[$i];
-    # ensure long name
-		print STDERR "featlist: $name=$val \n";
-  }
+  my $sparse_weights_file = shift; # only defined when optimizing sparse features
 
   my %P; # the hash of all parameters we wish to override
+  
+  for (my $i = 0; $i < scalar(@{$featlist->{"names"}}); $i++) {
+    my $name = unmunge($featlist->{"names"}->[$i]);
+    my $val = $featlist->{"values"}->[$i];
+    # ensure long name
+    $P{$name} = $val;
+  }
 
-  # first convert the command line parameters to the hash
-  # ensure local scope of vars
-  {
-    my $parameter = undef;
-    print "Parsing --decoder-flags: |$___DECODER_FLAGS|\n";
-    $___DECODER_FLAGS =~ s/^\s*|\s*$//;
-    $___DECODER_FLAGS =~ s/\s+/ /;
-    foreach (split(/ /, $___DECODER_FLAGS)) {
-      if (/^\-([^\d].*)$/) {
-        $parameter = $1;
-      } else {
-				my $value = $_;
-        die "Found value with no -paramname before it: $value"
-            if !defined $parameter;
-        push @{$P{$parameter}}, $value;
+  # Dump the sparse weights into our main config file
+  print STDERR "SPARSE WEIGHTS FROM '$sparse_weights_file'\n";
+  if (defined($sparse_weights_file)) {
+    open SPARSE, $sparse_weights_file or die "can't open sparse weights file '$sparse_weights_file'";
+    while (my $line = <SPARSE>) {
+      if ($line =~ /^(\S+) (\S+)$/) {
+        $P{$1} = $2;
+#        print STDERR "featlist: $1=$2 \n";
       }
     }
+    close SPARSE;
   }
 
   # create new moses.ini decoder config file by cloning and overriding the original one
   open my $ini_fh, '<', $infn or die "Can't read $infn: $!";
-  delete($P{"config"}); # never output
   print "Saving new config to: $outfn\n";
 
   open my $out, '>', $outfn or die "Can't write $outfn: $!";
@@ -1693,61 +1701,39 @@ sub create_config_joshua {
 
   my %oldvalues = ();
 
-  LINE: while (my $line = <$ini_fh>) {
-    last unless $line;
-
-    if ($line =~ /^(\S+) (\S+)$/) {
-      my ($longname, $value) = split(' ', $line);
-      
+  while (my $line = <$ini_fh>) {
+    if ($line =~ /^\s*#/ or $line =~ /^\s*$/ or $line =~ /=/) {
+      print $out $line;
+    } elsif ($line =~ /^(\S+) (.+)$/) {
       for( @{$featlist->{"untuneables"}} ){
         if ($1 eq $_ ) {# if weight is untuneable, copy it into new config
           print $out $line;
-          next LINE;
+          last;
         }
       }
       for( @{$featlist->{"allcomponentsuntuneable"}} ){
         if ($1 eq $_ ) {# if all dense weights are untuneable, copy it into new config
           print $out $line;
-          next LINE;
+          last;
         }
       }
 
-      print "$longname $featlist->{$longname}\n";
-
-    } else {
-      print $line;
-    }
-  }
-
-  my $prevName = "";
-  my $outStr = "";
-  my $valcnt = 0;
-  my $offset = 0;
-  for (my $i = 0; $i < scalar(@{$featlist->{"names"}}); $i++) {
-    my $name = $featlist->{"names"}->[$i];
-    my $val = $featlist->{"values"}->[$i];
-    
-    if ($prevName ne $name) {
-      print $out "$outStr\n";
-      $valcnt = 0;
-      $outStr = "$name=";
-      $prevName = $name;
-      while (defined $featlist->{"skippeduntuneablecomponents"}->{$name}{$valcnt+$offset}) {
-        $outStr .= " $oldvalues{$name}{$valcnt+$offset}";
-        $offset++;
+      my ($longname, $value) = ($1, $2);
+      next if (!defined($value));
+      if (exists($P{$longname})) {
+        $value = $P{$longname};
+        delete $P{$longname};
       }
-    }
-    $outStr .= " $val";
-    $valcnt++;
-    while (defined $featlist->{"skippeduntuneablecomponents"}->{$name}{$valcnt+$offset}) {
-      $outStr .= " $oldvalues{$name}{$valcnt+$offset}";
-      $offset++;
+      print $out "$longname $value\n";
+    } else {
+      print STDERR "Whoa, you missed a kind of line, passing through '$line'\n";
+      print $out $line;
     }
   }
-  print $out "$outStr\n";
 
-  for (@keep_weights) {
-     print $out $_;
+  # Print out features that have weights but were not seen in the old config file
+  foreach my $key (keys %P) {
+    print $out "$key $P{$key}\n";
   }
 
   close $ini_fh;

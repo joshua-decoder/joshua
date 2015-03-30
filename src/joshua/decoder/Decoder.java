@@ -358,6 +358,25 @@ public class Decoder {
   // ===============================================================
 
   /**
+   * Moses requires the pattern .*_.* for sparse features, and prohibits underscores in dense features. 
+   * This conforms to that pattern. We assume non-conforming dense features start with tm_ or lm_,
+   * and the only sparse feature that needs converting is OOVPenalty.
+   * 
+   * @param feature
+   * @return the feature in Moses format
+   */
+  private String mosesize(String feature) {
+    if (joshuaConfiguration.moses) {
+      if (feature.equals("OOVPenalty"))
+        return "OOV_Penalty";
+      else if (feature.startsWith("tm_") || feature.startsWith("lm_"))
+        return feature.replace("_", "-");
+    }
+    
+    return feature;
+  }
+  
+  /**
    * Initialize all parts of the JoshuaDecoder.
    * 
    * @param configFile File containing configuration options
@@ -372,6 +391,22 @@ public class Decoder {
        * in the Joshua config file. Config file values take precedent.
        */
       this.readWeights(joshuaConfiguration.weights_file);
+      
+      
+      /* Add command-line-passed weights to the weights array for processing below */
+      if (joshuaConfiguration.weight_overwrite != "") {
+        String[] tokens = joshuaConfiguration.weight_overwrite.split("\\s+");
+        for (int i = 0; i < tokens.length; i += 2) {
+          String feature = tokens[i];
+          float value = Float.parseFloat(tokens[i+1]);
+          
+          if (joshuaConfiguration.moses)
+            feature = demoses(feature);
+          
+          joshuaConfiguration.weights.add(String.format("%s %s", tokens[i], tokens[i+1]));
+          Decoder.LOG(1, String.format("COMMAND LINE WEIGHT: %s -> %.3f", feature, value));
+        }
+      }
 
       /* Read the weights found in the config file */
       for (int i = 0; i < joshuaConfiguration.weights.size(); i++) {
@@ -396,9 +431,10 @@ public class Decoder {
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
 
+      // This is mostly for compatibility with the Moses tuning script
       if (joshuaConfiguration.show_weights_and_quit) {
-        for (String key : Decoder.feature_names) {
-          System.out.println(String.format("%s %.5f", key, weights.get(key)));
+        for (String key : Decoder.dense_feature_names) {
+          System.out.println(String.format("%s= %.5f", mosesize(key), weights.get(key)));
         }
         System.exit(0);
       }
@@ -549,6 +585,11 @@ public class Decoder {
         String tokens[] = line.split("\\s+");
         String feature = tokens[0];
         Float value = Float.parseFloat(tokens[1]);
+        
+        // Kludge for compatibility with Moses tuners
+        if (joshuaConfiguration.moses) {
+          feature = demoses(feature);
+        }
 
         weights.put(feature, value);
         feature_names.add(feature);
@@ -564,8 +605,18 @@ public class Decoder {
       ioe.printStackTrace();
       System.exit(1);
     }
-
+    
     Decoder.LOG(1, String.format("Read %d weights from file '%s'", weights.size(), fileName));
+  }
+
+  private String demoses(String feature) {
+    if (feature.endsWith("="))
+      feature = feature.replace("=", "");
+    if (feature.equals("OOV_Penalty"))
+      feature = "OOVPenalty";
+    else if (feature.startsWith("tm-") || feature.startsWith("lm-"))
+      feature = feature.replace("-",  "_");
+    return feature;
   }
 
   /**

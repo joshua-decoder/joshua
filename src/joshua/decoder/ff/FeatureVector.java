@@ -166,9 +166,40 @@ public class FeatureVector {
   }
 
   /***
+   * Moses distinguishes sparse features as those containing an underscore, so we have to fake it
+   * to be compatible with their tuners.
+   */
+  public String mosesString() {
+    String outputString = "";
+    
+    HashSet<String> printed_keys = new HashSet<String>();
+    
+    // First print all the dense feature names in order
+    for (String key: Decoder.dense_feature_names) {
+      float value = features.containsKey(key) ? features.get(key) : 0.0f;
+      outputString += String.format("%s=%.3f ", key.replaceAll("_", "-"), value);
+      printed_keys.add(key);
+    }
+    
+    // Now print the sparse features
+    ArrayList<String> keys = new ArrayList<String>(features.keySet());
+    Collections.sort(keys);
+    for (String key: keys) {
+      float value = features.get(key);
+      if (key.equals("OOVPenalty"))
+        // force moses to see it as sparse
+        key = "OOV_Penalty";
+      if (! printed_keys.contains(key))
+        outputString += String.format("%s=%.3f ", key, value);
+    }
+    return outputString.trim();
+  }
+    
+  /***
    * Outputs a list of feature names. All dense features are printed. Feature names are printed
    * in the order they were read in.
    */
+  @Override
   public String toString() {
     String outputString = "";
     

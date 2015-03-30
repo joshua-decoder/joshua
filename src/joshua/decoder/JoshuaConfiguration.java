@@ -216,6 +216,9 @@ public class JoshuaConfiguration {
 
   /* Whether to look at source side for special annotations */
   public boolean source_annotations = false;
+
+  /* Weights overridden from the command line */
+  public String weight_overwrite = "";
   
   /**
    * This method resets the state of JoshuaConfiguration back to the state after initialization.
@@ -322,7 +325,7 @@ public class JoshuaConfiguration {
          */
 
         if (line.indexOf("=") != -1) { // parameters; (not feature function)
-          String[] fds = Regex.equalsWithSpaces.split(line);
+          String[] fds = Regex.equalsWithSpaces.split(line, 2);
           if (fds.length < 2) {
             Decoder.LOG(1, String.format("* WARNING: skipping config file line '%s'", line));
             continue;
@@ -549,9 +552,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("input-type"))) {
             ; // for Moses compatibility; ignore this 
 
-          } else if (parameter.equals(normalize_key("weight-overwrite"))) {
-            ; // for Moses compatibility; ignore this 
-            
           } else if (parameter.equals(normalize_key("n-best-list"))) {
             // for Moses compatibility
             String[] tokens = fds[1].split("\\s+");
@@ -562,6 +562,12 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("input-file"))) {
             // for Moses compatibility
             input_file = fds[1];
+            
+          } else if (parameter.equals(normalize_key("weight-file"))) {
+            // for Moses, ignore
+
+          } else if (parameter.equals(normalize_key("weight-overwrite"))) {
+            weight_overwrite = fds[1];
             
           } else if (parameter.equals(normalize_key("source-annotations"))) {
             // Check source sentence
