@@ -215,7 +215,6 @@ my $NER_TAGGER = undef;
 my $TMPDIR = "/tmp";
 
 # Enable forest rescoring
-my $RESCORE_FOREST = 0;
 my $LM_STATE_MINIMIZATION = 1;
 
 my $NBEST = 300;
@@ -291,7 +290,6 @@ my $retval = GetOptions(
   "hadoop-conf=s"          => \$HADOOP_CONF,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
   "tmp=s"             => \$TMPDIR,
-  "rescore-forest!"  => \$RESCORE_FOREST,
   "nbest=i"           => \$NBEST,
   "reordering-limit=i" => \$REORDERING_LIMIT,
   "num-translation-options=i" => \$NUM_TRANSLATION_OPTIONS,
@@ -304,11 +302,6 @@ my $retval = GetOptions(
 if (! $retval) {
   print "Invalid usage, quitting\n";
   exit 1;
-}
-
-# Forest rescoring doesn't work with LM state minimization
-if ($RESCORE_FOREST) {
-  $LM_STATE_MINIMIZATION = 0;
 }
 
 $RUNDIR = get_absolute_path($RUNDIR);
@@ -1573,12 +1566,10 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $refs_path = $TUNE{target};
     $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
 
-    my $rescore_str = ($RESCORE_FOREST == 1) ? "--rescore-forest" : "--no-rescore-forest";
-    
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --input $TUNE{source} --refs $refs_path --config $tunedir/joshua.config --decoder $JOSHUA/bin/decoder --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest $NBEST --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS $extra_args\" $rescore_str > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $JOSHUA/bin/decoder $tunedir/joshua.config > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/joshua.config.final");
