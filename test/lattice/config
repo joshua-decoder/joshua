@@ -16,6 +16,8 @@ use_unique_nbest = true
 include-align-index = false
 top_n = 300
 
+mark-oovs = true
+
 # this shouldn't apply to the lattice
 maxlen = 1
 

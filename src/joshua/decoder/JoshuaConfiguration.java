@@ -142,7 +142,7 @@ public class JoshuaConfiguration {
    * When true, _OOV is appended to all words that are passed through (useful for something like
    * transliteration on the target side
    */
-  public boolean mark_oovs = true;
+  public boolean mark_oovs = false;
 
   /* Enables synchronous parsing. */
   public boolean parse = false; // perform synchronous parsing
@@ -255,7 +255,7 @@ public class JoshuaConfiguration {
     outputFormat = "%i ||| %s ||| %f ||| %c";
     num_parallel_decoders = 1;
     hypergraphFilePattern = "";
-    mark_oovs = true;
+    mark_oovs = false;
     // oracleFile = null;
     parse = false; // perform synchronous parsing
     features = new ArrayList<String>();

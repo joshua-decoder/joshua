@@ -2,7 +2,7 @@
 
 # This test case starts a server and then throws 10 threads at it to make sure threading is working.
 
-$JOSHUA/bin/decoder -threads 4 -server-port 9010 -output-format "%i ||| %s" > server.log 2>&1 &
+$JOSHUA/bin/decoder -threads 4 -server-port 9010 -output-format "%i ||| %s" -mark-oovs true > server.log 2>&1 &
 serverpid=$!
 sleep 2
 
