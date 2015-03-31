@@ -1,33 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Combine a set of Joshua configuration and resources into a portable directory
+tree.
+"""
 from __future__ import print_function
 import argparse
 import logging
 import os
-import re
 import shutil
 import stat
 import sys
-from collections import defaultdict
+from collections import namedtuple
 from subprocess import Popen, PIPE
 
 
-EXAMPLE = """
-example invocation:
+EXAMPLE = r"""
+Example invocation:
 
-$JOSHUA/scripts/support/run_bundler.py \\
-  --force \\
-  /path/to/origin/directory/test/1/joshua.config \\
-  /path/to/origin/directory \\
-  new-bundle \\
-  --copy-config-options \\
-    '-top-n 1 \\
-    -output-format %S \\
-    -mark-oovs false \\
-    -server-port 5674 \\
+$JOSHUA/scripts/support/run_bundler.py \
+  --force \
+  /path/to/origin/directory/test/1/joshua.config \
+  /path/to/origin/directory \
+  new-bundle \
+  --copy-config-options \
+    '-top-n 1 \
+    -output-format %S \
+    -mark-oovs false \
+    -server-port 5674 \
     -tm/pt "thrax pt 20 /path/to/origin/directory/grammar.gz"'
 
-note: The options included in the value string for the --copy-config-options
+Note: The options included in the value string for the --copy-config-options
 argument can either be Joshua options or options for the
 $JOSHUA/scripts/copy-config.pl script. The -tm/pt option above is a special
 parameter for the copy-config script.
@@ -37,7 +40,7 @@ README_TEMPLATE = """Joshua Configuration Run Bundle
 ===============================
 
 To use the bundle, invoke the command
-  ./new-bundle/bundle-runner.sh [[JOSHUA] OPTIONS ... ]
+  ./new-bundle/run-joshua.sh [JOSHUA OPTIONS ... ]
 
 The Joshua decoder will start running.
 
@@ -49,7 +52,7 @@ options that may be useful during decoding include:
 -server-port 5674
 
 Instead of running as a command line processing tool, the Joshua decoder can be
-run as a TCP server which responds to (concurrently connectedO inputs with the
+run as a TCP server which responds to (concurrently connected) inputs with the
 resulting translated outputs. If the -server-port option is included, with the
 port specified as the value, Joshua will start up in server mode.
 
@@ -101,7 +104,16 @@ vocabulary will have '_OOV' appended to it.
 """
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
-FILE_TYPE_TOKENS = set(['lm', 'lmfile', 'tmfile', 'tm'])
+FILE_TYPE_TOKENS = [
+    'lm',
+    'tm',
+    # 'lmfile',
+    # 'tmfile',
+    'feature_function',
+    'feature-function'
+]
+FILE_TYPE_OPTIONS = ['-path', '-lm_file']
+
 OUTPUT_CONFIG_FILE_NAME = 'joshua.config'
 BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
 BUNDLE_RUNNER_TEXT = """#!/bin/bash
@@ -121,276 +133,398 @@ $JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
 """ % BUNDLE_RUNNER_FILE_NAME
 
 
-def clear_non_empty_dir(top):
-    logging.info('Deleting the directory ' + top + ' and all its contents.')
-    for root, dirs, files in os.walk(top, topdown=False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.rmdir(os.path.join(root, name))
-    os.rmdir(top)
+LineParts = namedtuple('LineParts', ['command', 'comment'])
 
 
-def abs_file_path(dir_path, file_token):
-        # The path might be relative or absolute, we don't know.
-        match_orig_dir_prefix = re.search("^" + dir_path, file_token)
-        match_abs_path = re.search("^/", file_token)
-        if match_abs_path or match_orig_dir_prefix:
-            return file_token
-        return os.path.abspath(os.path.join(dir_path, file_token))
-
-
-def make_dest_dir(dest_dir, overwrite):
-    """
-    Create the destination directory. Raise an exception if the specified
-    directory exists, and overwriting is not requested.
-    """
-    if os.path.exists(dest_dir) and overwrite:
-        clear_non_empty_dir(dest_dir)
-    os.mkdir(dest_dir)
-    logging.info('Creating the directory ' + dest_dir)
-
-
-def filter_through_copy_config_script(configs, copy_configs):
-    """
-    configs should be a list.
-    copy_configs should be a list.
-    """
-    cmd = JOSHUA_PATH + "/scripts/copy-config.pl " + copy_configs
-    logging.info('Running the copy config script with the command: ' + cmd)
-    p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
-    result = p.communicate("\n".join(configs))[0]
-    return result.splitlines()
-
-
-class ConfigLine(object):
-    """
-    Base class for representing a configuration lines. Subclasses of this class
-    are meant to deal with files that get copied or processed.
-    """
-
-    def __init__(self, line_parts, orig_dir=None, dest_dir=None):
-        self.line_parts = line_parts
-        self.orig_dir = orig_dir
-        self.dest_dir = dest_dir
-
-    def join_command_comment(self, custom_command_parts=None,
-                custom_comment=None):
-        """
-        Merges line_parts to re-form resulting config line.
-        If no values are given for the custom_command_parts and custom_comment
-        parameters, the original input configuration string is returned.
-        """
-        if custom_command_parts:
-            command = " ".join(custom_command_parts)
-        else:
-            command = " ".join(self.line_parts["command"])
-        if custom_comment:
-            comment = custom_comment
-        else:
-            comment = self.line_parts["comment"]
-        if comment:
-            comment = "#" + comment
-        return " ".join([command, comment]).strip()
-
-    def process(self):
-        pass
-
-    def result(self):
-        return self.join_command_comment()
-
-
-class FileConfigLine(ConfigLine):
-
-    def __init__(self, line_parts, orig_dir, dest_dir):
-        ConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
-        self.file_token = self.line_parts["command"][-1]
-        self.source_file_path = self.__set_source_file_token()
-
-    def __set_source_file_token(self):
-        """
-        If the path to the file to be copied is relative, then prepend it with
-        the origin directory.
-        """
-        return abs_file_path(self.orig_dir, self.file_token)
-
-
-class CopyFileConfigLine(FileConfigLine):
-
-    # The number of times each file name has been seen
-    file_name_counts = defaultdict(int)
-
-    @staticmethod
-    def clear_file_name_counts():
-        CopyFileConfigLine.file_name_counts = defaultdict(int)
-
-
-    def __init__(self, line_parts, orig_dir, dest_dir):
-        FileConfigLine.__init__(self, line_parts, orig_dir, dest_dir)
-        self.dest_file_path = self.__determine_copy_dest_path()
-
-    def __determine_copy_dest_path(self):
-        """
-        If the path to the file to be copied is relative, then prepend it with
-        the destination directory.
-        The path might be relative or absolute, we don't know.
-        """
-        file_name = os.path.basename(os.path.basename(self.file_token))
-        # Prevent more than one input file with the same name from clashing in
-        # the bundle.
-        count = CopyFileConfigLine.file_name_counts[file_name]
-        if count:
-            pre_extension, extension = os.path.splitext(file_name)
-            self.new_name = pre_extension + '-' + str(count) + extension
-        else:
-            self.new_name = file_name
-        CopyFileConfigLine.file_name_counts[file_name] += 1
-        return os.path.abspath(os.path.join(self.dest_dir, self.new_name))
-
-    def process(self):
-        """
-        Copy referenced file or directory tree over to the destination
-        directory.
-        """
-        src = self.source_file_path
-        dst = self.dest_file_path
-        logging.info('Copying ' + src + ' to ' + dst)
-        if os.path.isdir(src):
-            shutil.copytree(src, dst)
-        else:
-            shutil.copy(src, dst)
-
-    def result(self):
-        """
-        return the config line, changed if necessary, reflecting the new
-        location of the file.
-        """
-        # Update the config line to reference the changed path.
-        # 1) Remove the directories from the path, since the files are
-        #    copied to the top level.
-        command_parts = self.line_parts["command"]
-        command_parts[-1] = self.new_name
-        # 2) Put back together the configuration line
-        return self.join_command_comment(command_parts)
+def error_quit(message):
+    logging.error(message)
+    sys.exit(2)
 
 
 def extract_line_parts(line):
     """
-    Builds a dict containing tokenized command portion and comment portion of a
-    config line
+    Builds a LineParts object containing tokenized command and comment
+    portions of a config line
     """
     config, hash_char, comment = line.partition('#')
-    return {"command": config.split(), "comment": comment}
+    return LineParts(command=config, comment=comment)
 
 
-def config_line_factory(line, args):
+def filter_through_copy_config_script(config_text, copy_configs):
     """
-    Factory method that instantiates and returns a new object of a ConfigLine
-    (sub)class.
-    * line is the configuration line.
-    * args is a MyParser object.
+    Run the config_text through the 'copy-config.pl' script, applying
+    the copy_configs options
+    """
+    cmd = [os.path.join(JOSHUA_PATH, "/scripts/copy-config.pl"), copy_configs]
+    logging.info(
+        'Running the copy-config.pl script with the command: ' + ' '.join(cmd)
+    )
+    p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
+    result, err = p.communicate(config_text)
+    if p.returncode != 0:
+        error_quit(
+            'Encountered an error running the copy-config.pl script:\n' + err
+        )
+    return result
+
+
+def line_specifies_path(line):
+    """
+    Return True if the line matches the format of a joshua.config line
+    that specifies a file or directory path, and False otherwise.
+
+    >>> line_specifies_path('tm = moses -owner pt -maxspan 0 -path phrase-table.packed -max-source-len 5')
+    True
+    >>> line_specifies_path('tm = moses pt 0 phrase-table.packed')
+    True
+    >>> line_specifies_path('feature-function = WordPenalty')
+    False
+    >>> line_specifies_path('feature_function = Distortion')
+    False
+    >>> line_specifies_path('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file expts/systems/es-en/1/lm.kenlm')
+    True
     """
     line_parts = extract_line_parts(line)
-    tokens = line_parts["command"]
-    try:
-        config_type_token = tokens[0]
-    except:
-        config_type_token = None
-    if config_type_token in FILE_TYPE_TOKENS:
-        # This line refers to a file that should be copied.
-        cl = CopyFileConfigLine(line_parts, args.origdir, args.destdir)
-        return cl
+    if not line_parts.command:
+        return False
+
+    command_tokens = line_parts.command.split()
+    if not command_tokens:
+        return False
+
+    # The first token has to be the type of config that would specify a path
+    if not command_tokens[0] in FILE_TYPE_TOKENS:
+        return False
+
+    # Look for tokens that match options indicating a path
+    for path_opt in FILE_TYPE_OPTIONS:
+        if path_opt in command_tokens:
+            return True
+
+    # Look for 'tm' line with exactly four tokens to the right of the '='
+    if command_tokens[0] == 'tm' and len(command_tokens) == 6:
+        # Unless one of the tokens is an -option string
+        for token in command_tokens:
+            if token.startswith('-'):
+                return False
+        return True
+
+    # Look for 'lm' line with exactly six tokens to the right of the '='
+    if command_tokens[0] == 'lm' and len(command_tokens) == 8:
+        # Unless one of the tokens is an -option string
+        for token in command_tokens:
+            if token.startswith('-'):
+                return False
+        return True
+
+    return False
+
+
+def validate_path(path):
+    """
+    If the specified path does not exist, quit with an nonzero return
+    code, and log an error
+    """
+    if not os.path.exists(path):
+        error_quit('ERROR: The path "%s" does not exist. Cannot proceed.'
+                   % path)
+
+
+def recursive_copy(src, dest):
+    """
+    Copy the src file or recursively copy the directory rooted at src to
+    dest
+    """
+    if os.path.isdir(src):
+        shutil.copytree(src, dest, True)
     else:
-        return ConfigLine(line_parts)
+        shutil.copy(src, dest)
 
 
-def processed_config_line(line, args):
+def process_line_containing_path(line, orig_dir, dest_dir, unique_paths=False):
     """
-    Factory method that instantiates a new object of a ConfigLine or one of its
-    subclasses, runs the object's process() method, and returns the object.
-    * line is the configuration line.
-    * args is a MyParser object.
+    The line has already been determined to contain a path, so generate
+    an operation tuple, and update the config line based on the passed
+    orig_dir and dest_dir
+
+    NB! Setting unique paths makes this function stateful. It will track
+    the number of times it sees the
+
+    >>> with open('/tmp/lm.kenlm', 'w') as fh:
+    ...     fh.write('')
+    >>> line = ('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file ./lm.kenlm')
+
+    >>> process_line_containing_path(line, '/tmp', '/foobar', True)
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file lm.kenlm',
+     (<function recursive_copy at ...>,
+      ('/tmp/./lm.kenlm', '/foobar/lm.kenlm'),
+      'Making a copy of /tmp/./lm.kenlm at /foobar/lm.kenlm'))
+
+    >>> process_line_containing_path(line, '/tmp', '/foobar', True)
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file lm.2.kenlm',
+     (<function recursive_copy at ...>,
+      ('/tmp/./lm.kenlm', '/foobar/lm.2.kenlm'),
+      'Making a copy of /tmp/./lm.kenlm at /foobar/lm.2.kenlm'))
     """
-    cl = config_line_factory(line, args)
-    cl.process()
-    return cl
+    # This adds state to this function: dup_name_cts is a dictionary
+    # with filenames as keys and counts as values.
+    f = process_line_containing_path  # Abbreviate this function's name
+    if not hasattr(f, 'dup_name_cts'):
+        f.dup_name_cts = {}
+
+    #####################
+    # Get the source path
+    logging.debug('Looking for a path in the line:\n    %s' % line)
+    line_parts = extract_line_parts(line)
+    command_tokens = line_parts.command.split()
+    src_path = None
+
+    # Look for -lm_file or -path option tokens indicating a path
+    # If one of those options is not found, assume the final path is the
+    # final token.
+    path_index = -1
+    for path_opt in FILE_TYPE_OPTIONS:
+        if path_opt in command_tokens:
+            path_index = command_tokens.index(path_opt) + 1
+            break
+
+    src_path = command_tokens[path_index]
+    logging.debug('* Found path "%s"' % src_path)
+
+    #####################################
+    # Determine a unique destination path
+
+    # Get directory name or file name of source path
+    __, src_name = os.path.split(src_path)
+
+    # If file/dir name was previously seen, rename the destination path
+    # by incrementing the number if type it has been seen.
+    if unique_paths:
+        times_seen = f.dup_name_cts.get(src_name, 0) + 1
+        f.dup_name_cts[src_name] = times_seen
+        pre_extension, extension = os.path.splitext(src_name)
+        if times_seen > 1:
+            dest_name = "{0}.{1}{2}".format(pre_extension,
+                                            times_seen,
+                                            extension)
+        else:
+            dest_name = src_name
+    else:
+        dest_name = src_name
+
+    #############################################################
+    # Generate an operation tuple to copy from orig_dir to dest_dir
+
+    # Coerce the source path its absolute path if it's relative
+    if not os.path.isabs(src_path):
+        src_path = os.path.join(orig_dir, src_path)
+
+    validate_path(src_path)
+
+    dest_path = os.path.join(dest_dir, dest_name)
+    operation = (
+        (recursive_copy, (src_path, dest_path),
+         'Making a copy of {0} at {1}'.format(src_path, dest_path))
+    )
+
+    ########################
+    # Update the config line
+    command_tokens[path_index] = dest_name
+    command = ' '.join(command_tokens)
+    if line_parts.comment:
+        line = '#'.join([command, line_parts.comment])
+    else:
+        line = command
+
+    return line, operation
 
 
 def handle_args(clargs):
     """
-    Command-line arguments
+    Process the command-line options
     """
-
     class MyParser(argparse.ArgumentParser):
         def error(self, message):
-            sys.stderr.write('error: %s\n' % message)
+            logging.error('ERROR: %s\n' % message)
             self.print_help()
             print(EXAMPLE)
             sys.exit(2)
 
     # Parse the command line arguments.
-    parser = MyParser(description='creates a Joshua configuration bundle from '
+    parser = MyParser(description='create a Joshua configuration bundle from '
                                   'an existing configuration and set of files')
-    parser.add_argument('config', type=file,
-                        help='path to the origin configuration file. '
-                        'e.g. /path/to/test/1/joshua.config.final')
-    parser.add_argument('origdir',
-                        help='origin directory, which is the root directory '
-                        'from which origin files specified by relative paths '
-                        'are copied')
-    parser.add_argument('destdir',
-                        help='destination directory, which should not already '
-                        'exist. But if it does, it will be removed if -f is used.')
-    parser.add_argument('-f', '--force', action='store_true',
-                        help='extant destination directory will be overwritten')
-    parser.add_argument('-o', '--copy-config-options',
-                        default='',
-                        help='optional additional or replacement configuration '
-                        'options for Joshua, all surrounded by one pair of '
-                        'quotes.')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='print informational messages')
+    parser.add_argument(
+        'config', type=argparse.FileType('r'),
+        help='path to the origin configuration file. e.g. '
+             '/path/to/test/1/joshua.config.final'
+    )
+    parser.add_argument(
+        'orig_dir',
+        help='origin directory, which is the root directory from which origin '
+             'files specified by relative paths are copied'
+    )
+    parser.add_argument(
+        'dest_dir',
+        help='destination directory, which should not already exist. But if '
+             'it does, it will be removed if -f is used.'
+    )
+    parser.add_argument(
+        '-f', '--force', action='store_true',
+        help='extant destination directory will be overwritten'
+    )
+    parser.add_argument(
+        '-o', '--copy-config-options', default='',
+        help='optional additional or replacement configuration options for '
+             'Joshua, all surrounded by one pair of quotes.'
+    )
+    parser.add_argument(
+        '-v', '--verbose', action='store_true',
+        help='print informational messages'
+    )
     return parser.parse_args(clargs)
 
 
-def main(argv):
-    args = handle_args(argv[1:])
+def write_string_to_file(path, text):
+    """
+    Write the file at the specified path with the given lines
+    """
+    with open(path, 'w') as fh:
+        fh.write(text)
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format='* %(message)s')
 
-    try:
-        make_dest_dir(args.destdir, args.force)
-    except:
-        if os.path.exists(args.destdir) and not args.force:
-            sys.stderr.write('error: trying to make existing directory %s\n'
-                             % args.destdir)
-            sys.stderr.write('use -f or --force option to overwrite the directory.')
-            sys.exit(2)
-    config_lines = [line.strip() for line in args.config]
-    if args.copy_config_options:
-        config_lines = filter_through_copy_config_script(config_lines,
-                args.copy_config_options)
-    # Create the resource files in the new bundle.
-    # Some results might be a list of more than one line.
-    result_config_lines = [processed_config_line(line.strip(), args).result()
-                           for line in config_lines]
-    # Create the Joshua configuration file for the package
-    with open(os.path.join(args.destdir, OUTPUT_CONFIG_FILE_NAME), 'w') as fh:
-        for line in result_config_lines:
-            fh.write(line + '\n')
-    # Write the script that runs Joshua using the configuration and resources
-    # in the bundle.
-    with open(os.path.join(args.destdir, BUNDLE_RUNNER_FILE_NAME), 'w') as fh:
+def write_bundle_runner_file(dest_dir):
+    """
+    Write the bundle runner file
+    """
+    with open(os.path.join(dest_dir, BUNDLE_RUNNER_FILE_NAME), 'w') as fh:
         fh.write(BUNDLE_RUNNER_TEXT)
         # The mode will be read and execute by all.
-        mode = stat.S_IREAD | stat.S_IEXEC | stat.S_IRGRP | stat.S_IXGRP \
-                | stat.S_IROTH | stat.S_IXOTH
-        os.chmod(os.path.join(args.destdir, BUNDLE_RUNNER_FILE_NAME), mode)
+        mode = (stat.S_IREAD | stat.S_IEXEC | stat.S_IRGRP | stat.S_IXGRP
+                | stat.S_IROTH | stat.S_IXOTH)
+        os.chmod(os.path.join(dest_dir, BUNDLE_RUNNER_FILE_NAME), mode)
+
+
+def collect_operations(opts):
+    """
+    Produce a list of operations to take.
+
+    Each element in the operations list is in the format:
+      (function, (arguments,), 'logging message')
+    """
+    operations = []
+
+    #######################
+    # Destination directory
+    if os.path.exists(opts.dest_dir):
+        if not opts.force:
+            error_quit(
+                'ERROR: The destination directory exists: "%s"\n'
+                'Use -f or --force option to overwrite the directory.'
+                % opts.dest_dir
+            )
+        else:
+            operations.append(
+                (shutil.rmtree, (opts.dest_dir,),
+                 'Forcing deletion of existing destination directory "%s"'
+                 % opts.dest_dir)
+            )
+
+    operations.append(
+        (os.mkdir, (opts.dest_dir,),
+         'Creating destination directory "%s"' % opts.dest_dir)
+    )
+
+    ##########################
+    # Input joshua.config file
+    config_text = opts.config.read()
+    if opts.copy_config_options:
+        config_text = filter_through_copy_config_script(
+            config_text,
+            opts.copy_config_options
+        )
+
+    config_lines = config_text.split('\n')
+
+    ###############
+    # Files to copy
+    # Parse the joshua.config and collect copy operations
+    result_config_lines = []
+    for line in config_lines:
+        if line_specifies_path(line):
+            line, operation = process_line_containing_path(line,
+                                                           opts.orig_dir,
+                                                           opts.dest_dir,
+                                                           unique_paths=True)
+            operations.append(operation)
+        result_config_lines.append(line)
+
+    ###########################
+    # Output joshua.config file
+    # Create the Joshua configuration file for the package
+    path = os.path.join(opts.dest_dir, OUTPUT_CONFIG_FILE_NAME)
+    text = '\n'.join(result_config_lines) + '\n'
+    operations.append(
+        (write_string_to_file, (path, text),
+         'Writing the updated joshua.config to %s' % path
+         )
+    )
+
+    ######################
+    # Bundle runner script
+    # Write the script that runs Joshua using the configuration and resource
+    # in the bundle, and make its mode world-readable, and world-executable.
+    path = os.path.join(opts.dest_dir, BUNDLE_RUNNER_FILE_NAME)
+    operations.append(
+        (write_string_to_file, (path, BUNDLE_RUNNER_TEXT),
+         'Writing the bundle runner file "%s"' % path)
+    )
+    mode = (stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH |
+            stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    operations.append(
+        (os.chmod, (path, mode),
+         'Making the bundle runner file executable')
+    )
+
+    #######################
     # Write the README file
-    with open(os.path.join(args.destdir, 'README'), 'w') as fh:
-        fh.write(README_TEMPLATE)
+    path = os.path.join(opts.dest_dir, 'README')
+    operations.append(
+        (write_string_to_file, (path, README_TEMPLATE),
+         'Writing the README to "%s"' % path
+         )
+    )
+
+    return operations
+
+
+def execute_operations(operations):
+    """
+    Execute the list of operations.
+    """
+    for func, args, msg in operations:
+        logging.info(msg)
+        func(*args)
+
+
+def main(argv):
+    opts = handle_args(argv[1:])
+
+    logging.basicConfig(
+        level=logging.DEBUG if opts.verbose else logging.WARNING,
+        format='* %(message)s'
+    )
+
+    validate_path(opts.orig_dir)
+    operations = collect_operations(opts)
+    execute_operations(operations)
 
 
 if __name__ == "__main__":
+    try:
+        assert JOSHUA_PATH
+    except AssertionError:
+        error_quit('ERROR: The JOSHUA environment variable must be defined.')
+
     main(sys.argv)
