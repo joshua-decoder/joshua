@@ -1163,11 +1163,11 @@ if($___RETURN_BEST_DEV) {
   $best_featlist->{"skippeduntuneablecomponents"} = $featlist->{"skippeduntuneablecomponents"};
   # create_config($___CONFIG_ORIG, "./moses.ini", $best_featlist,
   #               $bestit, $bestbleu, $best_sparse_file);
-  create_config_joshua($___CONFIG_ORIG, "./joshua.config", $best_featlist,
+  create_config_joshua($___CONFIG_ORIG, "./joshua.config.final", $best_featlist,
                 $bestit, $bestbleu, $best_sparse_file);
 }
 else {
-  create_config_joshua($___CONFIG_ORIG, "./joshua.config", $featlist, $run, $devbleu, $sparse_weights_file);
+  create_config_joshua($___CONFIG_ORIG, "./joshua.config.final", $featlist, $run, $devbleu, $sparse_weights_file);
 }
 
 # just to be sure that we have the really last finished step marked
