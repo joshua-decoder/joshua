@@ -1,0 +1,3 @@
+0 ||| this is a test ||| TargetBigram_<s>_this=1.000 TargetBigram_UNK_</s>=1.000 TargetBigram_UNK_UNK=1.000 TargetBigram_is_UNK=1.000 TargetBigram_this_is=1.000 tm_glue_0=4.000 ||| 0.000
+0 ||| this is a test ||| TargetBigram_<s>_UNK=1.000 TargetBigram_UNK_</s>=1.000 TargetBigram_UNK_UNK=1.000 TargetBigram_UNK_a=1.000 TargetBigram_a_UNK=1.000 tm_glue_0=4.000 ||| 0.000
+0 ||| this is a test ||| TargetBigram_<s>_UNK=1.000 TargetBigram_UNK_</s>=1.000 TargetBigram_UNK_is=1.000 TargetBigram_a_UNK=1.000 TargetBigram_is_a=1.000 tm_glue_0=4.000 ||| 0.000

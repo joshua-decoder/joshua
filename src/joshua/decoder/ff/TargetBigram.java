@@ -1,5 +1,7 @@
 package joshua.decoder.ff;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;	
 import java.util.List;
 
@@ -11,16 +13,72 @@ import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.segment_file.Sentence;
+import joshua.util.io.LineReader;
 
 /***
  * The RuleBigram feature is an indicator feature that counts target word bigrams that are created when
- * a rule is applied. 
+ * a rule is applied. It accepts three parameters:
+ * 
+ * -vocab /path/to/vocab
+ * 
+ *  The path to a vocabulary, where each line is of the format ID WORD COUNT.
+ *  
+ * -threshold N
+ * 
+ *  Mask to UNK all words whose COUNT is less than N.
+ *  
+ * -top-n N
+ * 
+ *  Only use the top N words.
  */
 
 public class TargetBigram extends StatefulFF {
+  
+  private HashSet<String> vocab = null;
+  private int maxTerms = 1000000;
+  private int threshold = 0;
 
   public TargetBigram(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "TargetBigram", args, config);
+    
+    if (parsedArgs.containsKey("threshold"))
+      threshold = Integer.parseInt(parsedArgs.get("threshold"));
+    
+    if (parsedArgs.containsKey("top-n"))
+      maxTerms = Integer.parseInt(parsedArgs.get("top-n"));
+
+    if (parsedArgs.containsKey("vocab")) {
+      loadVocab(parsedArgs.get("vocab"));
+    }
+  }
+
+  /**
+   * Load vocabulary items passing the 'threshold' and 'top-n' filters.
+   * 
+   * @param filename
+   */
+  private void loadVocab(String filename) {
+    this.vocab = new HashSet<String>(); 
+    this.vocab.add("<s>");
+    this.vocab.add("</s>");
+    try {
+      LineReader lineReader = new LineReader(filename);
+      for (String line: lineReader) {
+        if (lineReader.lineno() > maxTerms)
+          break;
+        
+        String[] tokens = line.split("\\s+");
+        String word = tokens[1];
+        int count = Integer.parseInt(tokens[2]);
+        
+        if (count >= threshold)
+          vocab.add(word);
+      }
+
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -44,7 +102,7 @@ public class TargetBigram extends StatefulFF {
 
         // Left context.
         for (int token : leftContext) {
-          currentNgram.add(Vocabulary.word(token));
+          currentNgram.add(getWord(token));
           if (left == -1)
             left = token;
           right = token;
@@ -58,10 +116,10 @@ public class TargetBigram extends StatefulFF {
         // Replace right context.
         int tSize = currentNgram.size();
         for (int i = 0; i < rightContext.length; i++)
-          currentNgram.set(tSize - rightContext.length + i, Vocabulary.word(rightContext[i]));
+          currentNgram.set(tSize - rightContext.length + i, getWord(rightContext[i]));
 
       } else { // terminal words
-        currentNgram.add(Vocabulary.word(curID));
+        currentNgram.add(getWord(curID));
         if (left == -1)
           left = curID;
         right = curID;
@@ -77,6 +135,22 @@ public class TargetBigram extends StatefulFF {
     NgramDPState state = new NgramDPState(new int[] { left }, new int[] { right });
 //    System.err.println(String.format("RULE %s -> state %s", rule.getRuleString(), state));
     return state;
+  }
+
+  /**
+   * Returns the word after comparing against the private vocabulary (if set).
+   * 
+   * @param curID
+   * @return the word
+   */
+  private String getWord(int curID) {
+    String word = Vocabulary.word(curID);
+
+    if (vocab != null && ! vocab.contains(word)) {
+      return "UNK"; 
+    }
+    
+    return word;
   }
 
   /**
