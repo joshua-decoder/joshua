@@ -403,20 +403,20 @@ public class Decoder {
           if (joshuaConfiguration.moses)
             feature = demoses(feature);
           
-          joshuaConfiguration.weights.add(String.format("%s %s", tokens[i], tokens[i+1]));
+          joshuaConfiguration.weights.add(String.format("%s %s", feature, tokens[i+1]));
           Decoder.LOG(1, String.format("COMMAND LINE WEIGHT: %s -> %.3f", feature, value));
         }
       }
 
       /* Read the weights found in the config file */
-      for (int i = 0; i < joshuaConfiguration.weights.size(); i++) {
-        String pair[] = joshuaConfiguration.weights.get(i).split("\\s+");
+      for (String pairStr: joshuaConfiguration.weights) {
+        String pair[] = pairStr.split("\\s+");
 
         /* Sanity check for old-style unsupported feature invocations. */
         if (pair.length != 2) {
           System.err.println("FATAL: Invalid feature weight line found in config file.");
           System.err
-              .println(String.format("The line was '%s'", joshuaConfiguration.weights.get(i)));
+              .println(String.format("The line was '%s'", pairStr));
           System.err
               .println("You might be using an old version of the config file that is no longer supported");
           System.err

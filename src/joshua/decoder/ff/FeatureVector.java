@@ -185,12 +185,13 @@ public class FeatureVector {
     ArrayList<String> keys = new ArrayList<String>(features.keySet());
     Collections.sort(keys);
     for (String key: keys) {
-      float value = features.get(key);
-      if (key.equals("OOVPenalty"))
-        // force moses to see it as sparse
-        key = "OOV_Penalty";
-      if (! printed_keys.contains(key))
+      if (! printed_keys.contains(key)) {
+        float value = features.get(key);
+        if (key.equals("OOVPenalty"))
+          // force moses to see it as sparse
+          key = "OOV_Penalty";
         outputString += String.format("%s=%.3f ", key, value);
+      }
     }
     return outputString.trim();
   }
