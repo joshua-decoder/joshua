@@ -424,9 +424,12 @@ public class Decoder {
           System.exit(17);
         }
 
-        feature_names.add(pair[0]);
-        if (FeatureVector.isDense(pair[0]))
-          dense_feature_names.add(pair[0]);
+        /* Weights could be listed more than once if overridden from the command line */
+        if (! weights.containsKey(pair[0])) {
+          feature_names.add(pair[0]);
+          if (FeatureVector.isDense(pair[0]))
+            dense_feature_names.add(pair[0]);
+        }
 
         weights.put(pair[0], Float.parseFloat(pair[1]));
       }
