@@ -831,7 +831,7 @@ while (1) {
     $cmd .= " -d" if $__PROMIX_TRAINING; # Allow duplicates
     # remove segmentation
     $cmd .= " -l $__REMOVE_SEGMENTATION" if  $__PROMIX_TRAINING;
-    $cmd = &create_extractor_script($cmd, $___WORKING_DIR);
+    $cmd = &create_extractor_script($cmd, ".");
     &submit_or_exec($cmd, "extract.out","extract.err");
   }
 
