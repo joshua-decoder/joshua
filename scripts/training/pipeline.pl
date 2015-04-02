@@ -60,6 +60,9 @@ my $MAXSPAN = 20;
 my $MAXLEN_TUNE = 0;
 my $MAXLEN_TEST = 0;
 
+# when doing phrase-based decoding, the maximum length of a phrase (source side)
+my $MAX_PHRASE_LEN = 5;
+
 my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $DO_PACK_GRAMMARS = 1;
@@ -1018,8 +1021,6 @@ if (! defined $GRAMMAR_FILE) {
 
   } elsif ($GRAMMAR_TYPE eq "phrase") {
 
-    my $max_phrase_length = 5;
-
     mkdir("model") unless -d "model";
 
     if ($ALIGNMENT ne "alignments/training.align") {
@@ -1030,7 +1031,7 @@ if (! defined $GRAMMAR_FILE) {
 
     # Compute lexical probabilities
     $cachepipe->cmd("build-lex-trans",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file alignments/training -alignment align -corpus $TRAIN{prefix}",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 4 -last-step 4 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $MAX_PHRASE_LEN -score-options '--GoodTuring' -parallel -lexical-file model/lex -alignment-file alignments/training -alignment align -corpus $TRAIN{prefix}",
                     $TRAIN{source},
                     $TRAIN{target},
                     $ALIGNMENT,
@@ -1040,7 +1041,7 @@ if (! defined $GRAMMAR_FILE) {
 
     # Extract the phrases
     $cachepipe->cmd("extract-phrases",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -alignment-file alignments/training -alignment align -extract-file model/extract -corpus $TRAIN{prefix}",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 5 -last-step 5 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -max-phrase-length $MAX_PHRASE_LEN -score-options '--GoodTuring' -parallel -alignment-file alignments/training -alignment align -extract-file model/extract -corpus $TRAIN{prefix}",
                     $TRAIN{source},
                     $TRAIN{target},
                     $ALIGNMENT,
@@ -1050,7 +1051,7 @@ if (! defined $GRAMMAR_FILE) {
 
     # Build the phrase table
     $cachepipe->cmd("build-ttable",
-                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 6 -last-step 6 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -alignment grow-diag-final-and -max-phrase-length $max_phrase_length -score-options '--GoodTuring' -parallel -extract-file model/extract -lexical-file model/lex -phrase-translation-table model/phrase-table",
+                    "$MOSES/scripts/training/train-model.perl -mgiza -mgiza-cpus $NUM_THREADS -dont-zip -first-step 6 -last-step 6 -external-bin-dir $MOSES/bin -f $SOURCE -e $TARGET -alignment grow-diag-final-and -max-phrase-length $MAX_PHRASE_LEN -score-options '--GoodTuring' -parallel -extract-file model/extract -lexical-file model/lex -phrase-translation-table model/phrase-table",
                     "model/lex.e2f",
                     "model/extract.sorted.gz"
         );
@@ -1408,6 +1409,38 @@ for my $i (0..$#LMFILES) {
   push (@lmparamstrings, $lmparamstring);
 }
 
+sub parse_tm_line {
+  my $line = shift;
+  my $owner = "";
+  my $span = "";
+  my $grammar = "";
+  if ($line =~ /\-path/) { 
+    # new format, e.g., tm = moses -owner pt -path /path/to/grammar -maxspan 0
+    my $grammarline = $line; 
+    $grammarline =~ s/.*?=\s+//;
+    my @tokens = split(' ', $grammarline);
+    my $keyword = shift(@tokens);
+    while (scalar @tokens) {
+      my $field = shift @tokens;
+      if ($field eq "-path") {
+        $grammar = shift @tokens;
+      } elsif ($field eq "-owner") {
+        $owner = shift @tokens;
+      } elsif ($field eq "-maxspan") {
+        $span = shift @tokens;
+      } else {
+        shift @tokens;
+      }
+    }    
+  } else {
+    # old format, e.g., tm = moses pt 0 /path/to/grammar
+    my (undef,$grammarline) = split(/\s*=\s*/, $line);
+    (undef,$owner,$span,$grammar) = split(' ', $grammarline);
+  }
+
+  return ($owner, $span, $grammar);
+}
+
 my $lmlines   = join($/, @configstrings);
 my $lmweights = join($/, @lmweightstrings);
 my $lmparams  = join($/, @lmparamstrings);
@@ -1416,12 +1449,11 @@ my (@tmparamstrings, @tmweightstrings);
 open CONFIG, $TUNEFILES{'joshua.config'} or die;
 while (my $line = <CONFIG>) {
   if ($line =~ /^tm\s*=/) {
-    $line =~ s/\s+$//;
-    my (undef,$grammarline) = split(/\s*=\s*/, $line);
-    my (undef,$owner,$span,$grammar) = split(' ', $grammarline);
+    my ($owner, $span, $grammar) = parse_tm_line($line);
 
     next if ($GRAMMAR_TYPE eq "phrase" and $grammar =~ /<GLUE_GRAMMAR>/);
 
+    # If we're looking at template line...
     if ($grammar =~ /<GRAMMAR_FILE>/ or $grammar =~ /<GLUE_GRAMMAR>/) {
       
       my $grammar_file = ($grammar =~ /<GRAMMAR_FILE>/) ? $TUNE_GRAMMAR : $GLUE_GRAMMAR_FILE;
@@ -1492,7 +1524,11 @@ for my $run (1..$OPTIMIZER_RUNS) {
   system("mkdir -p $tunedir") unless -d $tunedir;
 
   my $tmtype = "thrax";
-  $tmtype = "moses" if $GRAMMAR_TYPE eq "phrase";
+  my $tmargs = "";
+  if ($GRAMMAR_TYPE eq "phrase") {
+    $tmtype = "moses";
+    $tmargs = "-max-source-len $MAX_PHRASE_LEN";
+  }
 
   foreach my $key (keys %TUNEFILES) {
 		my $file = $TUNEFILES{$key};
@@ -1518,6 +1554,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
 			s/<GRAMMAR_FILE>/$TUNE_GRAMMAR/g;
       s/<GRAMMAR_KEYWORD>/$tmtype/g;
+      s/<GRAMMAR_ARGS>/$tmargs/g;
 			s/<GLUE_GRAMMAR>/$GLUE_GRAMMAR_FILE/g;
 			s/<MAXSPAN>/$MAXSPAN/g;
 			s/<OOV>/$OOV/g;
@@ -1569,7 +1606,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
     my $extra_args = $JOSHUA_ARGS;
     $extra_args =~ s/"/\\"/g;
     $cachepipe->cmd("mira-$run",
-                    "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --return-best-dev --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $JOSHUA/bin/decoder $tunedir/joshua.config > $tunedir/mira.log 2>&1",
+                    "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $JOSHUA/bin/decoder $tunedir/joshua.config > $tunedir/mira.log 2>&1",
                     $TUNE_GRAMMAR_FILE,
                     $TUNE{source},
                     "$tunedir/joshua.config.final");
@@ -1695,7 +1732,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs false -tm '$tmtype pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
+                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs false -tm '$tmtype -owner pt -maxspan $MAXSPAN -path $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config.final",
 									"$testrun/joshua.config");
 
@@ -1856,7 +1893,7 @@ chmod(0755,"$testrun/decoder_command");
 my $tmtype = "thrax";
 $tmtype = "phrase" if $GRAMMAR_TYPE eq "phrase";
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs false -tm/pt '$tmtype pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV -search $SEARCH_ALGORITHM > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs false -tm/pt '$tmtype -owner pt -maxspan $MAXSPAN -path $TEST_GRAMMAR' -default-non-terminal $OOV -search $SEARCH_ALGORITHM > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 

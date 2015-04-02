@@ -1650,6 +1650,7 @@ sub create_config {
 sub unmunge {
   my $feature = shift;
   $feature =~ s/-/_/g if ($feature =~ /^tm/ or $feature =~ /^lm/);
+  $feature = "OOVPenalty" if $feature eq "OOV_Penalty";
   return $feature;
 }
 
