@@ -394,18 +394,6 @@ def write_string_to_file(path, text):
         fh.write(text)
 
 
-def write_bundle_runner_file(dest_dir):
-    """
-    Write the bundle runner file
-    """
-    with open(os.path.join(dest_dir, BUNDLE_RUNNER_FILE_NAME), 'w') as fh:
-        fh.write(BUNDLE_RUNNER_TEXT)
-        # The mode will be read and execute by all.
-        mode = (stat.S_IREAD | stat.S_IEXEC | stat.S_IRGRP | stat.S_IXGRP
-                | stat.S_IROTH | stat.S_IXOTH)
-        os.chmod(os.path.join(dest_dir, BUNDLE_RUNNER_FILE_NAME), mode)
-
-
 def collect_operations(opts):
     """
     Produce a list of operations to take.
