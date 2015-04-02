@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Combine a set of Joshua configuration and resources into a portable directory
-tree.
+Combine a set of Joshua configuration and resources into a portable
+directory tree.
 """
 from __future__ import print_function
 import argparse
