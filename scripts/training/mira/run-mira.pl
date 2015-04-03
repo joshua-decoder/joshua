@@ -1682,7 +1682,7 @@ sub create_config_joshua {
     open SPARSE, $sparse_weights_file or die "can't open sparse weights file '$sparse_weights_file'";
     while (my $line = <SPARSE>) {
       if ($line =~ /^(\S+) (\S+)$/) {
-        $P{$1} = $2;
+        $P{unmunge($1)} = $2;
 #        print STDERR "featlist: $1=$2 \n";
       }
     }
