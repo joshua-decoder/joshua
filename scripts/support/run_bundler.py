@@ -155,7 +155,7 @@ def filter_through_copy_config_script(config_text, copy_configs):
     Run the config_text through the 'copy-config.pl' script, applying
     the copy_configs options
     """
-    cmd = [os.path.join(JOSHUA_PATH, "/scripts/copy-config.pl"), copy_configs]
+    cmd = [os.path.join(JOSHUA_PATH, "scripts/copy-config.pl"), copy_configs]
     logging.info(
         'Running the copy-config.pl script with the command: ' + ' '.join(cmd)
     )
@@ -163,7 +163,8 @@ def filter_through_copy_config_script(config_text, copy_configs):
     result, err = p.communicate(config_text)
     if p.returncode != 0:
         error_quit(
-            'Encountered an error running the copy-config.pl script:\n' + err
+            'Encountered an error running the copy-config.pl script\n  command: %s\n  error: %s'
+            % (" ".join(cmd), err or '')
         )
     return result
 
