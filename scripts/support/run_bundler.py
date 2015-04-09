@@ -12,7 +12,7 @@ import shutil
 import stat
 import sys
 from collections import namedtuple
-from subprocess import Popen, PIPE
+from subprocess import CalledProcessError, Popen, PIPE
 
 
 EXAMPLE = r"""
@@ -162,8 +162,10 @@ def filter_through_copy_config_script(config_text, copy_configs):
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
     result, err = p.communicate(config_text)
     if p.returncode != 0:
-        error_quit(
-            'Encountered an error running the copy-config.pl script\n  command: %s\n  error: %s'
+        raise CalledProcessError(
+            'Encountered an error running the copy-config.pl script.\n'
+            '  command: %s\n'
+            '  error: %s'
             % (" ".join(cmd), err or '')
         )
     return result
@@ -221,14 +223,20 @@ def line_specifies_path(line):
     return False
 
 
+class PathException(Exception):
+    """Error involving a specified path"""
+    pass
+
+
 def validate_path(path):
     """
     If the specified path does not exist, quit with an nonzero return
     code, and log an error
     """
     if not os.path.exists(path):
-        error_quit('ERROR: The path "%s" does not exist. Cannot proceed.'
-                   % path)
+        raise PathException(
+            'The path "%s" does not exist. Cannot proceed.' % path
+        )
 
 
 def recursive_copy(src, dest):
@@ -408,7 +416,7 @@ def collect_operations(opts):
     # Destination directory
     if os.path.exists(opts.dest_dir):
         if not opts.force:
-            error_quit(
+            raise Exception(
                 'ERROR: The destination directory exists: "%s"\n'
                 'Use -f or --force option to overwrite the directory.'
                 % opts.dest_dir
@@ -440,12 +448,21 @@ def collect_operations(opts):
     # Files to copy
     # Parse the joshua.config and collect copy operations
     result_config_lines = []
-    for line in config_lines:
+    for i, line in enumerate(config_lines):
+        line_num = i + 1
         if line_specifies_path(line):
-            line, operation = process_line_containing_path(line,
-                                                           opts.orig_dir,
-                                                           opts.dest_dir,
-                                                           unique_paths=True)
+            try:
+                line, operation = process_line_containing_path(
+                    line, opts.orig_dir, opts.dest_dir, unique_paths=True
+                )
+            except PathException as e:
+                # Prepend the line number to the error message
+                message = (
+                    'ERROR: Configuration file "{0}" line {1}: {2}'
+                    .format(opts.config.name, line_num, e.message)
+                )
+                e.message = message
+                raise e
             operations.append(operation)
         result_config_lines.append(line)
 
@@ -505,9 +522,12 @@ def main(argv):
         format='* %(message)s'
     )
 
-    validate_path(opts.orig_dir)
-    operations = collect_operations(opts)
-    execute_operations(operations)
+    try:
+        validate_path(opts.orig_dir)
+        operations = collect_operations(opts)
+        execute_operations(operations)
+    except Exception as e:
+        error_quit(e.message)
 
 
 if __name__ == "__main__":
