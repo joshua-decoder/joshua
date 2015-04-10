@@ -186,6 +186,8 @@ def line_specifies_path(line):
     False
     >>> line_specifies_path('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file expts/systems/es-en/1/lm.kenlm')
     True
+    >>> line_specifies_path('# Foo')
+    False
     """
     line_parts = extract_line_parts(line)
     if not line_parts.command:
