@@ -24,7 +24,6 @@ public class PhraseTable implements Grammar {
   
   private JoshuaConfiguration config;
   private Grammar backend;
-  private int maxSourcePhraseLength = -1;
   
   /**
    * Chain to the super with a number of defaults. For example, we only use a single nonterminal,
@@ -42,12 +41,11 @@ public class PhraseTable implements Grammar {
     
     if (new File(grammarFile).isDirectory()) {
       this.backend = new PackedGrammar(grammarFile, spanLimit, owner, "moses", config);
-      if (maxSource == -1) {
-        System.err.println("FATAL: Using a packed grammar for a phrase table backend requires");
-        System.err.println("       you to specify -max-source-len in the tm line");
+      if (this.backend.getMaxSourcePhraseLength() == -1) {
+        System.err.println("FATAL: Using a packed grammar for a phrase table backend requires that you");
+        System.err.println("       packed the grammar with Joshua 6.0.2 or greater");
         System.exit(-1);
       }
-      setMaxSourcePhraseLength(maxSource);
 
     } else {
       this.backend = new MemoryBasedBatchGrammar("moses", grammarFile, owner, "[X]", spanLimit, config);
@@ -59,28 +57,20 @@ public class PhraseTable implements Grammar {
     
     this.backend = new MemoryBasedBatchGrammar(owner, config);
   }
-  
-  /**
-   * The maximum length of a source phrase found in the grammar.
-   * 
-   * @param max
-   */
-  public void setMaxSourcePhraseLength(int max) {
-    this.maxSourcePhraseLength = max;
-  }
       
   /**
-   * Returns the longest source phrase read, subtracting off the nonterminal that was added.
-   * The {@link MemoryBasedBatchGrammar} computes this as the grammar is read in, whereas
-   * a {@link PackedGrammar} has to be told the maximum length via the config file.
+   * Returns the longest source phrase read. For {@link MemoryBasedBatchGrammar}s, we subtract 1
+   * since the grammar includes the nonterminal. For {@link PackedGrammar}s, the value was either
+   * in the packed config file (Joshua 6.0.2+) or was passed in via the TM config line.
    * 
    * @return
    */
+  @Override
   public int getMaxSourcePhraseLength() {
     if (backend instanceof MemoryBasedBatchGrammar)
-      return ((MemoryBasedBatchGrammar)backend).getMaxSourcePhraseLength() - 1;
+      return this.backend.getMaxSourcePhraseLength() - 1;
     else
-      return this.maxSourcePhraseLength;
+      return this.backend.getMaxSourcePhraseLength();
   }
 
   /**

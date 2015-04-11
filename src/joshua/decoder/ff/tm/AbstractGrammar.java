@@ -44,6 +44,21 @@ public abstract class AbstractGrammar implements Grammar {
    */
   protected int owner = -1;
   
+  /*
+   * The maximum length of a source-side phrase. Mostly used by the phrase-based decoder.
+   */
+  protected int maxSourcePhraseLength = -1;
+  
+    /**
+   * Returns the longest source phrase read.
+   * 
+   * @return the longest source phrase read (nonterminal + terminal symbols).
+   */
+  @Override
+  public int getMaxSourcePhraseLength() {
+    return maxSourcePhraseLength;
+  }
+  
   @Override
   public int getOwner() {
     return owner;

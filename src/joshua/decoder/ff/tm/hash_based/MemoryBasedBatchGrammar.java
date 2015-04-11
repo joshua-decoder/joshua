@@ -49,9 +49,6 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
 
   private GrammarReader<Rule> modelReader;
   
-  /* Maximum source phrase length */
-  protected int maxSourcePhraseLength = 0;
-
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
 
@@ -228,16 +225,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   public void setRegexpGrammar(boolean value) {
     this.isRegexpGrammar = value;
   }
-  
-  /**
-   * Returns the longest source phrase read.
-   * 
-   * @return the longest source phrase read (nonterminal + terminal symbols).
-   */
-  public int getMaxSourcePhraseLength() {
-    return maxSourcePhraseLength;
-  }
-  
+
   /***
    * Takes an input word and creates an OOV rule in the current grammar for that word.
    * 
