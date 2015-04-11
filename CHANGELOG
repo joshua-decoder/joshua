@@ -1,3 +1,12 @@
+6.0.2 (April 10, 2015)
+======================
+
+- Restored compatibility with Moses 3.0 tuning regime (tuning with kbmira 
+  now requires Moses 3.0)
+- Sparse feature support in grammar file, which enables compatibility with 
+  PPDB grammars (paraphrase.org)
+- Bugfixes and other minor improvements
+
 6.0.1 (March 6, 2015)
 =====================
 
