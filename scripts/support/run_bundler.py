@@ -129,6 +129,16 @@ $JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
 LineParts = namedtuple('LineParts', ['command', 'comment'])
 
 
+class PathException(Exception):
+    """Error involving a specified path"""
+    pass
+
+
+class PackingError(Exception):
+    """Error packing a grammar"""
+    pass
+
+
 def error_quit(message):
     logging.error(message)
     sys.exit(2)
@@ -162,6 +172,29 @@ def filter_through_copy_config_script(config_text, copy_configs):
             % (" ".join(cmd), err or '')
         )
     return result
+
+
+def line_specifies_grammar(line):
+    """
+    Return True if the line matches the format of a joshua.config line
+    that specifies a grammar, and False otherwise.
+
+    >>> line_specifies_grammar('tm = moses -owner pt -maxspan 0 -path phrase-table.packed -max-source-len 5')
+    True
+    >>> line_specifies_grammar('tm = moses pt 0 phrase-table.packed')
+    True
+    >>> line_specifies_grammar('feature-function = WordPenalty')
+    False
+    >>> line_specifies_grammar('# Foo')
+    False
+    """
+    line_parts = extract_line_parts(line)
+    if not line_parts.command:
+        return False
+
+    command_tokens = line_parts.command.split()
+    # The first two tokens must be 'tm', and '='
+    return command_tokens[:2] == ['tm', '=']
 
 
 def line_specifies_path(line):
@@ -205,11 +238,6 @@ def line_specifies_path(line):
     return False
 
 
-class PathException(Exception):
-    """Error involving a specified path"""
-    pass
-
-
 def validate_path(path):
     """
     If the specified path does not exist, quit with an nonzero return
@@ -219,6 +247,47 @@ def validate_path(path):
         raise PathException(
             'The path "%s" does not exist. Cannot proceed.' % path
         )
+
+
+def parse_path(config_line):
+    """
+    Given a Joshua config line with no comments, return a path specified
+    by the config.
+
+    >>> parse_path('tm = moses -owner pt -maxspan 0 -path phrase-table.packed -max-source-len 5')
+    'phrase-table.packed'
+    >>> parse_path('tm = moses pt 0 phrase-table.packed')
+    'phrase-table.packed'
+    """
+    config_tokens = config_line.split()
+    # Look for -lm_file or -path option tokens indicating a path
+    # If one of those options is not found, assume the final path is the
+    # final token.
+    path_index = -1
+    for path_opt in FILE_TYPE_OPTIONS:
+        if path_opt in config_tokens:
+            path_index = config_tokens.index(path_opt) + 1
+            break
+
+    return config_tokens[path_index]
+
+
+duplicate_name_counts = {}
+
+
+def get_unique_dest(name):
+    """
+    If file/dir name was previously seen, rename the destination path
+    by incrementing the number if type it has been seen.
+    """
+    global duplicate_name_counts
+    times_seen = duplicate_name_counts.get(name, 0) + 1
+    duplicate_name_counts[name] = times_seen
+    pre_extension, extension = os.path.splitext(name)
+    result = name
+    if times_seen > 1:
+        result = "{0}.{1}{2}".format(pre_extension, times_seen, extension)
+    return result
 
 
 def recursive_copy(src, dest):
@@ -232,56 +301,84 @@ def recursive_copy(src, dest):
         shutil.copy(src, dest)
 
 
-def process_line_containing_path(line, orig_dir, dest_dir, unique_paths=False):
+def run_grammar_packer(src_path, dest_path):
+    cmd = [os.path.join(JOSHUA_PATH, "scripts/support/grammar-packer.pl"),
+           src_path, dest_path]
+    logging.info(
+        'Running the grammar-packer.pl script with the command: %s'
+        % ' '.join(cmd)
+    )
+    p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
+    result, err = p.communicate()
+    if p.returncode != 0:
+        raise CalledProcessError(
+            'Encountered an error running the grammer-packer.pl script.\n'
+            '  command: %s\n'
+            '  error: %s'
+            % (" ".join(cmd), err or '')
+        )
+
+
+def pack_grammer_operation(line, orig_dir, dest_dir):
+    """
+    Generate the operation that will pack the specified grammar and
+    copy the resulting directory tree into the run bundle.
+    """
+    src_path = parse_path(line)
+    __, src_name = os.path.split(src_path)
+    dest_name = '%s.packed' % get_unique_dest(src_name)
+
+    line = line.replace(src_path, dest_name)
+
+    # Coerce the source path to its absolute path if it's relative
+    if os.path.isabs(src_path):
+        full_src_path = src_path
+    else:
+        full_src_path = os.path.join(orig_dir, src_path)
+
+    validate_path(full_src_path)
+
+    dest_path = os.path.join(dest_dir, dest_name)
+    args = (full_src_path, dest_path)
+    operation = (
+        (run_grammar_packer, args,
+         'Packing grammar at "{0}" to "{1}"'.format(*args)
+         )
+    )
+    return line, operation
+
+
+def process_line_containing_path(line, orig_dir, dest_dir):
     """
     The line has already been determined to contain a path, so generate
     an operation tuple, and update the config line based on the passed
     orig_dir and dest_dir
 
-    NB! Setting unique paths makes this function stateful. It will track
-    the number of times it sees the
-
     >>> with open('/tmp/lm.kenlm', 'w') as fh:
     ...     fh.write('')
     >>> line = ('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file ./lm.kenlm')
 
-    >>> process_line_containing_path(line, '/tmp', '/foobar', True)
+    >>> process_line_containing_path(line, '/tmp', '/foobar')
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file lm.kenlm',
      (<function recursive_copy at ...>,
       ('/tmp/./lm.kenlm', '/foobar/lm.kenlm'),
       'Making a copy of /tmp/./lm.kenlm at /foobar/lm.kenlm'))
 
-    >>> process_line_containing_path(line, '/tmp', '/foobar', True)
+    >>> process_line_containing_path(line, '/tmp', '/foobar')
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ('feature-function = StateMinimizingLanguageModel -lm_type kenlm -lm_order 5 -lm_file lm.2.kenlm',
      (<function recursive_copy at ...>,
       ('/tmp/./lm.kenlm', '/foobar/lm.2.kenlm'),
       'Making a copy of /tmp/./lm.kenlm at /foobar/lm.2.kenlm'))
     """
-    # This adds state to this function: dup_name_cts is a dictionary
-    # with filenames as keys and counts as values.
-    f = process_line_containing_path  # Abbreviate this function's name
-    if not hasattr(f, 'dup_name_cts'):
-        f.dup_name_cts = {}
-
     #####################
     # Get the source path
+
     logging.debug('Looking for a path in the line:\n    %s' % line)
     line_parts = extract_line_parts(line)
-    command_tokens = line_parts.command.split()
-    src_path = None
 
-    # Look for -lm_file or -path option tokens indicating a path
-    # If one of those options is not found, assume the final path is the
-    # final token.
-    path_index = -1
-    for path_opt in FILE_TYPE_OPTIONS:
-        if path_opt in command_tokens:
-            path_index = command_tokens.index(path_opt) + 1
-            break
-
-    src_path = command_tokens[path_index]
+    src_path = parse_path(line_parts.command)
     logging.debug('* Found path "%s"' % src_path)
 
     #####################################
@@ -289,46 +386,44 @@ def process_line_containing_path(line, orig_dir, dest_dir, unique_paths=False):
 
     # Get directory name or file name of source path
     __, src_name = os.path.split(src_path)
-
-    # If file/dir name was previously seen, rename the destination path
-    # by incrementing the number if type it has been seen.
-    if unique_paths:
-        times_seen = f.dup_name_cts.get(src_name, 0) + 1
-        f.dup_name_cts[src_name] = times_seen
-        pre_extension, extension = os.path.splitext(src_name)
-        if times_seen > 1:
-            dest_name = "{0}.{1}{2}".format(pre_extension,
-                                            times_seen,
-                                            extension)
-        else:
-            dest_name = src_name
-    else:
-        dest_name = src_name
+    dest_name = get_unique_dest(src_name)
 
     #############################################################
     # Generate an operation tuple to copy from orig_dir to dest_dir
 
-    # Coerce the source path its absolute path if it's relative
-    if not os.path.isabs(src_path):
-        src_path = os.path.join(orig_dir, src_path)
+    # Coerce the source path to its absolute path if it's relative
+    if os.path.isabs(src_path):
+        full_src_path = src_path
+    else:
+        full_src_path = os.path.join(orig_dir, src_path)
 
-    validate_path(src_path)
+    validate_path(full_src_path)
 
     dest_path = os.path.join(dest_dir, dest_name)
     operation = (
-        (recursive_copy, (src_path, dest_path),
-         'Making a copy of {0} at {1}'.format(src_path, dest_path))
+        (recursive_copy, (full_src_path, dest_path),
+         'Making a copy of {0} at {1}'.format(full_src_path, dest_path))
     )
 
     ########################
     # Update the config line
-    command_tokens[path_index] = dest_name
-    command = ' '.join(command_tokens)
+    updated_config = line_parts.command.replace(src_path, dest_name)
     if line_parts.comment:
-        line = '#'.join([command, line_parts.comment])
+        line = '#'.join([updated_config, line_parts.comment])
     else:
-        line = command
+        line = updated_config
 
+    return line, operation
+
+
+def process_line_containing_grammar(line, orig_dir, dest_dir):
+    """
+    Perform the same procedures as 'process_line_containing_path()',
+    but also prepend "tm = " to the line if it was omitted.
+    """
+    line, operation = process_line_containing_path(line, orig_dir, dest_dir)
+    if not line_specifies_grammar(line):
+        line = 'tm = ' + line
     return line, operation
 
 
@@ -369,6 +464,21 @@ def handle_args(clargs):
         '-o', '--copy-config-options', default='',
         help='optional additional or replacement configuration options for '
              'Joshua, all surrounded by one pair of quotes.'
+    )
+    parser.add_argument(
+        '--grammar', dest='grammars', action='append', default=[],
+        help=('each time this option is included, its argument is added to the '
+              'resulting config file. The grammar will NOT be packed.\n'
+              'Note: This will cause any grammar configurations in the config '
+              'file to be ignored.'
+              ),
+    )
+    parser.add_argument(
+        '--pack-grammar', dest='pack_grammars', action='append', default=[],
+        help='each time this option is included, its argument is added to the '
+             'resulting config file. THE GRAMMAR WILL BE PACKED.\n'
+             'Note: This will cause any grammar configurations in the config '
+             'file to be ignored.'
     )
     parser.add_argument(
         '-v', '--verbose', action='store_true',
@@ -432,10 +542,22 @@ def collect_operations(opts):
     result_config_lines = []
     for i, line in enumerate(config_lines):
         line_num = i + 1
+
+        # Ignore grammar configurations when grammars were specified on
+        # the command line.
+        if opts.grammars or opts.pack_grammars:
+            if line_specifies_grammar(line):
+                logging.info(
+                    'Skipping line {0} because other grammars were specified '
+                    'in command line options:\n    {1}'
+                    .format(line_num, line)
+                )
+                continue
+
         if line_specifies_path(line):
             try:
                 line, operation = process_line_containing_path(
-                    line, opts.orig_dir, opts.dest_dir, unique_paths=True
+                    line, opts.orig_dir, opts.dest_dir
                 )
             except PathException as e:
                 # Prepend the line number to the error message
@@ -446,6 +568,46 @@ def collect_operations(opts):
                 e.message = message
                 raise e
             operations.append(operation)
+        result_config_lines.append(line)
+
+    for grammar_conf_line in opts.grammars:
+        try:
+            line, operation = process_line_containing_grammar(
+                grammar_conf_line, opts.orig_dir, opts.dest_dir
+            )
+        except PathException as e:
+            # Prepend the grammar config to the error message
+            message = (
+                'ERROR: Grammar configuration "{0}" path error: {1}'
+                .format(grammar_conf_line, e.message)
+            )
+            e.message = message
+            raise e
+        operations.append(operation)
+        result_config_lines.append(line)
+
+    for grammar_conf_line in opts.pack_grammars:
+        try:
+            line, operation = pack_grammer_operation(
+                grammar_conf_line, opts.orig_dir, opts.dest_dir,
+            )
+        except PathException as e:
+            # Prepend the grammar config to the error message
+            message = (
+                'ERROR: Grammar configuration "{0}" path error: {1}'
+                .format(grammar_conf_line, e.message)
+            )
+            e.message = message
+            raise e
+        except PackingError as e:
+            # Prepend the grammar config to the error message
+            message = (
+                'ERROR: Grammar configuration "{0}" packing failed: {1}'
+                .format(grammar_conf_line, e.message)
+            )
+            e.message = message
+            raise e
+        operations.append(operation)
         result_config_lines.append(line)
 
     ###########################
@@ -519,3 +681,8 @@ if __name__ == "__main__":
         error_quit('ERROR: The JOSHUA environment variable must be defined.')
 
     main(sys.argv)
+
+
+# TODO:
+#  - lineparts s/command/config/
+#  - automatically pack unpacked grammars
