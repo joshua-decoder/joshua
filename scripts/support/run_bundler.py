@@ -104,14 +104,7 @@ vocabulary will have '_OOV' appended to it.
 """
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
-FILE_TYPE_TOKENS = [
-    'lm',
-    'tm',
-    # 'lmfile',
-    # 'tmfile',
-    'feature_function',
-    'feature-function'
-]
+FILE_TYPE_TOKENS = ['lm', 'tm']
 FILE_TYPE_OPTIONS = ['-path', '-lm_file']
 
 OUTPUT_CONFIG_FILE_NAME = 'joshua.config'
@@ -176,6 +169,8 @@ def line_specifies_path(line):
     Return True if the line matches the format of a joshua.config line
     that specifies a file or directory path, and False otherwise.
 
+    >>> line_specifies_path('tm = thrax glue -1 1/data/tune/grammar.glue')
+    True
     >>> line_specifies_path('tm = moses -owner pt -maxspan 0 -path phrase-table.packed -max-source-len 5')
     True
     >>> line_specifies_path('tm = moses pt 0 phrase-table.packed')
@@ -197,29 +192,14 @@ def line_specifies_path(line):
     if not command_tokens:
         return False
 
-    # The first token has to be the type of config that would specify a path
-    if not command_tokens[0] in FILE_TYPE_TOKENS:
-        return False
-
-    # Look for tokens that match options indicating a path
-    for path_opt in FILE_TYPE_OPTIONS:
-        if path_opt in command_tokens:
-            return True
-
-    # Look for 'tm' line with exactly four tokens to the right of the '='
-    if command_tokens[0] == 'tm' and len(command_tokens) == 6:
-        # Unless one of the tokens is an -option string
-        for token in command_tokens:
-            if token.startswith('-'):
-                return False
+    if command_tokens[0] in FILE_TYPE_TOKENS:
+        # The first token is the type of config that would specify a
+        # path.
         return True
 
-    # Look for 'lm' line with exactly six tokens to the right of the '='
-    if command_tokens[0] == 'lm' and len(command_tokens) == 8:
-        # Unless one of the tokens is an -option string
-        for token in command_tokens:
-            if token.startswith('-'):
-                return False
+    # Look for tokens that match options indicating a path
+    # using intersection of sets
+    if set(command_tokens) & set(FILE_TYPE_OPTIONS):
         return True
 
     return False
