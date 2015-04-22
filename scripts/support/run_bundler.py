@@ -40,66 +40,63 @@ README_TEMPLATE = """Joshua Configuration Run Bundle
 ===============================
 
 To use the bundle, invoke the command
-  ./new-bundle/run-joshua.sh [JOSHUA OPTIONS ... ]
 
-The Joshua decoder will start running.
+  ./run-joshua.sh [JOSHUA OPTIONS ... ]
+
+The Joshua decoder will start running, accepting input from STDIN and writing
+to STDOUT.  Input should first be piped through `prepare.sh`, which normalizes
+and tokenizes the input.  Input should be pre-formatted into sentences, one per
+line:
+
+    cat input.txt | prepare.sh | run-joshua.sh > output.txt
+
+The reason you must prepare the input is because it is done as preprocessing
+and Joshua may be multi-threaded (see below).
+
+To run Joshua as a TCP-IP server, add the option
+
+    ./run-joshua.sh -server-port 5674
+
+The script `run-joshua-server.sh` does this for you. You can then connect via
+telnet or nc to send data:
+
+    cat input.txt | prepare.sh | nc localhost 5674 > output.txt
 
 
 Other Joshua configuration options can be appended after the script. Some
 options that may be useful during decoding include:
 
+-  `-threads N`
 
--server-port 5674
+   N is the number of simultaneous decoding threads to launch. If this option
+   is omitted from the command line and the configuration file, the default
+   number of threads, which is 1, will be used.
 
-Instead of running as a command line processing tool, the Joshua decoder can be
-run as a TCP server which responds to (concurrently connected) inputs with the
-resulting translated outputs. If the -server-port option is included, with the
-port specified as the value, Joshua will start up in server mode.
+   Decoded outputs are assembled in order and Joshua has to hold on to the
+   complete target hypergraph until it is ready to be processed for output, so
+   too many simultaneous threads could result in lots of memory usage if a long
+   sentence results in many sentences being queued up. We have run Joshua with
+   as many as 48 threads without any problems of this kind, but it’s useful to
+   keep in the back of your mind.
 
+-  `-pop-limit N`
 
--threads N
+   N is the number of candidates that the decoder stores in its stack.
+   Decreasing the stack size increases the speed of decoding. However, the
+   tradeoff is a potential penalty in accuracy.
 
-N is the number of simultaneous decoding threads to launch. If this option is
-omitted from the command line and the configuration file, the default number of
-threads, which is 1, will be used.
+-  `-output-format "formatting string"
 
-Decoded outputs are assembled in order and Joshua has to hold on to the
-complete target hypergraph until it is ready to be processed for output, so too
-many simultaneous threads could result in lots of memory usage if a long
-sentence results in many sentences being queued up. We have run Joshua with as
-many as 48 threads without any problems of this kind, but it’s useful to keep
-in the back of your mind.
+   Specify the output-format variable, which is interpolated for the following
+   variables:
 
+       %i : the 0-index sentence number
+       %s : the translated sentence
+       %c : the model cost
+       %S : provides built-in denormalization for Joshua. The beginning
+            character is capitalized, and punctuation is denormalized.
 
--pop-limit N
-
-N is the number of candidates that the decoder stores in its stack. Decreasing
-the stack size increases the speed of decoding. However, the tradeoff is a
-potential penalty in accuracy.
-
-
--output-format "formatting string"
-
-Specify the output-format variable, which is interpolated for the following
-variables:
-
-%i : the 0-index sentence number
-%s : the translated sentence
-%f : the list of feature values (as name=value pairs)
-%c : the model cost
-%w : the weight vector (unimplemented)
-%a : the alignments between source and target words (currently unimplemented)
-%S : provides built-in denormalization for Joshua. The beginning character is
-     capitalized, and punctuation is denormalized.
-
-The default value is: -output-format = "%i ||| %s ||| %f ||| %c"
-The most readable setting would be: -output-format = "%S"
-
-
--mark-oovs false
-
-If the value of this option is 'true', then any word that is not in the
-vocabulary will have '_OOV' appended to it.
+   The default value is: `-output-format = %s`
 
 """
 
