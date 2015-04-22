@@ -126,7 +126,7 @@ $JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
 """ % BUNDLE_RUNNER_FILE_NAME
 
 
-LineParts = namedtuple('LineParts', ['command', 'comment'])
+LineParts = namedtuple('LineParts', ['config', 'comment'])
 
 
 class PathException(Exception):
@@ -146,11 +146,11 @@ def error_quit(message):
 
 def extract_line_parts(line):
     """
-    Builds a LineParts object containing tokenized command and comment
+    Builds a LineParts object containing tokenized config and comment
     portions of a config line
     """
     config, hash_char, comment = line.partition('#')
-    return LineParts(command=config, comment=comment)
+    return LineParts(config=config, comment=comment)
 
 
 def filter_through_copy_config_script(config_text, copy_configs):
@@ -189,12 +189,12 @@ def line_specifies_grammar(line):
     False
     """
     line_parts = extract_line_parts(line)
-    if not line_parts.command:
+    if not line_parts.config:
         return False
 
-    command_tokens = line_parts.command.split()
+    config_tokens = line_parts.config.split()
     # The first two tokens must be 'tm', and '='
-    return command_tokens[:2] == ['tm', '=']
+    return config_tokens[:2] == ['tm', '=']
 
 
 def line_specifies_path(line):
@@ -218,21 +218,21 @@ def line_specifies_path(line):
     False
     """
     line_parts = extract_line_parts(line)
-    if not line_parts.command:
+    if not line_parts.config:
         return False
 
-    command_tokens = line_parts.command.split()
-    if not command_tokens:
+    config_tokens = line_parts.config.split()
+    if not config_tokens:
         return False
 
-    if command_tokens[0] in FILE_TYPE_TOKENS:
+    if config_tokens[0] in FILE_TYPE_TOKENS:
         # The first token is the type of config that would specify a
         # path.
         return True
 
     # Look for tokens that match options indicating a path
     # using intersection of sets
-    if set(command_tokens) & set(FILE_TYPE_OPTIONS):
+    if set(config_tokens) & set(FILE_TYPE_OPTIONS):
         return True
 
     return False
@@ -350,7 +350,7 @@ def process_line_containing_path(line, orig_dir, dest_dir):
     logging.debug('Looking for a path in the line:\n    %s' % line)
     line_parts = extract_line_parts(line)
 
-    src_path = parse_path(line_parts.command)
+    src_path = parse_path(line_parts.config)
     logging.debug('* Found path "%s"' % src_path)
 
     #####################################
@@ -380,7 +380,7 @@ def process_line_containing_path(line, orig_dir, dest_dir):
 
     ########################
     # Update the config line
-    updated_config = line_parts.command.replace(src_path, dest_name)
+    updated_config = line_parts.config.replace(src_path, dest_name)
     if line_parts.comment:
         line = '#'.join([updated_config, line_parts.comment])
     else:
@@ -461,7 +461,7 @@ def handle_args(clargs):
             print(EXAMPLE)
             sys.exit(2)
 
-    # Parse the command line arguments.
+    # Parse the command-line arguments.
     parser = MyParser(description='create a Joshua configuration bundle from '
                                   'an existing configuration and set of files')
     parser.add_argument(
@@ -681,7 +681,3 @@ if __name__ == "__main__":
         error_quit('ERROR: The JOSHUA environment variable must be defined.')
 
     main(sys.argv)
-
-
-# TODO:
-#  - lineparts s/command/config/
