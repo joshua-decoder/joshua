@@ -20,20 +20,20 @@ Example invocation:
 
 $JOSHUA/scripts/support/run_bundler.py \
   --force \
+  --verbose \
   /path/to/origin/directory/test/1/joshua.config \
   /path/to/origin/directory \
   new-bundle \
   --copy-config-options \
-    '-top-n 1 \
-    -output-format %S \
-    -mark-oovs false \
-    -server-port 5674 \
-    -tm/pt "thrax pt 20 /path/to/origin/directory/grammar.gz"'
+    '-top-n 1 -output-format %S -mark-oovs false -server-port 5674' \
+  --grammar /path/to/origin/directory/grammar.glue \
+  --pack-grammar /path/to/different/directory/grammar.gz
 
 Note: The options included in the value string for the --copy-config-options
 argument can either be Joshua options or options for the
-$JOSHUA/scripts/copy-config.pl script. The -tm/pt option above is a special
-parameter for the copy-config script.
+$JOSHUA/scripts/copy-config.pl script. The order of the --[pack-]grammar
+options must be in the same order as the grammar configuration lines they
+intend to override in the joshua.config file.
 """
 
 README_TEMPLATE = """Joshua Configuration Run Bundle
@@ -497,7 +497,7 @@ def handle_args(clargs):
              'time this option (or --pack-grammar) is included corresponds to '
              'the next `tm = ...` entry in the joshua config file. '
              'NOTE: The path for the grammar is relative to the invocation '
-             'directory, not the second argument'
+             'directory, not the second argument.'
     )
     parser.add_argument(
         '--pack-grammar', dest='grammar_paths', action='append',
@@ -506,7 +506,7 @@ def handle_args(clargs):
              'directory of the corresponding grammar in the joshua config '
              'file, just like the --grammar option, except that THE GRAMMAR '
              'WILL BE PACKED, and the destination directory of the packed '
-             'grammar will be the source\s name appended with `.packed`. '
+             "grammar will be the source's name appended with `.packed`. "
     )
     parser.set_defaults(grammar_paths=[])
 
