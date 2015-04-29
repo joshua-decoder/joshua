@@ -57,6 +57,10 @@ To run Joshua as a TCP-IP server, add the option
 
     ./run-joshua.sh -server-port 5674
 
+or just run:
+
+    ./run-joshua-server.sh
+
 The script `run-joshua-server.sh` does this for you. You can then connect via
 telnet or nc to send data:
 
@@ -107,7 +111,7 @@ FILE_TYPE_OPTIONS = ['-path', '-lm_file']
 OUTPUT_CONFIG_FILE_NAME = 'joshua.config'
 BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
 BUNDLE_RUNNER_TEXT = """#!/bin/bash
-# Usage: bundle_destdir/%s [extra joshua config options]
+# Usage: ./%s [extra joshua config options]
 
 ## memory usage; default is 4 GB
 mem=4g
@@ -121,6 +125,23 @@ bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
 $JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
 """ % BUNDLE_RUNNER_FILE_NAME
+
+SERVER_RUNNER_FILE_NAME = 'run-joshua-server.sh'
+SERVER_RUNNER_TEXT = """#!/bin/bash
+# Usage: bundle_destdir/%s [extra joshua config options]
+
+## memory usage; default is 4 GB
+mem=4g
+if [[ $1 == "-m" ]]; then
+    mem=$2
+    shift
+    shift
+fi
+
+bundledir=$(dirname $0)
+cd $bundledir   # relative paths are now safe....
+$JOSHUA/bin/joshua-decoder -m ${mem} -server-port 5674 -c joshua.config $*
+""" % SERVER_RUNNER_FILE_NAME
 
 
 LineParts = namedtuple('LineParts', ['config', 'comment'])
@@ -618,21 +639,25 @@ def collect_operations(opts):
          )
     )
 
-    ######################
-    # Bundle runner script
-    # Write the script that runs Joshua using the configuration and resource
-    # in the bundle, and make its mode world-readable, and world-executable.
-    path = os.path.join(opts.dest_dir, BUNDLE_RUNNER_FILE_NAME)
-    operations.append(
-        (write_string_to_file, (path, BUNDLE_RUNNER_TEXT),
-         'Writing the bundle runner file "%s"' % path)
-    )
-    mode = (stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH |
-            stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-    operations.append(
-        (os.chmod, (path, mode),
-         'Making the bundle runner file executable')
-    )
+    #######################
+    # Bundle runner scripts
+    # Write the scripts that run Joshua using the configuration and
+    # resource in the bundle, and make their mode world-readable, and
+    # world-executable.
+    for file_name, file_text in [[BUNDLE_RUNNER_FILE_NAME, BUNDLE_RUNNER_TEXT],
+                                 [SERVER_RUNNER_FILE_NAME, SERVER_RUNNER_TEXT],
+                                 ]:
+        path = os.path.join(opts.dest_dir, file_name)
+        operations.append(
+            (write_string_to_file, (path, file_text),
+             'Writing the bundle runner file "%s"' % path)
+        )
+        mode = (stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH |
+                stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+        operations.append(
+            (os.chmod, (path, mode),
+             'Making the bundle runner file executable')
+        )
 
     #######################
     # Write the README file
