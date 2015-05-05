@@ -8,6 +8,7 @@ from __future__ import print_function
 import argparse
 import logging
 import os
+import signal
 import shutil
 import stat
 import sys
@@ -326,7 +327,11 @@ def run_grammar_packer(src_path, dest_path):
         'Running the grammar-packer.pl script with the command: %s'
         % ' '.join(cmd)
     )
-    p = Popen(cmd, stdin=PIPE, stdout=PIPE)
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE,
+              # https://blog.nelhage.com/2010/02/a-very-subtle-bug/
+              # re-enable SIGPIPE, since grammar-packer.pl uses tar -z:
+              preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+              )
     result, err = p.communicate()
     if p.returncode != 0:
         raise CalledProcessError(
