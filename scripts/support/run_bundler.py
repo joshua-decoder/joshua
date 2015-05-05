@@ -6,14 +6,14 @@ directory tree.
 """
 from __future__ import print_function
 import argparse
+from collections import namedtuple
 import logging
 import os
-import signal
 import shutil
+import signal
 import stat
-import sys
-from collections import namedtuple
 from subprocess import CalledProcessError, Popen, PIPE
+import sys
 
 
 EXAMPLE = r"""
