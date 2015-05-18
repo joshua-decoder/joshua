@@ -5,8 +5,8 @@ CC = g++
 # The max order for the LM, this was increased to incorporate Class LM (9grams)
 MAX_ORDER = 9
 
-# Set to the location of your boost libraries
-BOOST_ROOT = /opt/local
+# Set to the location of your boost libraries (only set if not in the environment)
+BOOST_ROOT ?= /opt/local/wdfawf
 
 # Should be set to blank or "-mt", depending on whether you have the boost multithreaded
 # libraries installed
@@ -16,7 +16,7 @@ CORE = lm/bhiksha.o lm/binary_format.o lm/config.o lm/lm_exception.o lm/model.o 
 
 HEADERS= lm/bhiksha.hh lm/binary_format.hh lm/blank.hh lm/builder/adjust_counts.hh lm/builder/corpus_count.hh lm/builder/discount.hh lm/builder/header_info.hh lm/builder/initial_probabilities.hh lm/builder/interpolate.hh lm/builder/joint_order.hh lm/builder/multi_stream.hh lm/builder/ngram.hh lm/builder/ngram_stream.hh lm/builder/pipeline.hh lm/builder/print.hh lm/builder/sort.hh lm/config.hh lm/enumerate_vocab.hh lm/facade.hh lm/left.hh lm/lm_exception.hh lm/max_order.hh lm/model.hh lm/model_type.hh lm/ngram_query.hh lm/partial.hh lm/quantize.hh lm/read_arpa.hh lm/return.hh lm/search_hashed.hh lm/search_trie.hh lm/sizes.hh lm/state.hh lm/trie.hh lm/trie_sort.hh lm/value_build.hh lm/value.hh lm/virtual_interface.hh lm/vocab.hh lm/weights.hh lm/word_index.hh util/bit_packing.hh util/ersatz_progress.hh util/exception.hh util/fake_ofstream.hh util/file.hh util/file_piece.hh util/getopt.hh util/have.hh util/joint_sort.hh util/mmap.hh util/multi_intersection.hh util/murmur_hash.hh util/pcqueue.hh util/pool.hh util/probing_hash_table.hh util/proxy_iterator.hh util/read_compressed.hh util/scoped.hh util/sized_iterator.hh util/sorted_uniform.hh util/stream/block.hh util/stream/chain.hh util/stream/config.hh util/stream/io.hh util/stream/line_input.hh util/stream/multi_progress.hh util/stream/sort.hh util/stream/stream.hh util/stream/timer.hh util/string_piece_hash.hh util/string_piece.hh util/thread_pool.hh util/tokenize_piece.hh util/usage.hh util/parallel_read.hh
 
-CPPFLAGS = $(CXXFLAGS) -I/opt/local/include -I. -O3 -DKENLM_MAX_ORDER=$(MAX_ORDER) -DHAVE_ZLIB -DNDEBUG
+CPPFLAGS = $(CXXFLAGS) -I. -O3 -DKENLM_MAX_ORDER=$(MAX_ORDER) -DHAVE_ZLIB -DNDEBUG
 
 .cc.o: $(HEADERS)
 	$(CC) -c $(CPPFLAGS) -fPIC -o $@ $<
@@ -36,11 +36,11 @@ INSTALL=build_binary ngram_query
 
 #lmplz
 SHELL=bash
-ifeq ($(shell $(CC) -L/opt/local/lib -L$(BOOST_ROOT)/lib64 -lboost_program_options$(BOOST_MT) -lboost_thread$(BOOST_MT) -x c++ - <<<'int main() {}' -o dummy && rm dummy && echo Boost),Boost)
+ifeq ($(shell $(CC) -L$(BOOST_ROOT)/lib -lboost_program_options$(BOOST_MT) -lboost_thread$(BOOST_MT) -x c++ - <<<'int main() {}' -o dummy && rm dummy && echo Boost),Boost)
   $(info Detected Boost)
 LMPLZ=lm/builder/adjust_counts.o lm/builder/corpus_count.o lm/builder/initial_probabilities.o lm/builder/interpolate.o lm/builder/lmplz_main.o lm/builder/pipeline.o lm/builder/print.o lm/builder/output.o util/stream/chain.o util/stream/io.o util/stream/line_input.o util/stream/multi_progress.o
 lmplz: $(CORE) $(HEADERS) $(LMPLZ)
-	$(CC) $(CPPFLAGS) $(CORE) $(LMPLZ) -o lmplz -L/opt/local/lib -L$(BOOST_ROOT)/lib64 -lz -lboost_program_options$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_system$(BOOST_MT) $(RT) -pthread
+	$(CC) $(CPPFLAGS) $(CORE) $(LMPLZ) -o lmplz -lz -L$(BOOST_ROOT)/lib -lboost_program_options$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_system$(BOOST_MT) $(RT) -pthread
 EXES+=lmplz 
 else
   echo "lmplz (used for building language models) failed to build. Is Boost installed?"
