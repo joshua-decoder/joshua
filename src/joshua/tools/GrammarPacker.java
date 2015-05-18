@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
@@ -51,6 +52,8 @@ public class GrammarPacker {
 
   private String dump;
 
+  private int max_source_len;
+
   static {
     SLICE_SIZE = 1000000;
     DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
@@ -65,6 +68,7 @@ public class GrammarPacker {
     this.output = output_filename;
     this.dump = featuredump_filename;
     this.grammarAlignments = grammar_alignments;
+    this.max_source_len = 0;
 
     // TODO: Always open encoder config? This is debatable.
     this.types = new FeatureTypeAnalyzer(true);
@@ -152,6 +156,13 @@ public class GrammarPacker {
     logger.info("Writing vocab.");
     Vocabulary.write(output + File.separator + "vocabulary");
 
+    String configFile = output + File.separator + "config";
+    logger.info(String.format("Writing config to '%s'", configFile));
+    // Write config options
+    FileWriter config = new FileWriter(configFile);
+    config.write(String.format("max-source-len = %d\n", max_source_len));
+    config.close();
+    
     // Read previously written encoder configuration to match up to changed
     // vocabulary id's.
     logger.info("Reading encoding.");
@@ -204,6 +215,8 @@ public class GrammarPacker {
       String[] source = fields.get(0).split("\\s");
       String[] target = fields.get(1).split("\\s");
       String[] features = fields.get(2).split("\\s");
+      
+      max_source_len = Math.max(max_source_len, source.length);
 
       Vocabulary.id(lhs);
       try {

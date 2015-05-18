@@ -82,6 +82,7 @@
       <arg value="-C" />
       <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
       <arg value="install" />
+      <arg value="BOOST_ROOT=${env.BOOST_ROOT}" />
     </exec>
   </target>
 

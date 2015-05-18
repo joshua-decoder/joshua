@@ -1,7 +1,7 @@
 package joshua.decoder.ff.tm.packed;
 
 /***
- * This package implements Joshua's packed grammar structure, which enables the efficient loading
+ * This package implements Joshua's packed grammar structure, which enables the efficient loading	
  * and accessing of grammars. It is described in the paper:
  * 
  * @article{ganitkevitch2012joshua,
@@ -61,6 +61,7 @@ import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
+import joshua.util.io.LineReader;
 
 public class PackedGrammar extends AbstractGrammar {
 
@@ -82,6 +83,13 @@ public class PackedGrammar extends AbstractGrammar {
     String vocabFile = grammar_dir + File.separator + "vocabulary";
     Decoder.LOG(1, String.format("Reading vocabulary: %s", vocabFile));
     Vocabulary.read(vocabFile);
+    
+    // Read the config
+    String configFile = grammar_dir + File.separator + "config";
+    if (new File(configFile).exists()) {
+      Decoder.LOG(1, String.format("Reading packed config: %s", configFile));
+      readConfig(configFile);
+    }
     
     // Read the quantizer setup.
     Decoder.LOG(1, String.format("Reading encoder configuration: %s%sencoding", grammar_dir, File.separator));
@@ -836,5 +844,13 @@ public class PackedGrammar extends AbstractGrammar {
   @Override
   public void addOOVRules(int word, List<FeatureFunction> featureFunctions) {
     throw new RuntimeException("PackedGrammar: I can't add OOV rules");
+  }
+  
+  private void readConfig(String config) throws IOException {
+    for (String line: new LineReader(config)) {
+      String[] tokens = line.split(" = ");
+      if (tokens[0].equals("max-source-len"))
+        this.maxSourcePhraseLength = Integer.parseInt(tokens[1]);
+    }
   }
 }

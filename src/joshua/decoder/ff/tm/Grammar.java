@@ -92,6 +92,11 @@ public interface Grammar {
    * Return the grammar's owner.
    */
   int getOwner();
+
+  /**
+   * Return the maximum source phrase length (terminals + nonterminals).
+   */
+  int getMaxSourcePhraseLength();
   
   /**
    * Add an OOV rule for the requested word for the grammar.
