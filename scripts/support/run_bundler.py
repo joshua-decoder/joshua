@@ -175,9 +175,9 @@ def filter_through_copy_config_script(config_text, copy_configs):
     Run the config_text through the 'copy-config.pl' script, applying
     the copy_configs options
     """
-    cmd = [os.path.join(JOSHUA_PATH, "scripts/copy-config.pl"), copy_configs]
+    cmd = os.path.join(JOSHUA_PATH, "scripts/copy-config.pl") + ' ' + copy_configs
     logging.info(
-        'Running the copy-config.pl script with the command: ' + ' '.join(cmd)
+        'Running the copy-config.pl script with the command: ' + cmd
     )
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
     result, err = p.communicate(config_text)
@@ -186,7 +186,7 @@ def filter_through_copy_config_script(config_text, copy_configs):
             'Encountered an error running the copy-config.pl script.\n'
             '  command: %s\n'
             '  error: %s'
-            % (" ".join(cmd), err or '')
+            % (cmd, err or '')
         )
     return result
 
@@ -505,9 +505,10 @@ def handle_args(clargs):
         help='extant destination directory will be overwritten'
     )
     parser.add_argument(
-        '-o', '--copy-config-options', default='',
+        '-o', '--copy-config-options', default='-top-n 0 -output-format %S -mark-oovs false',
         help='optional additional or replacement configuration options for '
-             'Joshua, all surrounded by one pair of quotes.'
+             'Joshua, all surrounded by one pair of quotes. Defaults to '
+             ' \'-top-n 0 -output-format %S -mark-oovs false\''
     )
 
     parser.add_argument(
