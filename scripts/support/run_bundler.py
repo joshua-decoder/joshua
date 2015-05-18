@@ -23,18 +23,17 @@ $JOSHUA/scripts/support/run_bundler.py \
   --force \
   --verbose \
   /path/to/origin/directory/test/1/joshua.config \
-  /path/to/origin/directory \
-  new-bundle \
+  --root /path/to/origin/directory \
+  new-bundle-directory \
   --copy-config-options \
-    '-top-n 1 -output-format %S -mark-oovs false -server-port 5674' \
-  --grammar /path/to/origin/directory/grammar.glue \
-  --pack-grammar /path/to/different/directory/grammar.gz
+    '-top-n 1 -output-format %S -mark-oovs false' \
+  --pack-tm 'pt /path/to/origin/directory/grammar.gz'
 
 Note: The options included in the value string for the --copy-config-options
 argument can either be Joshua options or options for the
-$JOSHUA/scripts/copy-config.pl script. The order of the --[pack-]grammar
-options must be in the same order as the grammar configuration lines they
-intend to override in the joshua.config file.
+$JOSHUA/scripts/copy-config.pl script. The order of the --[pack-]tm options must
+be in the same order as the grammar configuration lines they intend to
+override in the joshua.config file.
 """
 
 README_TEMPLATE = """Joshua Configuration Run Bundle
@@ -66,7 +65,6 @@ The script `run-joshua-server.sh` does this for you. You can then connect via
 telnet or nc to send data:
 
     cat input.txt | prepare.sh | nc localhost 5674 > output.txt
-
 
 Other Joshua configuration options can be appended after the script. Some
 options that may be useful during decoding include:
@@ -493,14 +491,14 @@ def handle_args(clargs):
              '/path/to/test/1/joshua.config.final'
     )
     parser.add_argument(
-        'orig_dir',
-        help='origin directory, which is the root directory from which origin '
-             'files specified by relative paths are copied'
-    )
-    parser.add_argument(
         'dest_dir',
         help='destination directory, which should not already exist. But if '
              'it does, it will be removed if -f is used.'
+    )
+    parser.add_argument(
+        '--root', dest='orig_dir',
+        help='the origin directory, which is the root directory from which relative'
+             'files in the config file should be resolved'
     )
     parser.add_argument(
         '-f', '--force', action='store_true',
@@ -513,25 +511,31 @@ def handle_args(clargs):
     )
 
     parser.add_argument(
-        '--grammar', dest='grammar_paths', action='append',
+        '--tm', dest='grammar_paths', action='append',
         type=str,
         help='specify a path to a grammar to use to override the source '
              'directory of a grammar defined in the joshua config file. Each '
-             'time this option (or --pack-grammar) is included corresponds to '
-             'the next `tm = ...` entry in the joshua config file. '
+             'time this option is included corresponds to the next'
+             '`tm = ...` entry in the joshua config file. '
              'NOTE: The path for the grammar is relative to the invocation '
-             'directory, not the second argument.'
+             'directory, not the --root argument.'
     )
+
     parser.add_argument(
-        '--pack-grammar', dest='grammar_paths', action='append',
+        '--pack-tm', dest='grammar_paths', action='append',
         type=_PackGrammarPath,
         help='specify a path to a grammar to use to override the source '
              'directory of the corresponding grammar in the joshua config '
-             'file, just like the --grammar option, except that THE GRAMMAR '
+             'file, just like the --tm option, except that THE GRAMMAR '
              'WILL BE PACKED, and the destination directory of the packed '
              "grammar will be the source's name appended with `.packed`. "
     )
     parser.set_defaults(grammar_paths=[])
+
+    parser.add_argument(
+        '--server-port', dest='server_port', type=int, default=5674,
+        help='specify the port to be used when running Joshua as a server'
+    )
 
     parser.add_argument(
         '-v', '--verbose', action='store_true',
