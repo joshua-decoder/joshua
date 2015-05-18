@@ -1695,7 +1695,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   # Copy the config file over.
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs false -tm '$tmtype pt $MAXSPAN $TEST_GRAMMAR' > $testrun/joshua.config",
+                  "cat $tunedir/joshua.config.final | $COPY_CONFIG -mark-oovs false -tm0/maxspan $MAXSPAN -tm0/path $TEST_GRAMMAR' > $testrun/joshua.config",
 									"$tunedir/joshua.config.final",
 									"$testrun/joshua.config");
 
@@ -1856,7 +1856,7 @@ chmod(0755,"$testrun/decoder_command");
 my $tmtype = "thrax";
 $tmtype = "phrase" if $GRAMMAR_TYPE eq "phrase";
 $cachepipe->cmd("test-$NAME-copy-config",
-                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs false -tm/pt '$tmtype pt $MAXSPAN $TEST_GRAMMAR' -default-non-terminal $OOV -search $SEARCH_ALGORITHM > $testrun/joshua.config",
+                "cat $TUNEFILES{'joshua.config'} | $COPY_CONFIG -mark-oovs false -tm0/maxspan $MAXSPAN -tm0/path $TEST_GRAMMAR' -default-non-terminal $OOV -search $SEARCH_ALGORITHM > $testrun/joshua.config",
                 $TUNEFILES{'joshua.config'},
                 "$testrun/joshua.config");
 

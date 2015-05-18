@@ -7,12 +7,12 @@
 #    cat joshua.config | copy-config.pl -param1 value -param2 "multi-word value" ...
 #
 # Some parameters can take options.  For example, there are multiple permitted "tm" lines.  If you
-# want to specify which one to replace, you can add "/owner" after the name.  For example,
+# want to specify which one to replace, you can add "/N" after the name, where N is the 0-indexed
+# index of the grammar.  For example,
 #
-#    cat joshua.config | copy-config.pl -tm/pt "tm = thrax pt 12 /path/to/grammar"
+#    cat joshua.config | copy-config.pl -tm0/path /path/to/grammar -tm0/owner pt
 #
-# This will ensure that only the tm line with the "pt" owner gets replaced.  Note that if there is
-# more than one, only the first one will be replaced.
+# This will ensure that only the first tm line gets updated.
 
 use strict;
 use warnings;
@@ -39,6 +39,7 @@ while (my $key = shift @ARGV) {
 
 # Step 2.  Now read through the config file.
 
+my $tm_index = 0;
 while (my $line = <>) {
   if ($line =~ /=/) {
     # split on equals
@@ -50,9 +51,27 @@ while (my $line = <>) {
 
     my $norm_key = normalize_key($key);
 
-    if ($norm_key eq "tm") {
-      my (undef,$owner) = split(' ', $value);
-      $norm_key = "$norm_key/$owner" if (exists $params{"$norm_key/$owner"});
+    # TMs get special treatment. We parse the line (supporting old format and new keyword format),
+    # and then compare to command-line args to see what gets updated
+    if ($norm_key =~ /^tm/) {
+      # get the hash of tm values from the config file
+      my $tm_hash = parse_tm_line($value);
+
+      # check if each one was passed as a command-line argument, and if so, retrieve its new value
+      foreach my $tmkey (keys %$tm_hash) {
+        my $concat = "tm${tm_index}/${tmkey}";
+        if (exists $params{$concat}) {
+          $tm_hash->{$tmkey} = $params{$concat};
+          delete $params{$concat};
+        }
+      }
+      # write out the new line (using new keyword format always)
+      $params{$norm_key} = $tm_hash->{type};
+      foreach my $tmkey (keys %$tm_hash) {
+        next if $tmkey eq "type";
+        $params{$norm_key} .= " -$tmkey $tm_hash->{$tmkey}";
+      }
+      $tm_index++;
     }
 
     # if the parameter was found on the command line, print out its replaced value
@@ -81,6 +100,7 @@ if (scalar(keys(%params))) {
   }
 }
 
+# Remove hyphens and underscores, lowercase
 sub normalize_key {
   my ($key) = @_;
 
@@ -91,3 +111,35 @@ sub normalize_key {
   return $key;
 }
 
+# Produces a {key => value} hash from the TM line, supporting both the old format:
+# 
+#   tm = thrax pt 0 /path/to/grammar.gz
+#
+# and the new one
+#
+#   tm = thrax -owner pt -maxspan 0 -path /path/to/grammar.gz
+#
+sub parse_tm_line {
+  my ($line) = @_;
+
+  # line might still have keyword on it
+  $line =~ s/^tm = // if ($line =~ /^tm = /);
+
+  my %hash;
+  my @tokens = split(' ', $line);
+  $hash{type} = shift(@tokens);
+  if ($tokens[0] =~ /^-/) {
+    while (@tokens) {
+      my $key = shift(@tokens);
+      my $value = shift(@tokens);
+      $key =~ s/^-//;
+      $hash{$key} = $value;
+    }
+  } else {
+    $hash{owner} = shift(@tokens);
+    $hash{maxspan} = shift(@tokens);
+    $hash{path} = shift(@tokens);
+  } 
+
+  return \%hash;
+}
