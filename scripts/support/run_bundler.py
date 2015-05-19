@@ -497,7 +497,7 @@ def handle_args(clargs):
     )
     parser.add_argument(
         '--root', dest='orig_dir', default=".",
-        help='the origin directory, which is the root directory from which relative'
+        help='the origin directory, which is the root directory from which relative '
              'files in the config file should be resolved (default = ".")'
     )
     parser.add_argument(
@@ -508,7 +508,7 @@ def handle_args(clargs):
         '-o', '--copy-config-options', default='-top-n 0 -output-format %S -mark-oovs false',
         help='optional additional or replacement configuration options for '
              'Joshua, all surrounded by one pair of quotes. Defaults to '
-             ' \'-top-n 0 -output-format %S -mark-oovs false\''
+             ' \'-top-n 0 -output-format %%S -mark-oovs false\''
     )
 
     parser.add_argument(
