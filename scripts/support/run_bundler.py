@@ -496,9 +496,9 @@ def handle_args(clargs):
              'it does, it will be removed if -f is used.'
     )
     parser.add_argument(
-        '--root', dest='orig_dir',
+        '--root', dest='orig_dir', default=".",
         help='the origin directory, which is the root directory from which relative'
-             'files in the config file should be resolved'
+             'files in the config file should be resolved (default = ".")'
     )
     parser.add_argument(
         '-f', '--force', action='store_true',
