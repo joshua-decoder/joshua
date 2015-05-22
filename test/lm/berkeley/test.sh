@@ -1,7 +1,7 @@
 #!/bin/bash
 
-(for file in lm lm.gz lm.berkeley lm.berkeley.gz; do
-    echo the chat-rooms | joshua-decoder -feature-function 'LanguageModel -lm_type berkeleylm -lm_order 2 -lm_file lm.berkeleylm.gz' -v 0 -output-format %f 2> log
+(for file in lm lm.gz lm.berkeleylm lm.berkeleylm.gz; do
+    echo the chat-rooms | joshua-decoder -feature-function "LanguageModel -lm_type berkeleylm -lm_order 2 -lm_file $file" -v 0 -output-format %f 2> log
 done) > output
 
 # Compare
