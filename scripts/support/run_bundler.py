@@ -543,6 +543,10 @@ def handle_args(clargs):
         help='print informational messages'
     )
 
+    parser.add_argument(
+        '--no-docs', dest='suppress_docs', action='store_true',
+        help="don't create the README in the bundle")
+
     return parser.parse_args(clargs)
 
 
