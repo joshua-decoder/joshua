@@ -122,7 +122,7 @@ fi
 
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
-$JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
+$JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config "$@"
 """ % BUNDLE_RUNNER_FILE_NAME
 
 SERVER_RUNNER_FILE_NAME = 'run-joshua-server.sh'
@@ -139,7 +139,7 @@ fi
 
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
-$JOSHUA/bin/joshua-decoder -m ${mem} -server-port 5674 -c joshua.config $*
+$JOSHUA/bin/joshua-decoder -m ${mem} -server-port 5674 -c joshua.config "$@"
 """ % SERVER_RUNNER_FILE_NAME
 
 
@@ -544,8 +544,8 @@ def handle_args(clargs):
     )
 
     parser.add_argument(
-        '--no-docs', dest='suppress_docs', action='store_true',
-        help="don't create the README in the bundle")
+        '--no-comments', dest='suppress_comments', action='store_true',
+        help="delete comments and multiple consecutive empty lines")
 
     return parser.parse_args(clargs)
 
