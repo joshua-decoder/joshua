@@ -580,7 +580,7 @@ def collect_operations(opts):
             )
 
     operations.append(
-        (os.mkdir, (opts.dest_dir,),
+        (os.makedirs, (opts.dest_dir,),
          'Creating destination directory "%s"' % opts.dest_dir)
     )
 
