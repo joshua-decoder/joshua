@@ -45,7 +45,7 @@ my $THRAX = "$JOSHUA/thrax";
 
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,@LMFILES,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$_TUNE_GRAMMAR_FILE,$_TEST_GRAMMAR_FILE,$THRAX_CONF_FILE, $_JOSHUA_CONFIG);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,@LMFILES,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$_TUNE_GRAMMAR_FILE,$_TEST_GRAMMAR_FILE,$THRAX_CONF_FILE, $_JOSHUA_CONFIG, $_JOSHUA_ARGS);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
@@ -85,8 +85,6 @@ my $GHKM_EXTRACTOR = "moses";
 my $EXTRACT_OPTIONS = "";
 
 my $WITTEN_BELL = 0;
-
-my $JOSHUA_ARGS = "";
 
 # Run description.
 my $README = undef;
@@ -191,8 +189,6 @@ my $LM_OPTIONS = "";
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR PHRASE TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
-my $NAME = undef;
-
 # Methods to use for merging alignments (see Koehn et al., 2003).
 # Options are union, {intersect, grow, srctotgt, tgttosrc}-{diag,final,final-and,diag-final,diag-final-and}
 my $GIZA_MERGE = "grow-diag-final";
@@ -230,7 +226,6 @@ my $retval = GetOptions(
   "tune=s"          => \$TUNE,
   "test=s"            => \$TEST,
   "prepare!"          => \$DO_PREPARE_CORPORA,
-  "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
   "aligner-mem=s"     => \$ALIGNER_MEM,
@@ -266,7 +261,7 @@ my $retval = GetOptions(
   "joshua-config=s"   => \$_JOSHUA_CONFIG,
   "pro-config=s"   => \$TUNEFILES{'pro.config'},
   "params-txt=s"   => \$TUNEFILES{'params.txt'},
-  "joshua-args=s"      => \$JOSHUA_ARGS,
+  "joshua-args=s"      => \$_JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "parser-mem=s"      => \$PARSER_MEM,
@@ -314,6 +309,7 @@ $TUNER = lc $TUNER;
 my $DOING_LATTICES = 0;
 
 # Prepend a space to the arguments list if it's non-empty and doesn't already have the space.
+my $JOSHUA_ARGS = $_JOSHUA_ARGS || "";
 if ($JOSHUA_ARGS ne "" and $JOSHUA_ARGS !~ /^\s/) {
   $JOSHUA_ARGS = " $JOSHUA_ARGS";
 }
@@ -327,10 +323,6 @@ my %DATA_DIRS = (
   tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
   test  => get_absolute_path("$RUNDIR/$DATA_DIR/test"),
 );
-
-if (defined $NAME) {
-  map { $DATA_DIRS{$_} .= "/$NAME" } (keys %DATA_DIRS);
-}
 
 # capitalize these to offset a common error:
 $FIRST_STEP = uc($FIRST_STEP);
@@ -659,8 +651,8 @@ if ($DO_PREPARE_CORPORA) {
 # prepare the tuning and development data
 if (defined $TUNE and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
-  $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
-  $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
+  $TUNE{source} = "$DATA_DIRS{tune}/corpus.$SOURCE";
+  $TUNE{target} = "$DATA_DIRS{tune}/corpus.$TARGET";
   my $ner_return = ner_annotate("$TUNE{source}", "$TUNE{source}.ner", $SOURCE);
   if ($ner_return == 2) {
     $TUNE{source} = "$TUNE{source}.ner";
@@ -670,8 +662,8 @@ if (defined $TUNE and $DO_PREPARE_CORPORA) {
 
 if (defined $TEST and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
-  $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
-  $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
+  $TEST{source} = "$DATA_DIRS{test}/corpus.$SOURCE";
+  $TEST{target} = "$DATA_DIRS{test}/corpus.$TARGET";
   my $ner_return = ner_annotate("$TEST{source}", "$TEST{source}.ner", $SOURCE);
   if ($ner_return == 2) {
     $TEST{source} = "$TEST{source}.ner";
@@ -1409,7 +1401,7 @@ $cachepipe->cmd("tune-bundle",
   }
 }
 
-my $tunedir = "tune";
+my $tunedir = "$RUNDIR/tune";
 system("mkdir -p $tunedir") unless -d $tunedir;
 
 # Write the decoder run command
@@ -1484,6 +1476,8 @@ if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $_TEST_GRAMMAR_FILE) {
                   $TEST_GRAMMAR);
 }
 
+my $testdir = "$RUNDIR/test";
+
 # Create the glue file.
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-test",
@@ -1504,10 +1498,10 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 
 # Build the filtered testing model
 $cachepipe->cmd("test-bundle",
-                "$BUNDLER --force --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' --${tm_switch} $TEST_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch} $TEST_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TEST_GRAMMAR),
-                "test/model/joshua.config");
+                "$testdir/model/joshua.config");
 
 {
   # Update some variables. $TEST_GRAMMAR_FILE, which previously held
@@ -1515,10 +1509,10 @@ $cachepipe->cmd("test-bundle",
   # grammar, is now used to record the text-based grammar, which is
   # needed later for different things.
   my $basename = basename($TEST_GRAMMAR);
-  if (-e "test/model/$basename") {
-    $TEST_GRAMMAR = "test/model/$basename";
-  } elsif (-e "test/model/$basename.packed") {
-    $TEST_GRAMMAR = "test/model/$basename.packed";
+  if (-e "$testdir/model/$basename") {
+    $TEST_GRAMMAR = "$testdir/model/$basename";
+  } elsif (-e "$testdir/model/$basename.packed") {
+    $TEST_GRAMMAR = "$testdir/model/$basename.packed";
   } else {
     print STDERR "* FATAL: test model bundling didn't produce a grammar?";
     exit 1;
@@ -1585,7 +1579,7 @@ if ($DO_MBR) {
 }
 
 # Update the BLEU summary.
-my $dir = (defined $NAME) ? "test/$NAME" : "test";
+my $dir = "test";
 compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
 compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
 compute_time_summary("$dir/*/joshua.log", "$dir/final-times");
