@@ -1442,6 +1442,8 @@ if ($TUNER eq "mert") {
                   "$tunedir/joshua.config.final");
 }
 
+$JOSHUA_CONFIG = "$tunedir/joshua.config.final";
+
 # Go to the next tuning run if tuning is the last step.
 if ($LAST_STEP eq "TUNE") {
   next;
@@ -1519,82 +1521,94 @@ $cachepipe->cmd("test-bundle",
   }
 }
 
+my $testrun = get_absolute_path("test", $RUNDIR);
+my $bestoutput = "$testrun/output";
+my $nbestoutput = "$testrun/output.nbest";
+my $output;
+
 # If we're decoding a lattice, also output the source side path we chose
-my $joshua_args = $JOSHUA_ARGS;
+$JOSHUA_ARGS = $_JOSHUA_ARGS;
 if ($DOING_LATTICES) {
-  $joshua_args .= " -maxlen 0 -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
+  $JOSHUA_ARGS .= " -maxlen 0 -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
 }
 
-my $testrun = get_absolute_path("test", $RUNDIR);
-my $testoutput = "$testrun/test.output.nbest";
+if ($DO_MBR) {
+  $JOSHUA_ARGS .= " -top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\"";
+  $output = $nbestoutput;
+} else {
+  $JOSHUA_ARGS .= " -top-n 0 -output-format %s";
+  $output = $bestoutput;
+}
 
 # Write the decoder run command
 open DEC_CMD, ">$testrun/decoder_command";
-print DEC_CMD "cat $TEST{source} | $testrun/model/run-joshua.sh -m $JOSHUA_MEM -threads $NUM_THREADS $joshua_args > $testoutput 2> $testrun/joshua.log\n";
+print DEC_CMD "cat $TEST{source} | $testrun/model/run-joshua.sh -m $JOSHUA_MEM -threads $NUM_THREADS $JOSHUA_ARGS > $output 2> $testrun/joshua.log\n";
 close(DEC_CMD);
 chmod(0755,"$testrun/decoder_command");
 
-# Decode
+# Decode. $output here is either $nbestoutput (if doing MBR decoding, in which case we'll
+# need the n-best output) or $bestoutput (which only outputs the hypothesis but is tons faster)
 $cachepipe->cmd("test-decode",
+                "$testrun/decoder_command",
                 "$testrun/decoder_command",
                 $TEST{source},
                 "$testrun/model/joshua.config",
                 get_file_from_grammar($TEST_GRAMMAR),
-                "$testoutput");
-
-$cachepipe->cmd("remove-oov",
-                "cat $testoutput | perl -pe 's/_OOV//g' > $testoutput.noOOV",
-                $testoutput,
-                "$testoutput.noOOV");
-
-my $output = "$testrun/test.output.1best";
-$numrefs = get_numrefs($TEST{target});
-
-# Always compute the BLEU score on the regular 1-best output, since it's easy to do
-$cachepipe->cmd("test-extract-onebest",
-                "java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest.noOOV $output",
-                "$testrun/test.output.nbest.noOOV", 
                 $output);
 
-$cachepipe->cmd("test-bleu",
-                "$JOSHUA/bin/bleu $output $TEST{target} $numrefs > $testrun/test.output.1best.bleu",
-                $output,
-                "$output.bleu");
+# $cachepipe->cmd("remove-oov",
+#                 "cat $testoutput | perl -pe 's/_OOV//g' > $testoutput.noOOV",
+#                 $testoutput,
+#                 "$testoutput.noOOV");
 
-# We can also rescore the output lattice with MBR
+# Extract the 1-best output from the n-best file if the n-best file alone was output
+if ($DO_MBR) {
+  $cachepipe->cmd("test-extract-onebest",
+                  "java -Xmx500m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.util.ExtractTopCand $nbestoutput $bestoutput",
+                  $nbestoutput,
+                  $bestoutput);
+}  
+
+# Now compute the BLEU score on the 1-best output
+$cachepipe->cmd("test-bleu",
+                "$JOSHUA/bin/bleu $output $TEST{target} > $testrun/bleu",
+                $bestoutput,
+                "$testrun/bleu");
+
+# Update the BLEU summary.
+compute_bleu_summary("$testrun/bleu", "$testrun/final-bleu");
+
 if ($DO_MBR) {
   my $numlines = `cat $TEST{source} | wc -l`;
   $numlines--;
-  $output .= ".mbr";
+  my $mbr_output = "$testrun/output.mbr";
 
   $cachepipe->cmd("test-onebest-parmbr", 
-                  "cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 $NUM_THREADS > $output",
-                  "$testrun/test.output.nbest.noOOV", 
-                  $output);
+                  "cat $nbestoutput | java -Xmx1700m -cp $JOSHUA/class -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 $NUM_THREADS > $mbr_output",
+                  $nbestoutput,
+                  $mbr_output);
 
   $cachepipe->cmd("test-bleu-mbr",
-                  "$JOSHUA/bin/bleu output $TEST{target} $numrefs > $testrun/test.output.1best.mbr.bleu",
-                  $output,
-                  "$output.bleu");
+                  "$JOSHUA/bin/bleu output $TEST{target} $numrefs > $testrun/bleu.mbr",
+                  $mbr_output,
+                  "$testrun/bleu.mbr");
+
+  compute_bleu_summary("$testrun/bleu.mbr", "$testrun/final-bleu-mbr");
 }
 
-# Update the BLEU summary.
-my $dir = "test";
-compute_bleu_summary("$dir/*/*.1best.bleu", "$dir/final-bleu");
-compute_bleu_summary("$dir/*/*.1best.mbr.bleu", "$dir/final-bleu-mbr");
-compute_time_summary("$dir/*/joshua.log", "$dir/final-times");
+compute_time_summary("$testrun/joshua.log", "$testrun/final-times");
 
 # Now do the analysis
 if ($DOING_LATTICES) {
   # extract the source
   my $source = "$testrun/test.lattice-path.txt";
   $cachepipe->cmd("test-lattice-extract-source",
-                  "$JOSHUA/bin/extract-1best $testrun/test.output.nbest.noOOV 2 | perl -pe 's/<s> //' > $source",
-                  $output, $source);
+                  "$JOSHUA/bin/extract-1best $nbestoutput 2 | perl -pe 's/<s> //' > $source",
+                  $nbestoutput, $source);
 
-  analyze_testrun($output,$source,$TEST{target});
+  analyze_testrun($bestoutput,$source,$TEST{target});
 } else {
-  analyze_testrun($output,$TEST{source},$TEST{target});
+  analyze_testrun($bestoutput,$TEST{source},$TEST{target});
 }
 
 
@@ -1899,11 +1913,9 @@ sub analyze_testrun {
 
   my $references = join(" -r ", @references);
 
-  my $runname = "analyze-$dir";
-  $runname =~ s/\//-/g;
-  $cachepipe->cmd($runname,
+  $cachepipe->cmd("analyze-test",
                   "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $output > $dir/analysis/sentence-by-sentence.html",
-                  "$dir/test.output.1best",
+                  $output,
                   "$dir/analysis/sentence-by-sentence.html");
 }
 
