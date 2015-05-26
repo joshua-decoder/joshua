@@ -307,15 +307,18 @@ def get_unique_dest(name):
     return result
 
 
-def recursive_copy(src, dest):
+def recursive_copy(src, dest, symlink = False):
     """
     Copy the src file or recursively copy the directory rooted at src to
     dest
     """
-    if os.path.isdir(src):
-        shutil.copytree(src, dest, True)
+    if symlink:
+        os.symlink(src, dest)
     else:
-        shutil.copy(src, dest)
+        if os.path.isdir(src):
+            shutil.copytree(src, dest, True)
+        else:
+            shutil.copy(src, dest)
 
 
 def run_grammar_packer(src_path, dest_path):
@@ -340,7 +343,7 @@ def run_grammar_packer(src_path, dest_path):
         )
 
 
-def process_line_containing_path(line, orig_dir, dest_dir):
+def process_line_containing_path(line, orig_dir, dest_dir, symlink):
     """
     The line has already been determined to contain a path, so generate
     an operation tuple, and update the config line based on the passed
@@ -395,7 +398,7 @@ def process_line_containing_path(line, orig_dir, dest_dir):
 
     dest_path = os.path.join(dest_dir, dest_name)
     operation = (
-        recursive_copy, (full_src_path, dest_path),
+        recursive_copy, (full_src_path, dest_path, symlink),
         'Making a copy of {0} at {1}'.format(full_src_path, dest_path)
     )
 
@@ -411,7 +414,7 @@ def process_line_containing_path(line, orig_dir, dest_dir):
 
 
 def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
-                                    grammar_path_overrides, grammar_idx):
+                                    grammar_path_overrides, grammar_idx, symlink):
     """
     Perform the same procedures as 'process_line_containing_path()',
     but also replace the grammar path and pack if requested.
@@ -456,7 +459,7 @@ def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
     else:
         # Just copy the grammar without packing it.
         operation = (
-            recursive_copy, (src_path, dest_path),
+            recursive_copy, (src_path, dest_path, symlink),
             'Making a copy of {0} at {1}'.format(src_path, dest_path)
         )
 
@@ -510,7 +513,6 @@ def handle_args(clargs):
              'Joshua, all surrounded by one pair of quotes. Defaults to '
              ' \'-top-n 0 -output-format %%S -mark-oovs false\''
     )
-
     parser.add_argument(
         '--tm', dest='grammar_paths', action='append',
         type=str,
@@ -537,15 +539,16 @@ def handle_args(clargs):
         '--server-port', dest='server_port', type=int, default=5674,
         help='specify the port to be used when running Joshua as a server'
     )
-
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='print informational messages'
     )
-
     parser.add_argument(
         '--no-comments', dest='suppress_comments', action='store_true',
         help="delete comments and multiple consecutive empty lines")
+    parser.add_argument(
+        '--symlink', dest='symlink', action='store_true',
+        help="symlink (where possible) to TM and LM files, instead of copying them")
 
     return parser.parse_args(clargs)
 
@@ -611,7 +614,7 @@ def collect_operations(opts):
             try:
                 line, operation = process_line_containing_grammar(
                     line, opts.orig_dir, opts.dest_dir,
-                    opts.grammar_paths, grammar_configs_count
+                    opts.grammar_paths, grammar_configs_count, opts.symlink
                 )
             except PathException as e:
                 # TODO: make this more appropriate for when the source
@@ -629,7 +632,7 @@ def collect_operations(opts):
         elif line_specifies_path(line):
             try:
                 line, operation = process_line_containing_path(
-                    line, opts.orig_dir, opts.dest_dir
+                    line, opts.orig_dir, opts.dest_dir, opts.symlink
                 )
             except PathException as e:
                 # Prepend the line number to the error message

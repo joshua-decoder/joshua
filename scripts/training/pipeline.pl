@@ -1384,7 +1384,7 @@ sub get_file_from_grammar {
 # Build the filtered tuning model
 my $tm_switch = ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
 $cachepipe->cmd("tune-bundle",
-                "$BUNDLER --force --verbose $JOSHUA_CONFIG tune/model --copy-config-options '-top-n $NBEST -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG tune/model --copy-config-options '-top-n $NBEST -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TUNE_GRAMMAR),  # in case it's packed
                 "tune/model/joshua.config");
@@ -1500,7 +1500,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 
 # Build the filtered testing model
 $cachepipe->cmd("test-bundle",
-                "$BUNDLER --force --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch} $TEST_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch} $TEST_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TEST_GRAMMAR),
                 "$testdir/model/joshua.config");
