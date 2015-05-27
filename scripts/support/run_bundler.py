@@ -432,7 +432,8 @@ def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
     override_src_path = grammar_idx < len(grammar_path_overrides)
     if override_src_path:
         src_path = grammar_path_overrides[grammar_idx]
-        to_pack = type(src_path) is _PackGrammarPath
+        already_packed = os.path.isdir(src_path)
+        to_pack = type(src_path) is _PackGrammarPath and not already_packed
     else:
         if not os.path.isabs(original_src_path):
             src_path = os.path.join(orig_dir, original_src_path)
