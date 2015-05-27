@@ -345,7 +345,7 @@ def run_grammar_packer(src_path, dest_path):
         )
 
 
-def process_line_containing_path(line, orig_dir, dest_dir, symlink):
+def process_line_containing_path(line, orig_dir, dest_dir, symlink, absolute):
     """
     The line has already been determined to contain a path, so generate
     an operation tuple, and update the config line based on the passed
@@ -383,7 +383,7 @@ def process_line_containing_path(line, orig_dir, dest_dir, symlink):
     # Determine a unique destination path
 
     # Get directory name or file name of source path
-    __, src_name = os.path.split(src_path)
+    src_name = os.path.basename(src_path)
     dest_name = get_unique_dest(src_name)
 
     #############################################################
@@ -406,7 +406,7 @@ def process_line_containing_path(line, orig_dir, dest_dir, symlink):
 
     ########################
     # Update the config line
-    updated_config = line_parts.config.replace(src_path, dest_name)
+    updated_config = line_parts.config.replace(src_path, dest_path if absolute else dest_name)
     if line_parts.comment:
         line = '#'.join([updated_config, line_parts.comment])
     else:
@@ -416,7 +416,7 @@ def process_line_containing_path(line, orig_dir, dest_dir, symlink):
 
 
 def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
-                                    grammar_path_overrides, grammar_idx, symlink):
+                                    grammar_path_overrides, grammar_idx, symlink, absolute):
     """
     Perform the same procedures as 'process_line_containing_path()',
     but also replace the grammar path and pack if requested.
@@ -452,7 +452,7 @@ def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
         dest_name += '.packed'
     dest_path = os.path.join(dest_dir, dest_name)
 
-    grammar_conf_line = grammar_conf_line.replace(original_src_path, dest_name)
+    grammar_conf_line = grammar_conf_line.replace(original_src_path, dest_path if absolute else dest_name)
 
     if to_pack:
         operation = (
@@ -552,6 +552,9 @@ def handle_args(clargs):
     parser.add_argument(
         '--symlink', dest='symlink', action='store_true',
         help="symlink (where possible) to TM and LM files, instead of copying them")
+    parser.add_argument(
+        '--absolute', dest='absolute', action='store_true', default=False,
+        help="Use absolute instead of relative paths for model file locations")
 
     return parser.parse_args(clargs)
 
@@ -617,7 +620,7 @@ def collect_operations(opts):
             try:
                 line, operation = process_line_containing_grammar(
                     line, opts.orig_dir, opts.dest_dir,
-                    opts.grammar_paths, grammar_configs_count, opts.symlink
+                    opts.grammar_paths, grammar_configs_count, opts.symlink, opts.absolute
                 )
             except PathException as e:
                 # TODO: make this more appropriate for when the source
@@ -635,7 +638,7 @@ def collect_operations(opts):
         elif line_specifies_path(line):
             try:
                 line, operation = process_line_containing_path(
-                    line, opts.orig_dir, opts.dest_dir, opts.symlink
+                    line, opts.orig_dir, opts.dest_dir, opts.symlink, opts.absolute
                 )
             except PathException as e:
                 # Prepend the line number to the error message
