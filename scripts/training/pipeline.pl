@@ -95,14 +95,6 @@ my $CAT = "$SCRIPTDIR/training/scat";
 # where processed data files are stored
 my $DATA_DIR = "data";
 
-# this file should exist in the Joshua mert templates file; it contains
-# the Joshua command invoked by MERT
-my %TUNEFILES = (
-  'mert.config'     => "$TUNECONFDIR/mert.config",
-  'pro.config'      => "$TUNECONFDIR/pro.config",
-  'params.txt'      => "$TUNECONFDIR/params.txt",
-);
-
 # Whether to do MBR decoding on the n-best list (for test data).
 my $DO_MBR = 0;
 
@@ -259,8 +251,6 @@ my $retval = GetOptions(
   "tokenizer-source=s"      => \$TOKENIZER_SOURCE,
   "tokenizer-target=s"      => \$TOKENIZER_TARGET,
   "joshua-config=s"   => \$_JOSHUA_CONFIG,
-  "pro-config=s"   => \$TUNEFILES{'pro.config'},
-  "params-txt=s"   => \$TUNEFILES{'params.txt'},
   "joshua-args=s"      => \$_JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
   "hadoop-mem=s"      => \$HADOOP_MEM,
@@ -268,7 +258,6 @@ my $retval = GetOptions(
   "buildlm-mem=s"     => \$BUILDLM_MEM,
   "packer-mem=s"      => \$PACKER_MEM,
   "pack!"             => \$DO_PACK_GRAMMARS,
-  "decoder-command=s" => \$TUNEFILES{'decoder_command'},
   "tuner=s"           => \$TUNER,
   "tuner-mem=s"       => \$TUNER_MEM,
   "mira-iterations=i" => \$MIRA_ITERATIONS,
@@ -309,14 +298,7 @@ $TUNER = lc $TUNER;
 my $DOING_LATTICES = 0;
 
 # Prepend a space to the arguments list if it's non-empty and doesn't already have the space.
-my $JOSHUA_ARGS = $_JOSHUA_ARGS || "";
-if ($JOSHUA_ARGS ne "" and $JOSHUA_ARGS !~ /^\s/) {
-  $JOSHUA_ARGS = " $JOSHUA_ARGS";
-}
-
-$TUNEFILES{'pro.config'} = get_absolute_path($TUNEFILES{'pro.config'});
-$TUNEFILES{'params.txt'} = get_absolute_path($TUNEFILES{'params.txt'});
-$TUNEFILES{'decoder_command'} = get_absolute_path($TUNEFILES{'decoder_command'});
+my $JOSHUA_ARGS = $_JOSHUA_ARGS;
 
 my %DATA_DIRS = (
   train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
@@ -1324,7 +1306,7 @@ if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $_TUNE_GRAMMAR_FILE) {
 if (! defined $GLUE_GRAMMAR_FILE) {
   $cachepipe->cmd("glue-tune",
                   "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
-                  $TUNE_GRAMMAR,
+                  get_file_from_grammar($TUNE_GRAMMAR),
                   "$DATA_DIRS{tune}/grammar.glue");
   $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
 } else {
@@ -1381,13 +1363,20 @@ sub get_file_from_grammar {
   return $file;
 }
 
+my $tunedir = "$RUNDIR/tune";
+system("mkdir -p $tunedir") unless -d $tunedir;
+
 # Build the filtered tuning model
+my $tunemodeldir = "$tunedir/model";
 my $tm_switch = ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
 $cachepipe->cmd("tune-bundle",
-                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG tune/model --copy-config-options '-top-n $NBEST -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TUNE_GRAMMAR),  # in case it's packed
-                "tune/model/joshua.config");
+                "$tunemodeldir/joshua.config");
+
+# Update the config file location
+$JOSHUA_CONFIG = "$tunedir/model/joshua.config";
 {
   # Now update the tuning grammar
   my $basename = basename($TUNE_GRAMMAR);
@@ -1401,34 +1390,33 @@ $cachepipe->cmd("tune-bundle",
   }
 }
 
-my $tunedir = "$RUNDIR/tune";
-system("mkdir -p $tunedir") unless -d $tunedir;
-
 # Write the decoder run command
+$JOSHUA_ARGS .= " -output-format \"%i ||| %s ||| %f ||| %c\"";
+
 open DEC_CMD, ">$tunedir/decoder_command";
-print DEC_CMD "cat $TUNE{source} | $tunedir/model/run-joshua.sh -m $JOSHUA_MEM -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/tune.output.nbest 2> $tunedir/joshua.log\n";
+print DEC_CMD "cat $TUNE{source} | $tunedir/model/run-joshua.sh -m $JOSHUA_MEM -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/output.nbest 2> $tunedir/joshua.log\n";
 close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
 if ($TUNER eq "mert") {
   $cachepipe->cmd("mert",
-                  "java -d64 -Xmx$TUNER_MEM -cp $JOSHUA/class joshua.zmert.ZMERT -maxMem 4000 $tunedir/mert.config > $tunedir/mert.log 2>&1",
+                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert -m $JOSHUA_MEM -t $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  $TUNE{source},
+                  $TUNE{target},
+                  $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
-                  "$tunedir/joshua.config.ZMERT.final",
-                  "$tunedir/decoder_command",
-                  "$tunedir/mert.config",
-                  "$tunedir/params.txt");
-  system("ln -sf joshua.config.ZMERT.final $tunedir/joshua.config.final");
+                  "$tunedir/joshua.config.final");
+                  
 } elsif ($TUNER eq "pro") {
   $cachepipe->cmd("pro",
-                  "java -d64 -Xmx$TUNER_MEM -cp $JOSHUA/class joshua.pro.PRO -maxMem 4000 $tunedir/pro.config > $tunedir/pro.log 2>&1",
+                  "$SCRIPTDIR/training/run-zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro -m $JOSHUA_MEM -t $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  $TUNE{source},
+                  $TUNE{target},
+                  $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
-                  "$tunedir/joshua.config.PRO.final",
-                  "$tunedir/decoder_command",
-                  "$tunedir/pro.config",
-                  "$tunedir/params.txt");
-  system("ln -sf joshua.config.PRO.final $tunedir/joshua.config.final");
+                  "$tunedir/joshua.config.final");
+
 } elsif ($TUNER eq "mira") {
   my $refs_path = $TUNE{target};
   $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
