@@ -53,8 +53,8 @@ public class ArgsParser {
         }
       }
 
-      // Search for the configuration file
-      for (int i = 0; i < args.length; i++) {
+      // Search for the configuration file from the end (so as to take the last one)
+      for (int i = args.length-1; i >= 0; i--) {
         if (args[i].equals("-c") || args[i].equals("-config")) {
 
           setConfigFile(args[i + 1].trim());
