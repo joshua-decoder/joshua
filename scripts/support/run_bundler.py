@@ -112,8 +112,10 @@ BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
 BUNDLE_RUNNER_TEXT = """#!/bin/bash
 # Usage: ./%s [extra joshua config options]
 
-## memory usage; default is 4 GB
-mem=4g
+# defaults
+mem="4g"
+
+# process command-line arguments
 if [[ $1 == "-m" ]]; then
     mem=$2
     shift

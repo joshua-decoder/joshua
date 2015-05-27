@@ -1375,8 +1375,6 @@ $cachepipe->cmd("tune-bundle",
                 get_file_from_grammar($TUNE_GRAMMAR),  # in case it's packed
                 "$tunemodeldir/joshua.config");
 
-# Update the config file location
-$JOSHUA_CONFIG = "$tunedir/model/joshua.config";
 {
   # Now update the tuning grammar
   my $basename = basename($TUNE_GRAMMAR);
@@ -1390,18 +1388,22 @@ $JOSHUA_CONFIG = "$tunedir/model/joshua.config";
   }
 }
 
-# Write the decoder run command
+# Write the decoder run command. The decoder will use the config file in the bundled
+# directory, continually updating it.
 $JOSHUA_ARGS .= " -output-format \"%i ||| %s ||| %f ||| %c\"";
 
+# Update the config file location
+$JOSHUA_CONFIG = "$tunedir/model/joshua.config";
+
 open DEC_CMD, ">$tunedir/decoder_command";
-print DEC_CMD "cat $TUNE{source} | $tunedir/model/run-joshua.sh -m $JOSHUA_MEM -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/output.nbest 2> $tunedir/joshua.log\n";
+print DEC_CMD "cat $TUNE{source} | $tunedir/model/run-joshua.sh -m $JOSHUA_MEM -config $JOSHUA_CONFIG -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/output.nbest 2> $tunedir/joshua.log\n";
 close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
 if ($TUNER eq "mert") {
   $cachepipe->cmd("mert",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert -m $JOSHUA_MEM -t $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert -t $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
                   $TUNE{target},
                   $JOSHUA_CONFIG,
