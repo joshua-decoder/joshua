@@ -653,7 +653,7 @@ public class Decoder {
         this.featureFunctions.add((FeatureFunction) constructor.newInstance(weights, fields, joshuaConfiguration));
       } catch (Exception e) {
         e.printStackTrace();
-        System.err.println("* WARNING: could not find a feature '" + featureLine + "'");
+        System.err.println("* FATAL: could not find a feature '" + featureName + "'");
         System.exit(1);
       }
     }

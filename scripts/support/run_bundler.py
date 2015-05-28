@@ -112,8 +112,10 @@ BUNDLE_RUNNER_FILE_NAME = 'run-joshua.sh'
 BUNDLE_RUNNER_TEXT = """#!/bin/bash
 # Usage: ./%s [extra joshua config options]
 
-## memory usage; default is 4 GB
-mem=4g
+# defaults
+mem="4g"
+
+# process command-line arguments
 if [[ $1 == "-m" ]]; then
     mem=$2
     shift
@@ -122,7 +124,7 @@ fi
 
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
-$JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config $*
+$JOSHUA/bin/joshua-decoder -m ${mem} -c joshua.config "$@"
 """ % BUNDLE_RUNNER_FILE_NAME
 
 SERVER_RUNNER_FILE_NAME = 'run-joshua-server.sh'
@@ -139,7 +141,7 @@ fi
 
 bundledir=$(dirname $0)
 cd $bundledir   # relative paths are now safe....
-$JOSHUA/bin/joshua-decoder -m ${mem} -server-port 5674 -c joshua.config $*
+$JOSHUA/bin/joshua-decoder -m ${mem} -server-port 5674 -c joshua.config "$@"
 """ % SERVER_RUNNER_FILE_NAME
 
 
@@ -307,15 +309,18 @@ def get_unique_dest(name):
     return result
 
 
-def recursive_copy(src, dest):
+def recursive_copy(src, dest, symlink = False):
     """
     Copy the src file or recursively copy the directory rooted at src to
     dest
     """
-    if os.path.isdir(src):
-        shutil.copytree(src, dest, True)
+    if symlink:
+        os.symlink(src, dest)
     else:
-        shutil.copy(src, dest)
+        if os.path.isdir(src):
+            shutil.copytree(src, dest, True)
+        else:
+            shutil.copy(src, dest)
 
 
 def run_grammar_packer(src_path, dest_path):
@@ -340,7 +345,7 @@ def run_grammar_packer(src_path, dest_path):
         )
 
 
-def process_line_containing_path(line, orig_dir, dest_dir):
+def process_line_containing_path(line, orig_dir, dest_dir, symlink, absolute):
     """
     The line has already been determined to contain a path, so generate
     an operation tuple, and update the config line based on the passed
@@ -378,7 +383,7 @@ def process_line_containing_path(line, orig_dir, dest_dir):
     # Determine a unique destination path
 
     # Get directory name or file name of source path
-    __, src_name = os.path.split(src_path)
+    src_name = os.path.basename(src_path)
     dest_name = get_unique_dest(src_name)
 
     #############################################################
@@ -395,13 +400,13 @@ def process_line_containing_path(line, orig_dir, dest_dir):
 
     dest_path = os.path.join(dest_dir, dest_name)
     operation = (
-        recursive_copy, (full_src_path, dest_path),
+        recursive_copy, (full_src_path, dest_path, symlink),
         'Making a copy of {0} at {1}'.format(full_src_path, dest_path)
     )
 
     ########################
     # Update the config line
-    updated_config = line_parts.config.replace(src_path, dest_name)
+    updated_config = line_parts.config.replace(src_path, dest_path if absolute else dest_name)
     if line_parts.comment:
         line = '#'.join([updated_config, line_parts.comment])
     else:
@@ -411,7 +416,7 @@ def process_line_containing_path(line, orig_dir, dest_dir):
 
 
 def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
-                                    grammar_path_overrides, grammar_idx):
+                                    grammar_path_overrides, grammar_idx, symlink, absolute):
     """
     Perform the same procedures as 'process_line_containing_path()',
     but also replace the grammar path and pack if requested.
@@ -429,7 +434,8 @@ def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
     override_src_path = grammar_idx < len(grammar_path_overrides)
     if override_src_path:
         src_path = grammar_path_overrides[grammar_idx]
-        to_pack = type(src_path) is _PackGrammarPath
+        already_packed = os.path.isdir(src_path)
+        to_pack = type(src_path) is _PackGrammarPath and not already_packed
     else:
         if not os.path.isabs(original_src_path):
             src_path = os.path.join(orig_dir, original_src_path)
@@ -446,7 +452,7 @@ def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
         dest_name += '.packed'
     dest_path = os.path.join(dest_dir, dest_name)
 
-    grammar_conf_line = grammar_conf_line.replace(original_src_path, dest_name)
+    grammar_conf_line = grammar_conf_line.replace(original_src_path, dest_path if absolute else dest_name)
 
     if to_pack:
         operation = (
@@ -456,7 +462,7 @@ def process_line_containing_grammar(grammar_conf_line, orig_dir, dest_dir,
     else:
         # Just copy the grammar without packing it.
         operation = (
-            recursive_copy, (src_path, dest_path),
+            recursive_copy, (src_path, dest_path, symlink),
             'Making a copy of {0} at {1}'.format(src_path, dest_path)
         )
 
@@ -497,7 +503,7 @@ def handle_args(clargs):
     )
     parser.add_argument(
         '--root', dest='orig_dir', default=".",
-        help='the origin directory, which is the root directory from which relative'
+        help='the origin directory, which is the root directory from which relative '
              'files in the config file should be resolved (default = ".")'
     )
     parser.add_argument(
@@ -508,9 +514,8 @@ def handle_args(clargs):
         '-o', '--copy-config-options', default='-top-n 0 -output-format %S -mark-oovs false',
         help='optional additional or replacement configuration options for '
              'Joshua, all surrounded by one pair of quotes. Defaults to '
-             ' \'-top-n 0 -output-format %S -mark-oovs false\''
+             ' \'-top-n 0 -output-format %%S -mark-oovs false\''
     )
-
     parser.add_argument(
         '--tm', dest='grammar_paths', action='append',
         type=str,
@@ -537,11 +542,19 @@ def handle_args(clargs):
         '--server-port', dest='server_port', type=int, default=5674,
         help='specify the port to be used when running Joshua as a server'
     )
-
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='print informational messages'
     )
+    parser.add_argument(
+        '--no-comments', dest='suppress_comments', action='store_true',
+        help="delete comments and multiple consecutive empty lines")
+    parser.add_argument(
+        '--symlink', dest='symlink', action='store_true',
+        help="symlink (where possible) to TM and LM files, instead of copying them")
+    parser.add_argument(
+        '--absolute', dest='absolute', action='store_true', default=False,
+        help="Use absolute instead of relative paths for model file locations")
 
     return parser.parse_args(clargs)
 
@@ -580,7 +593,7 @@ def collect_operations(opts):
             )
 
     operations.append(
-        (os.mkdir, (opts.dest_dir,),
+        (os.makedirs, (opts.dest_dir,),
          'Creating destination directory "%s"' % opts.dest_dir)
     )
 
@@ -607,7 +620,7 @@ def collect_operations(opts):
             try:
                 line, operation = process_line_containing_grammar(
                     line, opts.orig_dir, opts.dest_dir,
-                    opts.grammar_paths, grammar_configs_count
+                    opts.grammar_paths, grammar_configs_count, opts.symlink, opts.absolute
                 )
             except PathException as e:
                 # TODO: make this more appropriate for when the source
@@ -625,7 +638,7 @@ def collect_operations(opts):
         elif line_specifies_path(line):
             try:
                 line, operation = process_line_containing_path(
-                    line, opts.orig_dir, opts.dest_dir
+                    line, opts.orig_dir, opts.dest_dir, opts.symlink, opts.absolute
                 )
             except PathException as e:
                 # Prepend the line number to the error message

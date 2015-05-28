@@ -1231,7 +1231,7 @@ sub get_weights_from_mert {
 
 sub run_decoder {
     my ($featlist, $run, $need_to_normalize) = @_;
-    my $filename_template = "run%d.best$___N_BEST_LIST_SIZE.out";
+    my $filename_template = "$___WORKING_DIR/run%d.best$___N_BEST_LIST_SIZE.out";
     my $filename = sprintf($filename_template, $run);
     my $hypergraph_dir = "hypergraph";
     my $lsamp_filename = undef;
@@ -1307,8 +1307,9 @@ sub run_decoder {
         # Always use single (first) reference.  Simulated post-editing undefined for multiple references.
         $decoder_cmd = "$___MOSES_SIM_PE $decoder_cmd -ref $references[0] -symal $dev_symal_abs -tmp $working_dir_abs > run$run.out";
       }
-      $decoder_cmd .= " > run$run.out";
+      $decoder_cmd .= " > $___WORKING_DIR/run$run.out";
     }
+    $decoder_cmd .= " 2> $___WORKING_DIR/run$run.log";
 
     print STDERR "Executing: $decoder_cmd \n";
     safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";

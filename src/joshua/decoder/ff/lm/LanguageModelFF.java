@@ -1,6 +1,7 @@
 package joshua.decoder.ff.lm;
 
 import java.io.BufferedReader;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,7 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.chart_parser.SourcePath;

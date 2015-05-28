@@ -1,6 +1,0 @@
-<LMPARAMS>
-<TMPARAMS>
-WordPenalty        ||| -2.844814  Opt  -Inf  +Inf  -5   0
-OOVPenalty         ||| 1          Fix     0     0   0   0
-<OTHERPARAMS>
-normalization = absval 1 lm_0

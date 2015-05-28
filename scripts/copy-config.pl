@@ -13,6 +13,12 @@
 #    cat joshua.config | copy-config.pl -tm0/path /path/to/grammar -tm0/owner pt
 #
 # This will ensure that only the first tm line gets updated.
+#
+# Most keys are replacement keys: specifying a value will replace what's found in the config
+# file. The only exception is -feature-function, instances of which are appended to the output.
+# Feature functions can't be deleted from the config file.
+#
+# Weights
 
 use strict;
 use warnings;
@@ -20,7 +26,7 @@ use warnings;
 # Step 1. process command-line arguments for key/value pairs.  The keys are matched next to the
 # config file and the configfile values replaced with those found on the command-line.
 
-my (%params,%restrictions);
+my (%params,%weights,@features);
 while (my $key = shift @ARGV) {
   # make sure the parameter has a leading dash
   if ($key !~ /^-/) {
@@ -30,18 +36,36 @@ while (my $key = shift @ARGV) {
 
   # remove leading dash
   $key =~ s/^-+//g;
+  $key = normalize_key($key);
 
   # get the value and store the pair
   my $value = shift(@ARGV);
 
-  $params{normalize_key($key)} = $value;
+  # -feature-function lines are gathered, other keys can be present only once
+  if ($key eq "featurefunction") {
+    push(@features, $value);
+  } elsif ($key eq "weights") {
+    my @tokens = split(' ', $value);
+    for (my $i = 0; $i < @tokens; $i += 2) {
+      $weights{$tokens[$i]} = $tokens[$i+1];
+    }
+  } else {
+    $params{$key} = $value;
+  }
 }
 
 # Step 2.  Now read through the config file.
 
+my @weights_order;
 my $tm_index = 0;
 while (my $line = <>) {
-  if ($line =~ /=/) {
+  if ($line =~ /^\s*$/ or $line =~ /^#/) {
+    # Comments, empty lines
+    print $line;
+
+  } elsif ($line =~ /=/) {
+    # Regular configuration variables.
+
     # split on equals
     my ($key,$value) = split(/\s*=\s*/, $line, 2);
 
@@ -87,7 +111,11 @@ while (my $line = <>) {
     }
 
   } else {
-    print $line;
+    # Weights. Save these to print at the end, just to keep things neat.
+    chomp($line);
+    my ($name, $value) = split(' ', $line);
+    $weights{$name} = $value unless exists $weights{$name};
+    push(@weights_order, $name);
   }
 }
 
@@ -98,6 +126,19 @@ if (scalar(keys(%params))) {
     print STDERR "* WARNING: no key '$key' found in config file (appending to end)\n";
     print "$key = $params{$key}\n";
   }
+}
+
+# print out the feature functions
+map { print "feature-function = $_\n" } @features;
+print $/;
+
+# Print out the weights
+foreach my $weight (@weights_order) {
+  print "$weight $weights{$weight}\n";
+  delete $weights{$weight};
+}
+foreach my $weight (keys %weights) {
+  print "$weight $weights{$weight}\n";
 }
 
 # Remove hyphens and underscores, lowercase
