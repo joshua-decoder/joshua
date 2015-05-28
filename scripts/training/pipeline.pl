@@ -1370,7 +1370,7 @@ system("mkdir -p $tunedir") unless -d $tunedir;
 my $tunemodeldir = "$tunedir/model";
 my $tm_switch = ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
 $cachepipe->cmd("tune-bundle",
-                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TUNE_GRAMMAR),  # in case it's packed
                 "$tunemodeldir/joshua.config");
@@ -1403,18 +1403,16 @@ chmod(0755,"$tunedir/decoder_command");
 # tune
 if ($TUNER eq "mert") {
   $cachepipe->cmd("mert",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert -t $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert --threads $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
-                  $TUNE{target},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
                   "$tunedir/joshua.config.final");
                   
 } elsif ($TUNER eq "pro") {
   $cachepipe->cmd("pro",
-                  "$SCRIPTDIR/training/run-zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro -m $JOSHUA_MEM -t $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run-zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro -m $JOSHUA_MEM --threads $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
-                  $TUNE{target},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
                   "$tunedir/joshua.config.final");
@@ -1493,7 +1491,7 @@ $cachepipe->cmd("test-bundle",
                 "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch} $TEST_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TEST_GRAMMAR),
-                "$testdir/model/joshua.config");
+                "$testdir/joshua.config");
 
 {
   # Update some variables. $TEST_GRAMMAR_FILE, which previously held
