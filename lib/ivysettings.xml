@@ -2,24 +2,17 @@
 <ivysettings >
   <settings defaultResolver="1" />
   <resolvers>
-    <chain name="1">
-
-      <chain name="1">
-        <filesystem name="filesystem">
-          <ivy pattern="${ivy.settings.dir}/ivy.xml"/>
-          <artifact pattern="${ivy.settings.dir}/[artifact]-[revision].[ext]"/>
-        </filesystem>
-      </chain>
-
-      <chain name="maven">
-        <ibiblio name="central" m2compatible="true"/>
-        <ibiblio name="tools.gbif.org" m2compatible="true" root="http://tools.gbif.org/maven/repository/" />
-        <packager name="roundup" buildRoot="${env.JOSHUA}/lib/packager/build" resourceCache="${env.JOSHUA}/lib/cache">
-          <ivy pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/ivy.xml"/>
-          <artifact pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/packager.xml"/>
-        </packager>
-      </chain>
-
+    <chain name="1" returnFirst="true" dual="true">
+      <filesystem name="filesystem">
+        <ivy pattern="${ivy.settings.dir}/cache/[organisation]/[module]/ivys/ivy-[revision].xml"/>
+        <artifact pattern="${ivy.settings.dir}/[artifact]-[revision].[ext]"/>
+      </filesystem>
+      <ibiblio name="central" m2compatible="true"/>
+      <ibiblio name="tools.gbif.org" m2compatible="true" root="http://tools.gbif.org/maven/repository/" />
+      <packager name="roundup" buildRoot="${env.JOSHUA}/lib/packager/build" resourceCache="${env.JOSHUA}/lib/cache">
+        <ivy pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/ivy.xml"/>
+        <artifact pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/packager.xml"/>
+      </packager>
     </chain>
   </resolvers>
 </ivysettings>
