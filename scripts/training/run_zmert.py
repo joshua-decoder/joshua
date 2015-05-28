@@ -210,13 +210,17 @@ def get_num_refs(prefix):
 
     return 0
     
+def remove_if_present(file):
+    if (os.path.isfile(file)):
+        os.unlink(file)
+
 def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output):
     """Writes the config files for both Z-MERT and PRO (which run on the same codebase).
     Both of them write the file "params.txt", but they use different names for the config file,
     so that is a parameter."""
 
     local_config = os.path.join(tunedir, 'joshua.config')
-    os.remove(local_config)
+    remove_if_present(local_config)
     os.symlink(config, local_config)
 
     write_template(template, template_dest,
@@ -270,9 +274,9 @@ def run_zmert(tunedir, source, target, command, config, output):
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.zmert.ZMERT -maxMem 4000 %s/mert.config > %s/mert.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
 
-    os.remove('%s/joshua.config.final' % (tunedir))
-    os.symlink('%s/joshua.config.ZMERT.final' % (tunedir),
-               '%s/joshua.config.final' % (tunedir))
+    final_config_path = os.path.join(tunedir, 'joshua.config.final')
+    remove_if_present(final_config_path)
+    os.symlink(os.path.join(tunedir,'joshua.config.ZMERT.final'), final_config_path)
 
     
 def run_pro(tunedir, source, target, command, config, output):
@@ -284,9 +288,9 @@ def run_pro(tunedir, source, target, command, config, output):
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO -maxMem 4000 %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
 
-    os.remove('%s/joshua.config.final' % (tunedir))
-    os.symlink('%s/joshua.config.PRO.final' % (tunedir),
-               '%s/joshua.config.final' % (tunedir))
+    final_config_path = os.path.join(tunedir, 'joshua.config.final')
+    remove_if_present(final_config_path)
+    os.symlink(os.path.join(tunedir,'joshua.config.ZMERT.final'), final_config_path)
 
 def error_quit(message):
     logging.error(message)
