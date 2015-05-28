@@ -1403,7 +1403,7 @@ chmod(0755,"$tunedir/decoder_command");
 # tune
 if ($TUNER eq "mert") {
   $cachepipe->cmd("mert",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert --threads $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
@@ -1411,7 +1411,7 @@ if ($TUNER eq "mert") {
                   
 } elsif ($TUNER eq "pro") {
   $cachepipe->cmd("pro",
-                  "$SCRIPTDIR/training/run-zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro -m $JOSHUA_MEM --threads $NUM_THREADS --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run-zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro -m $JOSHUA_MEM --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),

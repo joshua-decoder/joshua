@@ -21,20 +21,21 @@ EXAMPLE = r"""
 Example invocation:
 
 $JOSHUA/scripts/support/run_zmert.py \
-  --force \
-  --verbose \
-  /path/to/origin/directory/test/1/joshua.config \
-  --root /path/to/origin/directory \
-  new-bundle-directory \
-  --copy-config-options \
-    '-top-n 1 -output-format %S -mark-oovs false' \
-  --pack-tm 'pt /path/to/origin/directory/grammar.gz'
+  /path/to/source.txt \
+  /path/to/reference.en \
+  --tuner zmert \
+  --tunedir working-dir \
+  --decoder /path/to/decoder/command \
+  --decoder-output /path/to/decoder/nbest/output \
+  --decoder-config /path/to/joshua.config
 
-Note: The options included in the value string for the --copy-config-options
-argument can either be Joshua options or options for the
-$JOSHUA/scripts/copy-config.pl script. The order of the --[pack-]tm options must
-be in the same order as the grammar configuration lines they intend to
-override in the joshua.config file.
+--tuner can be one of zmert or pro. If the path to the reference is a prefix
+with ".0", ".1", etc extensions, they are treated as multiple references 
+(extensions "0", "1", etc also works --- i.e., the path to the reference can
+have a trailing period). The decoder command should decode your source file and
+produce output at the --decoder-output location in the Joshua n-best format, e.g.,
+
+  0 ||| example candidate translation ||| tm_pt_0=1 lm_0=17 ||| -34.2
 """
 
 ZMERT_CONFIG_TEMPLATE = """### MERT parameters
@@ -318,9 +319,6 @@ def handle_args(clargs):
     parser.add_argument(
         '--tuner', default='zmert',
         help='which tuner to use: zmert (default) or pro')
-    parser.add_argument(
-        '-t', '--threads', default=4,
-        help='number of threads to use when decoding')
     parser.add_argument(
         '--decoder', default='tune/decoder_command',
         help='The path to the decoder or wrapper script. This script is responsible for '
