@@ -1411,7 +1411,7 @@ if ($TUNER eq "mert") {
                   
 } elsif ($TUNER eq "pro") {
   $cachepipe->cmd("pro",
-                  "$SCRIPTDIR/training/run-zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro -m $JOSHUA_MEM --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
