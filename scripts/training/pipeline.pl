@@ -1241,11 +1241,14 @@ if ($DO_BUILD_CLASS_LM) {
 if ($MERGE_LMS) {
   # Merge @LMFILES.
   my $merged_lm = "lm-merged.gz";
-  print "@LMFILES";
+
+  # Use the target first target reference if there are multiple ones
+  my $target_ref = (-e $TUNE{target}) ? $TUNE{target} : "$TUNE{target}.0";
+
   $cachepipe->cmd("merge-lms",
                   "$JOSHUA/scripts/support/merge_lms.py "
                     . "@LMFILES "
-                    . "$TUNE{target} "
+                    . "$target_ref "
                     . "lm-merged.gz "
                     . "--temp-dir data/merge_lms ",
                   @LMFILES,
