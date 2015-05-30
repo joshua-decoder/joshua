@@ -1793,8 +1793,9 @@ sub rollout_hadoop_cluster {
   # if it's not already unpacked, unpack it
   if (! -d "hadoop") {
 
-		system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz");
-		system("ln -sf hadoop-0.20.2 hadoop");
+    my $hadoop_tmp_dir = tempdir("hadoop-0.20.2.XXXX", DIR => $TMPDIR, CLEANUP => 1);
+		system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz -C $hadoop_tmp_dir");
+		system("ln -sf $hadoop_tmp_dir/hadoop-0.20.2 hadoop");
     if (defined $HADOOP_CONF) {
       print STDERR "Copying HADOOP_CONF($HADOOP_CONF) to hadoop/conf/core-site.xml\n";
       system("cp $HADOOP_CONF hadoop/conf/core-site.xml");
@@ -1813,7 +1814,7 @@ sub stop_hadoop_cluster {
 
 sub teardown_hadoop_cluster {
   stop_hadoop_cluster();
-  system("rm -rf hadoop-0.20.2 hadoop");
+  system("rm -f hadoop");
 }
 
 sub is_lattice {
