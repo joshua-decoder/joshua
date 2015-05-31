@@ -1,5 +1,5 @@
-Troubleshooting the installation and environment	{#troubleshooting}
-================================================
+Troubleshooting		 {#troubleshooting}
+================
 
 Make sure that the `JOSHUA` environment variable has been set to the directory
 created by the git clone command or from extracting the release tarball.

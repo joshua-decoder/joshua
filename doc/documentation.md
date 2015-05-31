@@ -17,7 +17,7 @@ syntax.
 
 Edit the JavaDoc tagging as needed in the source code.
 
-Edit the source in the `$JOSHUA/doc/*.markdown` manual pages or create new ones
+Edit the source in the `$JOSHUA/doc/*.md` manual pages or create new ones
 in the directory. (Note the use of
 [reference links](http://www.stack.nl/~dimitri/doxygen/markdown.html#md_reflinks)
 in the manual sources.) 

@@ -1,4 +1,4 @@
-# kenlm
+# KenLM
 
 Language model inference code by Kenneth Heafield (kenlm at kheafield.com)
 
