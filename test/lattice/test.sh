@@ -6,7 +6,7 @@
 
 rm -f test.nbest test.1best
 
-cat test.plf | $JOSHUA/bin/joshua-decoder -m 500m -c config > output 2> log
+cat test.plf | $JOSHUA/bin/joshua-decoder -m 500m -c joshua.config > output 2> log
 
 if [[ $? -ne 0 ]]; then
 	exit 1

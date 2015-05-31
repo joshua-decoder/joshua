@@ -162,7 +162,11 @@ public class KBestExtractor {
           || joshuaConfiguration.outputFormat.contains("%d"))
         features = derivationState.replayFeatures();
 
-      hypothesis = derivationState.getHypothesis();
+      hypothesis = derivationState.getHypothesis()
+          .replaceAll("-lsb-", "[")
+          .replaceAll("-rsb-", "]")
+          .replaceAll("-pipe-", "|");
+
 
       outputString = joshuaConfiguration.outputFormat
           .replace("%k", Integer.toString(k))
@@ -687,7 +691,7 @@ public class KBestExtractor {
         if (edge.getTailNodes() != null) {
           int[] english = rule.getEnglish();
           for (int c = 0; c < english.length; c++) {
-            if (Vocabulary.idx(english[c])) {
+            if (Vocabulary.nt(english[c])) {
               int index = -(english[c] + 1);
               getChildDerivationState(edge, index).visit(visitor, indent + 1);
             }

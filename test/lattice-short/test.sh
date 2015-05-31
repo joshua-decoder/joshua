@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat input | $JOSHUA/bin/joshua-decoder -m 500m -config config 2> log | sort > output
+cat input | $JOSHUA/bin/joshua-decoder -m 500m -config joshua.config 2> log | sort > output
 
 if [[ $? -ne 0 ]]; then
 	exit 1

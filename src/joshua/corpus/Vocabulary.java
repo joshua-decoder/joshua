@@ -229,11 +229,13 @@ public class Vocabulary {
     return UNKNOWN_WORD;
   }
 
+  /**
+   * Returns true if the Vocabulary ID represents a nonterminal. 
+   * 
+   * @param id
+   * @return
+   */
   public static boolean nt(int id) {
-    return (id < 0);
-  }
-
-  public static boolean idx(int id) {
     return (id < 0);
   }
 

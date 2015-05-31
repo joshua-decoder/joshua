@@ -77,7 +77,12 @@ public class JoshuaConfiguration {
    * Whether to segment OOVs into a lattice
    */
   public boolean segment_oovs = false;
-
+  
+  /*
+   * Enable lattice decoding.
+   */
+  public boolean lattice_decoding = false;
+  
   /*
    * If false, sorting of the complete grammar is done at load time. If true, grammar tries are not
    * sorted till they are first accessed. Amortized sorting means you get your first translation
@@ -425,8 +430,12 @@ public class JoshuaConfiguration {
               Collections.sort(oovList);
             }
 
+          } else if (parameter.equals(normalize_key("lattice-decoding"))) {
+            lattice_decoding = true;
+            
           } else if (parameter.equals(normalize_key("segment-oovs"))) {
             segment_oovs = true;
+            lattice_decoding = true;
 
           } else if (parameter.equals(normalize_key("default-non-terminal"))) {
             default_non_terminal = String.format("[%s]", FormatUtils.cleanNonterminal(fds[1].trim()));

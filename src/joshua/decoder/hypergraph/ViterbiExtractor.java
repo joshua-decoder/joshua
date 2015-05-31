@@ -28,7 +28,7 @@ public class ViterbiExtractor {
     }
     int[] english = rl.getEnglish();
     for (int c = 0; c < english.length; c++) {
-      if (Vocabulary.idx(english[c])) {
+      if (Vocabulary.nt(english[c])) {
         int id = -(english[c] + 1);
         HGNode child = (HGNode) edge.getTailNodes().get(id);
         res.append(extractViterbiString(child));

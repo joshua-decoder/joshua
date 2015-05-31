@@ -19,6 +19,7 @@ import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
+import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.io.TranslationRequest;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
@@ -230,17 +231,12 @@ public class Decoder {
          * translated.
          */
         threadPool.put(decoderThread);
-      } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        System.err
-            .println("* WARNING: I encountered an error trying to return the decoder thread.");
-        e.printStackTrace();
-      } catch (RuntimeException e) {
+      } catch (Exception e) {
         System.err.println(String.format(
-            "* Decoder: fatal uncaught runtime exception on sentence %d: %s", sentence.id(),
-            e.getMessage()));
+            "Input %d: FATAL UNCAUGHT EXCEPTION: %s", sentence.id(), e.getMessage()));
         e.printStackTrace();
-        System.exit(1);
+        System.exit(1);;
+//        translations.record(new Translation(sentence, null, featureFunctions, joshuaConfiguration));
       }
     }
   }

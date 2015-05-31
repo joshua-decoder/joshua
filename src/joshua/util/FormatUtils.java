@@ -28,7 +28,7 @@ public class FormatUtils {
    * @return true if it's a nonterminal symbol, false otherwise
    */
   public static boolean isNonterminal(String token) {
-    return (token.charAt(0) == '[') && (token.charAt(token.length() - 1) == ']');
+    return (token.length() >=3 && token.charAt(0) == '[') && (token.charAt(token.length() - 1) == ']');
   }
 
   /**

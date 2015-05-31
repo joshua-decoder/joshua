@@ -46,6 +46,8 @@ public class Sentence {
 
   /* List of constraints */
   private final List<ConstraintSpan> constraints;
+  
+  private JoshuaConfiguration config = null;
 
   /**
    * Constructor. Receives a string representing the input sentence. This string may be a
@@ -57,6 +59,9 @@ public class Sentence {
   public Sentence(String inputString, int id, JoshuaConfiguration joshuaConfiguration) {
   
     inputString = Regex.spaces.replaceAll(inputString, " ").trim();
+    
+    config = joshuaConfiguration;
+    
     this.constraints = new LinkedList<ConstraintSpan>();
   
     // Check if the sentence has SGML markings denoting the
@@ -83,6 +88,11 @@ public class Sentence {
       }
       this.id = id;
     }
+    
+    // Mask strings that cause problems for the decoder
+    source = source.replaceAll("\\[",  "-lsb-")
+        .replaceAll("\\]",  "-rsb-")
+        .replaceAll("\\|",  "-pipe-");
   
     // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
     if (joshuaConfiguration.maxlen != 0 && isLinearChain())
@@ -370,7 +380,7 @@ public class Sentence {
 
   public Lattice<Token> getLattice() {
     if (this.sourceLattice == null)
-      this.sourceLattice = (rawSource().startsWith("((("))
+      this.sourceLattice = (config.lattice_decoding && rawSource().startsWith("((("))
         ? Lattice.createTokenLatticeFromPLF(rawSource())
         : Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
             rawSource(), Vocabulary.STOP_SYM));

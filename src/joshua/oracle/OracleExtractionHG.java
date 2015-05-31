@@ -364,7 +364,7 @@ public class OracleExtractionHG extends SplitHg {
     // #### get left_state_sequence, right_state_sequence, total_hyp_len, num_ngram_match
     for (int c = 0; c < en_words.length; c++) {
       int c_id = en_words[c];
-      if (Vocabulary.idx(c_id)) {
+      if (Vocabulary.nt(c_id)) {
         int index = -(c_id + 1);
         DPStateOracle ant_state = (DPStateOracle) l_ant_virtual_item.get(index).dp_state;
         total_hyp_len += ant_state.best_len;
