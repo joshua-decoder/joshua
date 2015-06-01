@@ -1,3 +1,15 @@
+6.0.3 (June 1, 2015)
+====================
+
+- New, more versatile run bundler for creating language packs
+- Restructuring of the pipeline. Now uses the run bundler to build models
+  for tuning and testing, and no longer directly supports multiple optimizer
+  runs
+- Split out ZMERT / PRO tuning script into run_zmert.py, to facilitate 
+  running ZMERT independently
+- Fix to ivy (dependency download tool) for offline and cached downloads
+- Other bug fixes and changes
+
 6.0.2 (April 10, 2015)
 ======================
 
