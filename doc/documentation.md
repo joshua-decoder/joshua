@@ -29,3 +29,34 @@ Regenerate the updated documentation by running the following ant target:
 
 Preview the regenerated manual by opening `$JOSHUA/doc/html/index.html` in a web
 browser.
+
+## Documentation
+
+Documenting Joshua is of great importance. The manual is automatically
+generated using Doxygen. Find out more on the [documentation](@ref documentation)
+page.
+
+## Style guide
+
+<!-- ### Naming conventions -->
+
+<!-- TBD -->
+
+### Format
+
+If you are using Eclipse, the project settings can be loaded automatically by pointing
+Eclipse to the $JOSHUA/.settings/ directory. If you are using another tool, please follow
+these conventions:
+
+* 100 characters maximum line width
+* Indent with 2 spaces
+
+  In emacs: 
+
+    (setq tab-width 2)
+    (setq-default indent-tabs-mode nil)
+
+* Use spaces only for tabbing
+http://blog.ayjay.org/uncategorized/according-to-conway-there-is-a-disconnect-between-the-desire-to-travel-into-space-and-the-desire/* Open brace on same line
+* Keep `else if` on one line
+
