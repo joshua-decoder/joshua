@@ -19,7 +19,7 @@ echo "current commit: $(git rev-parse --verify HEAD)" >> VERSION
 
 tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
-    joshua-$version/{README,VERSION,build.xml,logging.properties} \
+    joshua-$version/{README.md,VERSION,build.xml,logging.properties} \
     joshua-$version/src \
     joshua-$version/bin \
     joshua-$version/class \
