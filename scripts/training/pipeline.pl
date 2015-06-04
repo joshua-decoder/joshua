@@ -771,8 +771,51 @@ if (! defined $ALIGNMENT) {
 
   system("mkdir alignments") unless -d "alignments";
 
-  # Run the parallel aligner
-  system("seq 0 $lastchunk | $SCRIPTDIR/training/paralign.pl -aligner $ALIGNER -num_threads $NUM_THREADS -giza_merge $GIZA_MERGE -aligner_mem $ALIGNER_MEM -source $SOURCE -target $TARGET -giza_trainer \"$GIZA_TRAINER\" -train_dir \"$DATA_DIRS{train}\" > alignments/run.log");
+  my $aligner_cmd = (
+    "$SCRIPTDIR/training/paralign.pl "
+    . " -aligner $ALIGNER"
+    . " -num_threads 1"
+    . " -giza_merge $GIZA_MERGE"
+    . " -aligner_mem $ALIGNER_MEM"
+    . " -source $SOURCE"
+    . " -target $TARGET"
+    . " -giza_trainer \"$GIZA_TRAINER\""
+    . " -train_dir \"$DATA_DIRS{train}\" "
+    . "> alignments/run.log"
+  );
+
+  # Start a parallel job on each core
+  my @children = ();
+  my $chunk = 0
+  foreach my $core (1..$max_aligner_threads) {
+    if ($chunk < $lastchunk + 1) {
+      my $child = fork();
+      if (! $child) { # I am child
+          exec("echo $chunk | $aligner_cmd");
+          exit 0;
+      }
+      push @children, $child;
+      $chunk++;
+      next;
+    }
+  }
+
+  # Start another concurrent job as each oldest job finishes
+  while (@children) {
+    my $old_child = shift @children;
+    waitpid( $old_child, 0 );
+    print "child finished\n";
+
+    if ($chunk < $lastchunk + 1) {
+      my $new_child = fork();
+      if (! $new_child) { # I am child
+        exec("echo $chunk | $aligner_cmd");
+        exit 0;
+      }
+      $chunk++;
+      push @children, $new_child;
+    }
+  }
 
   my @aligned_files;
   if ($ALIGNER eq "giza") {
