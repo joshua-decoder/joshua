@@ -1589,7 +1589,12 @@ public class PROCore {
         System.exit(21);
       }
 
-      if (!isOptimizable[c]) { // skip next two values
+      // PRO always skips the next two values, which are used by MERT to define the lower and upper
+      // bounds of values to try during line search
+      dummy = inFile_init.next();
+      dummy = inFile_init.next();
+      
+      if (!isOptimizable[c]) { // skip next four values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
       } else {

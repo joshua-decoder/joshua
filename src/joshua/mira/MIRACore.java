@@ -10,8 +10,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -1623,6 +1621,11 @@ public class MIRACore {
         println("Unknown isOptimizable string " + dummy + " (must be either Opt or Fix)");
         System.exit(21);
       }
+      
+      // MIRA always skips the next two values, which are used by MERT to define the lower and upper
+      // bounds of values to try during line search
+      dummy = inFile_init.next();
+      dummy = inFile_init.next();
 
       if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
