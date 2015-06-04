@@ -786,16 +786,16 @@ if (! defined $ALIGNMENT) {
 
   # Start a parallel job on each core
   my @children = ();
-  my $chunk = 0
-  foreach my $core (1..$max_aligner_threads) {
-    if ($chunk < $lastchunk + 1) {
+  my $next_chunk = 0;
+  foreach my $core (1..$NUM_THREADS) {
+    if ($next_chunk < $lastchunk + 1) {
       my $child = fork();
       if (! $child) { # I am child
-          exec("echo $chunk | $aligner_cmd");
-          exit 0;
+        exec("echo $next_chunk | $aligner_cmd");
+        exit 0;
       }
       push @children, $child;
-      $chunk++;
+      $next_chunk++;
       next;
     }
   }
@@ -806,13 +806,13 @@ if (! defined $ALIGNMENT) {
     waitpid( $old_child, 0 );
     print "child finished\n";
 
-    if ($chunk < $lastchunk + 1) {
+    if ($next_chunk < $lastchunk + 1) {
       my $new_child = fork();
       if (! $new_child) { # I am child
-        exec("echo $chunk | $aligner_cmd");
+        exec("echo $next_chunk | $aligner_cmd");
         exit 0;
       }
-      $chunk++;
+      $next_chunk++;
       push @children, $new_child;
     }
   }
