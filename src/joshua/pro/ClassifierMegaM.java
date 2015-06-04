@@ -14,14 +14,10 @@ public class ClassifierMegaM implements ClassifierInterface {
   @Override
   public double[] runClassifier(Vector<String> samples, double[] initialLambda, int featDim) {
     double[] lambda = new double[featDim + 1];
-    // String root_dir =
-    // "/media/Data/JHU/Research/MT discriminative LM training/joshua_expbleu/PRO_test/";
-    // String root_dir = "/home/ycao/WS11/nist_zh_en_percep/pro_forward/pro_megam/";
     System.out.println("------- MegaM training starts ------");
 
     try {
       // prepare training file for MegaM
-      // PrintWriter prt = new PrintWriter(new FileOutputStream(root_dir+"megam_train.data"));
       PrintWriter prt = new PrintWriter(new FileOutputStream(trainingFilePath));
       String[] feat;
       String[] featInfo;
@@ -42,16 +38,12 @@ public class ClassifierMegaM implements ClassifierInterface {
           featInfo = feat[i].split(":");
           prt.print(featInfo[0] + " " + featInfo[1] + " ");
         }
-
         prt.println();
       }
       prt.close();
 
       // start running MegaM
       Runtime rt = Runtime.getRuntime();
-      // String cmd = "/home/yuan/tmp_megam_command";
-      // String cmd = "/home/ycao/WS11/nist_zh_en_percep/pro_forward/pro_megam/megam_command";
-
       Process p = rt.exec(commandFilePath);
 
       StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), 1);

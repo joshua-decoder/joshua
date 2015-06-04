@@ -75,35 +75,19 @@ PRO_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -maxIt	 30
 
 # file containing commands to run decoder
--cmd	 <TUNEDIR>/decoder_command   
+-cmd	 <DECODER_COMMAND>
 
 # file prodcued by decoder
--decOut	 <TUNEDIR>/tune.output.nbest
+-decOut	 <DECODER_OUTPUT>
 
 # decoder config file
--dcfg	 <TUNEDIR>/joshua.config
+-dcfg	 <DECODER_CONFIG>
 
 # size of N-best list
 -N	 300
 
 # verbosity level (0-2; higher value => more verbose)
 -v	 1
-
-
-### Part2: PRO parameters
-#-trainingMode can be 1,2,3,4
-#1: train dense feature weights only
-#2: train dense & sparse feature weights together
-#3: train sparse feature weights only(with dense feature weights fixed) also works)
-#4: treat sparse features as one component(summary feature), train dense and summary feature weights together
-
--trainingMode	1
-
-#-nbestFormat can be "sparse" or "dense"
-#for trainingMode 1: either "dense" or "sparse"
-#for trainingMode 2-4: use "sparse" format
-
--nbestFormat	dense	#dense or sparse
 
 #use one of the classifiers(and the corresponding parameter setting) below:
 #1.perceptron paramters
@@ -265,7 +249,6 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                      'TUNEDIR': tunedir,
                      'PARAMS': paramstr })
 
-
 def run_zmert(tunedir, source, target, command, config, output):
     """Runs Z-MERT after setting up all its crazy file requirements."""
 
@@ -287,12 +270,27 @@ def run_pro(tunedir, source, target, command, config, output):
                   target, get_num_refs(target), tunedir, command, config, output)
 
     tuner_mem = '4g'
-    call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO -maxMem 4000 %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
+    call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
 
     final_config_path = os.path.join(tunedir, 'joshua.config.final')
     remove_if_present(final_config_path)
-    os.symlink(os.path.join(tunedir,'joshua.config.ZMERT.final'), final_config_path)
+    os.symlink(os.path.join(tunedir,'joshua.config.PRO.final'), final_config_path)
 
+
+def run_mira(tunedir, source, target, command, config, output):
+    """Runs MIRA after setting up all its crazy file requirements."""
+
+    setup_configs(PRO_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
+                  target, get_num_refs(target), tunedir, command, config, output)
+
+    tuner_mem = '4g'
+    call("java -d64 -Xmx%s -cp %s/class joshua.mira.MIRA %s/mira.config > %s/mira.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
+
+    final_config_path = os.path.join(tunedir, 'joshua.config.final')
+    remove_if_present(final_config_path)
+    os.symlink(os.path.join(tunedir,'joshua.config.MIRA.final'), final_config_path)
+
+    
 def error_quit(message):
     logging.error(message)
     sys.exit(2)
@@ -355,12 +353,14 @@ def main(argv):
     if not os.path.exists(opts.tunedir):
         os.makedirs(opts.tunedir)
 
-    if opts.tuner == 'zmert':
+    if opts.tuner in ['mert', 'zmert']:
         run_zmert(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
 
     elif opts.tuner == 'pro':
         run_pro(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
-
+        
+    elif opts.tuner == 'mira':
+        run_mira(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
 
 if __name__ == "__main__":
     try:

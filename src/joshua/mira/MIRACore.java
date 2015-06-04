@@ -1,4 +1,4 @@
-package joshua.pro;
+package joshua.mira;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,6 +10,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -36,7 +38,7 @@ import joshua.corpus.Vocabulary;
  * This code was originally written by Yuan Cao, who copied the MERT code to produce this file.
  */
 
-public class PROCore {
+public class MIRACore {
   private final JoshuaConfiguration joshuaConfiguration;
   private TreeSet<Integer>[] indicesOfInterest_all;
 
@@ -148,7 +150,7 @@ public class PROCore {
   // 0: nothing, 1: only configs, 2: only n-bests, 3: both configs and n-bests
 
   private int compressFiles;
-  // should PRO gzip the large files? If 0, no compression takes place.
+  // should MIRA gzip the large files? If 0, no compression takes place.
   // If 1, compression is performed on: decoder output files, temp sents files,
   // and temp feats files.
 
@@ -198,18 +200,25 @@ public class PROCore {
   // number of sufficient statistics for the evaluation metric
 
   private String tmpDirPrefix;
-  // prefix for the PRO.temp.* files
+  // prefix for the MIRA.temp.* files
 
   private boolean passIterationToDecoder;
   // should the iteration number be passed as an argument to decoderCommandFileName?
 
-  // USED FOR PRO
-  private String classifierAlg; // THE CLASSIFICATION ALGORITHM(PERCEP, MEGAM, MAXENT ...)
-  private String[] classifierParams = null; // THE PARAM ARRAY FOR EACH CLASSIFIER
-  private int Tau;
-  private int Xi;
-  private double interCoef;
-  private double metricDiff;
+  // used by mira
+  private boolean needShuffle = true; // shuffle the training sentences or not
+  private boolean needAvg = true; //average the weihgts or not?
+  private boolean runPercep = false; //run perceptron instead of mira
+  private boolean usePseudoBleu = true; //need to use pseudo corpus to compute bleu?
+  private String trainingMode;
+  private int oraSelectMode = 1;
+  private int predSelectMode = 1;
+  private int miraIter = 1;
+  private double C = 0.01; //relaxation coefficient
+  private double R = 0.99; //corpus decay when pseudo corpus is used for bleu computation
+    //private double sentForScale = 0.15; //percentage of sentences for scale factor estimation
+  private double scoreRatio = 5.0; //sclale so that model_score/metric_score = scoreratio
+  private boolean needScale = true; //need scaling?
 
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, docInfoFileName, finalLambdaFileName;
@@ -223,18 +232,18 @@ public class PROCore {
 
   // private int useDisk;
 
-  public PROCore(JoshuaConfiguration joshuaConfiguration) {
+  public MIRACore(JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
   }
 
-  public PROCore(String[] args, JoshuaConfiguration joshuaConfiguration) {
+  public MIRACore(String[] args, JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
     EvaluationMetric.set_knownMetrics();
     processArgsArray(args);
     initialize(0);
   }
 
-  public PROCore(String configFileName, JoshuaConfiguration joshuaConfiguration) {
+  public MIRACore(String configFileName, JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
     EvaluationMetric.set_knownMetrics();
     processArgsArray(cfgFileToArgsArray(configFileName));
@@ -260,8 +269,8 @@ public class PROCore {
       println("", 1);
     }
 
-    // COUNT THE TOTAL NUM OF SENTENCES TO BE DECODED, refFileName IS THE COMBINED REFERENCE FILE
-    // NAME(AUTO GENERATED)
+    // count the total num of sentences to be decoded, reffilename is the combined reference file
+    // name(auto generated)
     numSentences = countLines(refFileName) / refsPerSen;
 
     // ??
@@ -297,10 +306,10 @@ public class PROCore {
 
       inFile_names.close();
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in PROCore.initialize(int): " + e.getMessage());
+      System.err.println("FileNotFoundException in MIRACore.initialize(int): " + e.getMessage());
       System.exit(99901);
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.initialize(int): " + e.getMessage());
+      System.err.println("IOException in MIRACore.initialize(int): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -359,10 +368,10 @@ public class PROCore {
         }
       }
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in PROCore.initialize(int): " + e.getMessage());
+      System.err.println("FileNotFoundException in MIRACore.initialize(int): " + e.getMessage());
       System.exit(99901);
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.initialize(int): " + e.getMessage());
+      System.err.println("IOException in MIRACore.initialize(int): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -447,13 +456,13 @@ public class PROCore {
 
       // rename original config file so it doesn't get overwritten
       // (original name will be restored in finish())
-      renameFile(decoderConfigFileName, decoderConfigFileName + ".PRO.orig");
+      renameFile(decoderConfigFileName, decoderConfigFileName + ".MIRA.orig");
     } // if (randsToSkip == 0)
 
     // by default, load joshua decoder
     if (decoderCommand == null && fakeFileNameTemplate == null) {
       println("Loading Joshua decoder...", 1);
-      myDecoder = new Decoder(joshuaConfiguration, decoderConfigFileName + ".PRO.orig");
+      myDecoder = new Decoder(joshuaConfiguration, decoderConfigFileName + ".MIRA.orig");
       println("...finished loading @ " + (new Date()), 1);
       println("");
     } else {
@@ -471,11 +480,11 @@ public class PROCore {
 
   // -------------------------
 
-  public void run_PRO() {
-    run_PRO(minMERTIterations, maxMERTIterations, prevMERTIterations);
+  public void run_MIRA() {
+    run_MIRA(minMERTIterations, maxMERTIterations, prevMERTIterations);
   }
 
-  public void run_PRO(int minIts, int maxIts, int prevIts) {
+  public void run_MIRA(int minIts, int maxIts, int prevIts) {
     // FIRST, CLEAN ALL PREVIOUS TEMP FILES
     String dir;
     int k = tmpDirPrefix.lastIndexOf("/");
@@ -493,7 +502,7 @@ public class PROCore {
       for (int i = 0; i < listOfFiles.length; i++) {
         if (listOfFiles[i].isFile()) {
           files = listOfFiles[i].getName();
-          if (files.startsWith("PRO.temp")) {
+          if (files.startsWith("MIRA.temp")) {
             deleteFile(files);
           }
         }
@@ -501,7 +510,7 @@ public class PROCore {
     }
 
     println("----------------------------------------------------", 1);
-    println("PRO run started @ " + (new Date()), 1);
+    println("MIRA run started @ " + (new Date()), 1);
     // printMemoryUsage();
     println("----------------------------------------------------", 1);
     println("", 1);
@@ -546,7 +555,7 @@ public class PROCore {
     println("", 1);
 
     println("----------------------------------------------------", 1);
-    println("PRO run ended @ " + (new Date()), 1);
+    println("MIRA run ended @ " + (new Date()), 1);
     // printMemoryUsage();
     println("----------------------------------------------------", 1);
     println("", 1);
@@ -573,7 +582,7 @@ public class PROCore {
         }
       }
     }
-  } // void run_PRO(int maxIts)
+  } // void run_MIRA(int maxIts)
 
   // this is the key function!
   @SuppressWarnings("unchecked")
@@ -599,7 +608,7 @@ public class PROCore {
       stats_hash[i] = new HashMap<String, String>();
 
     while (!done) { // NOTE: this "loop" will only be carried out once
-      println("--- Starting PRO iteration #" + iteration + " @ " + (new Date()) + " ---", 1);
+      println("--- Starting MIRA iteration #" + iteration + " @ " + (new Date()) + " ---", 1);
 
       // printMemoryUsage();
 
@@ -607,7 +616,7 @@ public class PROCore {
       // CREATE DECODER CONFIG FILE //
       /******************************/
 
-      createConfigFile(lambda, decoderConfigFileName, decoderConfigFileName + ".PRO.orig");
+      createConfigFile(lambda, decoderConfigFileName, decoderConfigFileName + ".MIRA.orig");
       // i.e. use the original config file as a template
 
       /***************/
@@ -642,39 +651,39 @@ public class PROCore {
       produceTempFiles(decRunResult[0], iteration);
 
       // save intermedidate output files
-      // save joshua.config.pro.it*
+      // save joshua.config.mira.it*
       if (saveInterFiles == 1 || saveInterFiles == 3) { // make copy of intermediate config file
-        if (!copyFile(decoderConfigFileName, decoderConfigFileName + ".PRO.it" + iteration)) {
+        if (!copyFile(decoderConfigFileName, decoderConfigFileName + ".MIRA.it" + iteration)) {
           println("Warning: attempt to make copy of decoder config file (to create"
-              + decoderConfigFileName + ".PRO.it" + iteration + ") was unsuccessful!", 1);
+              + decoderConfigFileName + ".MIRA.it" + iteration + ") was unsuccessful!", 1);
         }
       }
 
-      // save output.nest.PRO.it*
+      // save output.nest.MIRA.it*
       if (saveInterFiles == 2 || saveInterFiles == 3) { // make copy of intermediate decoder output
                                                         // file...
 
         if (!decRunResult[1].equals("2")) { // ...but only if no fake decoder
           if (!decRunResult[0].endsWith(".gz")) {
-            if (!copyFile(decRunResult[0], decRunResult[0] + ".PRO.it" + iteration)) {
+            if (!copyFile(decRunResult[0], decRunResult[0] + ".MIRA.it" + iteration)) {
               println("Warning: attempt to make copy of decoder output file (to create"
-                  + decRunResult[0] + ".PRO.it" + iteration + ") was unsuccessful!", 1);
+                  + decRunResult[0] + ".MIRA.it" + iteration + ") was unsuccessful!", 1);
             }
           } else {
             String prefix = decRunResult[0].substring(0, decRunResult[0].length() - 3);
-            if (!copyFile(prefix + ".gz", prefix + ".PRO.it" + iteration + ".gz")) {
+            if (!copyFile(prefix + ".gz", prefix + ".MIRA.it" + iteration + ".gz")) {
               println("Warning: attempt to make copy of decoder output file (to create" + prefix
-                  + ".PRO.it" + iteration + ".gz" + ") was unsuccessful!", 1);
+                  + ".MIRA.it" + iteration + ".gz" + ") was unsuccessful!", 1);
             }
           }
 
           if (compressFiles == 1 && !decRunResult[0].endsWith(".gz")) {
-            gzipFile(decRunResult[0] + ".PRO.it" + iteration);
+            gzipFile(decRunResult[0] + ".MIRA.it" + iteration);
           }
         } // if (!fake)
       }
 
-      // ------------- end of saving .pro.it* files ---------------
+      // ------------- end of saving .mira.it* files ---------------
 
       int[] candCount = new int[numSentences];
       int[] lastUsedIndex = new int[numSentences];
@@ -828,6 +837,7 @@ public class PROCore {
         // iterations if the user specifies a value for prevMERTIterations
         // that causes MERT to skip candidates from early iterations.
 
+        double[] currFeatVal = new double[1 + numParams];
         String[] featVal_str;
 
         int totalCandidateCount = 0;
@@ -882,17 +892,12 @@ public class PROCore {
 			String[] pair = featurePair.split("=");
 			String name = pair[0];
 			Double value = Double.parseDouble(pair[1]);
-			int featId = Vocabulary.id(name);
-			//need to identify newly fired feats here
-			if (featId > numParams) {
-			    ++numParams;
-			    lambda.add(new Double(0));
-			}
                     }
 		}
                 existingCandStats.put(sents_str, stats_str);
                 candCount[i] += 1;
                 newCandidatesAdded[it] += 1;
+
               } // if unseen candidate
             } // for (n)
           } // for (it)
@@ -1084,12 +1089,16 @@ public class PROCore {
 		      String name = pair[0];
 		      Double value = Double.parseDouble(pair[1]);
 		      int featId = Vocabulary.id(name);
+
 		      //need to identify newly fired feats here
+		      //in this case currFeatVal is not given the value
+		      //of the new feat, since the corresponding weight is
+		      //initialized as zero anyway
 		      if (featId > numParams) {
 			  ++numParams;
 			  lambda.add(new Double(0));
 		      }
-		  }
+                  }
 	      }
               existingCandStats.put(sents_str, stats_str);
               candCount[i] += 1;
@@ -1183,20 +1192,20 @@ public class PROCore {
 	println("", 1);
 
       } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in PROCore.run_single_iteration(6): "
+        System.err.println("FileNotFoundException in MIRACore.run_single_iteration(6): "
             + e.getMessage());
         System.exit(99901);
       } catch (IOException e) {
-        System.err.println("IOException in PROCore.run_single_iteration(6): " + e.getMessage());
+        System.err.println("IOException in MIRACore.run_single_iteration(6): " + e.getMessage());
         System.exit(99902);
       }
 
       // n-best list converges
       if (newCandidatesAdded[iteration] == 0) {
         if (!oneModificationPerIteration) {
-          println("No new candidates added in this iteration; exiting PRO.", 1);
+          println("No new candidates added in this iteration; exiting MIRA.", 1);
           println("", 1);
-          println("---  PRO iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
+          println("---  MIRA iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
           println("", 1);
 	  deleteFile(tmpDirPrefix + "temp.stats.merged");
           return null; // this means that the old values should be kept by the caller
@@ -1212,6 +1221,34 @@ public class PROCore {
        * System.exit(0);
        */
 
+      Optimizer.sentNum = numSentences; // total number of training sentences
+      Optimizer.needShuffle = needShuffle;
+      Optimizer.miraIter = miraIter;
+      Optimizer.oraSelectMode = oraSelectMode;
+      Optimizer.predSelectMode = predSelectMode;
+      Optimizer.runPercep = runPercep;
+      Optimizer.C = C;
+      Optimizer.needAvg = needAvg;
+      //Optimizer.sentForScale = sentForScale;
+      Optimizer.scoreRatio = scoreRatio;
+      Optimizer.evalMetric = evalMetric;
+      Optimizer.normalizationOptions = normalizationOptions;
+      Optimizer.needScale = needScale;
+
+      //if need to use bleu stats history
+      if( iteration == 1 ) {
+	  if(evalMetric.get_metricName().equals("BLEU") && usePseudoBleu) {
+	      Optimizer.initBleuHistory(numSentences, evalMetric.get_suffStatsCount());
+	      Optimizer.usePseudoBleu = usePseudoBleu;
+	      Optimizer.R = R;
+	  }
+	  if(evalMetric.get_metricName().equals("TER-BLEU") && usePseudoBleu) {
+	      Optimizer.initBleuHistory(numSentences, evalMetric.get_suffStatsCount()-2); //Stats count of TER=2
+	      Optimizer.usePseudoBleu = usePseudoBleu;
+	      Optimizer.R = R;
+	  }
+      }
+
       Vector<String> output = new Vector<String>();
       double score = 0;
 
@@ -1223,15 +1260,12 @@ public class PROCore {
       //finalLambda[] has length = numParams (considering new features)
       double[] finalLambda = new double[1 + numParams];
 
-      Optimizer opt = new Optimizer(seed + iteration, isOptimizable, output, initialLambdaNew,
-          feat_hash, stats_hash, score, evalMetric, Tau, Xi, metricDiff, normalizationOptions,
-          classifierAlg, classifierParams);
-      finalLambda = opt.run_Optimizer();
+      Optimizer opt = new Optimizer(output, isOptimizable, initialLambdaNew, feat_hash, stats_hash, score);
+      finalLambda = opt.runOptimizer();
 
-      /*
-       * System.out.println(finalLambda[1].length); for( int i=0; i<finalLambda[1].length-1; i++ )
-       * System.out.println(finalLambda[1][i+1]);
-       */
+       // System.out.println(finalLambda.length);
+       // for( int i=0; i<finalLambda.length-1; i++ )
+       // 	   System.out.println(finalLambda[i+1]);
 
       /************* end optimization **************/
 
@@ -1253,11 +1287,11 @@ public class PROCore {
 
       // System.arraycopy(finalLambda,1,lambda,1,numParams);
 
-      println("---  PRO iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
+      println("---  MIRA iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
       println("", 1);
 
       if (!anyParamChanged) {
-        println("No parameter value changed in this iteration; exiting PRO.", 1);
+        println("No parameter value changed in this iteration; exiting MIRA.", 1);
         println("", 1);
         break; // exit for (iteration) loop preemptively
       }
@@ -1280,7 +1314,7 @@ public class PROCore {
       // if min number of iterations executed, investigate if early exit should happen
       if (iteration >= minIts && earlyStop >= stopMinIts) {
         println("Some early stopping criteria has been observed " + "in " + stopMinIts
-            + " consecutive iterations; exiting PRO.", 1);
+            + " consecutive iterations; exiting MIRA.", 1);
         println("", 1);
 	
 	for ( int f = 1; f <=numParams; ++f )
@@ -1291,7 +1325,7 @@ public class PROCore {
 
       // if max number of iterations executed, exit
       if (iteration >= maxIts) {
-        println("Maximum number of PRO iterations reached; exiting PRO.", 1);
+        println("Maximum number of MIRA iterations reached; exiting MIRA.", 1);
         println("", 1);
 
 	for ( int f = 1; f <=numParams; ++f )
@@ -1302,6 +1336,7 @@ public class PROCore {
 
       // use the new wt vector to decode the next iteration
       // (interpolation with previous wt vector)
+      double interCoef = 1.0; //no interpolation for now
       for (int i = 1; i <= numParams; i++)
 	  lambda.set(i, interCoef * finalLambda[i] + (1 - interCoef) * lambda.get(i).doubleValue());
 
@@ -1394,10 +1429,10 @@ public class PROCore {
           System.exit(30);
         }
       } catch (IOException e) {
-        System.err.println("IOException in PROCore.run_decoder(int): " + e.getMessage());
+        System.err.println("IOException in MIRACore.run_decoder(int): " + e.getMessage());
         System.exit(99902);
       } catch (InterruptedException e) {
-        System.err.println("InterruptedException in PROCore.run_decoder(int): " + e.getMessage());
+        System.err.println("InterruptedException in MIRACore.run_decoder(int): " + e.getMessage());
         System.exit(99903);
       }
 
@@ -1497,11 +1532,11 @@ public class PROCore {
       }
 
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in PROCore.produceTempFiles(int): "
+      System.err.println("FileNotFoundException in MIRACore.produceTempFiles(int): "
           + e.getMessage());
       System.exit(99901);
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.produceTempFiles(int): " + e.getMessage());
+      System.err.println("IOException in MIRACore.produceTempFiles(int): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -1549,7 +1584,7 @@ public class PROCore {
       inFile.close();
       outFile.close();
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.createConfigFile(double[],String,String): "
+      System.err.println("IOException in MIRACore.createConfigFile(double[],String,String): "
           + e.getMessage());
       System.exit(99902);
     }
@@ -1561,7 +1596,7 @@ public class PROCore {
     try {
       inFile_init = new Scanner(new FileReader(paramsFileName));
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in PROCore.processParamFile(): " + e.getMessage());
+      System.err.println("FileNotFoundException in MIRACore.processParamFile(): " + e.getMessage());
       System.exit(99901);
     }
 
@@ -1811,10 +1846,10 @@ public class PROCore {
         }
 
       } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in PROCore.processDocInfo(): " + e.getMessage());
+        System.err.println("FileNotFoundException in MIRACore.processDocInfo(): " + e.getMessage());
         System.exit(99901);
       } catch (IOException e) {
-        System.err.println("IOException in PROCore.processDocInfo(): " + e.getMessage());
+        System.err.println("IOException in MIRACore.processDocInfo(): " + e.getMessage());
         System.exit(99902);
       }
     }
@@ -1851,11 +1886,11 @@ public class PROCore {
        */
       return true;
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in PROCore.copyFile(String,String): "
+      System.err.println("FileNotFoundException in MIRACore.copyFile(String,String): "
           + e.getMessage());
       return false;
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.copyFile(String,String): " + e.getMessage());
+      System.err.println("IOException in MIRACore.copyFile(String,String): " + e.getMessage());
       return false;
     }
   }
@@ -1870,7 +1905,7 @@ public class PROCore {
             + " was unsuccessful!", 1);
       }
     } else {
-      println("Warning: file " + origFileName + " does not exist! (in PROCore.renameFile)", 1);
+      println("Warning: file " + origFileName + " does not exist! (in MIRACore.renameFile)", 1);
     }
   }
 
@@ -1896,8 +1931,8 @@ public class PROCore {
     }
 
     // create config file with final values
-    createConfigFile(lambda, decoderConfigFileName + ".PRO.final", decoderConfigFileName
-        + ".PRO.orig");
+    createConfigFile(lambda, decoderConfigFileName + ".MIRA.final", decoderConfigFileName
+        + ".MIRA.orig");
 
     // delete current decoder config file and decoder output
     deleteFile(decoderConfigFileName);
@@ -1905,7 +1940,7 @@ public class PROCore {
 
     // restore original name for config file (name was changed
     // in initialize() so it doesn't get overwritten)
-    renameFile(decoderConfigFileName + ".PRO.orig", decoderConfigFileName);
+    renameFile(decoderConfigFileName + ".MIRA.orig", decoderConfigFileName);
 
     if (finalLambdaFileName != null) {
       try {
@@ -1916,7 +1951,7 @@ public class PROCore {
         outFile_lambdas.close();
 
       } catch (IOException e) {
-        System.err.println("IOException in PROCore.finish(): " + e.getMessage());
+        System.err.println("IOException in MIRACore.finish(): " + e.getMessage());
         System.exit(99902);
       }
     }
@@ -1947,7 +1982,7 @@ public class PROCore {
           // now line should look like "-xxx XXX"
 
           /*
-           * OBSOLETE MODIFICATION //SPECIAL HANDLING FOR PRO CLASSIFIER PARAMETERS String[] paramA
+           * OBSOLETE MODIFICATION //SPECIAL HANDLING FOR MIRA CLASSIFIER PARAMETERS String[] paramA
            * = line.split("\\s+");
            * 
            * if( paramA[0].equals("-classifierParams") ) { String classifierParam = ""; for(int p=1;
@@ -1959,7 +1994,7 @@ public class PROCore {
            * MODIFICATION
            */
 
-          // CMU MODIFICATION(FROM METEOR FOR ZMERT)
+          // cmu modification(from meteor for zmert)
           // Parse args
           ArrayList<String> argList = new ArrayList<String>();
           StringBuilder arg = new StringBuilder();
@@ -2009,12 +2044,12 @@ public class PROCore {
 
       inFile.close();
     } catch (FileNotFoundException e) {
-      println("PRO configuration file " + fileName + " was not found!");
-      System.err.println("FileNotFoundException in PROCore.cfgFileToArgsArray(String): "
+      println("MIRA configuration file " + fileName + " was not found!");
+      System.err.println("FileNotFoundException in MIRACore.cfgFileToArgsArray(String): "
           + e.getMessage());
       System.exit(99901);
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.cfgFileToArgsArray(String): " + e.getMessage());
+      System.err.println("IOException in MIRACore.cfgFileToArgsArray(String): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -2172,25 +2207,25 @@ public class PROCore {
       } else if (option.equals("-maxIt")) {
         maxMERTIterations = Integer.parseInt(args[i + 1]);
         if (maxMERTIterations < 1) {
-          println("maxMERTIts must be positive.");
+          println("maxIt must be positive.");
           System.exit(10);
         }
       } else if (option.equals("-minIt")) {
         minMERTIterations = Integer.parseInt(args[i + 1]);
         if (minMERTIterations < 1) {
-          println("minMERTIts must be positive.");
+          println("minIt must be positive.");
           System.exit(10);
         }
       } else if (option.equals("-prevIt")) {
         prevMERTIterations = Integer.parseInt(args[i + 1]);
         if (prevMERTIterations < 0) {
-          println("prevMERTIts must be non-negative.");
+          println("prevIt must be non-negative.");
           System.exit(10);
         }
       } else if (option.equals("-stopIt")) {
         stopMinIts = Integer.parseInt(args[i + 1]);
         if (stopMinIts < 1) {
-          println("stopMinIts must be positive.");
+          println("stopIts must be positive.");
           System.exit(10);
         }
       } else if (option.equals("-stopSig")) {
@@ -2249,30 +2284,96 @@ public class PROCore {
        * useDisk > 2) { println("useDisk should be between 0 and 2"); System.exit(10); } }
        */
 
-      // FOR PRO:
-      // CLASSIFICATION ALGORITHM CLASS PATH
-      else if (option.equals("-classifierClass")) {
-        classifierAlg = args[i + 1];
+      // for mira:
+      else if (option.equals("-needShuffle")) {
+	  int shuffle = Integer.parseInt(args[i + 1]);
+	  if(shuffle==1)
+	      needShuffle = true;
+	  else if(shuffle==0)
+	      needShuffle = false;
+	  else {
+	      println("-needShuffle must be either 0 or 1.");
+	      System.exit(10);
+	  }
       }
-      // PARAMS FOR THE SPECIFIED CLASSIFIER
-      else if (option.equals("-classifierParams")) {
-        classifierParams = args[i + 1].split("\\s+");
+      //average weights after each epoch or not
+      else if (option.equals("-needAvg")) {
+	  int avg = Integer.parseInt(args[i + 1]);
+	  if(avg==1)
+	      needAvg = true;
+	  else if(avg==0)
+	      needAvg = false;
+	  else {
+	      println("-needAvg must be either 0 or 1.");
+	      System.exit(10);
+	  }
       }
-      // TAU: NUM OF RANDOMLY GENERATED CANDIDATES
-      else if (option.equals("-Tau")) {
-        Tau = Integer.parseInt(args[i + 1]);
+      //run perceptron or not
+      else if (option.equals("-runPercep")) {
+	  int per = Integer.parseInt(args[i + 1]);
+	  if(per==1)
+	      runPercep = true;
+	  else if(per==0)
+	      runPercep = false;
+	  else {
+	      println("-runPercep must be either 0 or 1.");
+	      System.exit(10);
+	  }
       }
-      // XI: TOP-XI CANDIDATES TO BE ACCEPTED
-      else if (option.equals("-Xi")) {
-        Xi = Integer.parseInt(args[i + 1]);
+      // oracle selection mode
+      else if (option.equals("-oracleSelection")) {
+	  oraSelectMode = Integer.parseInt(args[i + 1]);
       }
-      // INTERPOLATION COEFFICIENT BETWEEN CURRENT & PREVIOUS WEIGHTS
-      else if (option.equals("-interCoef")) {
-        interCoef = Double.parseDouble(args[i + 1]);
+      // prediction selection mode
+      else if (option.equals("-predictionSelection")) {
+	  predSelectMode = Integer.parseInt(args[i + 1]);
       }
-      // METRIC(eg. BLEU) DIFF THRESHOLD(TO SELECT SAMPLED CANDIDATES)
-      else if (option.equals("-metricDiff")) {
-        metricDiff = Double.parseDouble(args[i + 1]);
+      // MIRA internal iterations
+      else if (option.equals("-miraIter")) {
+	  miraIter = Integer.parseInt(args[i + 1]);
+      }
+      // relaxation coefficient
+      else if (option.equals("-C")) {
+	  C = Double.parseDouble(args[i + 1]);
+      }
+      // else if (option.equals("-sentForScaling")) {
+      // 	  sentForScale = Double.parseDouble(args[i + 1]);
+      // 	  if(sentForScale>1 || sentForScale<0) {
+      // 	      println("-sentForScaling must be in [0,1]");
+      // 	      System.exit(10);
+      // 	  }
+      // }
+      else if (option.equals("-scoreRatio")) {
+      	  scoreRatio = Double.parseDouble(args[i + 1]);
+      	  if(scoreRatio<=0) {
+      	      println("-scoreRatio must be positive");
+      	      System.exit(10);
+      	  }
+      }
+      else if (option.equals("-needScaling")) {
+      	  int scale = Integer.parseInt(args[i + 1]);
+      	  if(scale==1)
+      	      needScale = true;
+      	  else if(scale==0)
+      	      needScale = false;
+      	  else {
+      	      println("-needScaling must be either 0 or 1.");
+      	      System.exit(10);
+      	  }
+      }
+      else if (option.equals("-usePseudoCorpus")) {
+	  int use = Integer.parseInt(args[i + 1]);
+	  if(use==1)
+	      usePseudoBleu = true;
+	  else if(use==0)
+	      usePseudoBleu = false;
+	  else {
+	      println("-usePseudoCorpus must be either 0 or 1.");
+	      System.exit(10);
+	  }
+      }
+      else if (option.equals("-corpusDecay")) {
+	  R = Double.parseDouble(args[i + 1]);
       }
 
       // Decoder specs
@@ -2367,9 +2468,9 @@ public class PROCore {
     // TODO: change name from tmpDirPrefix to tmpFilePrefix?
     int k = decoderOutFileName.lastIndexOf("/");
     if (k >= 0) {
-      tmpDirPrefix = decoderOutFileName.substring(0, k + 1) + "PRO.";
+      tmpDirPrefix = decoderOutFileName.substring(0, k + 1) + "MIRA.";
     } else {
-      tmpDirPrefix = "PRO.";
+      tmpDirPrefix = "MIRA.";
     }
     println("tmpDirPrefix: " + tmpDirPrefix);
 
@@ -2394,7 +2495,7 @@ public class PROCore {
     if (!canRunCommand && !canRunJoshua) { // can only run fake decoder
 
       if (!canRunFake) {
-        println("PRO cannot decode; must provide one of: command file (for external decoder),");
+        println("MIRA cannot decode; must provide one of: command file (for external decoder),");
         println("                                           source file (for Joshua decoder),");
         println("                                        or prefix for existing output files (for fake decoder).");
         System.exit(12);
@@ -2540,7 +2641,7 @@ public class PROCore {
       deleteFile(inputFileName);
 
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.gzipFile(String,String): " + e.getMessage());
+      System.err.println("IOException in MIRACore.gzipFile(String,String): " + e.getMessage());
       System.exit(99902);
     }
   }
@@ -2573,7 +2674,7 @@ public class PROCore {
       deleteFile(gzippedFileName);
 
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.gunzipFile(String,String): " + e.getMessage());
+      System.err.println("IOException in MIRACore.gunzipFile(String,String): " + e.getMessage());
       System.exit(99902);
     }
   }
@@ -2643,11 +2744,11 @@ public class PROCore {
           inFile[r].close();
         }
       } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in PROCore.createUnifiedRefFile(String,int): "
+        System.err.println("FileNotFoundException in MIRACore.createUnifiedRefFile(String,int): "
             + e.getMessage());
         System.exit(99901);
       } catch (IOException e) {
-        System.err.println("IOException in PROCore.createUnifiedRefFile(String,int): "
+        System.err.println("IOException in MIRACore.createUnifiedRefFile(String,int): "
             + e.getMessage());
         System.exit(99902);
       }
@@ -2802,7 +2903,7 @@ public class PROCore {
 
       inFile.close();
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.countLines(String): " + e.getMessage());
+      System.err.println("IOException in MIRACore.countLines(String): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -2824,7 +2925,7 @@ public class PROCore {
 
       inFile.close();
     } catch (IOException e) {
-      System.err.println("IOException in PROCore.countNonEmptyLines(String): " + e.getMessage());
+      System.err.println("IOException in MIRACore.countNonEmptyLines(String): " + e.getMessage());
       System.exit(99902);
     }
 

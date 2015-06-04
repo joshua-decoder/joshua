@@ -1404,23 +1404,15 @@ close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
-if ($TUNER eq "mert") {
-  $cachepipe->cmd("mert",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert --decoder-config $JOSHUA_CONFIG",
-                  $TUNE{source},
-                  $JOSHUA_CONFIG,
-                  get_file_from_grammar($TUNE_GRAMMAR),
-                  "$tunedir/joshua.config.final");
-                  
-} elsif ($TUNER eq "pro") {
-  $cachepipe->cmd("pro",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro --decoder-config $JOSHUA_CONFIG",
+if ($TUNER eq "mert" or $TUNER eq "pro" or $TUNER eq "mira") {
+  $cachepipe->cmd($TUNER,
+                  "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
                   "$tunedir/joshua.config.final");
 
-} elsif ($TUNER eq "mira") {
+} elsif ($TUNER eq "moses-mira") {
   my $refs_path = $TUNE{target};
   $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
 
