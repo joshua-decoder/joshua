@@ -497,8 +497,8 @@ if ($TUNER eq "mira") {
   }
 }
 
-if ($TUNER ne "mert" and $TUNER ne "mira" and $TUNER ne "pro") {
-  print "* FATAL: --tuner must be one of 'mert', 'pro', or 'mira'.\n";
+if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "local-mira" and $TUNER ne "pro") {
+  print "* FATAL: --tuner must be one of '[z]mert', 'pro', or '[local-]mira'.\n";
   exit 1;
 }
 
@@ -1404,7 +1404,7 @@ close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
-if ($TUNER eq "mert" or $TUNER eq "pro" or $TUNER eq "local-mira") {
+if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "local-mira") {
   $cachepipe->cmd($TUNER,
                   "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
