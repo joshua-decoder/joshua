@@ -1404,7 +1404,7 @@ close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
-if ($TUNER eq "mert" or $TUNER eq "pro" or $TUNER eq "mira") {
+if ($TUNER eq "mert" or $TUNER eq "pro" or $TUNER eq "local-mira") {
   $cachepipe->cmd($TUNER,
                   "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG",
                   $TUNE{source},
@@ -1412,7 +1412,7 @@ if ($TUNER eq "mert" or $TUNER eq "pro" or $TUNER eq "mira") {
                   get_file_from_grammar($TUNE_GRAMMAR),
                   "$tunedir/joshua.config.final");
 
-} elsif ($TUNER eq "moses-mira") {
+} elsif ($TUNER eq "mira") {
   my $refs_path = $TUNE{target};
   $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
 
