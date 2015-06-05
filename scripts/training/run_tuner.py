@@ -119,11 +119,87 @@ PRO_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -metricDiff	0.05	
 """
 
+MIRA_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
+# target sentences file name (in this case, file name prefix)
+-r <REF>
+
+# references per sentence
+-rps <NUMREFS>
+
+# parameter file
+-p <TUNEDIR>/params.txt
+
+#metric setting:
+-m       BLEU 4 closest
+#-m      TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
+#-m      TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
+#-m      METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
+#-m      Meteor en lowercase '0.5 1.0 0.5 0.5' 'exact stem synonym paraphrase' '1.0 0.5 0.5 0.5' #CMU meteor interface
+
+# maximum MIRA iterations
+-maxIt   5
+
+# file containing commands to run decoder
+-cmd     <DECODER_COMMAND>
+
+# file prodcued by decoder
+-decOut  <DECODER_OUTPUT>
+
+# decoder config file
+-dcfg    <DECODER_CONFIG>
+
+# size of N-best list
+-N       300
+
+# verbosity level (0-2; higher value => more verbose)
+-v       1
+
+### PART 2: MIRA parameters
+#oracle selection method:
+#1: "hope"(default)
+#2: best metric score(ex: max BLEU)
+-oracleSelection 1
+
+#prediction selection method:
+#1: "fear"(default)
+#2: max model score
+#3: worst metric score(ex: min BLEU)
+-predictionSelection 1
+
+#shuffle the training samples? (default:1)
+-needShuffle 1
+
+#average the weights after each epoch? (default:1)
+-needAvg 1
+
+#when use BLEU/TER-BLEU as metric, use the pseudo corpus to compute BLEU? (default:1)
+-usePseudoCorpus 1
+
+#corpus decay coefficient (only valid when pseudo corpus is used for BLEU, default:0.99)
+-corpusDecay 0.99
+
+#scale the model score(in order to make it comparable to the metric score)?(default:1)
+-needScaling 1
+
+#options for scaling (only valid when -needScaling=1)
+-scoreRatio 5   #scale the model score so that abs(model_score/metric_score) \approx scoreRatio (default:5)
+
+#MIRA internal iterations (default:1)
+#-miraIter 1
+
+#regularization parameter (default:0.01)
+-C 0.01
+
+#run perceptron mode? (default:0)
+-runPercep 0
+"""
+
 PARAMS_TEMPLATE = """<PARAMS>
 WordPenalty        ||| -2.844814  Opt  -Inf  +Inf  -5   0
 OOVPenalty         ||| 1          Fix     0     0   0   0
 normalization = absval 1 lm_0
 """
+
 
 def write_template(template, path, lookup):
     """Writes a template file, substituting variables of the form <NAME> for values found
@@ -135,6 +211,7 @@ def write_template(template, path, lookup):
         line = re.sub(r'<(.*?)>', lambda m: '{0}'.format(lookup[m.group(1)]), line)
         out.write(line + '\n')
     out.close()
+
 
 def parse_tm_line(line):
     """Parses a TM line and returns the owner, span, and path. Works on both the
@@ -170,6 +247,7 @@ def parse_tm_line(line):
 
     return (owner, maxspan, path)
 
+
 def get_features(grammar_path):
     """Opens the grammar at grammar_path and returns the list of features. Works for
     both packed grammars and unpacked grammars. For packed grammars, the feature list
@@ -179,6 +257,7 @@ def get_features(grammar_path):
 
     features = check_output("%s/scripts/training/get_grammar_features.pl %s" % (JOSHUA, grammar_path), shell=True)
     return features.strip().split('\n')
+
 
 def get_num_refs(prefix):
     """Determines how many references there are."""
@@ -195,25 +274,25 @@ def get_num_refs(prefix):
 
     return 0
     
-def remove_if_present(file):
-    if (os.path.isfile(file)):
-        os.unlink(file)
+
+def safe_symlink(to_path, from_path):
+    if (os.path.isfile(from_path)):
+        os.unlink(from_path)
+
+    os.symlink(to_path, from_path)
+
 
 def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output):
     """Writes the config files for both Z-MERT and PRO (which run on the same codebase).
     Both of them write the file "params.txt", but they use different names for the config file,
     so that is a parameter."""
 
-    local_config = os.path.join(tunedir, 'joshua.config')
-    remove_if_present(local_config)
-    os.symlink(config, local_config)
-
     write_template(template, template_dest,
                    { 'REF': target,
                      'NUMREFS': num_refs,
                      'TUNEDIR': tunedir,
                      'DECODER_COMMAND': command,
-                     'DECODER_CONFIG': local_config,
+                     'DECODER_CONFIG': config,
                      'DECODER_OUTPUT': output })
 
     # Parse the config file, looking for tms, lms, and feature
@@ -249,6 +328,7 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                      'TUNEDIR': tunedir,
                      'PARAMS': paramstr })
 
+
 def run_zmert(tunedir, source, target, command, config, output):
     """Runs Z-MERT after setting up all its crazy file requirements."""
 
@@ -258,11 +338,10 @@ def run_zmert(tunedir, source, target, command, config, output):
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.zmert.ZMERT -maxMem 4000 %s/mert.config > %s/mert.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
 
-    final_config_path = os.path.join(tunedir, 'joshua.config.final')
-    remove_if_present(final_config_path)
-    os.symlink(os.path.join(tunedir,'joshua.config.ZMERT.final'), final_config_path)
-
+    safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.ZMERT.final'),
+                 os.path.join(tunedir, 'joshua.config.final'))
     
+
 def run_pro(tunedir, source, target, command, config, output):
     """Runs PRO after setting up all its crazy file requirements."""
 
@@ -272,23 +351,21 @@ def run_pro(tunedir, source, target, command, config, output):
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
 
-    final_config_path = os.path.join(tunedir, 'joshua.config.final')
-    remove_if_present(final_config_path)
-    os.symlink(os.path.join(tunedir,'joshua.config.PRO.final'), final_config_path)
+    safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.PRO.final'),
+                 os.path.join(tunedir, 'joshua.config.final'))
 
 
 def run_mira(tunedir, source, target, command, config, output):
     """Runs MIRA after setting up all its crazy file requirements."""
 
-    setup_configs(PRO_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
+    setup_configs(MIRA_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.mira.MIRA %s/mira.config > %s/mira.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
 
-    final_config_path = os.path.join(tunedir, 'joshua.config.final')
-    remove_if_present(final_config_path)
-    os.symlink(os.path.join(tunedir,'joshua.config.MIRA.final'), final_config_path)
+    safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.MIRA.final'),
+                 os.path.join(tunedir, 'joshua.config.final'))
 
     
 def error_quit(message):
