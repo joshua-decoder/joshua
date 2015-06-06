@@ -312,12 +312,12 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                 else:
                     params.append('%s ||| 0.0 Opt -Inf +Inf -1 +1' % (f))
 
-        elif line.startswith('feature-function ='):
+        elif line.startswith('feature-function'):
             if 'LanguageModel' in line:
                 params.append('lm_%d ||| 1.0 Opt 0.1 +Inf +0.5 +1.5' % (lm_i))
                 lm_i += 1
             else:
-                ff = line.split(' ')[2]
+                ff = line.strip().split(' ', 2)[2]
                 if ff in ['SourcePath', 'PhrasePenalty', 'Distortion']:
                     params.append('%s ||| 1.0 Opt -Inf +Inf -1 +1' % (ff))
                     
