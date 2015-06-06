@@ -1472,6 +1472,13 @@ public class MIRACore {
 
       while (line != null) {
 
+        // skip blank lines
+        if (line.equals("")) continue;
+
+        // skip lines that aren't formatted correctly
+        if (line.indexOf("|||") == -1)
+          continue;
+
         /*
          * line format:
          * 
