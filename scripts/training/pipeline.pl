@@ -1337,6 +1337,8 @@ if ($DOING_LATTICES) {
 if ($GRAMMAR_TYPE eq "phrase") {
   push(@feature_functions, "Distortion");
   push(@feature_functions, "PhrasePenalty");
+
+  $weightstr .= "Distortion 1.0 PhrasePenalty 1.0 ";
 }
 my $feature_functions = join(" ", map { "-feature-function \"$_\"" } @feature_functions);
 
