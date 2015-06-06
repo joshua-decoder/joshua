@@ -4,7 +4,7 @@
 # appropriate.
 
 for file in $@; do
-    text=$(file $file)
+    text=$(file -L $file)
     if [[ $text =~ "gzip" ]]; then
         gzip -cd $file
     elif [[ $text =~ "bzip2" ]]; then
