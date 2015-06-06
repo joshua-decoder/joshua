@@ -24,7 +24,7 @@ my $CAT = "$ENV{JOSHUA}/scripts/training/scat";
 my ($grammar) = @ARGV;
 
 if (-d $grammar) {
-  chomp(my @features = `java -cp $ENV{JOSHUA}/class joshua.util.encoding.EncoderConfiguration $grammar | grep ^feature: | awk '{print \$NF}'`);
+  chomp(my @features = `java -d64 -Xmx256m -cp $ENV{JOSHUA}/class joshua.util.encoding.EncoderConfiguration $grammar | grep ^feature: | awk '{print \$NF}'`);
   print join("\n", @features) . $/;
 
 } elsif (-e $grammar) {
