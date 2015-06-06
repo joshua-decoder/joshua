@@ -393,7 +393,7 @@ def handle_args(clargs):
         help='path to tuning directory')
     parser.add_argument(
         '--tuner', default='zmert',
-        help='which tuner to use: zmert (default) or pro')
+        help='which tuner to use: zmert, pro, or mira')
     parser.add_argument(
         '--decoder', default='tune/decoder_command',
         help='The path to the decoder or wrapper script. This script is responsible for '
@@ -436,7 +436,7 @@ def main(argv):
     elif opts.tuner == 'pro':
         run_pro(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
         
-    elif opts.tuner == 'mira':
+    elif 'mira' in opts.tuner:
         run_mira(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
 
 if __name__ == "__main__":
