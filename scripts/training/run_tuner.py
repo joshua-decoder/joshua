@@ -45,7 +45,7 @@ ZMERT_CONFIG_TEMPLATE = """### MERT parameters
 -rps     <NUMREFS>                   # references per sentence
 -p       <TUNEDIR>/params.txt        # parameter file
 -m       BLEU 4 closest              # evaluation metric and its options
--maxIt   10                          # maximum MERT iterations
+-maxIt   <ITERATIONS>                # maximum MERT iterations
 -ipi     20                          # number of intermediate initial points per iteration
 -cmd     <DECODER_COMMAND>           # file containing commands to run decoder
 -decOut  <DECODER_OUTPUT>            # file produced by decoder
@@ -72,7 +72,7 @@ PRO_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 #-m	 Meteor en lowercase '0.5 1.0 0.5 0.5' 'exact stem synonym paraphrase' '1.0 0.5 0.5 0.5' #CMU meteor interface
 
 # maximum PRO iterations
--maxIt	 30
+-maxIt	 <ITERATIONS>
 
 # file containing commands to run decoder
 -cmd	 <DECODER_COMMAND>
@@ -137,7 +137,7 @@ MIRA_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 #-m      Meteor en lowercase '0.5 1.0 0.5 0.5' 'exact stem synonym paraphrase' '1.0 0.5 0.5 0.5' #CMU meteor interface
 
 # maximum MIRA iterations
--maxIt   5
+-maxIt   <ITERATIONS>
 
 # file containing commands to run decoder
 -cmd     <DECODER_COMMAND>
@@ -282,7 +282,7 @@ def safe_symlink(to_path, from_path):
     os.symlink(to_path, from_path)
 
 
-def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output):
+def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output, iterations):
     """Writes the config files for both Z-MERT and PRO (which run on the same codebase).
     Both of them write the file "params.txt", but they use different names for the config file,
     so that is a parameter."""
@@ -291,6 +291,7 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                    { 'REF': target,
                      'NUMREFS': num_refs,
                      'TUNEDIR': tunedir,
+                     'ITERATIONS': `iterations`,
                      'DECODER_COMMAND': command,
                      'DECODER_CONFIG': config,
                      'DECODER_OUTPUT': output })
@@ -329,11 +330,12 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                      'PARAMS': paramstr })
 
 
-def run_zmert(tunedir, source, target, command, config, output):
+def run_zmert(tunedir, source, target, command, config, output, opts):
     """Runs Z-MERT after setting up all its crazy file requirements."""
 
     setup_configs(ZMERT_CONFIG_TEMPLATE, '%s/mert.config' % (tunedir),
-                  target, get_num_refs(target), tunedir, command, config, output)
+                  target, get_num_refs(target), tunedir, command, config, output,
+                  opts.iterations or 10)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.zmert.ZMERT -maxMem 4000 %s/mert.config > %s/mert.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -342,11 +344,12 @@ def run_zmert(tunedir, source, target, command, config, output):
                  os.path.join(tunedir, 'joshua.config.final'))
     
 
-def run_pro(tunedir, source, target, command, config, output):
+def run_pro(tunedir, source, target, command, config, output, opts):
     """Runs PRO after setting up all its crazy file requirements."""
 
     setup_configs(PRO_CONFIG_TEMPLATE, '%s/pro.config' % (tunedir),
-                  target, get_num_refs(target), tunedir, command, config, output)
+                  target, get_num_refs(target), tunedir, command, config, output,
+                  opts.iterations or 30)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -355,11 +358,12 @@ def run_pro(tunedir, source, target, command, config, output):
                  os.path.join(tunedir, 'joshua.config.final'))
 
 
-def run_mira(tunedir, source, target, command, config, output):
+def run_mira(tunedir, source, target, command, config, output, opts):
     """Runs MIRA after setting up all its crazy file requirements."""
 
     setup_configs(MIRA_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
-                  target, get_num_refs(target), tunedir, command, config, output)
+                  target, get_num_refs(target), tunedir, command, config, output,
+                  opts.iterations or 5)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.mira.MIRA %s/mira.config > %s/mira.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -413,11 +417,15 @@ def handle_args(clargs):
         '--decoder-log-file', default='tune/joshua.log',
         help='location of decoder n-best log file')
     parser.add_argument(
+        '-i', '--iterations', type=int, 
+        help='the maximum number of iterations to run the tuner for')
+    parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='print informational messages'
     )
 
     return parser.parse_args(clargs)
+
 
 def main(argv):
     opts = handle_args(argv[1:])
@@ -431,13 +439,13 @@ def main(argv):
         os.makedirs(opts.tunedir)
 
     if opts.tuner in ['mert', 'zmert']:
-        run_zmert(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
+        run_zmert(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
 
     elif opts.tuner == 'pro':
-        run_pro(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
+        run_pro(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
         
     elif 'mira' in opts.tuner:
-        run_mira(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file)
+        run_mira(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
 
 if __name__ == "__main__":
     try:

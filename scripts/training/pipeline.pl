@@ -189,10 +189,10 @@ my $GIZA_MERGE = "grow-diag-final";
 my $MERGE_LMS = 0;
 
 # Which tuner to use by default
-my $TUNER = "mert";  # or "pro" or "mira"
+my $TUNER = "mert";  # or pro, mira, or kbmira (the latter calling out to Moses)
 
 # The number of iterations of the mira to run
-my $MIRA_ITERATIONS = 15;
+my $TUNER_ITERATIONS = 15;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
@@ -260,7 +260,7 @@ my $retval = GetOptions(
   "pack!"             => \$DO_PACK_GRAMMARS,
   "tuner=s"           => \$TUNER,
   "tuner-mem=s"       => \$TUNER_MEM,
-  "mira-iterations=i" => \$MIRA_ITERATIONS,
+  "tuner-iterations=i" => \$TUNER_ITERATIONS,
   "thrax=s"           => \$THRAX,
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -490,15 +490,15 @@ if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm" and $LM_GEN ne "kenlm") {
   exit 1;
 }
 
-if ($TUNER eq "mira") {
+if ($TUNER eq "kbmira") {
   if (! defined $MOSES) {
-    print "* FATAL: using MIRA for tuning requires setting the MOSES environment variable\n";
+    print "* FATAL: using 'kbmira' for tuning requires setting the MOSES environment variable\n";
     exit 1;
   }
 }
 
-if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "local-mira" and $TUNER ne "pro") {
-  print "* FATAL: --tuner must be one of '[z]mert', 'pro', or '[local-]mira'.\n";
+if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "local-mira" and $TUNER ne "pro" and $TUNER ne "kbmira") {
+  print "* FATAL: --tuner must be one of '[z]mert', 'pro', '[local]-mira', or 'kbmira'.\n";
   exit 1;
 }
 
@@ -1406,22 +1406,22 @@ close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
-if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "local-mira") {
+if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "mira" or $TUNER eq "local-mira") {
   $cachepipe->cmd($TUNER,
-                  "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG",
+                  "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG --iterations $TUNER_ITERATIONS",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
                   "$tunedir/joshua.config.final");
 
-} elsif ($TUNER eq "mira") {
+} elsif ($TUNER eq "kbmira") { # Moses' batch MIRA
   my $refs_path = $TUNE{target};
   $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
 
   my $extra_args = $JOSHUA_ARGS;
   $extra_args =~ s/"/\\"/g;
   $cachepipe->cmd("mira",
-                  "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $tunedir/model/run-joshua.sh $tunedir/model/joshua.config > $tunedir/mira.log 2>&1",
+                  "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $TUNER_ITERATIONS --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $tunedir/model/run-joshua.sh $tunedir/model/joshua.config > $tunedir/mira.log 2>&1",
                   get_file_from_grammar($TUNE_GRAMMAR),
                   $TUNE{source},
                   "$tunedir/joshua.config.final");
