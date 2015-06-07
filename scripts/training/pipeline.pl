@@ -1619,38 +1619,46 @@ sub prepare_data {
 
   # copy the data from its original location to our location
 	my $numlines = -1;
-  foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-    # append each extension to the corpora prefixes
-    my @files = map { "$_.$ext" } @$corpora;
-
-		# This block makes sure that the files have a nonzero file size
-		map {
-			if (-z $_) {
-				print STDERR "* FATAL: $label file '$_' is empty";
-				exit 1;
-			}
-		} @files;
-
-    # a list of all the files (in case of multiple corpora prefixes)
-    my $files = join(" ",@files);
-    if (-e $files[0]) {
-      $cachepipe->cmd("$label-copy-$ext",
-                      "cat $files | gzip -9n > $DATA_DIRS{$label}/$label.$ext.gz",
-                      @files, "$DATA_DIRS{$label}/$label.$ext.gz");
-
-			chomp(my $lines = `$CAT $DATA_DIRS{$label}/$label.$ext.gz | wc -l`);
-			$numlines = $lines if ($numlines == -1);
-			if ($lines != $numlines) {
-				print STDERR "* FATAL: $DATA_DIRS{$label}/$label.$ext.gz has a different number of lines ($lines) than a 'parallel' file that preceded it ($numlines)\n";
-				exit(1);
-			}
-		}
+  
+  # Build the list of extensions. For training data, there may be multiple corpora; for
+  # tuning and test data, there may be multiple references.
+  my @exts = ($SOURCE);
+  my $target_corpus = "$corpora->[0].$TARGET";
+  push(@exts, $TARGET) if -e $target_corpus;
+  for (my $i = 0; ; $i++) {
+    my $file = "$target_corpus.$i";
+    if (-e $file) {
+      push(@exts, "$TARGET.$i");
+    } else {
+      last;
+    }
   }
+
+  # Read through all input files, concatenate them (if multiple were passed), and filter them
+  # First, assemble the file handles
+  my (@infiles, @indeps, @outfiles);
+  foreach my $ext (@exts) {
+    my @files =  map { "$_.$ext" } @$corpora;
+    push(@indeps, @files);
+    if (@files > 1) {
+      push(@infiles, "<(cat " . join(" ", @files) . ")");
+    } else {
+      push(@infiles, $files[0]);
+    }
+    push (@outfiles, "$DATA_DIRS{$label}/$label.$ext.gz");
+  }
+
+  my $infiles =  join(" ", @infiles);
+  my $outfiles = join(" ", @outfiles);
+  $cachepipe->cmd("$label-copy-and-filter",
+                  "paste $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
+                  @indeps, @outfiles);
+  # Done concatenating and filtering files
 
   my $prefix = "$label";
 
   # tokenize the data
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+  foreach my $lang (@exts) {
 		if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
 			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
@@ -1670,7 +1678,7 @@ sub prepare_data {
 
   if ($maxlen > 0) {
     my (@infiles, @outfiles);
-    foreach my $ext ($TARGET, $SOURCE, "$TARGET.0", "$TARGET.1", "$TARGET.2", "$TARGET.3") {
+    foreach my $ext (@exts) {
       my $infile = "$DATA_DIRS{$label}/$prefix.$ext.gz";
       my $outfile = "$DATA_DIRS{$label}/$prefix.$maxlen.$ext.gz";
       if (-e $infile) {
@@ -1693,7 +1701,7 @@ sub prepare_data {
   $prefixes{shortened} = $prefix;
 
   # lowercase
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+  foreach my $lang (@exts) {
 		if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
 			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
 				system("gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz > $DATA_DIRS{$label}/$prefix.lc.$lang");
@@ -1708,19 +1716,18 @@ sub prepare_data {
   $prefix .= ".lc";
   $prefixes{lowercased} = $prefix;
 
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+  foreach my $lang (@exts) {
 		if (-e "$DATA_DIRS{$label}/$prefixes{lowercased}.$lang") {
       system("ln -sf $prefixes{lowercased}.$lang $DATA_DIRS{$label}/corpus.$lang");
     }
   }
 
-  if ($label eq "train") {
-    foreach my $lang ($TARGET, $SOURCE) {
-      $cachepipe->cmd("$label-vocab-$lang",
-                      "cat $DATA_DIRS{$label}/corpus.$lang | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{$label}/vocab.$lang",
-                      "$DATA_DIRS{$label}/corpus.$lang",
-                      "$DATA_DIRS{$label}/vocab.$lang");
-    }
+  # Build a vocabulary
+  foreach my $ext (@exts) {
+    $cachepipe->cmd("$label-vocab-$ext",
+                    "cat $DATA_DIRS{$label}/corpus.$ext | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{$label}/vocab.$ext",
+                    "$DATA_DIRS{$label}/corpus.$ext",
+                    "$DATA_DIRS{$label}/vocab.$ext");
   }
 
   return \%prefixes;
