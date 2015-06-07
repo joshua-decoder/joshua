@@ -28,7 +28,7 @@ use File::Basename;
 use Cwd qw[abs_path getcwd];
 use POSIX qw[ceil];
 use List::Util qw[max min sum];
-use File::Temp qw[:mktemp];
+use File::Temp qw[:mktemp tempdir];
 use CachePipe;
 # use Thread::Pool;
 
@@ -189,10 +189,10 @@ my $GIZA_MERGE = "grow-diag-final";
 my $MERGE_LMS = 0;
 
 # Which tuner to use by default
-my $TUNER = "mert";  # or "pro" or "mira"
+my $TUNER = "mert";  # or pro, mira, or kbmira (the latter calling out to Moses)
 
 # The number of iterations of the mira to run
-my $MIRA_ITERATIONS = 15;
+my $TUNER_ITERATIONS = 15;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
@@ -260,7 +260,7 @@ my $retval = GetOptions(
   "pack!"             => \$DO_PACK_GRAMMARS,
   "tuner=s"           => \$TUNER,
   "tuner-mem=s"       => \$TUNER_MEM,
-  "mira-iterations=i" => \$MIRA_ITERATIONS,
+  "tuner-iterations=i" => \$TUNER_ITERATIONS,
   "thrax=s"           => \$THRAX,
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -490,15 +490,15 @@ if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm" and $LM_GEN ne "kenlm") {
   exit 1;
 }
 
-if ($TUNER eq "mira") {
+if ($TUNER eq "kbmira") {
   if (! defined $MOSES) {
-    print "* FATAL: using MIRA for tuning requires setting the MOSES environment variable\n";
+    print "* FATAL: using 'kbmira' for tuning requires setting the MOSES environment variable\n";
     exit 1;
   }
 }
 
-if ($TUNER ne "mert" and $TUNER ne "mira" and $TUNER ne "pro") {
-  print "* FATAL: --tuner must be one of 'mert', 'pro', or 'mira'.\n";
+if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "local-mira" and $TUNER ne "pro" and $TUNER ne "kbmira") {
+  print "* FATAL: --tuner must be one of '[z]mert', 'pro', '[local]-mira', or 'kbmira'.\n";
   exit 1;
 }
 
@@ -1337,6 +1337,8 @@ if ($DOING_LATTICES) {
 if ($GRAMMAR_TYPE eq "phrase") {
   push(@feature_functions, "Distortion");
   push(@feature_functions, "PhrasePenalty");
+
+  $weightstr .= "Distortion 1.0 PhrasePenalty 1.0 ";
 }
 my $feature_functions = join(" ", map { "-feature-function \"$_\"" } @feature_functions);
 
@@ -1404,30 +1406,22 @@ close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
-if ($TUNER eq "mert") {
-  $cachepipe->cmd("mert",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner zmert --decoder-config $JOSHUA_CONFIG",
-                  $TUNE{source},
-                  $JOSHUA_CONFIG,
-                  get_file_from_grammar($TUNE_GRAMMAR),
-                  "$tunedir/joshua.config.final");
-                  
-} elsif ($TUNER eq "pro") {
-  $cachepipe->cmd("pro",
-                  "$SCRIPTDIR/training/run_zmert.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner pro --decoder-config $JOSHUA_CONFIG",
+if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "mira" or $TUNER eq "local-mira") {
+  $cachepipe->cmd($TUNER,
+                  "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG --iterations $TUNER_ITERATIONS",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR),
                   "$tunedir/joshua.config.final");
 
-} elsif ($TUNER eq "mira") {
+} elsif ($TUNER eq "kbmira") { # Moses' batch MIRA
   my $refs_path = $TUNE{target};
   $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
 
   my $extra_args = $JOSHUA_ARGS;
   $extra_args =~ s/"/\\"/g;
   $cachepipe->cmd("mira",
-                  "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $MIRA_ITERATIONS --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $tunedir/model/run-joshua.sh $tunedir/model/joshua.config > $tunedir/mira.log 2>&1",
+                  "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $TUNER_ITERATIONS --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $tunedir/model/run-joshua.sh $tunedir/model/joshua.config > $tunedir/mira.log 2>&1",
                   get_file_from_grammar($TUNE_GRAMMAR),
                   $TUNE{source},
                   "$tunedir/joshua.config.final");
@@ -1625,38 +1619,46 @@ sub prepare_data {
 
   # copy the data from its original location to our location
 	my $numlines = -1;
-  foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-    # append each extension to the corpora prefixes
-    my @files = map { "$_.$ext" } @$corpora;
-
-		# This block makes sure that the files have a nonzero file size
-		map {
-			if (-z $_) {
-				print STDERR "* FATAL: $label file '$_' is empty";
-				exit 1;
-			}
-		} @files;
-
-    # a list of all the files (in case of multiple corpora prefixes)
-    my $files = join(" ",@files);
-    if (-e $files[0]) {
-      $cachepipe->cmd("$label-copy-$ext",
-                      "cat $files | gzip -9n > $DATA_DIRS{$label}/$label.$ext.gz",
-                      @files, "$DATA_DIRS{$label}/$label.$ext.gz");
-
-			chomp(my $lines = `$CAT $DATA_DIRS{$label}/$label.$ext.gz | wc -l`);
-			$numlines = $lines if ($numlines == -1);
-			if ($lines != $numlines) {
-				print STDERR "* FATAL: $DATA_DIRS{$label}/$label.$ext.gz has a different number of lines ($lines) than a 'parallel' file that preceded it ($numlines)\n";
-				exit(1);
-			}
-		}
+  
+  # Build the list of extensions. For training data, there may be multiple corpora; for
+  # tuning and test data, there may be multiple references.
+  my @exts = ($SOURCE);
+  my $target_corpus = "$corpora->[0].$TARGET";
+  push(@exts, $TARGET) if -e $target_corpus;
+  for (my $i = 0; ; $i++) {
+    my $file = "$target_corpus.$i";
+    if (-e $file) {
+      push(@exts, "$TARGET.$i");
+    } else {
+      last;
+    }
   }
+
+  # Read through all input files, concatenate them (if multiple were passed), and filter them
+  # First, assemble the file handles
+  my (@infiles, @indeps, @outfiles);
+  foreach my $ext (@exts) {
+    my @files =  map { "$_.$ext" } @$corpora;
+    push(@indeps, @files);
+    if (@files > 1) {
+      push(@infiles, "<(cat " . join(" ", @files) . ")");
+    } else {
+      push(@infiles, $files[0]);
+    }
+    push (@outfiles, "$DATA_DIRS{$label}/$label.$ext.gz");
+  }
+
+  my $infiles =  join(" ", @infiles);
+  my $outfiles = join(" ", @outfiles);
+  $cachepipe->cmd("$label-copy-and-filter",
+                  "paste $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
+                  @indeps, @outfiles);
+  # Done concatenating and filtering files
 
   my $prefix = "$label";
 
   # tokenize the data
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+  foreach my $lang (@exts) {
 		if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
 			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
 				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
@@ -1676,7 +1678,7 @@ sub prepare_data {
 
   if ($maxlen > 0) {
     my (@infiles, @outfiles);
-    foreach my $ext ($TARGET, $SOURCE, "$TARGET.0", "$TARGET.1", "$TARGET.2", "$TARGET.3") {
+    foreach my $ext (@exts) {
       my $infile = "$DATA_DIRS{$label}/$prefix.$ext.gz";
       my $outfile = "$DATA_DIRS{$label}/$prefix.$maxlen.$ext.gz";
       if (-e $infile) {
@@ -1699,7 +1701,7 @@ sub prepare_data {
   $prefixes{shortened} = $prefix;
 
   # lowercase
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+  foreach my $lang (@exts) {
 		if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
 			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
 				system("gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz > $DATA_DIRS{$label}/$prefix.lc.$lang");
@@ -1714,19 +1716,18 @@ sub prepare_data {
   $prefix .= ".lc";
   $prefixes{lowercased} = $prefix;
 
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+  foreach my $lang (@exts) {
 		if (-e "$DATA_DIRS{$label}/$prefixes{lowercased}.$lang") {
       system("ln -sf $prefixes{lowercased}.$lang $DATA_DIRS{$label}/corpus.$lang");
     }
   }
 
-  if ($label eq "train") {
-    foreach my $lang ($TARGET, $SOURCE) {
-      $cachepipe->cmd("$label-vocab-$lang",
-                      "cat $DATA_DIRS{$label}/corpus.$lang | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{$label}/vocab.$lang",
-                      "$DATA_DIRS{$label}/corpus.$lang",
-                      "$DATA_DIRS{$label}/vocab.$lang");
-    }
+  # Build a vocabulary
+  foreach my $ext (@exts) {
+    $cachepipe->cmd("$label-vocab-$ext",
+                    "cat $DATA_DIRS{$label}/corpus.$ext | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{$label}/vocab.$ext",
+                    "$DATA_DIRS{$label}/corpus.$ext",
+                    "$DATA_DIRS{$label}/vocab.$ext");
   }
 
   return \%prefixes;
