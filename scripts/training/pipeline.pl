@@ -28,7 +28,7 @@ use File::Basename;
 use Cwd qw[abs_path getcwd];
 use POSIX qw[ceil];
 use List::Util qw[max min sum];
-use File::Temp qw[:mktemp];
+use File::Temp qw[:mktemp tempdir];
 use CachePipe;
 # use Thread::Pool;
 
