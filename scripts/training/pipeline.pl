@@ -77,7 +77,7 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $BUNDLER = "$JOSHUA/scripts/support/run_bundler.py";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
-my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase"
+my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase" or "phrasal"
 my $SEARCH_ALGORITHM = "cky"; # or "stack" (for phrase-based)
 
 # Which GHKM extractor to use ("galley" or "moses")
@@ -288,9 +288,6 @@ if (! $retval) {
   exit 1;
 }
 
-# Joshua config
-my $JOSHUA_CONFIG = $_JOSHUA_CONFIG || "$TUNECONFDIR/joshua.config";
-
 $RUNDIR = get_absolute_path($RUNDIR);
 
 $TUNER = lc $TUNER;
@@ -405,16 +402,21 @@ if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
   exit 1;
 }
 
+# Joshua config
+my $JOSHUA_CONFIG = get_absolute_path($_JOSHUA_CONFIG || "$TUNECONFDIR/joshua.config", $STARTDIR);
+
 # make sure a grammar file was given if we're skipping training
 if (! defined $GRAMMAR_FILE) {
   if ($STEPS{$FIRST_STEP} >= $STEPS{TEST}) {
-    if (! defined $_TEST_GRAMMAR_FILE) {
-      print "* FATAL: need a grammar (--grammar or --test-grammar) if you're skipping to testing\n";
+    if (! defined $_TEST_GRAMMAR_FILE or ! defined $JOSHUA_CONFIG) {
+      print "* FATAL: I need a Joshua config file (--joshua-config) and a grammar (--grammar or --test-grammar)\n";
+      print "         if you're skipping straight to testing\n";
 			exit 1;
 		}
   } elsif ($STEPS{$FIRST_STEP} >= $STEPS{TUNE}) {
-		if (! defined $_TUNE_GRAMMAR_FILE) {
-			print "* FATAL: need a grammar (--grammar or --tune-grammar) if you're skipping grammar learning\n";
+		if (! defined $_TUNE_GRAMMAR_FILE and ! defined $JOSHUA_CONFIG) {
+      print "* FATAL: I need a Joshua config file (--joshua-config) or a grammar (--grammar or --tune-grammar)\n";
+      print "         if you're skipping straight to tuning\n";
 			exit 1;
 		}
   }
@@ -426,6 +428,10 @@ if ($LM_GEN eq "srilm" && (scalar @LMFILES == 0) && $STEPS{$FIRST_STEP} <= $STEP
 }
 
 # check for file presence
+if (defined $JOSHUA_CONFIG and ! -e $JOSHUA_CONFIG) {
+  print "* FATAL: couldn't find joshua config file '$JOSHUA_CONFIG'\n";
+  exit 1;
+}
 if (defined $GRAMMAR_FILE and ! -e $GRAMMAR_FILE) {
   print "* FATAL: couldn't find grammar file '$GRAMMAR_FILE'\n";
   exit 1;
@@ -1138,7 +1144,7 @@ sub compile_lm($) {
 }
 
 # Build the language model if needed
-if ($DO_BUILD_LM_FROM_CORPUS) {
+if (defined $TRAIN{target} and $DO_BUILD_LM_FROM_CORPUS) {
 
   # make sure the training data is prepped
   if (! $PREPPED{TRAIN} and $DO_PREPARE_CORPORA) {
@@ -1151,11 +1157,6 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 		$TRAIN{source} = "$DATA_DIRS{train}/corpus.$SOURCE";
 		$TRAIN{target} = "$DATA_DIRS{train}/corpus.$TARGET";
 		$PREPPED{TRAIN} = 1;
-  }
-
-  if (! -e $TRAIN{target}) {
-		print "* FATAL: I need a training corpus to build the language model from (--corpus)\n";
-		exit(1);
   }
 
   my $lmfile = "lm.gz";
@@ -1297,7 +1298,7 @@ if ($numrefs > 1) {
 # main default grammar. Then update it if filtering was requested and
 # is possible.
 my $TUNE_GRAMMAR = $_TUNE_GRAMMAR_FILE || $GRAMMAR_FILE;
-if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $_TUNE_GRAMMAR_FILE) {
+if ($DO_FILTER_TM and defined $TUNE_GRAMMAR and ! $DOING_LATTICES and ! defined $_TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
@@ -1308,17 +1309,20 @@ if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $_TUNE_GRAMMAR_FILE) {
 }
 
 # Create the glue grammars. This is done by looking at all the symbols in the grammar file and
-# creating all the needed rules.
-if (! defined $GLUE_GRAMMAR_FILE) {
-  $cachepipe->cmd("glue-tune",
-                  "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
-                  get_file_from_grammar($TUNE_GRAMMAR),
-                  "$DATA_DIRS{tune}/grammar.glue");
-  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
-} else {
-  # just create a symlink to it
-  my $filename = $DATA_DIRS{tune} . "/" . basename($GLUE_GRAMMAR_FILE);
-  system("ln -sf $GLUE_GRAMMAR_FILE $filename");
+# creating all the needed rules. This is only done if there is a $TUNE_GRAMMAR defined (which
+# can be skipped if we skip straight to the tuning step).
+if (defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase") {
+  if (! defined $GLUE_GRAMMAR_FILE) {
+    $cachepipe->cmd("glue-tune",
+                    "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
+                    get_file_from_grammar($TUNE_GRAMMAR),
+                    "$DATA_DIRS{tune}/grammar.glue");
+    $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
+  } else {
+    # just create a symlink to it
+    my $filename = $DATA_DIRS{tune} . "/" . basename($GLUE_GRAMMAR_FILE);
+    system("ln -sf $GLUE_GRAMMAR_FILE $filename");
+  }
 }
 
 # Add in feature functions
@@ -1348,14 +1352,18 @@ my $feature_functions = join(" ", map { "-feature-function \"$_\"" } @feature_fu
 # Build out the weight string
 my $TM_OWNER = "pt";
 my $GLUE_OWNER = "glue";
-{
+if (defined $TUNE_GRAMMAR) {
   my @tm_features = get_features($TUNE_GRAMMAR);
   foreach my $feature (@tm_features) {
     # Only assign initial weights to dense features
     $weightstr .= "tm_${TM_OWNER}_$feature 1 " if ($feature =~ /^\d+$/);
   }
-  # Glue grammar
-  $weightstr .= "tm_${GLUE_OWNER}_0 1 ";
+
+  # Glue grammars are only needed for hierarchical models
+  if ($GRAMMAR_TYPE ne "phrase") {
+    # Glue grammar
+    $weightstr .= "tm_${GLUE_OWNER}_0 1 ";
+  }
 }
 
 my $tm_type = $GRAMMAR_TYPE;
@@ -1365,8 +1373,9 @@ if ($GRAMMAR_TYPE eq "phrase") {
 
 sub get_file_from_grammar {
   # Cachepipe doesn't work on directories, so we need to make sure we
-  # have a representative file to use to cache grammars.
+  # have a representative file to use to cache grammars. Returns undef if file not found
   my ($grammar_file) = @_;
+  return undef unless defined $grammar_file and -e $grammar_file;
   my $file = (-d $grammar_file) ? "$grammar_file/slice_00000.source" : $grammar_file;
   return $file;
 }
@@ -1376,15 +1385,29 @@ system("mkdir -p $tunedir") unless -d $tunedir;
 
 # Build the filtered tuning model
 my $tunemodeldir = "$tunedir/model";
-my $tm_switch = ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
+
+# We build up this string with TMs to substitute in, if any are provided
+my $tm_switch = "";
+if (defined $TUNE_GRAMMAR) {
+  $tm_switch .= ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
+  $tm_switch .= " $TUNE_GRAMMAR -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN";
+
+}
+# If we specified a new glue grammar, put that in
+if (defined $GLUE_GRAMMAR_FILE) {
+  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE -tm1/owner ${GLUE_OWNER} ";
+}
+
+# Now build the bundle
 $cachepipe->cmd("tune-bundle",
-                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN -tm1/owner ${GLUE_OWNER} -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch} $TUNE_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch}",
                 $JOSHUA_CONFIG,
-                get_file_from_grammar($TUNE_GRAMMAR),  # in case it's packed
+                get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG, # dummy file if tune grammar not defined
                 "$tunemodeldir/joshua.config");
 
-{
-  # Now update the tuning grammar
+# Update the tune grammar to its new location in the bundle
+if (defined $TUNE_GRAMMAR) {
+  # Now update the tuning grammar to its new path
   my $basename = basename($TUNE_GRAMMAR);
   if (-e "tune/model/$basename") {
     $TUNE_GRAMMAR = "tune/model/$basename";
@@ -1396,12 +1419,12 @@ $cachepipe->cmd("tune-bundle",
   }
 }
 
+# Update the config file location
+$JOSHUA_CONFIG = "$tunedir/model/joshua.config";
+
 # Write the decoder run command. The decoder will use the config file in the bundled
 # directory, continually updating it.
 $JOSHUA_ARGS .= " -output-format \"%i ||| %s ||| %f ||| %c\"";
-
-# Update the config file location
-$JOSHUA_CONFIG = "$tunedir/model/joshua.config";
 
 open DEC_CMD, ">$tunedir/decoder_command";
 print DEC_CMD "cat $TUNE{source} | $tunedir/model/run-joshua.sh -m $JOSHUA_MEM -config $JOSHUA_CONFIG -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/output.nbest 2> $tunedir/joshua.log\n";
@@ -1414,7 +1437,7 @@ if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "mira"
                   "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder-config $JOSHUA_CONFIG --iterations $TUNER_ITERATIONS",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
-                  get_file_from_grammar($TUNE_GRAMMAR),
+                  get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
                   "$tunedir/joshua.config.final");
 
 } elsif ($TUNER eq "kbmira") { # Moses' batch MIRA
@@ -1453,10 +1476,13 @@ if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
   $PREPPED{TEST} = 1;
 }
 
-# filter the test grammar
 system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
+
+# Define the test grammar, if it was provided
 my $TEST_GRAMMAR = $_TEST_GRAMMAR_FILE || $GRAMMAR_FILE;
-if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $_TEST_GRAMMAR_FILE) {
+
+# Now filter, if its defined and should be done
+if ($DO_FILTER_TM and defined $TEST_GRAMMAR and ! $DOING_LATTICES and ! defined $_TEST_GRAMMAR_FILE) {
   $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
   
   $cachepipe->cmd("filter-test",
@@ -1468,36 +1494,45 @@ if ($DO_FILTER_TM and ! $DOING_LATTICES and ! defined $_TEST_GRAMMAR_FILE) {
 
 my $testdir = "$RUNDIR/test";
 
-# Create the glue file.
-if (! defined $GLUE_GRAMMAR_FILE) {
-  $cachepipe->cmd("glue-test",
-                  "java -Xmx1g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
-                  $TEST_GRAMMAR,
-                  "$DATA_DIRS{test}/grammar.glue");
-  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
-  
-} else {
-  # just create a symlink to it
-  my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
-  if ($GLUE_GRAMMAR_FILE =~ /^\//) {
-    system("ln -sf $GLUE_GRAMMAR_FILE $filename");
+# Create and update the glue file, if the test grammar was provided (if not, we assume these
+# are in the $JOSHUA_CONFIG)
+if (defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase") {
+  if (! defined $GLUE_GRAMMAR_FILE) {
+    $cachepipe->cmd("glue-test",
+                    "java -Xmx1g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
+                    $TEST_GRAMMAR,
+                    "$DATA_DIRS{test}/grammar.glue");
+    $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
+    
   } else {
-    system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename");
+    # just create a symlink to it
+    my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
+    if ($GLUE_GRAMMAR_FILE =~ /^\//) {
+      system("ln -sf $GLUE_GRAMMAR_FILE $filename");
+    } else {
+      system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename");
+    }
   }
+}
+
+$tm_switch = "";
+if (defined $TEST_GRAMMAR) {
+  $tm_switch .= ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
+  $tm_switch .= " $TEST_GRAMMAR";
+}
+if (defined $GLUE_GRAMMAR_FILE) {
+  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
 }
 
 # Build the filtered testing model
 $cachepipe->cmd("test-bundle",
-                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch} $TEST_GRAMMAR --tm $GLUE_GRAMMAR_FILE",
+                "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch}",
                 $JOSHUA_CONFIG,
-                get_file_from_grammar($TEST_GRAMMAR),
+                get_file_from_grammar($TEST_GRAMMAR) || $JOSHUA_CONFIG,
                 "$testdir/joshua.config");
 
-{
-  # Update some variables. $TEST_GRAMMAR_FILE, which previously held
-  # an optional command-line argument of a pre-filtered tuning
-  # grammar, is now used to record the text-based grammar, which is
-  # needed later for different things.
+if (defined $TEST_GRAMMAR) {
+  # Update the test grammar (if defined) to its new path
   my $basename = basename($TEST_GRAMMAR);
   if (-e "$testdir/model/$basename") {
     $TEST_GRAMMAR = "$testdir/model/$basename";
@@ -1537,11 +1572,10 @@ chmod(0755,"$testrun/decoder_command");
 # Decode. $output here is either $nbestoutput (if doing MBR decoding, in which case we'll
 # need the n-best output) or $bestoutput (which only outputs the hypothesis but is tons faster)
 $cachepipe->cmd("test-decode",
-                "$testrun/decoder_command",
-                "$testrun/decoder_command",
                 $TEST{source},
+                "$testrun/decoder_command",
                 "$testrun/model/joshua.config",
-                get_file_from_grammar($TEST_GRAMMAR),
+                get_file_from_grammar($TEST_GRAMMAR) || "$testrun/model/joshua.config",
                 $output);
 
 # $cachepipe->cmd("remove-oov",

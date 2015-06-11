@@ -22,7 +22,7 @@ Example invocation:
 $JOSHUA/scripts/support/run_bundler.py \
   --force \
   --verbose \
-  /path/to/origin/directory/test/1/joshua.config \
+  /path/to/origin/directory/test/model/joshua.config \
   --root /path/to/origin/directory \
   new-bundle-directory \
   --copy-config-options \
@@ -494,7 +494,7 @@ def handle_args(clargs):
     parser.add_argument(
         'config', type=argparse.FileType('r'),
         help='path to the origin configuration file. e.g. '
-             '/path/to/test/1/joshua.config.final'
+             '/path/to/tune/dir/joshua.config.final'
     )
     parser.add_argument(
         'dest_dir',
