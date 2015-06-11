@@ -1529,7 +1529,7 @@ $cachepipe->cmd("test-bundle",
                 "$BUNDLER --force --symlink --verbose $JOSHUA_CONFIG test/model --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch}",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TEST_GRAMMAR) || $JOSHUA_CONFIG,
-                "$testdir/joshua.config");
+                "$testdir/model/joshua.config");
 
 if (defined $TEST_GRAMMAR) {
   # Update the test grammar (if defined) to its new path
@@ -1572,6 +1572,7 @@ chmod(0755,"$testrun/decoder_command");
 # Decode. $output here is either $nbestoutput (if doing MBR decoding, in which case we'll
 # need the n-best output) or $bestoutput (which only outputs the hypothesis but is tons faster)
 $cachepipe->cmd("test-decode",
+                "$testrun/decoder_command",
                 $TEST{source},
                 "$testrun/decoder_command",
                 "$testrun/model/joshua.config",
