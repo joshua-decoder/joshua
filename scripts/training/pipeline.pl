@@ -490,11 +490,14 @@ if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm" and $LM_GEN ne "kenlm") {
   exit 1;
 }
 
-if ($TUNER eq "kbmira") {
-  if (! defined $MOSES) {
-    print "* FATAL: using 'kbmira' for tuning requires setting the MOSES environment variable\n";
-    exit 1;
-  }
+if ($TUNER eq "kbmira" and ! defined $MOSES) {
+  print "* FATAL: using 'kbmira' for tuning requires setting the MOSES environment variable\n";
+  exit 1;
+}
+
+if ($GRAMMAR_TYPE eq "phrase" and ! defined $MOSES) {
+  print "* FATAL: building phrase-based models (--type phrase) requires setting the MOSES environment variable\n";
+  exit 1;
 }
 
 if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "local-mira" and $TUNER ne "pro" and $TUNER ne "kbmira") {
