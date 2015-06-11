@@ -1060,7 +1060,7 @@ if (! defined $GRAMMAR_FILE) {
       $THRAXDIR =~ s#/#_#g;
 
       $cachepipe->cmd("thrax-prep",
-                      "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
+                      "$HADOOP/bin/hadoop fs -rm -r $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
                       "$DATA_DIRS{train}/thrax-input-file", 
                       "grammar.gz");
 
