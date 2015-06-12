@@ -1388,22 +1388,23 @@ my $tunemodeldir = "$tunedir/model";
 
 # We build up this string with TMs to substitute in, if any are provided
 my $tm_switch = "";
+my $tm_copy_config_args = "";
 if (defined $TUNE_GRAMMAR) {
   $tm_switch .= ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
-  $tm_switch .= " $TUNE_GRAMMAR -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN";
-
+  $tm_switch .= " $TUNE_GRAMMAR";
+  $tm_copy_config_args = " -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN";
 }
 # If we specified a new glue grammar, put that in
 if (defined $GLUE_GRAMMAR_FILE) {
-  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE -tm1/owner ${GLUE_OWNER} ";
+  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
+  $tm_copy_config_args .= " -tm1/owner ${GLUE_OWNER} ";
 }
 
 # Now build the bundle
 $cachepipe->cmd("tune-bundle",
-                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions' ${tm_switch}",
+                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
                 $JOSHUA_CONFIG,
-                get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG, # dummy file if tune grammar not defined
-                "$tunemodeldir/joshua.config");
+                get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,);
 
 # Update the tune grammar to its new location in the bundle
 if (defined $TUNE_GRAMMAR) {
@@ -1516,6 +1517,7 @@ if (defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase") {
 }
 
 $tm_switch = "";
+$tm_copy_config_args = "";
 if (defined $TEST_GRAMMAR) {
   $tm_switch .= ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
   $tm_switch .= " $TEST_GRAMMAR";
