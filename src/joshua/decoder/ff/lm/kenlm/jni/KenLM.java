@@ -16,7 +16,17 @@ import joshua.decoder.ff.state_maintenance.KenLMState;
 public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   static {
-    System.loadLibrary("ken");
+    try {
+      System.loadLibrary("ken");
+    } catch (UnsatisfiedLinkError e) {
+      System.err.println("* FATAL: Can't find libken.so (libken.dylib on OS X) in $JOSHUA/lib");
+      System.err.println("*        This probably means that the KenLM library didn't compile.");
+      System.err.println("*        Make sure that BOOST_ROOT is set to the root of your boost");
+      System.err.println("*        installation (it's not /opt/local/, the default), change to");
+      System.err.println("*        $JOSHUA, and type 'ant kenlm'. If problems persist, see the");
+      System.err.println("*        website (joshua-decoder.org).");
+      System.exit(1);
+    }
   }
 
   private final long pointer;
