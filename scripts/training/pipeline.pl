@@ -416,7 +416,7 @@ if ($STEPS{$FIRST_STEP} >= $STEPS{TEST}) {
 
 # make sure we have either a config file or a grammar and LM if we're skipping model building
 if ($STEPS{$FIRST_STEP} >= $STEPS{TUNE}) {
-  if (! defined $JOSHUA_CONFIG or (! defined $_TUNE_GRAMMAR_FILE and ! defined $GRAMMAR_FILE) or scalar(@LMFILES) == 0) {
+  if (! defined $JOSHUA_CONFIG and ((! defined $_TUNE_GRAMMAR_FILE and ! defined $GRAMMAR_FILE) or scalar(@LMFILES) == 0)) {
     print "* FATAL: You must provide either a Joshua config file (--joshua-config) or\n";
     print "         a grammar (--grammar or --tune-grammar) and at least one LM (--lmfile)\n";
     print "         if you're skipping straight to tuning\n";
