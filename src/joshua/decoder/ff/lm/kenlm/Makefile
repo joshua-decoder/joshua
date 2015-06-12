@@ -36,7 +36,7 @@ INSTALL=build_binary ngram_query
 
 #lmplz
 SHELL=bash
-ifeq (,$(wildcard $(BOuST_ROOT)/lib/libboost_thread.a))
+ifeq (,$(wildcard $(BOOST_ROOT)/lib/libboost_thread.a))
   $(error BOOST_ROOT ($(BOOST_ROOT)) does not point to a Boost installation, quitting...)
 endif
 ifeq ($(shell $(CC) -L$(BOOST_ROOT)/lib -lboost_program_options$(BOOST_MT) -lboost_thread$(BOOST_MT) -x c++ - <<<'int main() {}' -o dummy && rm dummy && echo Boost),Boost)
