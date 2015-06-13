@@ -121,9 +121,9 @@ public class LanguageModelFF extends StatefulFF {
     this.type = parsedArgs.get("lm_type");
     this.ngramOrder = Integer.parseInt(parsedArgs.get("lm_order")); 
     this.path = parsedArgs.get("lm_file");
-    this.isClassLM = parsedArgs.containsKey("lm_class");
-    if (isClassLM && parsedArgs.containsKey("class_map"))
+    if (parsedArgs.containsKey("class_map"))
       try {
+        this.isClassLM = true;
         this.classMap = new ClassMap(parsedArgs.get("class_map"));
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -252,8 +252,7 @@ public class LanguageModelFF extends StatefulFF {
   
   
   /**
-   * Gets the target side classes for the class LM
-   * 
+   * Replace each word in a rule with the target side classes.
    */
   protected int[] getClasses(Rule rule) {
     if (this.classMap == null) {

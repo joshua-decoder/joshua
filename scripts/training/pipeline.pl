@@ -280,7 +280,7 @@ my $retval = GetOptions(
   "ner-tagger=s"   => \$NER_TAGGER,
   "class-lm!"     => \$DO_BUILD_CLASS_LM,
   "class-lm-corpus=s"   => \$CLASS_LM_CORPUS,
-  "class-map"     => \$CLASS_MAP,
+  "class-map=s"     => \$CLASS_MAP,
 );
 
 if (! $retval) {
@@ -1281,8 +1281,8 @@ if ($DO_BUILD_CLASS_LM) {
   # Needs to be capitalized
   my $mem = uc $BUILDLM_MEM;
   my $class_lmfile = "class_lm.gz";
-  $cachepipe->cmd("kenlm",
-                  "$JOSHUA/bin/lmplz -o $LM_ORDER -T $TMPDIR -S $mem --discount_fallback=0.5 1 1.5 --verbose_header --text $CLASS_LM_CORPUS $LM_OPTIONS | gzip -9n > lm.gz",
+  $cachepipe->cmd("classlm",
+                  "$JOSHUA/bin/lmplz -o 9 -T $TMPDIR -S $mem --discount_fallback=0.5 1 1.5 --verbose_header --text $CLASS_LM_CORPUS $LM_OPTIONS | gzip -9n > $class_lmfile",
                   "$CLASS_LM_CORPUS",
                   $class_lmfile);
 }
@@ -1373,6 +1373,7 @@ if (defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase") {
 # Add in feature functions
 my $weightstr = "";
 my @feature_functions;
+my $lm_index = 0;
 for my $i (0..$#LMFILES) {
   if ($LM_STATE_MINIMIZATION) {
     push(@feature_functions, "StateMinimizingLanguageModel -lm_order $LM_ORDER -lm_file $LMFILES[$i]");
@@ -1381,6 +1382,12 @@ for my $i (0..$#LMFILES) {
   }
 
   $weightstr .= "lm_$i 1 ";
+  $lm_index += 1;
+}
+
+if ($DO_BUILD_CLASS_LM) {
+  push(@feature_functions, "LanguageModel -lm_type kenlm -lm_order 9 -lm_file $RUNDIR/class_lm.gz -class_map $CLASS_MAP");
+  $weightstr .= "lm_$lm_index 1 ";
 }
 
 if ($DOING_LATTICES) {
