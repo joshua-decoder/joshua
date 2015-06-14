@@ -10,6 +10,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -90,11 +92,11 @@ public class MIRACore {
   // 4: apply 1+2+3
 
   private int numParams;
-  // total number of firing features
-  // this number may increase overtime as new n-best lists are decoded
-  // initially it is equal to the # of params in the parameter config file
+  //total number of firing features
+  //this number may increase overtime as new n-best lists are decoded
+  //initially it is equal to the # of params in the parameter config file
   private int numParamsOld;
-  // number of features before observing the new features fired in the current iteration
+  //number of features before observing the new features fired in the current iteration
 
   private double[] normalizationOptions;
   // How should a lambda[] vector be normalized (before decoding)?
@@ -108,9 +110,11 @@ public class MIRACore {
   /* NOTE: indexing starts at 1 in the following few arrays: */
   /* *********************************************************** */
 
-  // private double[] lambda;
+  //private double[] lambda;
   private ArrayList<Double> lambda = new ArrayList<Double>();
   // the current weight vector. NOTE: indexing starts at 1.
+  private ArrayList<Double> bestLambda = new ArrayList<Double>();
+  // the best weight vector across all iterations
 
   private boolean[] isOptimizable;
   // isOptimizable[c] = true iff lambda[c] should be optimized
@@ -205,17 +209,20 @@ public class MIRACore {
 
   // used by mira
   private boolean needShuffle = true; // shuffle the training sentences or not
-  private boolean needAvg = true; // average the weihgts or not?
-  private boolean runPercep = false; // run perceptron instead of mira
-  private boolean usePseudoBleu = true; // need to use pseudo corpus to compute bleu?
+  private boolean needAvg = true; //average the weihgts or not?
+  private boolean runPercep = false; //run perceptron instead of mira
+  private boolean usePseudoBleu = true; //need to use pseudo corpus to compute bleu?
+  private boolean returnBest = true; //return the best weight during tuning
+  private boolean needScale = true; //need scaling?
+  private String trainingMode;
   private int oraSelectMode = 1;
   private int predSelectMode = 1;
   private int miraIter = 1;
-  private double C = 0.01; // relaxation coefficient
-  private double R = 0.99; // corpus decay when pseudo corpus is used for bleu computation
-  // private double sentForScale = 0.15; //percentage of sentences for scale factor estimation
-  private double scoreRatio = 5.0; // sclale so that model_score/metric_score = scoreratio
-  private boolean needScale = true; // need scaling?
+  private double C = 0.01; //relaxation coefficient
+  private double R = 0.99; //corpus decay when pseudo corpus is used for bleu computation
+    //private double sentForScale = 0.15; //percentage of sentences for scale factor estimation
+  private double scoreRatio = 5.0; //sclale so that model_score/metric_score = scoreratio
+  private double prevMetricScore = 0; //final metric score of the previous iteration, used only when returnBest = true
 
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, docInfoFileName, finalLambdaFileName;
@@ -290,15 +297,15 @@ public class MIRACore {
       BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
 
       for (int c = 1; c <= numParams; ++c) {
-        String line = "";
-        while (line != null && line.length() == 0) { // skip empty lines
-          line = inFile_names.readLine();
-        }
-
-        // save feature names
-        String paramName = (line.substring(0, line.indexOf("|||"))).trim();
-        Vocabulary.id(paramName);
-        // System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
+          String line = "";
+          while (line != null && line.length() == 0) { // skip empty lines
+	      line = inFile_names.readLine();
+          }
+	  
+          // save feature names
+	  String paramName = (line.substring(0, line.indexOf("|||"))).trim();
+	  Vocabulary.id(paramName);
+	  // System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
       }
 
       inFile_names.close();
@@ -312,9 +319,10 @@ public class MIRACore {
 
     // the parameter file contains one line per parameter
     // and one line for the normalization method
-    // indexing starts at 1 in these arrays
-    for (int p = 0; p <= numParams; ++p)
-      lambda.add(new Double(0));
+    // indexing starts at 1 in these arrays 
+    for ( int p = 0; p <= numParams; ++p )
+	lambda.add(new Double(0));
+    bestLambda.add(new Double(0));
     // why only lambda is a list? because the size of lambda
     // may increase over time, but other arrays are specified in
     // the param config file, only used for initialization
@@ -380,6 +388,8 @@ public class MIRACore {
     EvaluationMetric.set_tmpDirPrefix(tmpDirPrefix);
 
     evalMetric = EvaluationMetric.getMetric(metricName, metricOptions);
+    //used only if returnBest = true
+    prevMetricScore = evalMetric.getToBeMinimized() ? PosInf : NegInf;
 
     // length of sufficient statistics
     // for bleu: suffstatscount=8 (2*ngram+2)
@@ -388,8 +398,8 @@ public class MIRACore {
     // set static data members for the IntermediateOptimizer class
     /*
      * IntermediateOptimizer.set_MERTparams(numSentences, numDocuments, docOfSentence,
-     * docSubsetInfo, numParams, normalizationOptions, isOptimizable oneModificationPerIteration,
-     * evalMetric, tmpDirPrefix, verbosity);
+     * docSubsetInfo, numParams, normalizationOptions, isOptimizable
+     * oneModificationPerIteration, evalMetric, tmpDirPrefix, verbosity);
      */
 
     // print info
@@ -415,7 +425,7 @@ public class MIRACore {
       println("c    Default value\tOptimizable?\tRand. val. range", 1);
 
       for (int c = 1; c <= numParams; ++c) {
-        print(c + "     " + f4.format(lambda.get(c).doubleValue()) + "\t\t", 1);
+          print(c + "     " + f4.format(lambda.get(c).doubleValue()) + "\t\t", 1);
 
         if (!isOptimizable[c]) {
           println(" No", 1);
@@ -556,8 +566,11 @@ public class MIRACore {
     // printMemoryUsage();
     println("----------------------------------------------------", 1);
     println("", 1);
-    println("FINAL lambda: " + lambdaToString(lambda), 1);
-    // + " (" + metricName_display + ": " + FINAL_score + ")",1);
+    if ( ! returnBest )
+	println("FINAL lambda: " + lambdaToString(lambda), 1);
+       // + " (" + metricName_display + ": " + FINAL_score + ")",1);
+    else
+	println("BEST lambda: " + lambdaToString(lambda), 1);
 
     // delete intermediate .temp.*.it* decoder output files
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
@@ -584,7 +597,7 @@ public class MIRACore {
   // this is the key function!
   @SuppressWarnings("unchecked")
   public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts,
-      int earlyStop, int[] maxIndex) {
+				       int earlyStop, int[] maxIndex) {
     double FINAL_score = 0;
 
     double[] retA = new double[3];
@@ -621,9 +634,9 @@ public class MIRACore {
       /***************/
 
       if (iteration == 1) {
-        println("Decoding using initial weight vector " + lambdaToString(lambda), 1);
+	  println("Decoding using initial weight vector " + lambdaToString(lambda), 1);
       } else {
-        println("Redecoding using weight vector " + lambdaToString(lambda), 1);
+	  println("Redecoding using weight vector " + lambdaToString(lambda), 1);
       }
 
       // generate the n-best file after decoding
@@ -696,7 +709,7 @@ public class MIRACore {
       // initLambda[0] is not used!
       double[] initialLambda = new double[1 + numParams];
       for (int i = 1; i <= numParams; ++i)
-        initialLambda[i] = lambda.get(i);
+	  initialLambda[i] = lambda.get(i);
 
       // the "score" in initialScore refers to that
       // assigned by the evaluation metric)
@@ -834,6 +847,7 @@ public class MIRACore {
         // iterations if the user specifies a value for prevMERTIterations
         // that causes MERT to skip candidates from early iterations.
 
+        double[] currFeatVal = new double[1 + numParams];
         String[] featVal_str;
 
         int totalCandidateCount = 0;
@@ -883,13 +897,13 @@ public class MIRACore {
                 // extract feature value
                 featVal_str = feats_str.split("\\s+");
 
-                if (feats_str.indexOf('=') != -1) {
-                  for (String featurePair : featVal_str) {
-                    String[] pair = featurePair.split("=");
-                    String name = pair[0];
-                    Double value = Double.parseDouble(pair[1]);
-                  }
-                }
+		if (feats_str.indexOf('=') != -1) {
+                    for (String featurePair : featVal_str) {
+			String[] pair = featurePair.split("=");
+			String name = pair[0];
+			Double value = Double.parseDouble(pair[1]);
+                    }
+		}
                 existingCandStats.put(sents_str, stats_str);
                 candCount[i] += 1;
                 newCandidatesAdded[it] += 1;
@@ -1016,8 +1030,8 @@ public class MIRACore {
         BufferedReader inFile_statsMergedKnown = new BufferedReader(new InputStreamReader(
             instream_statsMergedKnown, "utf8"));
 
-        // num of features before observing new firing features from this iteration
-        numParamsOld = numParams;
+	//num of features before observing new firing features from this iteration
+	numParamsOld = numParams;
 
         for (int i = 0; i < numSentences; ++i) {
           // reprocess candidates from previous iterations
@@ -1078,24 +1092,24 @@ public class MIRACore {
               stats_hash[i].put(sents_str, stats_str);
 
               featVal_str = feats_str.split("\\s+");
+	      
+	      if (feats_str.indexOf('=') != -1) {
+                  for (String featurePair : featVal_str) {
+		      String[] pair = featurePair.split("=");
+		      String name = pair[0];
+		      Double value = Double.parseDouble(pair[1]);
+		      int featId = Vocabulary.id(name);
 
-              if (feats_str.indexOf('=') != -1) {
-                for (String featurePair : featVal_str) {
-                  String[] pair = featurePair.split("=");
-                  String name = pair[0];
-                  Double value = Double.parseDouble(pair[1]);
-                  int featId = Vocabulary.id(name);
-
-                  // need to identify newly fired feats here
-                  // in this case currFeatVal is not given the value
-                  // of the new feat, since the corresponding weight is
-                  // initialized as zero anyway
-                  if (featId > numParams) {
-                    ++numParams;
-                    lambda.add(new Double(0));
+		      //need to identify newly fired feats here
+		      //in this case currFeatVal is not given the value
+		      //of the new feat, since the corresponding weight is
+		      //initialized as zero anyway
+		      if (featId > numParams) {
+			  ++numParams;
+			  lambda.add(new Double(0));
+		      }
                   }
-                }
-              }
+	      }
               existingCandStats.put(sents_str, stats_str);
               candCount[i] += 1;
 
@@ -1184,8 +1198,8 @@ public class MIRACore {
 
         println("", 1);
 
-        println("Number of features observed so far: " + numParams);
-        println("", 1);
+	println("Number of features observed so far: " + numParams);
+	println("", 1);
 
       } catch (FileNotFoundException e) {
         System.err.println("FileNotFoundException in MIRACore.run_single_iteration(6): "
@@ -1203,7 +1217,17 @@ public class MIRACore {
           println("", 1);
           println("---  MIRA iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
           println("", 1);
-          deleteFile(tmpDirPrefix + "temp.stats.merged");
+	  deleteFile(tmpDirPrefix + "temp.stats.merged");
+
+	  if (returnBest) {
+	      //note that bestLambda.size() <= lambda.size()
+	      for ( int p = 1; p < bestLambda.size(); ++p )
+		  lambda.set(p, bestLambda.get(p));
+	      //and set the rest of lambda to be 0
+	      for ( int p = 0; p < lambda.size() - bestLambda.size(); ++p )
+		  lambda.set(p+bestLambda.size(), new Double(0));
+	  }
+
           return null; // this means that the old values should be kept by the caller
         } else {
           println("Note: No new candidates added in this iteration.", 1);
@@ -1225,46 +1249,67 @@ public class MIRACore {
       Optimizer.runPercep = runPercep;
       Optimizer.C = C;
       Optimizer.needAvg = needAvg;
-      // Optimizer.sentForScale = sentForScale;
+      //Optimizer.sentForScale = sentForScale;
       Optimizer.scoreRatio = scoreRatio;
       Optimizer.evalMetric = evalMetric;
       Optimizer.normalizationOptions = normalizationOptions;
       Optimizer.needScale = needScale;
 
-      // if need to use bleu stats history
-      if (iteration == 1) {
-        if (evalMetric.get_metricName().equals("BLEU") && usePseudoBleu) {
-          Optimizer.initBleuHistory(numSentences, evalMetric.get_suffStatsCount());
-          Optimizer.usePseudoBleu = usePseudoBleu;
-          Optimizer.R = R;
-        }
-        if (evalMetric.get_metricName().equals("TER-BLEU") && usePseudoBleu) {
-          Optimizer.initBleuHistory(numSentences, evalMetric.get_suffStatsCount() - 2); // Stats
-                                                                                        // count of
-                                                                                        // TER=2
-          Optimizer.usePseudoBleu = usePseudoBleu;
-          Optimizer.R = R;
-        }
+      //if need to use bleu stats history
+      if( iteration == 1 ) {
+	  if(evalMetric.get_metricName().equals("BLEU") && usePseudoBleu) {
+	      Optimizer.initBleuHistory(numSentences, evalMetric.get_suffStatsCount());
+	      Optimizer.usePseudoBleu = usePseudoBleu;
+	      Optimizer.R = R;
+	  }
+	  if(evalMetric.get_metricName().equals("TER-BLEU") && usePseudoBleu) {
+	      Optimizer.initBleuHistory(numSentences, evalMetric.get_suffStatsCount()-2); //Stats count of TER=2
+	      Optimizer.usePseudoBleu = usePseudoBleu;
+	      Optimizer.R = R;
+	  }
       }
 
       Vector<String> output = new Vector<String>();
-      double score = 0;
 
-      // note: initialLambda[] has length = numParamsOld
-      // augmented with new feature weights, initial values are 0
+      //note: initialLambda[] has length = numParamsOld
+      //augmented with new feature weights, initial values are 0
       double[] initialLambdaNew = new double[1 + numParams];
       System.arraycopy(initialLambda, 1, initialLambdaNew, 1, numParamsOld);
 
-      // finalLambda[] has length = numParams (considering new features)
+      //finalLambda[] has length = numParams (considering new features)
       double[] finalLambda = new double[1 + numParams];
 
-      Optimizer opt = new Optimizer(output, isOptimizable, initialLambdaNew, feat_hash, stats_hash,
-          score);
+      Optimizer opt = new Optimizer(output, isOptimizable, initialLambdaNew, feat_hash, stats_hash);
       finalLambda = opt.runOptimizer();
 
-      // System.out.println(finalLambda.length);
-      // for( int i=0; i<finalLambda.length-1; i++ )
-      // System.out.println(finalLambda[i+1]);
+      if ( returnBest ) {
+	  double metricScore = opt.getMetricScore();
+	  if ( ! evalMetric.getToBeMinimized() ) {
+	      if ( metricScore > prevMetricScore ) {
+		  prevMetricScore = metricScore;
+		  for ( int p = 1; p < bestLambda.size(); ++p )
+		      bestLambda.set(p, finalLambda[p]);
+		  if ( 1 + numParams > bestLambda.size() ) {
+		      for ( int p = bestLambda.size(); p <= numParams; ++p )
+			  bestLambda.add(p, finalLambda[p]);
+		  }
+	      }
+	  } else {
+	      if ( metricScore < prevMetricScore ) {
+		  prevMetricScore = metricScore;
+		  for ( int p = 1; p < bestLambda.size(); ++p )
+		      bestLambda.set(p, finalLambda[p]);
+		  if ( 1 + numParams > bestLambda.size() ) {
+		      for ( int p = bestLambda.size(); p <= numParams; ++p )
+			  bestLambda.add(p, finalLambda[p]);
+		  }
+	      }
+	  }
+      }
+
+       // System.out.println(finalLambda.length);
+       // for( int i=0; i<finalLambda.length-1; i++ )
+       // 	   System.out.println(finalLambda[i+1]);
 
       /************* end optimization **************/
 
@@ -1276,12 +1321,12 @@ public class MIRACore {
       boolean anyParamChangedSignificantly = false;
 
       for (int c = 1; c <= numParams; ++c) {
-        if (finalLambda[c] != lambda.get(c)) {
-          anyParamChanged = true;
-        }
-        if (Math.abs(finalLambda[c] - lambda.get(c)) > stopSigValue) {
-          anyParamChangedSignificantly = true;
-        }
+	  if (finalLambda[c] != lambda.get(c)) {
+	      anyParamChanged = true;
+	  }
+	  if (Math.abs(finalLambda[c] - lambda.get(c)) > stopSigValue) {
+	      anyParamChangedSignificantly = true;
+	  }
       }
 
       // System.arraycopy(finalLambda,1,lambda,1,numParams);
@@ -1315,9 +1360,14 @@ public class MIRACore {
         println("Some early stopping criteria has been observed " + "in " + stopMinIts
             + " consecutive iterations; exiting MIRA.", 1);
         println("", 1);
-
-        for (int f = 1; f <= numParams; ++f)
-          lambda.set(f, finalLambda[f]);
+	
+	if ( returnBest ) {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1327,19 +1377,25 @@ public class MIRACore {
         println("Maximum number of MIRA iterations reached; exiting MIRA.", 1);
         println("", 1);
 
-        for (int f = 1; f <= numParams; ++f)
-          lambda.set(f, finalLambda[f]);
+	if ( returnBest ) {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop
       }
 
       // use the new wt vector to decode the next iteration
       // (interpolation with previous wt vector)
-      double interCoef = 1.0; // no interpolation for now
+      double interCoef = 1.0; //no interpolation for now
       for (int i = 1; i <= numParams; i++)
-        lambda.set(i, interCoef * finalLambda[i] + (1 - interCoef) * lambda.get(i).doubleValue());
+	  lambda.set(i, interCoef * finalLambda[i] + (1 - interCoef) * lambda.get(i).doubleValue());
 
-      println("Next iteration will decode with lambda: " + lambdaToString(lambda), 1);
+      println("Next iteration will decode with lambda: "
+	      + lambdaToString(lambda), 1);
       println("", 1);
 
       // printMemoryUsage();
@@ -1367,11 +1423,11 @@ public class MIRACore {
   private String lambdaToString(ArrayList<Double> lambdaA) {
     String retStr = "{";
     int featToPrint = numParams > 15 ? 15 : numParams;
-    // print at most the first 15 features
+    //print at most the first 15 features
 
     retStr += "(listing the first " + featToPrint + " lambdas)";
     for (int c = 1; c <= featToPrint - 1; ++c) {
-      retStr += "" + String.format("%.4f", lambdaA.get(c).doubleValue()) + ", ";
+        retStr += "" + String.format("%.4f", lambdaA.get(c).doubleValue()) + ", ";
     }
     retStr += "" + String.format("%.4f", lambdaA.get(numParams).doubleValue()) + "}";
 
@@ -1472,13 +1528,6 @@ public class MIRACore {
 
       while (line != null) {
 
-        // skip blank lines
-        if (line.equals("")) continue;
-
-        // skip lines that aren't formatted correctly
-        if (line.indexOf("|||") == -1)
-          continue;
-
         /*
          * line format:
          * 
@@ -1547,8 +1596,7 @@ public class MIRACore {
 
   }
 
-  private void createConfigFile(ArrayList<Double> params, String cfgFileName,
-      String templateFileName) {
+  private void createConfigFile(ArrayList<Double> params, String cfgFileName, String templateFileName) {
     try {
       // i.e. create cfgFileName, which is similar to templateFileName, but with
       // params[] as parameter values
@@ -1556,33 +1604,35 @@ public class MIRACore {
       BufferedReader inFile = new BufferedReader(new FileReader(templateFileName));
       PrintWriter outFile = new PrintWriter(cfgFileName);
 
-      int origFeatNum = 0; // feat num in the template file
+      BufferedReader inFeatDefFile = null;
+      PrintWriter outFeatDefFile = null;
+      int origFeatNum = 0; //feat num in the template file
 
       String line = inFile.readLine();
       while (line != null) {
-        int c_match = -1;
-        for (int c = 1; c <= numParams; ++c) {
-          if (line.startsWith(Vocabulary.word(c) + " ")) {
-            c_match = c;
-            ++origFeatNum;
-            break;
+          int c_match = -1;
+          for (int c = 1; c <= numParams; ++c) {
+	      if (line.startsWith(Vocabulary.word(c) + " ")) {
+		  c_match = c;
+		  ++origFeatNum;
+		  break;
+	      }
           }
-        }
-
-        if (c_match == -1) {
-          outFile.println(line);
-        } else {
-          if (Math.abs(params.get(c_match).doubleValue()) > 1e-20)
-            outFile.println(Vocabulary.word(c_match) + " " + params.get(c_match));
-        }
-
-        line = inFile.readLine();
+	  
+          if (c_match == -1) {
+	      outFile.println(line);
+          } else {
+	      if ( Math.abs(params.get(c_match).doubleValue()) > 1e-20 )
+		  outFile.println(Vocabulary.word(c_match) + " " + params.get(c_match));
+          }
+	  
+          line = inFile.readLine();
       }
 
-      // now append weights of new features
-      for (int c = origFeatNum + 1; c <= numParams; ++c) {
-        if (Math.abs(params.get(c).doubleValue()) > 1e-20)
-          outFile.println(Vocabulary.word(c) + " " + params.get(c));
+      //now append weights of new features
+      for (int c = origFeatNum+1; c <= numParams; ++c) {
+	  if ( Math.abs(params.get(c).doubleValue()) > 1e-20 )
+	      outFile.println(Vocabulary.word(c) + " " + params.get(c));
       }
 
       inFile.close();
@@ -1628,11 +1678,6 @@ public class MIRACore {
         System.exit(21);
       }
 
-      // MIRA always skips the next two values, which are used by MERT to define the lower and upper
-      // bounds of values to try during line search
-      dummy = inFile_init.next();
-      dummy = inFile_init.next();
-
       if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
@@ -1661,7 +1706,7 @@ public class MIRACore {
           System.exit(21);
         }
 
-        // check for odd values
+	// check for odd values
         if (minRandValue[c] == maxRandValue[c]) {
           println("Warning: lambda[" + c + "] has " + "minRandValue = maxRandValue = "
               + minRandValue[c] + ".", 1);
@@ -1955,7 +2000,7 @@ public class MIRACore {
       try {
         PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
         for (int c = 1; c <= numParams; ++c) {
-          outFile_lambdas.println(Vocabulary.word(c) + " ||| " + lambda.get(c).doubleValue());
+	    outFile_lambdas.println(Vocabulary.word(c) + " ||| " + lambda.get(c).doubleValue());
         }
         outFile_lambdas.close();
 
@@ -2036,7 +2081,8 @@ public class MIRACore {
           if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
             argsVector.add(paramA[0]);
             argsVector.add(paramA[1]);
-          } else if (paramA.length > 2 && (paramA[0].equals("-m") || paramA[0].equals("-docSet"))) {
+          } else if (paramA.length > 2
+              && (paramA[0].equals("-m") || paramA[0].equals("-docSet"))) {
             // -m (metricName), -docSet are allowed to have extra optinos
             for (int opt = 0; opt < paramA.length; ++opt) {
               argsVector.add(paramA[opt]);
@@ -2294,91 +2340,106 @@ public class MIRACore {
 
       // for mira:
       else if (option.equals("-needShuffle")) {
-        int shuffle = Integer.parseInt(args[i + 1]);
-        if (shuffle == 1)
-          needShuffle = true;
-        else if (shuffle == 0)
-          needShuffle = false;
-        else {
-          println("-needShuffle must be either 0 or 1.");
-          System.exit(10);
-        }
+	  int shuffle = Integer.parseInt(args[i + 1]);
+	  if(shuffle==1)
+	      needShuffle = true;
+	  else if(shuffle==0)
+	      needShuffle = false;
+	  else {
+	      println("-needShuffle must be either 0 or 1.");
+	      System.exit(10);
+	  }
       }
-      // average weights after each epoch or not
+      //average weights after each epoch or not
       else if (option.equals("-needAvg")) {
-        int avg = Integer.parseInt(args[i + 1]);
-        if (avg == 1)
-          needAvg = true;
-        else if (avg == 0)
-          needAvg = false;
-        else {
-          println("-needAvg must be either 0 or 1.");
-          System.exit(10);
-        }
+	  int avg = Integer.parseInt(args[i + 1]);
+	  if(avg==1)
+	      needAvg = true;
+	  else if(avg==0)
+	      needAvg = false;
+	  else {
+	      println("-needAvg must be either 0 or 1.");
+	      System.exit(10);
+	  }
       }
-      // run perceptron or not
+      //return the best weight during tuning or not
+      else if (option.equals("-returnBest")) {
+	  int retBest = Integer.parseInt(args[i + 1]);
+	  if(retBest == 1)
+	      returnBest = true;
+	  else if(retBest == 0)
+	      returnBest = false;
+	  else {
+	      println("-returnBest must be either 0 or 1.");
+	      System.exit(10);
+	  }
+      }
+      //run perceptron or not
       else if (option.equals("-runPercep")) {
-        int per = Integer.parseInt(args[i + 1]);
-        if (per == 1)
-          runPercep = true;
-        else if (per == 0)
-          runPercep = false;
-        else {
-          println("-runPercep must be either 0 or 1.");
-          System.exit(10);
-        }
+	  int per = Integer.parseInt(args[i + 1]);
+	  if(per==1)
+	      runPercep = true;
+	  else if(per==0)
+	      runPercep = false;
+	  else {
+	      println("-runPercep must be either 0 or 1.");
+	      System.exit(10);
+	  }
       }
       // oracle selection mode
       else if (option.equals("-oracleSelection")) {
-        oraSelectMode = Integer.parseInt(args[i + 1]);
+	  oraSelectMode = Integer.parseInt(args[i + 1]);
       }
       // prediction selection mode
       else if (option.equals("-predictionSelection")) {
-        predSelectMode = Integer.parseInt(args[i + 1]);
+	  predSelectMode = Integer.parseInt(args[i + 1]);
       }
       // MIRA internal iterations
       else if (option.equals("-miraIter")) {
-        miraIter = Integer.parseInt(args[i + 1]);
+	  miraIter = Integer.parseInt(args[i + 1]);
       }
       // relaxation coefficient
       else if (option.equals("-C")) {
-        C = Double.parseDouble(args[i + 1]);
+	  C = Double.parseDouble(args[i + 1]);
       }
       // else if (option.equals("-sentForScaling")) {
-      // sentForScale = Double.parseDouble(args[i + 1]);
-      // if(sentForScale>1 || sentForScale<0) {
-      // println("-sentForScaling must be in [0,1]");
-      // System.exit(10);
-      // }
+      // 	  sentForScale = Double.parseDouble(args[i + 1]);
+      // 	  if(sentForScale>1 || sentForScale<0) {
+      // 	      println("-sentForScaling must be in [0,1]");
+      // 	      System.exit(10);
+      // 	  }
       // }
       else if (option.equals("-scoreRatio")) {
-        scoreRatio = Double.parseDouble(args[i + 1]);
-        if (scoreRatio <= 0) {
-          println("-scoreRatio must be positive");
-          System.exit(10);
-        }
-      } else if (option.equals("-needScaling")) {
-        int scale = Integer.parseInt(args[i + 1]);
-        if (scale == 1)
-          needScale = true;
-        else if (scale == 0)
-          needScale = false;
-        else {
-          println("-needScaling must be either 0 or 1.");
-          System.exit(10);
-        }
-      } else if (option.equals("-usePseudoCorpus")) {
-        int use = Integer.parseInt(args[i + 1]);
-        if (use == 1)
-          usePseudoBleu = true;
-        else if (use == 0)
-          usePseudoBleu = false;
-        else {
-          println("-usePseudoCorpus must be either 0 or 1.");
-          System.exit(10);
-        }
-      } else if (option.equals("-corpusDecay")) {
-        R = Double.parseDouble(args[i + 1]);
+      	  scoreRatio = Double.parseDouble(args[i + 1]);
+      	  if(scoreRatio<=0) {
+      	      println("-scoreRatio must be positive");
+      	      System.exit(10);
+      	  }
+      }
+      else if (option.equals("-needScaling")) {
+      	  int scale = Integer.parseInt(args[i + 1]);
+      	  if(scale==1)
+      	      needScale = true;
+      	  else if(scale==0)
+      	      needScale = false;
+      	  else {
+      	      println("-needScaling must be either 0 or 1.");
+      	      System.exit(10);
+      	  }
+      }
+      else if (option.equals("-usePseudoCorpus")) {
+	  int use = Integer.parseInt(args[i + 1]);
+	  if(use==1)
+	      usePseudoBleu = true;
+	  else if(use==0)
+	      usePseudoBleu = false;
+	  else {
+	      println("-usePseudoCorpus must be either 0 or 1.");
+	      System.exit(10);
+	  }
+      }
+      else if (option.equals("-corpusDecay")) {
+	  R = Double.parseDouble(args[i + 1]);
       }
 
       // Decoder specs
@@ -3024,7 +3085,7 @@ public class MIRACore {
   }
 
   private ArrayList<Double> randomLambda() {
-    ArrayList<Double> retLambda = new ArrayList<Double>(1 + numParams);
+    ArrayList<Double> retLambda = new ArrayList<Double>(1+numParams);
 
     for (int c = 1; c <= numParams; ++c) {
       if (isOptimizable[c]) {
@@ -3034,7 +3095,40 @@ public class MIRACore {
         randVal = minRandValue[c] + randVal; // number in [min,max]
         retLambda.set(c, randVal);
       } else {
-        retLambda.set(c, defaultLambda[c]);
+	  retLambda.set(c, defaultLambda[c]);
+      }
+    }
+
+    return retLambda;
+  }
+
+  private double[] randomPerturbation(double[] origLambda, int i, double method, double param,
+      double mult) {
+    double sigma = 0.0;
+    if (method == 1) {
+      sigma = 1.0 / Math.pow(i, param);
+    } else if (method == 2) {
+      sigma = Math.exp(-param * i);
+    } else if (method == 3) {
+      sigma = Math.max(0.0, 1.0 - (i / param));
+    }
+
+    sigma = mult * sigma;
+
+    double[] retLambda = new double[1 + numParams];
+
+    for (int c = 1; c <= numParams; ++c) {
+      if (isOptimizable[c]) {
+        double randVal = 2 * randGen.nextDouble() - 1.0; // number in [-1.0,1.0]
+        ++generatedRands;
+        randVal = randVal * sigma; // number in [-sigma,sigma]
+        randVal = randVal * origLambda[c]; // number in [-sigma*orig[c],sigma*orig[c]]
+        randVal = randVal + origLambda[c]; // number in
+                                           // [orig[c]-sigma*orig[c],orig[c]+sigma*orig[c]]
+                                           // = [orig[c]*(1-sigma),orig[c]*(1+sigma)]
+        retLambda[c] = randVal;
+      } else {
+        retLambda[c] = origLambda[c];
       }
     }
 

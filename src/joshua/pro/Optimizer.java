@@ -17,7 +17,7 @@ import joshua.metrics.EvaluationMetric;
 public class Optimizer {
     public Optimizer(long _seed, boolean[] _isOptimizable, Vector<String> _output, double[] _initialLambda,
       HashMap<String, String>[] _feat_hash, HashMap<String, String>[] _stats_hash,
-      double _finalScore, EvaluationMetric _evalMetric, int _Tau, int _Xi, double _metricDiff,
+      EvaluationMetric _evalMetric, int _Tau, int _Xi, double _metricDiff,
       double[] _normalizationOptions, String _classifierAlg, String[] _classifierParam) {
     sentNum = _feat_hash.length; // total number of training sentences
     output = _output; // (not used for now)
@@ -59,7 +59,7 @@ public class Optimizer {
 
       double initMetricScore = computeCorpusMetricScore(initialLambda); // compute the initial
                                                                         // corpus-level metric score
-      double finalMetricScore = computeCorpusMetricScore(finalLambda); // compute the final
+      finalMetricScore = computeCorpusMetricScore(finalLambda); // compute the final
                                                                        // corpus-level metric score
 
       // for( int i=0; i<finalLambda.length; i++ ) System.out.print(finalLambda[i]+" ");
@@ -111,7 +111,6 @@ public class Optimizer {
       candSet = feat_hash[i].keySet();
 
       // find out the 1-best candidate for each sentence
-      // this depends on the training mode
       maxModelScore = NegInf;
       for (Iterator<String> it = candSet.iterator(); it.hasNext();) {
         modelScore = 0.0;
@@ -400,12 +399,17 @@ public class Optimizer {
     return Math.pow(sum, 1 / pow);
   }
 
+  public double getMetricScore() {
+      return finalMetricScore;
+  }
+
   private EvaluationMetric evalMetric;
   private Vector<String> output;
   private boolean[] isOptimizable;
   private double[] initialLambda;
   private double[] finalLambda;
   private double[] normalizationOptions;
+  private double finalMetricScore;
   private HashMap<String, String>[] feat_hash;
   private HashMap<String, String>[] stats_hash;
   private Random randgen;

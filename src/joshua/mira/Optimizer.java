@@ -15,7 +15,7 @@ import joshua.metrics.EvaluationMetric;
 // this class implements the MIRA algorithm
 public class Optimizer {
     public Optimizer(Vector<String>_output, boolean[] _isOptimizable, double[] _initialLambda,
-      HashMap<String, String>[] _feat_hash, HashMap<String, String>[] _stats_hash, double _finalScore) {
+      HashMap<String, String>[] _feat_hash, HashMap<String, String>[] _stats_hash) {
     output = _output; // (not used for now)
     isOptimizable = _isOptimizable;
     initialLambda = _initialLambda; // initial weights array
@@ -231,7 +231,7 @@ public class Optimizer {
 	   */ 
 
 	  double initMetricScore = computeCorpusMetricScore(initialLambda); // compute the initial corpus-level metric score
-	  double finalMetricScore = computeCorpusMetricScore(finalLambda); // compute final corpus-level metric score                                                                       // the
+	  finalMetricScore = computeCorpusMetricScore(finalLambda); // compute final corpus-level metric score                                                                       // the
 
 	  // prepare the printing info
 	  String result = "Iter "+iter+": Avg learning rate="+String.format("%.4f", avgEta);
@@ -586,10 +586,16 @@ public class Optimizer {
       }
     }
   }
+
+  public double getMetricScore()
+  {
+      return finalMetricScore;
+  }
   
   private Vector<String> output;
   private double[] initialLambda;
   private double[] finalLambda;
+  private double finalMetricScore;
   private HashMap<String, String>[] feat_hash;
   private HashMap<String, String>[] stats_hash;
   private int paramDim;
