@@ -1,3 +1,14 @@
+6.0.4 (June 15, 2015)
+=====================
+
+- Local MIRA implementation (now the default for the pipeline; Moses' kbmira available
+  with '--tuner kbmira')
+- PRO tuning implementation restored
+- Alignment in pipeline parallelized across chunks (up to --threads)
+- Better integration for class-based LMs
+- Bugfixes in pipeline script and elsewhere
+- Logic for KenLM/lmplz boost compile improved
+
 6.0.3 (June 1, 2015)
 ====================
 
