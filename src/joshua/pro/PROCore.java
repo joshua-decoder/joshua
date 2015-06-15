@@ -10,6 +10,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -111,6 +113,8 @@ public class PROCore {
   //private double[] lambda;
   private ArrayList<Double> lambda = new ArrayList<Double>();
   // the current weight vector. NOTE: indexing starts at 1.
+  private ArrayList<Double> bestLambda = new ArrayList<Double>();
+  // the best weight vector across all iterations
 
   private boolean[] isOptimizable;
   // isOptimizable[c] = true iff lambda[c] should be optimized
@@ -203,13 +207,15 @@ public class PROCore {
   private boolean passIterationToDecoder;
   // should the iteration number be passed as an argument to decoderCommandFileName?
 
-  // USED FOR PRO
-  private String classifierAlg; // THE CLASSIFICATION ALGORITHM(PERCEP, MEGAM, MAXENT ...)
-  private String[] classifierParams = null; // THE PARAM ARRAY FOR EACH CLASSIFIER
+  // used for pro
+  private String classifierAlg; // the classification algorithm(percep, megam, maxent ...)
+  private String[] classifierParams = null; // the param array for each classifier
   private int Tau;
   private int Xi;
   private double interCoef;
   private double metricDiff;
+  private double prevMetricScore = 0; //final metric score of the previous iteration, used only when returnBest = true
+  private boolean returnBest = true; //return the best weight during tuning
 
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, docInfoFileName, finalLambdaFileName;
@@ -309,6 +315,7 @@ public class PROCore {
     // indexing starts at 1 in these arrays 
     for ( int p = 0; p <= numParams; ++p )
 	lambda.add(new Double(0));
+    bestLambda.add(new Double(0));
     // why only lambda is a list? because the size of lambda
     // may increase over time, but other arrays are specified in
     // the param config file, only used for initialization
@@ -374,6 +381,8 @@ public class PROCore {
     EvaluationMetric.set_tmpDirPrefix(tmpDirPrefix);
 
     evalMetric = EvaluationMetric.getMetric(metricName, metricOptions);
+    //used only if returnBest = true
+    prevMetricScore = evalMetric.getToBeMinimized() ? PosInf : NegInf;
 
     // length of sufficient statistics
     // for bleu: suffstatscount=8 (2*ngram+2)
@@ -550,8 +559,13 @@ public class PROCore {
     // printMemoryUsage();
     println("----------------------------------------------------", 1);
     println("", 1);
-    println("FINAL lambda: " + lambdaToString(lambda), 1);
-    // + " (" + metricName_display + ": " + FINAL_score + ")",1);
+
+    if ( ! returnBest )
+	println("FINAL lambda: " + lambdaToString(lambda), 1);
+        // + " (" + metricName_display + ": " + FINAL_score + ")",1);
+    else
+	println("BEST lambda: " + lambdaToString(lambda), 1);
+        // + " (" + metricName_display + ": " + FINAL_score + ")",1);
 
     // delete intermediate .temp.*.it* decoder output files
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
@@ -1199,6 +1213,16 @@ public class PROCore {
           println("---  PRO iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
           println("", 1);
 	  deleteFile(tmpDirPrefix + "temp.stats.merged");
+
+	  if (returnBest) {
+	      //note that bestLambda.size() <= lambda.size()
+	      for ( int p = 1; p < bestLambda.size(); ++p )
+		  lambda.set(p, bestLambda.get(p));
+	      //and set the rest of lambda to be 0
+	      for ( int p = 0; p < lambda.size() - bestLambda.size(); ++p )
+		  lambda.set(p+bestLambda.size(), new Double(0));
+	  }
+
           return null; // this means that the old values should be kept by the caller
         } else {
           println("Note: No new candidates added in this iteration.", 1);
@@ -1213,7 +1237,6 @@ public class PROCore {
        */
 
       Vector<String> output = new Vector<String>();
-      double score = 0;
 
       //note: initialLambda[] has length = numParamsOld
       //augmented with new feature weights, initial values are 0
@@ -1224,14 +1247,39 @@ public class PROCore {
       double[] finalLambda = new double[1 + numParams];
 
       Optimizer opt = new Optimizer(seed + iteration, isOptimizable, output, initialLambdaNew,
-          feat_hash, stats_hash, score, evalMetric, Tau, Xi, metricDiff, normalizationOptions,
+          feat_hash, stats_hash, evalMetric, Tau, Xi, metricDiff, normalizationOptions,
           classifierAlg, classifierParams);
       finalLambda = opt.run_Optimizer();
 
-      /*
-       * System.out.println(finalLambda[1].length); for( int i=0; i<finalLambda[1].length-1; i++ )
-       * System.out.println(finalLambda[1][i+1]);
-       */
+      if ( returnBest ) {
+	  double metricScore = opt.getMetricScore();
+	  if ( ! evalMetric.getToBeMinimized() ) {
+	      if ( metricScore > prevMetricScore ) {
+		  prevMetricScore = metricScore;
+		  for ( int p = 1; p < bestLambda.size(); ++p )
+		      bestLambda.set(p, finalLambda[p]);
+		  if ( 1 + numParams > bestLambda.size() ) {
+		      for ( int p = bestLambda.size(); p <= numParams; ++p )
+			  bestLambda.add(p, finalLambda[p]);
+		  }
+	      }
+	  } else {
+	      if ( metricScore < prevMetricScore ) {
+		  prevMetricScore = metricScore;
+		  for ( int p = 1; p < bestLambda.size(); ++p )
+		      bestLambda.set(p, finalLambda[p]);
+		  if ( 1 + numParams > bestLambda.size() ) {
+		      for ( int p = bestLambda.size(); p <= numParams; ++p )
+			  bestLambda.add(p, finalLambda[p]);
+		  }
+	      }
+	  }
+      }
+
+      // System.out.println(finalLambda.length);
+      // for( int i=0; i<finalLambda.length-1; i++ )
+      // 	   System.out.print(finalLambda[i+1]+" ");
+      // System.out.println();
 
       /************* end optimization **************/
 
@@ -1282,9 +1330,14 @@ public class PROCore {
         println("Some early stopping criteria has been observed " + "in " + stopMinIts
             + " consecutive iterations; exiting PRO.", 1);
         println("", 1);
-	
-	for ( int f = 1; f <=numParams; ++f )
-	    lambda.set(f, finalLambda[f]);
+
+	if ( returnBest ) {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1294,8 +1347,13 @@ public class PROCore {
         println("Maximum number of PRO iterations reached; exiting PRO.", 1);
         println("", 1);
 
-	for ( int f = 1; f <=numParams; ++f )
-	    lambda.set(f, finalLambda[f]);
+	if ( returnBest ) {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop
       }
@@ -1439,13 +1497,6 @@ public class PROCore {
 
       while (line != null) {
 
-        // skip blank lines
-        if (line.equals("")) continue;
-
-        // skip lines that aren't formatted correctly
-        if (line.indexOf("|||") == -1)
-          continue;
-        
         /*
          * line format:
          * 
@@ -1596,12 +1647,7 @@ public class PROCore {
         System.exit(21);
       }
 
-      // PRO always skips the next two values, which are used by MERT to define the lower and upper
-      // bounds of values to try during line search
-      dummy = inFile_init.next();
-      dummy = inFile_init.next();
-      
-      if (!isOptimizable[c]) { // skip next four values
+      if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
       } else {
@@ -2261,28 +2307,40 @@ public class PROCore {
        * useDisk > 2) { println("useDisk should be between 0 and 2"); System.exit(10); } }
        */
 
-      // FOR PRO:
-      // CLASSIFICATION ALGORITHM CLASS PATH
+      // for pro:
+      // classification algorithm class path
       else if (option.equals("-classifierClass")) {
         classifierAlg = args[i + 1];
       }
-      // PARAMS FOR THE SPECIFIED CLASSIFIER
+      // params for the specified classifier
       else if (option.equals("-classifierParams")) {
         classifierParams = args[i + 1].split("\\s+");
       }
-      // TAU: NUM OF RANDOMLY GENERATED CANDIDATES
+      // tau: num of randomly generated candidates
       else if (option.equals("-Tau")) {
         Tau = Integer.parseInt(args[i + 1]);
       }
-      // XI: TOP-XI CANDIDATES TO BE ACCEPTED
+      // xi: top-xi candidates to be accepted
       else if (option.equals("-Xi")) {
         Xi = Integer.parseInt(args[i + 1]);
       }
-      // INTERPOLATION COEFFICIENT BETWEEN CURRENT & PREVIOUS WEIGHTS
+      //return the best weight during tuning or not
+      else if (option.equals("-returnBest")) {
+	  int retBest = Integer.parseInt(args[i + 1]);
+	  if(retBest == 1)
+	      returnBest = true;
+	  else if(retBest == 0)
+	      returnBest = false;
+	  else {
+	      println("-returnBest must be either 0 or 1.");
+	      System.exit(10);
+	  }
+      }
+      // interpolation coefficient between current & previous weights
       else if (option.equals("-interCoef")) {
         interCoef = Double.parseDouble(args[i + 1]);
       }
-      // METRIC(eg. BLEU) DIFF THRESHOLD(TO SELECT SAMPLED CANDIDATES)
+      // metric(eg. bleu) diff threshold(to select sampled candidates)
       else if (option.equals("-metricDiff")) {
         metricDiff = Double.parseDouble(args[i + 1]);
       }
