@@ -57,7 +57,7 @@ while (my $key = shift @ARGV) {
 # Step 2.  Now read through the config file.
 
 my @weights_order;
-my $tm_index = 0;
+my $tm_index = -1;
 while (my $line = <>) {
   if ($line =~ /^\s*$/ or $line =~ /^#/) {
     # Comments, empty lines
@@ -78,8 +78,16 @@ while (my $line = <>) {
     # TMs get special treatment. We parse the line (supporting old format and new keyword format),
     # and then compare to command-line args to see what gets updated
     if ($norm_key =~ /^tm/) {
+      $tm_index++;
+
       # get the hash of tm values from the config file
       my $tm_hash = parse_tm_line($value);
+
+      # Delete TM lines if they've been requested to be deleted
+      if (exists $params{"tm${tm_index}"} and $params{"tm${tm_index}"} eq "DELETE") {
+        delete $params{"tm${tm_index}"};
+        next;
+      }
 
       # check if each one was passed as a command-line argument, and if so, retrieve its new value
       foreach my $tmkey (keys %$tm_hash) {
@@ -95,7 +103,6 @@ while (my $line = <>) {
         next if $tmkey eq "type";
         $params{$norm_key} .= " -$tmkey $tm_hash->{$tmkey}";
       }
-      $tm_index++;
     }
 
     # if the parameter was found on the command line, print out its replaced value

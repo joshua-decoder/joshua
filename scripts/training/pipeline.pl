@@ -1449,7 +1449,10 @@ if (defined $TUNE_GRAMMAR) {
 # If we specified a new glue grammar, put that in
 if (defined $GLUE_GRAMMAR_FILE) {
   $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
-  $tm_copy_config_args .= " -tm1/owner ${GLUE_OWNER} ";
+  $tm_copy_config_args .= " -tm1/owner ${GLUE_OWNER}";
+} else {
+  # if there is no glue grammar, remove it from the config template
+  $tm_copy_config_args .= " -tm1 DELETE";
 }
 
 # Now build the bundle
