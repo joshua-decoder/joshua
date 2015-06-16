@@ -1,4 +1,4 @@
-package joshua.mira;
+package joshua.adagrad;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -8,11 +8,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+import java.lang.Math;
 
 import joshua.corpus.Vocabulary;
 import joshua.metrics.EvaluationMetric;
 
-// this class implements the MIRA algorithm
+// this class implements the AdaGrad algorithm
 public class Optimizer {
     public Optimizer(Vector<String>_output, boolean[] _isOptimizable, double[] _initialLambda,
       HashMap<String, String>[] _feat_hash, HashMap<String, String>[] _stats_hash) {
@@ -28,25 +29,21 @@ public class Optimizer {
       finalLambda[i] = initialLambda[i];
   }
 
-  //run MIRA for one epoch
+  //run AdaGrad for one epoch
   public double[] runOptimizer() {
-      for ( int iter = 0; iter < miraIter; ++iter ) {
+      for ( int iter = 0; iter < adagradIter; ++iter ) {
 	  System.arraycopy(finalLambda, 1, initialLambda, 1, paramDim);
 	  
 	  List<Integer> sents = new ArrayList<Integer>();
 	  for( int i = 0; i < sentNum; ++i )
 	      sents.add(i);
-    
-	  if(needShuffle)
+    	  if(needShuffle)
 	      Collections.shuffle(sents);
     
 	  double oraMetric, oraScore, predMetric, predScore;
 	  double[] oraPredScore = new double[4];
-	  double eta = 1.0; //learning rate, will not be changed if run percep
-	  double avgEta = 0; //average eta, just for analysis
 	  double loss = 0;
-	  double featNorm = 0;
-	  double featDiffVal;
+	  double diff = 0;
 	  double sumMetricScore = 0;
 	  double sumModelScore = 0;
 	  String oraFeat = "";
@@ -55,7 +52,9 @@ public class Optimizer {
 	  String[] vecOraFeat;
 	  String[] vecPredFeat;
 	  String[] featInfo;
-	  //int processedSent = 0;
+	  int thisBatchSize = 0;
+	  int numBatch = 0;
+	  int numUpdate = 0;
 	  Iterator it;
 	  Integer diffFeatId;
 	  double[] avgLambda = new double[initialLambda.length]; //only needed if averaging is required
@@ -63,163 +62,204 @@ public class Optimizer {
 	      avgLambda[i] = 0.0;
 
 	  //update weights
-	  for(Integer s : sents) {
-	      //find out oracle and prediction
-	      findOraPred(s, oraPredScore, oraPredFeat, finalLambda, featScale);
-      
-	      //the model scores here are already scaled in findOraPred
-	      oraMetric = oraPredScore[0];
-	      oraScore = oraPredScore[1];
-	      predMetric = oraPredScore[2];
-	      predScore = oraPredScore[3];
-	      oraFeat = oraPredFeat[0];
-	      predFeat = oraPredFeat[1];
-      
-	      //update the scale
-	      if(needScale) { //otherwise featscale remains 1.0
-		  sumMetricScore += java.lang.Math.abs(oraMetric+predMetric);
-		  sumModelScore += java.lang.Math.abs(oraScore+predScore)/featScale; //restore the original model score
-        
-		  if(sumModelScore/sumMetricScore > scoreRatio)
-		      featScale = sumMetricScore/sumModelScore;
-
-		  //   /* a different scaling strategy 
-		  //   if( (1.0*processedSent/sentNum) < sentForScale ) { //still need to scale
-		  //     double newFeatScale = java.lang.Math.abs(scoreRatio*sumMetricDiff / sumModelDiff); //to make sure modelScore*featScale/metricScore = scoreRatio
-          
-		  //     //update the scale only when difference is significant
-		  //     if( java.lang.Math.abs(newFeatScale-featScale)/featScale > 0.2 )
-		  //       featScale = newFeatScale;
-		  //   }*/
-	      }
-	      // processedSent++;
-
-	      HashMap<Integer, Double> allPredFeat = new HashMap<Integer, Double>();
+	  Integer s;
+	  int sentCount = 0;
+	  HashMap<Integer, Integer> lastUpdate = new HashMap<Integer, Integer>();
+	  HashMap<Integer, Double> lastVal = new HashMap<Integer, Double>();
+	  HashMap<Integer, Double> H = new HashMap<Integer, Double>();
+	  while( sentCount < sentNum ) {
+	      loss = 0;
+	      thisBatchSize = batchSize;
+	      ++numBatch;
 	      HashMap<Integer, Double> featDiff = new HashMap<Integer, Double>();
+	      for(int b = 0; b < batchSize; ++b ) {
+		  //find out oracle and prediction
+		  s = sents.get(sentCount);
+		  findOraPred(s, oraPredScore, oraPredFeat, finalLambda, featScale);
       
-	      vecOraFeat = oraFeat.split("\\s+");
-	      vecPredFeat = predFeat.split("\\s+");
+		  //the model scores here are already scaled in findOraPred
+		  oraMetric = oraPredScore[0];
+		  oraScore = oraPredScore[1];
+		  predMetric = oraPredScore[2];
+		  predScore = oraPredScore[3];
+		  oraFeat = oraPredFeat[0];
+		  predFeat = oraPredFeat[1];
       
-	      for (int i = 0; i < vecOraFeat.length; i++) {
-		  featInfo = vecOraFeat[i].split("=");
-		  diffFeatId = Integer.parseInt(featInfo[0]);
-		  featDiff.put(diffFeatId, Double.parseDouble(featInfo[1]));
-	      }
-
-	      for (int i = 0; i < vecPredFeat.length; i++) {
-		  featInfo = vecPredFeat[i].split("=");
-		  diffFeatId = Integer.parseInt(featInfo[0]);
-		  allPredFeat.put(diffFeatId, Double.parseDouble(featInfo[1]));
-		  if (featDiff.containsKey(diffFeatId)) //overlapping features
-		      featDiff.put(diffFeatId, featDiff.get(diffFeatId)-Double.parseDouble(featInfo[1]));
-		  else //features only firing in the 2nd feature vector
-		      featDiff.put(diffFeatId, -1.0*Double.parseDouble(featInfo[1]));
-	      }
-
-	      if(!runPercep) { //otherwise eta=1.0
-		  featNorm = 0;
-
-		  Collection<Double> allDiff = featDiff.values();
-		  for(it =allDiff.iterator(); it.hasNext();) {
-		      featDiffVal = (Double) it.next();
-		      featNorm += featDiffVal*featDiffVal;
-		  }
+		  //update the scale
+		  if(needScale) { //otherwise featscale remains 1.0
+		      sumMetricScore += Math.abs(oraMetric + predMetric);
+		      //restore the original model score
+		      sumModelScore += Math.abs(oraScore + predScore) / featScale;
         
-		  //a few sanity checks
-		  if(! evalMetric.getToBeMinimized()) {
-		      if(oraSelectMode==1 && predSelectMode==1) { //"hope-fear" selection
-			  /* ora_score+ora_metric > pred_score+pred_metric
-			   * pred_score-pred_metric > ora_score-ora_metric
-			   * => ora_metric > pred_metric  */
-			  if(oraMetric+1e-10 < predMetric) {
-			      System.err.println("WARNING: for hope-fear selection, oracle metric score must be greater than prediction metric score!");
-			      System.err.println("Something is wrong!");
-			  }
+		      if(sumModelScore/sumMetricScore > scoreRatio)
+			  featScale = sumMetricScore/sumModelScore;
+		  }
+		  // processedSent++;
+      
+		  vecOraFeat = oraFeat.split("\\s+");
+		  vecPredFeat = predFeat.split("\\s+");
+
+		  //accumulate difference feature vector
+		  if ( b == 0 ) {
+		      for (int i = 0; i < vecOraFeat.length; i++) {
+			  featInfo = vecOraFeat[i].split("=");
+			  diffFeatId = Integer.parseInt(featInfo[0]);
+			  featDiff.put(diffFeatId, Double.parseDouble(featInfo[1]));
 		      }
-          
-		      if(oraSelectMode==2 || predSelectMode==3) {
-			  if(oraMetric+1e-10 < predMetric) {
-			      System.err.println("WARNING: for max-metric oracle selection or min-metric prediction selection, the oracle metric " +
-						 "score must be greater than the prediction metric score!");
-			      System.err.println("Something is wrong!");
+		      for (int i = 0; i < vecPredFeat.length; i++) {
+			  featInfo = vecPredFeat[i].split("=");
+			  diffFeatId = Integer.parseInt(featInfo[0]);
+			  if (featDiff.containsKey(diffFeatId)) { //overlapping features
+			      diff = featDiff.get(diffFeatId)-Double.parseDouble(featInfo[1]);
+			      if ( Math.abs(diff) > 1e-20 )
+				  featDiff.put(diffFeatId, diff);
+			      else
+				  featDiff.remove(diffFeatId);
 			  }
+			  else //features only firing in the 2nd feature vector
+			      featDiff.put(diffFeatId, -1.0*Double.parseDouble(featInfo[1]));
 		      }
 		  } else {
-		      if(oraSelectMode==1 && predSelectMode==1) { //"hope-fear" selection
-			  /* ora_score-ora_metric > pred_score-pred_metric
-			   * pred_score+pred_metric > ora_score+ora_metric
-			   * => ora_metric < pred_metric  */
-			  if(oraMetric-1e-10 > predMetric) {
-			      System.err.println("WARNING: for hope-fear selection, oracle metric score must be smaller than prediction metric score!");
-			      System.err.println("Something is wrong!");
+		      for (int i = 0; i < vecOraFeat.length; i++) {
+			  featInfo = vecOraFeat[i].split("=");
+			  diffFeatId = Integer.parseInt(featInfo[0]);
+			  if (featDiff.containsKey(diffFeatId)) { //overlapping features
+			      diff = featDiff.get(diffFeatId)+Double.parseDouble(featInfo[1]);
+			      if ( Math.abs(diff) > 1e-20 )
+				  featDiff.put(diffFeatId, diff);
+			      else
+				  featDiff.remove(diffFeatId);
 			  }
+			  else //features only firing in the new oracle feature vector
+			      featDiff.put(diffFeatId, Double.parseDouble(featInfo[1]));
 		      }
-          
-		      if(oraSelectMode==2 || predSelectMode==3) {
-			  if(oraMetric-1e-10 > predMetric) {
-			      System.err.println("WARNING: for min-metric oracle selection or max-metric prediction selection, the oracle metric " +
-						 "score must be smaller than the prediction metric score!");
-			      System.err.println("Something is wrong!");
+		      for (int i = 0; i < vecPredFeat.length; i++) {
+			  featInfo = vecPredFeat[i].split("=");
+			  diffFeatId = Integer.parseInt(featInfo[0]);
+			  if (featDiff.containsKey(diffFeatId)) { //overlapping features
+			      diff = featDiff.get(diffFeatId)-Double.parseDouble(featInfo[1]);
+			      if ( Math.abs(diff) > 1e-20 )
+				  featDiff.put(diffFeatId, diff);
+			      else
+				  featDiff.remove(diffFeatId);
 			  }
+			  else //features only firing in the new prediction feature vector
+			      featDiff.put(diffFeatId, -1.0*Double.parseDouble(featInfo[1]));
 		      }
 		  }
-        
-		  if(predSelectMode==2) {
-		      if(predScore+1e-10 < oraScore) {
-			  System.err.println("WARNING: for max-model prediction selection, the prediction model score must be greater than oracle model score!");
-			  System.err.println("Something is wrong!");
-		      }
-		  }
-        
+		  
 		  //cost - margin
 		  //remember the model scores here are already scaled
-		  loss = evalMetric.getToBeMinimized() ? //cost should always be non-negative 
+		  double singleLoss = evalMetric.getToBeMinimized() ? //cost should always be non-negative 
 		      (predMetric-oraMetric) - (oraScore-predScore)/featScale: 
 		      (oraMetric-predMetric) - (oraScore-predScore)/featScale;
-        
-		  if( loss <= 0 )
-		      eta = 0;
-		  else
-		      //eta = C < loss/(featNorm*featScale*featScale) ? C : loss/(featNorm*featScale*featScale); //feat vector not scaled before
-		      eta = C < loss/(featNorm) ? C : loss/(featNorm); //feat vector not scaled before
+		  if(singleLoss > 0)
+		      loss += singleLoss;
+		  ++sentCount;
+		  if( sentCount >= sentNum ) {
+		      thisBatchSize = b + 1;
+		      break;
+		  }
+	      } //for(int b : batchSize)
+
+	      //System.out.println("\n\n"+sentCount+":");
+
+	      if( loss > 0 ) {
+	      //if(true) {
+		  //update weights (see Duchi'11, Eq.23. For l1-reg, use lazy update)
+		  Set<Integer> diffFeatSet = featDiff.keySet();
+		  it = diffFeatSet.iterator();
+		  double prevLambda = 0;
+		  double diffFeatVal = 0;
+		  double oldVal = 0;
+		  double gdStep = 0;
+		  double Hii = 0;
+		  double gradiiSquare = 0;
+		  double lastUpdateTime = 0;
+		  if( regularization == 1 ) { //l1-reg
+		      //for ( int p =1; p <=paramDim; ++p )
+		      //  System.out.print(p+"="+String.format("%.3f",finalLambda[p])+" ");
+		      //System.out.println();
+		      while(it.hasNext()) { //note these are all non-zero gradients!
+			  diffFeatId = (Integer)it.next();
+			  diffFeatVal = -1.0 * featDiff.get(diffFeatId) / thisBatchSize; //gradient
+			  lastUpdateTime =
+			      lastUpdate.get(diffFeatId) == null ? 0 : lastUpdate.get(diffFeatId);
+
+			  //System.out.print(diffFeatId+"="+String.format("%.3f",diffFeatVal)+" ");
+
+			  if( lastUpdateTime < numBatch - 1 ) {
+                              //haven't been updated (gradient=0) for at least 2 steps
+			      //lazy compute prevLambda now
+			      oldVal =
+				  lastVal.get(diffFeatId) == null ? initialLambda[diffFeatId] : lastVal.get(diffFeatId);
+			      Hii =
+				  H.get(diffFeatId) == null ? 0 : H.get(diffFeatId);
+			      if(Math.abs(Hii) > 1e-20)
+				  prevLambda =
+				      Math.signum(oldVal) * clip( Math.abs(oldVal) - lam * eta * (numBatch - 1 - lastUpdateTime) / Hii );
+			      else
+				  prevLambda = 0;
+			  } else //just updated at last time step or just started
+			      prevLambda = finalLambda[diffFeatId];
+			  if(H.get(diffFeatId) != null) {
+			      gradiiSquare = H.get(diffFeatId);
+			      gradiiSquare *= gradiiSquare;
+			      gradiiSquare += diffFeatVal * diffFeatVal;
+			      Hii = Math.sqrt(gradiiSquare);
+			  } else
+			      Hii = Math.abs(diffFeatVal);
+			  H.put(diffFeatId, Hii);
+			  gdStep = prevLambda - eta * diffFeatVal / Hii;
+			  finalLambda[diffFeatId] = Math.signum(gdStep) * clip( Math.abs(gdStep) - lam * eta / Hii );
+			  lastUpdate.put(diffFeatId, numBatch);
+			  lastVal.put(diffFeatId, finalLambda[diffFeatId]);
+		      }
+		  } else if( regularization == 2 ) {
+		      while(it.hasNext()) { //note these are all non-zero gradients!
+			  diffFeatId = (Integer)it.next();
+			  diffFeatVal = -1.0 * featDiff.get(diffFeatId) / thisBatchSize; //gradient
+			  if(H.get(diffFeatId) != null) {
+			      gradiiSquare = H.get(diffFeatId);
+			      gradiiSquare *= gradiiSquare;
+			      gradiiSquare += diffFeatVal * diffFeatVal;
+			      Hii = Math.sqrt(gradiiSquare);
+			  } else
+			      Hii = Math.abs(diffFeatVal);
+			  H.put(diffFeatId, Hii);
+			  finalLambda[diffFeatId] = (Hii * finalLambda[diffFeatId] - eta * diffFeatVal) / (lam + Hii);
+		      }
+		  }
+		  ++numUpdate;
 	      }
-      
-	      avgEta += eta;
-
-	      Set<Integer> diffFeatSet = featDiff.keySet();
-	      it = diffFeatSet.iterator();
-
-	      if( eta!=0 ) {
-		  while(it.hasNext()) {
-		      diffFeatId = (Integer)it.next();
-		      finalLambda[diffFeatId] = finalLambda[diffFeatId] + eta*featDiff.get(diffFeatId);
+	      if( regularization == 2 ) {
+		  if(needAvg) {
+		      for( int i = 1; i < finalLambda.length; ++i )
+			  avgLambda[i] += finalLambda[i];
 		  }
 	      }
-      
+	  }
+	  if( regularization == 1 ) {
+	      for( int i = 1; i < finalLambda.length; ++i ) {
+		  if(lastUpdate.get(i) == null)
+		      finalLambda[i] = 0;
+	      }
+	  } else if( regularization == 2 ) {
 	      if(needAvg) {
-		  for(int i=0; i<avgLambda.length; i++)
-		      avgLambda[i] += finalLambda[i];
+		  for( int i = 1; i < finalLambda.length; ++i )
+		      finalLambda[i] = avgLambda[i]/numBatch;
 	      }
 	  }
-      
-	  if(needAvg) {
-	      for(int i=0; i<finalLambda.length; i++)
-		  finalLambda[i] = avgLambda[i]/sentNum;
-	  }
     
-	  avgEta /= sentNum;
-
 	  /*
 	   * for( int i=0; i<finalLambda.length; i++ ) System.out.print(finalLambda[i]+" ");
 	   * System.out.println(); System.exit(0);
 	   */ 
 
 	  double initMetricScore = computeCorpusMetricScore(initialLambda); // compute the initial corpus-level metric score
-	  finalMetricScore = computeCorpusMetricScore(finalLambda); // compute final corpus-level metric score                                                                       // the
-
+	  finalMetricScore = computeCorpusMetricScore(finalLambda); // compute final corpus-level metric score
 	  // prepare the printing info
-	  String result = "Iter "+iter+": Avg learning rate="+String.format("%.4f", avgEta);
-	  result += " Initial "
+	  String result = " Initial "
 	      + evalMetric.get_metricName() + "=" + String.format("%.4f", initMetricScore) + " Final "
 	      + evalMetric.get_metricName() + "=" + String.format("%.4f", finalMetricScore);
 	  //print lambda info
@@ -232,7 +272,7 @@ public class Optimizer {
 	  //     result += String.format("%.4f", finalLambda[i]) + " ";
 
 	  output.add(result);
-      } //for ( int iter = 0; iter < miraIter; ++iter ) {
+      } //for ( int iter = 0; iter < adagradIter; ++iter ) {
 
       //non-optimizable weights should remain unchanged
       ArrayList<Double> cpFixWt = new ArrayList<Double>();
@@ -249,6 +289,10 @@ public class Optimizer {
 	  }
       }
       return finalLambda;
+  }
+
+  private double clip(double x) {
+      return x > 0 ? x : 0;
   }
 
   public double computeCorpusMetricScore(double[] finalLambda) {
@@ -268,7 +312,7 @@ public class Optimizer {
 
       // find out the 1-best candidate for each sentence
       // this depends on the training mode
-      maxModelScore = -99999999999.0;
+      maxModelScore = NegInf;
       for (Iterator it = candSet.iterator(); it.hasNext();) {
         modelScore = 0.0;
         candStr = it.next().toString();
@@ -585,18 +629,20 @@ public class Optimizer {
   private int paramDim;
   private boolean[] isOptimizable;
   public static int sentNum;
-  public static int miraIter; //MIRA internal iterations
+  public static int adagradIter; //AdaGrad internal iterations
   public static int oraSelectMode;
   public static int predSelectMode;
+  public static int batchSize;
+  public static int regularization;
   public static boolean needShuffle;
   public static boolean needScale;
   public static double scoreRatio;
-  public static boolean runPercep;
   public static boolean needAvg;
   public static boolean usePseudoBleu;
   public static double featScale = 1.0; //scale the features in order to make the model score comparable with metric score
                                             //updates in each epoch if necessary
-  public static double C; //relaxation coefficient
+  public static double eta;
+  public static double lam;
   public static double R; //corpus decay(used only when pseudo corpus is used to compute BLEU) 
   public static EvaluationMetric evalMetric;
   public static double[] normalizationOptions;
