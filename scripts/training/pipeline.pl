@@ -785,7 +785,7 @@ if (! defined $ALIGNMENT) {
   my $aligner_cmd = (
     "$SCRIPTDIR/training/paralign.pl "
     . " -aligner $ALIGNER"
-    . " -num_threads 1"
+    . " -num_threads 2"
     . " -giza_merge $GIZA_MERGE"
     . " -aligner_mem $ALIGNER_MEM"
     . " -source $SOURCE"
