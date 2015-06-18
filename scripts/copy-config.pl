@@ -26,7 +26,7 @@ use warnings;
 # Step 1. process command-line arguments for key/value pairs.  The keys are matched next to the
 # config file and the configfile values replaced with those found on the command-line.
 
-my (%params,%weights,@features);
+my (%params,%weights,%features);
 while (my $key = shift @ARGV) {
   # make sure the parameter has a leading dash
   if ($key !~ /^-/) {
@@ -43,7 +43,7 @@ while (my $key = shift @ARGV) {
 
   # -feature-function lines are gathered, other keys can be present only once
   if ($key eq "featurefunction") {
-    push(@features, $value);
+    $features{$value} = $value;
   } elsif ($key eq "weights") {
     my @tokens = split(' ', $value);
     for (my $i = 0; $i < @tokens; $i += 2) {
@@ -105,6 +105,15 @@ while (my $line = <>) {
       }
     }
 
+    # If an exact feature function line is in the config file, delete
+    # it from the command-line arguments so it doesn't get printed
+    # later. All features not found in the config file are appended.
+    if ($norm_key =~ /^feature-function/) {
+      if (exists $features{$value}) {
+        delete $features{$value};
+      }
+    }
+
     # if the parameter was found on the command line, print out its replaced value
     if (exists $params{$norm_key}) {
       print "$key = " . $params{$norm_key} . "\n";
@@ -136,7 +145,7 @@ if (scalar(keys(%params))) {
 }
 
 # print out the feature functions
-map { print "feature-function = $_\n" } @features;
+map { print "feature-function = $_\n" } (keys %features);
 print $/;
 
 # Print out the weights
