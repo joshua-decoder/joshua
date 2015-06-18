@@ -108,10 +108,8 @@ while (my $line = <>) {
     # If an exact feature function line is in the config file, delete
     # it from the command-line arguments so it doesn't get printed
     # later. All features not found in the config file are appended.
-    if ($norm_key =~ /^feature-function/) {
-      if (exists $features{$value}) {
-        delete $features{$value};
-      }
+    if ($norm_key eq "featurefunction" and exists $features{$value}) {
+      delete $features{$value};
     }
 
     # if the parameter was found on the command line, print out its replaced value
