@@ -139,6 +139,7 @@ while (my $line = <>) {
 if (scalar(keys(%params))) {
   print $/;
   foreach my $key (keys %params) {
+    next if $key =~ /^tm/; # skip unused tm flags
     print STDERR "* WARNING: no key '$key' found in config file (appending to end)\n";
     print "$key = $params{$key}\n";
   }
