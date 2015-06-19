@@ -815,7 +815,6 @@ if (! defined $ALIGNMENT) {
   while (@children) {
     my $old_child = shift @children;
     waitpid( $old_child, 0 );
-    print "child finished\n";
 
     if ($next_chunk < $lastchunk + 1) {
       my $new_child = fork();
