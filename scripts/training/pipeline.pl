@@ -1460,7 +1460,7 @@ $cachepipe->cmd("tune-bundle",
                 "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
-                "$tunemodeldir/joshua.config");
+                "$tunemodeldir/run-joshua.sh");
 
 # Update the tune grammar to its new location in the bundle
 if (defined $TUNE_GRAMMAR) {
