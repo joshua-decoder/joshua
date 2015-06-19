@@ -1363,14 +1363,14 @@ public class MIRACore {
         println("Some early stopping criteria has been observed " + "in " + stopMinIts
             + " consecutive iterations; exiting MIRA.", 1);
         println("", 1);
-
-        if (returnBest) {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, bestLambda.get(f));
-        } else {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, finalLambda[f]);
-        }
+	
+	if ( returnBest ) {
+	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1380,13 +1380,13 @@ public class MIRACore {
         println("Maximum number of MIRA iterations reached; exiting MIRA.", 1);
         println("", 1);
 
-        if (returnBest) {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, bestLambda.get(f));
-        } else {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, finalLambda[f]);
-        }
+	if ( returnBest ) {
+	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop
       }

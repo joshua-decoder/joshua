@@ -1330,13 +1330,14 @@ public class PROCore {
             + " consecutive iterations; exiting PRO.", 1);
         println("", 1);
 
-        if (returnBest) {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, bestLambda.get(f));
-        } else {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, finalLambda[f]);
-        }
+	if ( returnBest ) {
+	    //note that numParams >= bestLamba.size()-1 here!
+	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1346,13 +1347,14 @@ public class PROCore {
         println("Maximum number of PRO iterations reached; exiting PRO.", 1);
         println("", 1);
 
-        if (returnBest) {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, bestLambda.get(f));
-        } else {
-          for (int f = 1; f <= numParams; ++f)
-            lambda.set(f, finalLambda[f]);
-        }
+	if ( returnBest ) {
+	    //note that numParams >= bestLamba.size()-1 here! 
+	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
+		lambda.set(f, bestLambda.get(f));
+	} else {
+	    for ( int f = 1; f <= numParams; ++f )
+		lambda.set(f, finalLambda[f]);
+	}
 
         break; // exit for (iteration) loop
       }
