@@ -55,7 +55,6 @@ public class Optimizer {
       String[] vecOraFeat;
       String[] vecPredFeat;
       String[] featInfo;
-      boolean first = true;
       // int processedSent = 0;
       Iterator it;
       Integer diffFeatId;
@@ -66,10 +65,7 @@ public class Optimizer {
       // update weights
       for (Integer s : sents) {
         // find out oracle and prediction
-        if (first)
-          findOraPred(s, oraPredScore, oraPredFeat, initialLambda, featScale);
-        else
-          findOraPred(s, oraPredScore, oraPredFeat, finalLambda, featScale);
+        findOraPred(s, oraPredScore, oraPredFeat, finalLambda, featScale);
 
         // the model scores here are already scaled in findOraPred
         oraMetric = oraPredScore[0];
@@ -205,21 +201,10 @@ public class Optimizer {
         Set<Integer> diffFeatSet = featDiff.keySet();
         it = diffFeatSet.iterator();
 
-        if (first) {
-          first = false;
-
-          if (eta != 0) {
-            while (it.hasNext()) {
-              diffFeatId = (Integer) it.next();
-              finalLambda[diffFeatId] = initialLambda[diffFeatId] + eta * featDiff.get(diffFeatId);
-            }
-          }
-        } else {
-          if (eta != 0) {
-            while (it.hasNext()) {
-              diffFeatId = (Integer) it.next();
-              finalLambda[diffFeatId] = finalLambda[diffFeatId] + eta * featDiff.get(diffFeatId);
-            }
+        if (eta != 0) {
+          while (it.hasNext()) {
+            diffFeatId = (Integer) it.next();
+            finalLambda[diffFeatId] = finalLambda[diffFeatId] + eta * featDiff.get(diffFeatId);
           }
         }
 

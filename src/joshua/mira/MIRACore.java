@@ -212,7 +212,7 @@ public class MIRACore {
   private boolean needAvg = true; // average the weihgts or not?
   private boolean runPercep = false; // run perceptron instead of mira
   private boolean usePseudoBleu = true; // need to use pseudo corpus to compute bleu?
-  private boolean returnBest = true; // return the best weight during tuning
+  private boolean returnBest = false; // return the best weight during tuning
   private boolean needScale = true; // need scaling?
   private String trainingMode;
   private int oraSelectMode = 1;
