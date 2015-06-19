@@ -1332,7 +1332,8 @@ public class PROCore {
         println("", 1);
 
 	if ( returnBest ) {
-	    for ( int f = 1; f <= numParams; ++f )
+	    //note that numParams >= bestLamba.size()-1 here!
+	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
 		lambda.set(f, bestLambda.get(f));
 	} else {
 	    for ( int f = 1; f <= numParams; ++f )
@@ -1348,7 +1349,8 @@ public class PROCore {
         println("", 1);
 
 	if ( returnBest ) {
-	    for ( int f = 1; f <= numParams; ++f )
+	    //note that numParams >= bestLamba.size()-1 here! 
+	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
 		lambda.set(f, bestLambda.get(f));
 	} else {
 	    for ( int f = 1; f <= numParams; ++f )
