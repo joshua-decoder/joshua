@@ -1459,7 +1459,8 @@ if (defined $GLUE_GRAMMAR_FILE) {
 $cachepipe->cmd("tune-bundle",
                 "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
                 $JOSHUA_CONFIG,
-                get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,);
+                get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
+                "$tunemodeldir/joshua.config");
 
 # Update the tune grammar to its new location in the bundle
 if (defined $TUNE_GRAMMAR) {
@@ -1502,9 +1503,9 @@ if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "mira"
 
   my $extra_args = $JOSHUA_ARGS;
   $extra_args =~ s/"/\\"/g;
-  $cachepipe->cmd("mira",
+  $cachepipe->cmd("kbmira",
                   "$SCRIPTDIR/training/mira/run-mira.pl --mertdir $MOSES/bin --rootdir $MOSES/scripts --batch-mira --working-dir $tunedir --maximum-iterations $TUNER_ITERATIONS --nbest $NBEST --no-filter-phrase-table --decoder-flags \"-m $JOSHUA_MEM -threads $NUM_THREADS -moses $extra_args\" $TUNE{source} $refs_path $tunedir/model/run-joshua.sh $tunedir/model/joshua.config > $tunedir/mira.log 2>&1",
-                  get_file_from_grammar($TUNE_GRAMMAR),
+                  get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
                   $TUNE{source},
                   "$tunedir/joshua.config.final");
 }
