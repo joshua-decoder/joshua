@@ -10,8 +10,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -92,11 +90,11 @@ public class PROCore {
   // 4: apply 1+2+3
 
   private int numParams;
-  //total number of firing features
-  //this number may increase overtime as new n-best lists are decoded
-  //initially it is equal to the # of params in the parameter config file
+  // total number of firing features
+  // this number may increase overtime as new n-best lists are decoded
+  // initially it is equal to the # of params in the parameter config file
   private int numParamsOld;
-  //number of features before observing the new features fired in the current iteration
+  // number of features before observing the new features fired in the current iteration
 
   private double[] normalizationOptions;
   // How should a lambda[] vector be normalized (before decoding)?
@@ -110,7 +108,7 @@ public class PROCore {
   /* NOTE: indexing starts at 1 in the following few arrays: */
   /* *********************************************************** */
 
-  //private double[] lambda;
+  // private double[] lambda;
   private ArrayList<Double> lambda = new ArrayList<Double>();
   // the current weight vector. NOTE: indexing starts at 1.
   private ArrayList<Double> bestLambda = new ArrayList<Double>();
@@ -214,8 +212,9 @@ public class PROCore {
   private int Xi;
   private double interCoef;
   private double metricDiff;
-  private double prevMetricScore = 0; //final metric score of the previous iteration, used only when returnBest = true
-  private boolean returnBest = true; //return the best weight during tuning
+  private double prevMetricScore = 0; // final metric score of the previous iteration, used only
+                                      // when returnBest = true
+  private boolean returnBest = true; // return the best weight during tuning
 
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, docInfoFileName, finalLambdaFileName;
@@ -290,15 +289,15 @@ public class PROCore {
       BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
 
       for (int c = 1; c <= numParams; ++c) {
-          String line = "";
-          while (line != null && line.length() == 0) { // skip empty lines
-	      line = inFile_names.readLine();
-          }
-	  
-          // save feature names
-	  String paramName = (line.substring(0, line.indexOf("|||"))).trim();
-	  Vocabulary.id(paramName);
-	  // System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
+        String line = "";
+        while (line != null && line.length() == 0) { // skip empty lines
+          line = inFile_names.readLine();
+        }
+
+        // save feature names
+        String paramName = (line.substring(0, line.indexOf("|||"))).trim();
+        Vocabulary.id(paramName);
+        // System.err.println(String.format("VOCAB(%s) = %d", paramName, id));
       }
 
       inFile_names.close();
@@ -312,9 +311,9 @@ public class PROCore {
 
     // the parameter file contains one line per parameter
     // and one line for the normalization method
-    // indexing starts at 1 in these arrays 
-    for ( int p = 0; p <= numParams; ++p )
-	lambda.add(new Double(0));
+    // indexing starts at 1 in these arrays
+    for (int p = 0; p <= numParams; ++p)
+      lambda.add(new Double(0));
     bestLambda.add(new Double(0));
     // why only lambda is a list? because the size of lambda
     // may increase over time, but other arrays are specified in
@@ -381,7 +380,7 @@ public class PROCore {
     EvaluationMetric.set_tmpDirPrefix(tmpDirPrefix);
 
     evalMetric = EvaluationMetric.getMetric(metricName, metricOptions);
-    //used only if returnBest = true
+    // used only if returnBest = true
     prevMetricScore = evalMetric.getToBeMinimized() ? PosInf : NegInf;
 
     // length of sufficient statistics
@@ -391,8 +390,8 @@ public class PROCore {
     // set static data members for the IntermediateOptimizer class
     /*
      * IntermediateOptimizer.set_MERTparams(numSentences, numDocuments, docOfSentence,
-     * docSubsetInfo, numParams, normalizationOptions, isOptimizable
-     * oneModificationPerIteration, evalMetric, tmpDirPrefix, verbosity);
+     * docSubsetInfo, numParams, normalizationOptions, isOptimizable oneModificationPerIteration,
+     * evalMetric, tmpDirPrefix, verbosity);
      */
 
     // print info
@@ -418,7 +417,7 @@ public class PROCore {
       println("c    Default value\tOptimizable?\tRand. val. range", 1);
 
       for (int c = 1; c <= numParams; ++c) {
-          print(c + "     " + f4.format(lambda.get(c).doubleValue()) + "\t\t", 1);
+        print(c + "     " + f4.format(lambda.get(c).doubleValue()) + "\t\t", 1);
 
         if (!isOptimizable[c]) {
           println(" No", 1);
@@ -560,12 +559,12 @@ public class PROCore {
     println("----------------------------------------------------", 1);
     println("", 1);
 
-    if ( ! returnBest )
-	println("FINAL lambda: " + lambdaToString(lambda), 1);
-        // + " (" + metricName_display + ": " + FINAL_score + ")",1);
+    if (!returnBest)
+      println("FINAL lambda: " + lambdaToString(lambda), 1);
+    // + " (" + metricName_display + ": " + FINAL_score + ")",1);
     else
-	println("BEST lambda: " + lambdaToString(lambda), 1);
-        // + " (" + metricName_display + ": " + FINAL_score + ")",1);
+      println("BEST lambda: " + lambdaToString(lambda), 1);
+    // + " (" + metricName_display + ": " + FINAL_score + ")",1);
 
     // delete intermediate .temp.*.it* decoder output files
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
@@ -592,7 +591,7 @@ public class PROCore {
   // this is the key function!
   @SuppressWarnings("unchecked")
   public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts,
-				       int earlyStop, int[] maxIndex) {
+      int earlyStop, int[] maxIndex) {
     double FINAL_score = 0;
 
     double[] retA = new double[3];
@@ -629,9 +628,9 @@ public class PROCore {
       /***************/
 
       if (iteration == 1) {
-	  println("Decoding using initial weight vector " + lambdaToString(lambda), 1);
+        println("Decoding using initial weight vector " + lambdaToString(lambda), 1);
       } else {
-	  println("Redecoding using weight vector " + lambdaToString(lambda), 1);
+        println("Redecoding using weight vector " + lambdaToString(lambda), 1);
       }
 
       // generate the n-best file after decoding
@@ -704,7 +703,7 @@ public class PROCore {
       // initLambda[0] is not used!
       double[] initialLambda = new double[1 + numParams];
       for (int i = 1; i <= numParams; ++i)
-	  initialLambda[i] = lambda.get(i);
+        initialLambda[i] = lambda.get(i);
 
       // the "score" in initialScore refers to that
       // assigned by the evaluation metric)
@@ -891,19 +890,19 @@ public class PROCore {
                 // extract feature value
                 featVal_str = feats_str.split("\\s+");
 
-		if (feats_str.indexOf('=') != -1) {
-                    for (String featurePair : featVal_str) {
-			String[] pair = featurePair.split("=");
-			String name = pair[0];
-			Double value = Double.parseDouble(pair[1]);
-			int featId = Vocabulary.id(name);
-			//need to identify newly fired feats here
-			if (featId > numParams) {
-			    ++numParams;
-			    lambda.add(new Double(0));
-			}
+                if (feats_str.indexOf('=') != -1) {
+                  for (String featurePair : featVal_str) {
+                    String[] pair = featurePair.split("=");
+                    String name = pair[0];
+                    Double value = Double.parseDouble(pair[1]);
+                    int featId = Vocabulary.id(name);
+                    // need to identify newly fired feats here
+                    if (featId > numParams) {
+                      ++numParams;
+                      lambda.add(new Double(0));
                     }
-		}
+                  }
+                }
                 existingCandStats.put(sents_str, stats_str);
                 candCount[i] += 1;
                 newCandidatesAdded[it] += 1;
@@ -1029,8 +1028,8 @@ public class PROCore {
         BufferedReader inFile_statsMergedKnown = new BufferedReader(new InputStreamReader(
             instream_statsMergedKnown, "utf8"));
 
-	//num of features before observing new firing features from this iteration
-	numParamsOld = numParams;
+        // num of features before observing new firing features from this iteration
+        numParamsOld = numParams;
 
         for (int i = 0; i < numSentences; ++i) {
           // reprocess candidates from previous iterations
@@ -1091,20 +1090,20 @@ public class PROCore {
               stats_hash[i].put(sents_str, stats_str);
 
               featVal_str = feats_str.split("\\s+");
-	      
-	      if (feats_str.indexOf('=') != -1) {
-                  for (String featurePair : featVal_str) {
-		      String[] pair = featurePair.split("=");
-		      String name = pair[0];
-		      Double value = Double.parseDouble(pair[1]);
-		      int featId = Vocabulary.id(name);
-		      //need to identify newly fired feats here
-		      if (featId > numParams) {
-			  ++numParams;
-			  lambda.add(new Double(0));
-		      }
-		  }
-	      }
+
+              if (feats_str.indexOf('=') != -1) {
+                for (String featurePair : featVal_str) {
+                  String[] pair = featurePair.split("=");
+                  String name = pair[0];
+                  Double value = Double.parseDouble(pair[1]);
+                  int featId = Vocabulary.id(name);
+                  // need to identify newly fired feats here
+                  if (featId > numParams) {
+                    ++numParams;
+                    lambda.add(new Double(0));
+                  }
+                }
+              }
               existingCandStats.put(sents_str, stats_str);
               candCount[i] += 1;
 
@@ -1193,8 +1192,8 @@ public class PROCore {
 
         println("", 1);
 
-	println("Number of features observed so far: " + numParams);
-	println("", 1);
+        println("Number of features observed so far: " + numParams);
+        println("", 1);
 
       } catch (FileNotFoundException e) {
         System.err.println("FileNotFoundException in PROCore.run_single_iteration(6): "
@@ -1212,16 +1211,16 @@ public class PROCore {
           println("", 1);
           println("---  PRO iteration #" + iteration + " ending @ " + (new Date()) + "  ---", 1);
           println("", 1);
-	  deleteFile(tmpDirPrefix + "temp.stats.merged");
+          deleteFile(tmpDirPrefix + "temp.stats.merged");
 
-	  if (returnBest) {
-	      //note that bestLambda.size() <= lambda.size()
-	      for ( int p = 1; p < bestLambda.size(); ++p )
-		  lambda.set(p, bestLambda.get(p));
-	      //and set the rest of lambda to be 0
-	      for ( int p = 0; p < lambda.size() - bestLambda.size(); ++p )
-		  lambda.set(p+bestLambda.size(), new Double(0));
-	  }
+          if (returnBest) {
+            // note that bestLambda.size() <= lambda.size()
+            for (int p = 1; p < bestLambda.size(); ++p)
+              lambda.set(p, bestLambda.get(p));
+            // and set the rest of lambda to be 0
+            for (int p = 0; p < lambda.size() - bestLambda.size(); ++p)
+              lambda.set(p + bestLambda.size(), new Double(0));
+          }
 
           return null; // this means that the old values should be kept by the caller
         } else {
@@ -1238,12 +1237,12 @@ public class PROCore {
 
       Vector<String> output = new Vector<String>();
 
-      //note: initialLambda[] has length = numParamsOld
-      //augmented with new feature weights, initial values are 0
+      // note: initialLambda[] has length = numParamsOld
+      // augmented with new feature weights, initial values are 0
       double[] initialLambdaNew = new double[1 + numParams];
       System.arraycopy(initialLambda, 1, initialLambdaNew, 1, numParamsOld);
 
-      //finalLambda[] has length = numParams (considering new features)
+      // finalLambda[] has length = numParams (considering new features)
       double[] finalLambda = new double[1 + numParams];
 
       Optimizer opt = new Optimizer(seed + iteration, isOptimizable, output, initialLambdaNew,
@@ -1251,34 +1250,34 @@ public class PROCore {
           classifierAlg, classifierParams);
       finalLambda = opt.run_Optimizer();
 
-      if ( returnBest ) {
-	  double metricScore = opt.getMetricScore();
-	  if ( ! evalMetric.getToBeMinimized() ) {
-	      if ( metricScore > prevMetricScore ) {
-		  prevMetricScore = metricScore;
-		  for ( int p = 1; p < bestLambda.size(); ++p )
-		      bestLambda.set(p, finalLambda[p]);
-		  if ( 1 + numParams > bestLambda.size() ) {
-		      for ( int p = bestLambda.size(); p <= numParams; ++p )
-			  bestLambda.add(p, finalLambda[p]);
-		  }
-	      }
-	  } else {
-	      if ( metricScore < prevMetricScore ) {
-		  prevMetricScore = metricScore;
-		  for ( int p = 1; p < bestLambda.size(); ++p )
-		      bestLambda.set(p, finalLambda[p]);
-		  if ( 1 + numParams > bestLambda.size() ) {
-		      for ( int p = bestLambda.size(); p <= numParams; ++p )
-			  bestLambda.add(p, finalLambda[p]);
-		  }
-	      }
-	  }
+      if (returnBest) {
+        double metricScore = opt.getMetricScore();
+        if (!evalMetric.getToBeMinimized()) {
+          if (metricScore > prevMetricScore) {
+            prevMetricScore = metricScore;
+            for (int p = 1; p < bestLambda.size(); ++p)
+              bestLambda.set(p, finalLambda[p]);
+            if (1 + numParams > bestLambda.size()) {
+              for (int p = bestLambda.size(); p <= numParams; ++p)
+                bestLambda.add(p, finalLambda[p]);
+            }
+          }
+        } else {
+          if (metricScore < prevMetricScore) {
+            prevMetricScore = metricScore;
+            for (int p = 1; p < bestLambda.size(); ++p)
+              bestLambda.set(p, finalLambda[p]);
+            if (1 + numParams > bestLambda.size()) {
+              for (int p = bestLambda.size(); p <= numParams; ++p)
+                bestLambda.add(p, finalLambda[p]);
+            }
+          }
+        }
       }
 
       // System.out.println(finalLambda.length);
       // for( int i=0; i<finalLambda.length-1; i++ )
-      // 	   System.out.print(finalLambda[i+1]+" ");
+      // System.out.print(finalLambda[i+1]+" ");
       // System.out.println();
 
       /************* end optimization **************/
@@ -1291,12 +1290,12 @@ public class PROCore {
       boolean anyParamChangedSignificantly = false;
 
       for (int c = 1; c <= numParams; ++c) {
-	  if (finalLambda[c] != lambda.get(c)) {
-	      anyParamChanged = true;
-	  }
-	  if (Math.abs(finalLambda[c] - lambda.get(c)) > stopSigValue) {
-	      anyParamChangedSignificantly = true;
-	  }
+        if (finalLambda[c] != lambda.get(c)) {
+          anyParamChanged = true;
+        }
+        if (Math.abs(finalLambda[c] - lambda.get(c)) > stopSigValue) {
+          anyParamChangedSignificantly = true;
+        }
       }
 
       // System.arraycopy(finalLambda,1,lambda,1,numParams);
@@ -1331,13 +1330,13 @@ public class PROCore {
             + " consecutive iterations; exiting PRO.", 1);
         println("", 1);
 
-	if ( returnBest ) {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, bestLambda.get(f));
-	} else {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, finalLambda[f]);
-	}
+        if (returnBest) {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, bestLambda.get(f));
+        } else {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, finalLambda[f]);
+        }
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1347,13 +1346,13 @@ public class PROCore {
         println("Maximum number of PRO iterations reached; exiting PRO.", 1);
         println("", 1);
 
-	if ( returnBest ) {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, bestLambda.get(f));
-	} else {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, finalLambda[f]);
-	}
+        if (returnBest) {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, bestLambda.get(f));
+        } else {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, finalLambda[f]);
+        }
 
         break; // exit for (iteration) loop
       }
@@ -1361,10 +1360,9 @@ public class PROCore {
       // use the new wt vector to decode the next iteration
       // (interpolation with previous wt vector)
       for (int i = 1; i <= numParams; i++)
-	  lambda.set(i, interCoef * finalLambda[i] + (1 - interCoef) * lambda.get(i).doubleValue());
+        lambda.set(i, interCoef * finalLambda[i] + (1 - interCoef) * lambda.get(i).doubleValue());
 
-      println("Next iteration will decode with lambda: "
-	      + lambdaToString(lambda), 1);
+      println("Next iteration will decode with lambda: " + lambdaToString(lambda), 1);
       println("", 1);
 
       // printMemoryUsage();
@@ -1392,11 +1390,11 @@ public class PROCore {
   private String lambdaToString(ArrayList<Double> lambdaA) {
     String retStr = "{";
     int featToPrint = numParams > 15 ? 15 : numParams;
-    //print at most the first 15 features
+    // print at most the first 15 features
 
     retStr += "(listing the first " + featToPrint + " lambdas)";
     for (int c = 1; c <= featToPrint - 1; ++c) {
-        retStr += "" + String.format("%.4f", lambdaA.get(c).doubleValue()) + ", ";
+      retStr += "" + String.format("%.4f", lambdaA.get(c).doubleValue()) + ", ";
     }
     retStr += "" + String.format("%.4f", lambdaA.get(numParams).doubleValue()) + "}";
 
@@ -1565,7 +1563,8 @@ public class PROCore {
 
   }
 
-  private void createConfigFile(ArrayList<Double> params, String cfgFileName, String templateFileName) {
+  private void createConfigFile(ArrayList<Double> params, String cfgFileName,
+      String templateFileName) {
     try {
       // i.e. create cfgFileName, which is similar to templateFileName, but with
       // params[] as parameter values
@@ -1575,33 +1574,33 @@ public class PROCore {
 
       BufferedReader inFeatDefFile = null;
       PrintWriter outFeatDefFile = null;
-      int origFeatNum = 0; //feat num in the template file
+      int origFeatNum = 0; // feat num in the template file
 
       String line = inFile.readLine();
       while (line != null) {
-          int c_match = -1;
-          for (int c = 1; c <= numParams; ++c) {
-	      if (line.startsWith(Vocabulary.word(c) + " ")) {
-		  c_match = c;
-		  ++origFeatNum;
-		  break;
-	      }
+        int c_match = -1;
+        for (int c = 1; c <= numParams; ++c) {
+          if (line.startsWith(Vocabulary.word(c) + " ")) {
+            c_match = c;
+            ++origFeatNum;
+            break;
           }
-	  
-          if (c_match == -1) {
-	      outFile.println(line);
-          } else {
-	      if ( Math.abs(params.get(c_match).doubleValue()) > 1e-20 )
-		  outFile.println(Vocabulary.word(c_match) + " " + params.get(c_match));
-          }
-	  
-          line = inFile.readLine();
+        }
+
+        if (c_match == -1) {
+          outFile.println(line);
+        } else {
+          if (Math.abs(params.get(c_match).doubleValue()) > 1e-20)
+            outFile.println(Vocabulary.word(c_match) + " " + params.get(c_match));
+        }
+
+        line = inFile.readLine();
       }
 
-      //now append weights of new features
-      for (int c = origFeatNum+1; c <= numParams; ++c) {
-	  if ( Math.abs(params.get(c).doubleValue()) > 1e-20 )
-	      outFile.println(Vocabulary.word(c) + " " + params.get(c));
+      // now append weights of new features
+      for (int c = origFeatNum + 1; c <= numParams; ++c) {
+        if (Math.abs(params.get(c).doubleValue()) > 1e-20)
+          outFile.println(Vocabulary.word(c) + " " + params.get(c));
       }
 
       inFile.close();
@@ -1680,7 +1679,7 @@ public class PROCore {
           System.exit(21);
         }
 
-	// check for odd values
+        // check for odd values
         if (minRandValue[c] == maxRandValue[c]) {
           println("Warning: lambda[" + c + "] has " + "minRandValue = maxRandValue = "
               + minRandValue[c] + ".", 1);
@@ -1974,7 +1973,7 @@ public class PROCore {
       try {
         PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
         for (int c = 1; c <= numParams; ++c) {
-	    outFile_lambdas.println(Vocabulary.word(c) + " ||| " + lambda.get(c).doubleValue());
+          outFile_lambdas.println(Vocabulary.word(c) + " ||| " + lambda.get(c).doubleValue());
         }
         outFile_lambdas.close();
 
@@ -2055,8 +2054,7 @@ public class PROCore {
           if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
             argsVector.add(paramA[0]);
             argsVector.add(paramA[1]);
-          } else if (paramA.length > 2
-              && (paramA[0].equals("-m") || paramA[0].equals("-docSet"))) {
+          } else if (paramA.length > 2 && (paramA[0].equals("-m") || paramA[0].equals("-docSet"))) {
             // -m (metricName), -docSet are allowed to have extra optinos
             for (int opt = 0; opt < paramA.length; ++opt) {
               argsVector.add(paramA[opt]);
@@ -2329,17 +2327,17 @@ public class PROCore {
       else if (option.equals("-Xi")) {
         Xi = Integer.parseInt(args[i + 1]);
       }
-      //return the best weight during tuning or not
+      // return the best weight during tuning or not
       else if (option.equals("-returnBest")) {
-	  int retBest = Integer.parseInt(args[i + 1]);
-	  if(retBest == 1)
-	      returnBest = true;
-	  else if(retBest == 0)
-	      returnBest = false;
-	  else {
-	      println("-returnBest must be either 0 or 1.");
-	      System.exit(10);
-	  }
+        int retBest = Integer.parseInt(args[i + 1]);
+        if (retBest == 1)
+          returnBest = true;
+        else if (retBest == 0)
+          returnBest = false;
+        else {
+          println("-returnBest must be either 0 or 1.");
+          System.exit(10);
+        }
       }
       // interpolation coefficient between current & previous weights
       else if (option.equals("-interCoef")) {
@@ -2993,7 +2991,7 @@ public class PROCore {
   }
 
   private ArrayList<Double> randomLambda() {
-    ArrayList<Double> retLambda = new ArrayList<Double>(1+numParams);
+    ArrayList<Double> retLambda = new ArrayList<Double>(1 + numParams);
 
     for (int c = 1; c <= numParams; ++c) {
       if (isOptimizable[c]) {
@@ -3003,7 +3001,7 @@ public class PROCore {
         randVal = minRandValue[c] + randVal; // number in [min,max]
         retLambda.set(c, randVal);
       } else {
-	  retLambda.set(c, defaultLambda[c]);
+        retLambda.set(c, defaultLambda[c]);
       }
     }
 
