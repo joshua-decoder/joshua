@@ -1447,12 +1447,12 @@ if (defined $TUNE_GRAMMAR) {
   $tm_copy_config_args = " -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN";
 }
 # If we specified a new glue grammar, put that in
-if (defined $GLUE_GRAMMAR_FILE) {
-  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
-  $tm_copy_config_args .= " -tm1/owner ${GLUE_OWNER}";
-} else {
+if ($GRAMMAR_TYPE eq "phrase") {
   # if there is no glue grammar, remove it from the config template
   $tm_copy_config_args .= " -tm1 DELETE";
+} elsif (defined $GLUE_GRAMMAR_FILE) {
+  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
+  $tm_copy_config_args .= " -tm1/owner ${GLUE_OWNER}";
 }
 
 # Now build the bundle
