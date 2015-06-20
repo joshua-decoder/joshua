@@ -13,13 +13,11 @@ rm -f joshua-$version && ln -s $JOSHUA joshua-$version
 
 wget -qr joshua-decoder.org
 
-# Save the current version and commit to a file
-echo "release version: $version" > VERSION
-echo "current commit: $(git rev-parse --verify HEAD)" >> VERSION
+ant version
 
 tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
-    joshua-$version/{README.md,VERSION,build.xml,logging.properties} \
+    joshua-$version/{README.md,VERSION,CHANGELOG,build.xml,logging.properties} \
     joshua-$version/src \
     joshua-$version/bin \
     joshua-$version/class \

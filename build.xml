@@ -57,15 +57,6 @@
     <!-- </if> -->
   </target>
 
-  <!-- Set git version -->
-  <target name="git-version" description="--> Store latest git commit ID">
-    <exec executable="git">
-      <arg value="rev-parse"/>
-      <arg value="--short"/>
-      <arg value="HEAD"/>
-    </exec>
-  </target>
-
   <target name="set-joshua-version" unless="env.JOSHUA_VERSION" description="--> Prompt user to set Joshua version environment variable">
     <fail message="Please set the $JOSHUA_VERSION environment variable." />
   </target>
@@ -170,7 +161,7 @@
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="check-joshua-home" description="--> Compile the Java code">
+  <target name="java" depends="check-joshua-home,version" description="--> Compile the Java code">
     <mkdir dir="${build}" />
     <javac compiler="javac1.7" srcdir="${src}" destdir="${build}" classpathref="compile.all.classpath" debug="on" encoding="utf8" sourcepath="" includeantruntime="false">
       <!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
@@ -214,6 +205,12 @@
   <target name="release" depends="set-joshua-version, devel-clean, init, thrax" description="--> Create a versioned release">
     <exec executable="./scripts/support/make-release.sh">
       <arg value="${env.JOSHUA_VERSION}" />
+    </exec>
+  </target>
+
+    <!-- Set git version -->
+  <target name="version" description="Build VERSION file">
+    <exec executable="./scripts/support/write-version.sh">
     </exec>
   </target>
 
