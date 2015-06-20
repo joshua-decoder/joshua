@@ -15,7 +15,6 @@ import stat
 from subprocess import CalledProcessError, Popen, PIPE
 import sys
 
-
 EXAMPLE = r"""
 Example invocation:
 
@@ -23,17 +22,17 @@ $JOSHUA/scripts/support/run_bundler.py \
   --force \
   --verbose \
   /path/to/origin/directory/test/model/joshua.config \
-  --root /path/to/origin/directory \
+  --root /path/to/origin/directory/test/model \
   new-bundle-directory \
   --copy-config-options \
     '-top-n 1 -output-format %S -mark-oovs false' \
-  --pack-tm 'pt /path/to/origin/directory/grammar.gz'
+  --pack-tm /path/to/origin/directory/grammar.gz
 
 Note: The options included in the value string for the --copy-config-options
 argument can either be Joshua options or options for the
 $JOSHUA/scripts/copy-config.pl script. The order of the --[pack-]tm options must
 be in the same order as the grammar configuration lines they intend to
-override in the joshua.config file.
+override in the joshua.config file, and there can be only one --pack-tm option.
 """
 
 README_TEMPLATE = """Joshua Configuration Run Bundle
