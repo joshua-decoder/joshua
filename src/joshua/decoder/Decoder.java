@@ -19,7 +19,6 @@ import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
-import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.io.TranslationRequest;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
