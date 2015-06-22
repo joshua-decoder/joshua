@@ -4,10 +4,11 @@
 
 set -u
 
-version=$1
-
 cd $JOSHUA
 ant clean java
+
+version=$(cat $JOSHUA/VERSION | grep ^current | awk '{print $NF}')
+
 [[ ! -d release ]] && mkdir release
 rm -f joshua-$version && ln -s $JOSHUA joshua-$version
 

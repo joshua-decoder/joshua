@@ -57,10 +57,6 @@
     <!-- </if> -->
   </target>
 
-  <target name="set-joshua-version" unless="env.JOSHUA_VERSION" description="--> Prompt user to set Joshua version environment variable">
-    <fail message="Please set the $JOSHUA_VERSION environment variable." />
-  </target>
-
   <target name="set-java-home" unless="env.JAVA_HOME" description="--> Prompt user to set JAVA_HOME environment variable">
     <fail message="Please set the $JAVA_HOME environment variable." />
     <!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX -->
@@ -202,10 +198,8 @@
   </target>
 
   <!-- Create a versioned release -->
-  <target name="release" depends="set-joshua-version, devel-clean, init, thrax" description="--> Create a versioned release">
-    <exec executable="./scripts/support/make-release.sh">
-      <arg value="${env.JOSHUA_VERSION}" />
-    </exec>
+  <target name="release" depends="devel-clean, init, thrax, version" description="--> Create a versioned release">
+    <exec executable="./scripts/support/make-release.sh" />
   </target>
 
     <!-- Set git version -->
