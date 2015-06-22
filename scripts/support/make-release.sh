@@ -12,7 +12,7 @@ version=$(cat $JOSHUA/VERSION | grep ^current | awk '{print $NF}')
 [[ ! -d release ]] && mkdir release
 rm -f joshua-$version && ln -s $JOSHUA joshua-$version
 
-wget -qr joshua-decoder.org
+wget -r http://joshua-decoder.org/
 
 ant version
 
