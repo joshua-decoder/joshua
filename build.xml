@@ -232,6 +232,11 @@
       <arg value="scripts/training/giza-pp" />
       <arg value="clean" />
     </exec>
+    <exec executable="make">
+      <arg value="-C" />
+      <arg value="scripts/training/symal" />
+      <arg value="clean" />
+    </exec>
     <exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
       <arg value="clean" />
     </exec>
