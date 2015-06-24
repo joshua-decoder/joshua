@@ -31,12 +31,14 @@ public class Optimizer {
 
   //run AdaGrad for one epoch
   public double[] runOptimizer() {
+      List<Integer> sents = new ArrayList<Integer>();
+      for( int i = 0; i < sentNum; ++i )
+	  sents.add(i);
+      double[] avgLambda = new double[initialLambda.length]; //only needed if averaging is required
+      for( int i = 0; i < initialLambda.length; ++i )
+	  avgLambda[i] = 0;
       for ( int iter = 0; iter < adagradIter; ++iter ) {
 	  System.arraycopy(finalLambda, 1, initialLambda, 1, paramDim);
-	  
-	  List<Integer> sents = new ArrayList<Integer>();
-	  for( int i = 0; i < sentNum; ++i )
-	      sents.add(i);
     	  if(needShuffle)
 	      Collections.shuffle(sents);
     
@@ -57,13 +59,17 @@ public class Optimizer {
 	  int numUpdate = 0;
 	  Iterator it;
 	  Integer diffFeatId;
-	  double[] avgLambda = new double[initialLambda.length]; //only needed if averaging is required
-	  for(int i=0; i<initialLambda.length; i++)
-	      avgLambda[i] = 0.0;
 
 	  //update weights
 	  Integer s;
 	  int sentCount = 0;
+	  double prevLambda = 0;
+	  double diffFeatVal = 0;
+	  double oldVal = 0;
+	  double gdStep = 0;
+	  double Hii = 0;
+	  double gradiiSquare = 0;
+	  int lastUpdateTime = 0;
 	  HashMap<Integer, Integer> lastUpdate = new HashMap<Integer, Integer>();
 	  HashMap<Integer, Double> lastVal = new HashMap<Integer, Double>();
 	  HashMap<Integer, Double> H = new HashMap<Integer, Double>();
@@ -147,10 +153,9 @@ public class Optimizer {
 			      featDiff.put(diffFeatId, -1.0*Double.parseDouble(featInfo[1]));
 		      }
 		  }
-		  
-		  //cost - margin
+
 		  //remember the model scores here are already scaled
-		  double singleLoss = evalMetric.getToBeMinimized() ? //cost should always be non-negative 
+		  double singleLoss = evalMetric.getToBeMinimized() ?
 		      (predMetric-oraMetric) - (oraScore-predScore)/featScale: 
 		      (oraMetric-predMetric) - (oraScore-predScore)/featScale;
 		  if(singleLoss > 0)
@@ -166,40 +171,45 @@ public class Optimizer {
 
 	      if( loss > 0 ) {
 	      //if(true) {
+		  ++numUpdate;
 		  //update weights (see Duchi'11, Eq.23. For l1-reg, use lazy update)
 		  Set<Integer> diffFeatSet = featDiff.keySet();
 		  it = diffFeatSet.iterator();
-		  double prevLambda = 0;
-		  double diffFeatVal = 0;
-		  double oldVal = 0;
-		  double gdStep = 0;
-		  double Hii = 0;
-		  double gradiiSquare = 0;
-		  double lastUpdateTime = 0;
-		  if( regularization == 1 ) { //l1-reg
-		      //for ( int p =1; p <=paramDim; ++p )
-		      //  System.out.print(p+"="+String.format("%.3f",finalLambda[p])+" ");
-		      //System.out.println();
-		      while(it.hasNext()) { //note these are all non-zero gradients!
-			  diffFeatId = (Integer)it.next();
-			  diffFeatVal = -1.0 * featDiff.get(diffFeatId) / thisBatchSize; //gradient
+		  while(it.hasNext()) { //note these are all non-zero gradients!
+		      diffFeatId = (Integer)it.next();
+		      diffFeatVal = -1.0 * featDiff.get(diffFeatId); //gradient
+		      if( regularization > 0 ) {
 			  lastUpdateTime =
 			      lastUpdate.get(diffFeatId) == null ? 0 : lastUpdate.get(diffFeatId);
-
-			  //System.out.print(diffFeatId+"="+String.format("%.3f",diffFeatVal)+" ");
-
-			  if( lastUpdateTime < numBatch - 1 ) {
-                              //haven't been updated (gradient=0) for at least 2 steps
+			  if( lastUpdateTime < numUpdate - 1 ) {
+			      //haven't been updated (gradient=0) for at least 2 steps
 			      //lazy compute prevLambda now
 			      oldVal =
 				  lastVal.get(diffFeatId) == null ? initialLambda[diffFeatId] : lastVal.get(diffFeatId);
 			      Hii =
 				  H.get(diffFeatId) == null ? 0 : H.get(diffFeatId);
-			      if(Math.abs(Hii) > 1e-20)
-				  prevLambda =
-				      Math.signum(oldVal) * clip( Math.abs(oldVal) - lam * eta * (numBatch - 1 - lastUpdateTime) / Hii );
-			      else
-				  prevLambda = 0;
+			      if(Math.abs(Hii) > 1e-20) {
+				  if( regularization == 1 )
+				      prevLambda =
+					  Math.signum(oldVal) * clip( Math.abs(oldVal) - lam * eta * (numBatch - 1 - lastUpdateTime) / Hii );
+				  else if( regularization == 2 ) {
+				      prevLambda =
+					  Math.pow( Hii/(lam+Hii), (numUpdate - 1 - lastUpdateTime) ) * oldVal;
+				      if(needAvg) { //fill the gap due to lazy update
+					  double prevLambdaCopy = prevLambda;
+					  double scale = Hii/(lam+Hii);
+					  for( int t = 0; t < numUpdate - 1 - lastUpdateTime; ++t ) {
+					      avgLambda[diffFeatId] += prevLambdaCopy;
+					      prevLambdaCopy /= scale;
+					  }
+				      }
+				  }
+			      } else {
+				  if( regularization == 1 )
+				      prevLambda = 0;
+				  else if( regularization == 2 )
+				      prevLambda = oldVal;
+			      }
 			  } else //just updated at last time step or just started
 			      prevLambda = finalLambda[diffFeatId];
 			  if(H.get(diffFeatId) != null) {
@@ -210,15 +220,18 @@ public class Optimizer {
 			  } else
 			      Hii = Math.abs(diffFeatVal);
 			  H.put(diffFeatId, Hii);
-			  gdStep = prevLambda - eta * diffFeatVal / Hii;
-			  finalLambda[diffFeatId] = Math.signum(gdStep) * clip( Math.abs(gdStep) - lam * eta / Hii );
-			  lastUpdate.put(diffFeatId, numBatch);
+			  //update the weight
+			  if( regularization == 1 ) {
+			      gdStep = prevLambda - eta * diffFeatVal / Hii;
+			      finalLambda[diffFeatId] = Math.signum(gdStep) * clip( Math.abs(gdStep) - lam * eta / Hii );
+			  } else if(regularization == 2 ) {
+			      finalLambda[diffFeatId] = (Hii * prevLambda - eta * diffFeatVal) / (lam + Hii);
+			      if(needAvg)
+				  avgLambda[diffFeatId] += finalLambda[diffFeatId];
+			  }
+			  lastUpdate.put(diffFeatId, numUpdate);
 			  lastVal.put(diffFeatId, finalLambda[diffFeatId]);
-		      }
-		  } else if( regularization == 2 ) {
-		      while(it.hasNext()) { //note these are all non-zero gradients!
-			  diffFeatId = (Integer)it.next();
-			  diffFeatVal = -1.0 * featDiff.get(diffFeatId) / thisBatchSize; //gradient
+		      } else { //if no regularization
 			  if(H.get(diffFeatId) != null) {
 			      gradiiSquare = H.get(diffFeatId);
 			      gradiiSquare *= gradiiSquare;
@@ -227,37 +240,82 @@ public class Optimizer {
 			  } else
 			      Hii = Math.abs(diffFeatVal);
 			  H.put(diffFeatId, Hii);
-			  finalLambda[diffFeatId] = (Hii * finalLambda[diffFeatId] - eta * diffFeatVal) / (lam + Hii);
+			  finalLambda[diffFeatId] = finalLambda[diffFeatId] - eta * diffFeatVal / Hii;
+			  if(needAvg)
+			      avgLambda[diffFeatId] += finalLambda[diffFeatId];
 		      }
-		  }
-		  ++numUpdate;
-	      }
-	      if( regularization == 2 ) {
-		  if(needAvg) {
+		  } //while(it.hasNext())
+	      } //if(loss > 0)
+	      else { //no loss, therefore the weight update is skipped
+		  //however, the avg weights still need to be accumulated
+		  if( regularization == 0 ) {
 		      for( int i = 1; i < finalLambda.length; ++i )
 			  avgLambda[i] += finalLambda[i];
+		  } else if( regularization == 2 ) {
+		      if(needAvg) {
+			  //due to lazy update, we need to figure out the actual
+			  //weight vector at this point first...
+			  for( int i = 1; i < finalLambda.length; ++i ) {
+			      if( lastUpdate.get(i) != null ) {
+			      	  if( lastUpdate.get(i) < numUpdate ) {
+			      	      oldVal = lastVal.get(i);
+			      	      Hii = H.get(i);
+			      	      //lazy compute
+			      	      avgLambda[i] +=
+					  Math.pow( Hii/(lam+Hii), (numUpdate - lastUpdate.get(i)) ) * oldVal;
+			      	  } else
+			      	      avgLambda[i] += finalLambda[i];
+			      }
+			      avgLambda[i] += finalLambda[i];
+			  }
+		      }
 		  }
 	      }
-	  }
-	  if( regularization == 1 ) {
+	  } //while( sentCount < sentNum )
+	  if( regularization > 0 ) {
 	      for( int i = 1; i < finalLambda.length; ++i ) {
-		  if(lastUpdate.get(i) == null)
+		  //now lazy compute those weights that haven't been taken care of
+		  if( lastUpdate.get(i) == null )
 		      finalLambda[i] = 0;
+		  else if( lastUpdate.get(i) < numUpdate ) {
+		      oldVal = lastVal.get(i);
+		      Hii = H.get(i);
+		      if( regularization == 1 )
+		  	  finalLambda[i] =
+		  	      Math.signum(oldVal) * clip( Math.abs(oldVal) - lam * eta * (numUpdate - lastUpdate.get(i)) / Hii );
+		      else if( regularization == 2 ) {
+		  	  finalLambda[i] = 
+		  	      Math.pow( Hii/(lam+Hii), (numUpdate - lastUpdate.get(i)) ) * oldVal;
+		  	  if(needAvg) { //fill the gap due to lazy update
+		  	      double prevLambdaCopy = finalLambda[i];
+		  	      double scale = Hii/(lam+Hii);
+		  	      for( int t = 0; t < numUpdate - lastUpdate.get(i); ++t ) {
+		  		  avgLambda[i] += prevLambdaCopy;
+		  		  prevLambdaCopy /= scale;
+		  	      }
+		  	  }
+		      }
+		  }
+		  if( regularization == 2 && needAvg ) {
+		      if( iter == adagradIter - 1 )
+			  finalLambda[i] = avgLambda[i] / ( numBatch * adagradIter );
+		  }
 	      }
-	  } else if( regularization == 2 ) {
-	      if(needAvg) {
+	  } else { //if no regularization
+	      if( iter == adagradIter - 1 && needAvg ) {
 		  for( int i = 1; i < finalLambda.length; ++i )
-		      finalLambda[i] = avgLambda[i]/numBatch;
+		      finalLambda[i] = avgLambda[i] / ( numBatch * adagradIter );
 	      }
 	  }
-    
-	  /*
-	   * for( int i=0; i<finalLambda.length; i++ ) System.out.print(finalLambda[i]+" ");
-	   * System.out.println(); System.exit(0);
-	   */ 
 
-	  double initMetricScore = computeCorpusMetricScore(initialLambda); // compute the initial corpus-level metric score
-	  finalMetricScore = computeCorpusMetricScore(finalLambda); // compute final corpus-level metric score
+	  double initMetricScore;
+	  if (iter == 0) {
+	      initMetricScore = computeCorpusMetricScore(initialLambda);
+	      finalMetricScore = computeCorpusMetricScore(finalLambda);
+	  } else  {
+	      initMetricScore = finalMetricScore;
+	      finalMetricScore = computeCorpusMetricScore(finalLambda);
+	  }
 	  // prepare the printing info
 	  String result = " Initial "
 	      + evalMetric.get_metricName() + "=" + String.format("%.4f", initMetricScore) + " Final "
@@ -380,7 +438,7 @@ public class Optimizer {
     for (Iterator it = candSet.iterator(); it.hasNext();) {
       cand = it.next().toString();
       candMetric = computeSentMetric(sentId, cand); //compute metric score
-      
+
       //start to compute model score
       candScore = 0;
       featStr = feat_hash[sentId].get(cand).split("\\s+");

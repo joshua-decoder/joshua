@@ -119,7 +119,7 @@ public class Optimizer {
         feat_str = feat_hash[i].get(candStr).split("\\s+");
 
 	for (int f = 0; f < feat_str.length; f++) {
-            String[] feat_info = feat_str[f].split("[=:]");
+            String[] feat_info = feat_str[f].split("[=]");
             modelScore +=
                 Double.parseDouble(feat_info[1]) * finalLambda[Vocabulary.id(feat_info[0])];
 	}
@@ -258,7 +258,7 @@ public class Optimizer {
 	int feat_id;
 
         for (int i = 0; i < feat_str_j1.length; i++) {
-          feat_info = feat_str_j1[i].split("[:=]");
+          feat_info = feat_str_j1[i].split("[=]");
 	  feat_id = Vocabulary.id(feat_info[0]);
 	  if ( (feat_id < isOptimizable.length &&
 		isOptimizable[feat_id]) || 
@@ -266,7 +266,7 @@ public class Optimizer {
 	      feat_diff.put( feat_id, feat_info[1] );
         }
 	for (int i = 0; i < feat_str_j2.length; i++) {
-            feat_info = feat_str_j2[i].split("[:=]");
+            feat_info = feat_str_j2[i].split("[=]");
 	    feat_id = Vocabulary.id(feat_info[0]);
 	    if ( (feat_id < isOptimizable.length &&
 		  isOptimizable[feat_id]) || 

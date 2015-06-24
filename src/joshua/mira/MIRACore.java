@@ -218,6 +218,7 @@ public class MIRACore {
   private int oraSelectMode = 1;
   private int predSelectMode = 1;
   private int miraIter = 1;
+  private int batchSize = 1;
   private double C = 0.01; //relaxation coefficient
   private double R = 0.99; //corpus decay when pseudo corpus is used for bleu computation
     //private double sentForScale = 0.15; //percentage of sentences for scale factor estimation
@@ -1254,6 +1255,7 @@ public class MIRACore {
       Optimizer.evalMetric = evalMetric;
       Optimizer.normalizationOptions = normalizationOptions;
       Optimizer.needScale = needScale;
+      Optimizer.batchSize = batchSize;
 
       //if need to use bleu stats history
       if( iteration == 1 ) {
@@ -1681,7 +1683,12 @@ public class MIRACore {
       if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
+	dummy = inFile_init.next();
+        dummy = inFile_init.next();
       } else {
+        //the next two values are not used, only to be consistent with ZMERT's params file format
+	dummy = inFile_init.next();
+	dummy = inFile_init.next();
         // set minRandValue[c] and maxRandValue[c] (range for random values)
         dummy = inFile_init.next();
         if (dummy.equals("-Inf") || dummy.equals("+Inf")) {
@@ -2397,6 +2404,10 @@ public class MIRACore {
       // MIRA internal iterations
       else if (option.equals("-miraIter")) {
 	  miraIter = Integer.parseInt(args[i + 1]);
+      }
+      // mini-batch size
+      else if (option.equals("-batchSize")) {
+	  batchSize = Integer.parseInt(args[i + 1]);
       }
       // relaxation coefficient
       else if (option.equals("-C")) {
