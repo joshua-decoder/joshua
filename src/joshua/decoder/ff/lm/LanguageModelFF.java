@@ -102,15 +102,16 @@ public class LanguageModelFF extends StatefulFF {
      */
     private void read(String file_name) throws IOException {
 
-      File class_file = new File(file_name);
-      BufferedReader br = new BufferedReader(new FileReader(class_file));
-      String line;
-
-      while ((line = br.readLine()) != null) {
+      int lineno = 0;
+      for (String line: new joshua.util.io.LineReader(file_name, false)) {
+        lineno++;
         String[] lineComp = line.trim().split("\\s+");
-        this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+        try {
+          this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+          System.err.println(String.format("* WARNING: bad vocab line #%d '%s'", lineno, line));
+        }
       }
-      br.close();
     }
 
   }
