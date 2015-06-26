@@ -1386,7 +1386,7 @@ for my $i (0..$#LMFILES) {
 }
 
 if ($DO_BUILD_CLASS_LM) {
-  push(@feature_functions, "LanguageModel -lm_type kenlm -lm_order 9 -lm_file $RUNDIR/class_lm.gz -lm_class -class_map $CLASS_MAP");
+  push(@feature_functions, "LanguageModel -lm_type kenlm -lm_order 9 -lm_file $RUNDIR/class_lm.gz -class_map $CLASS_MAP");
   $weightstr .= "lm_$lm_index 1 ";
 }
 
