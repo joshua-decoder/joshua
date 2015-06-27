@@ -1656,7 +1656,12 @@ public class PROCore {
       if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
+	dummy = inFile_init.next();
+	dummy = inFile_init.next();
       } else {
+	//the next two values are not used, only to be consistent with ZMERT's params file format
+	dummy = inFile_init.next();
+	dummy = inFile_init.next();
         // set minRandValue[c] and maxRandValue[c] (range for random values)
         dummy = inFile_init.next();
         if (dummy.equals("-Inf") || dummy.equals("+Inf")) {
