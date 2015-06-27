@@ -217,11 +217,12 @@ public class MIRACore {
   private int predSelectMode = 1;
   private int miraIter = 1;
   private int batchSize = 1;
-  private double C = 0.01; //relaxation coefficient
-  private double R = 0.99; //corpus decay when pseudo corpus is used for bleu computation
-    //private double sentForScale = 0.15; //percentage of sentences for scale factor estimation
-  private double scoreRatio = 5.0; //sclale so that model_score/metric_score = scoreratio
-  private double prevMetricScore = 0; //final metric score of the previous iteration, used only when returnBest = true
+  private double C = 0.01; // relaxation coefficient
+  private double R = 0.99; // corpus decay when pseudo corpus is used for bleu computation
+  // private double sentForScale = 0.15; //percentage of sentences for scale factor estimation
+  private double scoreRatio = 5.0; // sclale so that model_score/metric_score = scoreratio
+  private double prevMetricScore = 0; // final metric score of the previous iteration, used only
+                                      // when returnBest = true
 
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, docInfoFileName, finalLambdaFileName;
@@ -1362,14 +1363,14 @@ public class MIRACore {
         println("Some early stopping criteria has been observed " + "in " + stopMinIts
             + " consecutive iterations; exiting MIRA.", 1);
         println("", 1);
-	
-	if ( returnBest ) {
-	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
-		lambda.set(f, bestLambda.get(f));
-	} else {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, finalLambda[f]);
-	}
+
+        if (returnBest) {
+          for (int f = 1; f <= bestLambda.size() - 1; ++f)
+            lambda.set(f, bestLambda.get(f));
+        } else {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, finalLambda[f]);
+        }
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1379,13 +1380,13 @@ public class MIRACore {
         println("Maximum number of MIRA iterations reached; exiting MIRA.", 1);
         println("", 1);
 
-	if ( returnBest ) {
-	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
-		lambda.set(f, bestLambda.get(f));
-	} else {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, finalLambda[f]);
-	}
+        if (returnBest) {
+          for (int f = 1; f <= bestLambda.size() - 1; ++f)
+            lambda.set(f, bestLambda.get(f));
+        } else {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, finalLambda[f]);
+        }
 
         break; // exit for (iteration) loop
       }
@@ -1688,12 +1689,12 @@ public class MIRACore {
       if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
-	dummy = inFile_init.next();
+        dummy = inFile_init.next();
         dummy = inFile_init.next();
       } else {
-        //the next two values are not used, only to be consistent with ZMERT's params file format
-	dummy = inFile_init.next();
-	dummy = inFile_init.next();
+        // the next two values are not used, only to be consistent with ZMERT's params file format
+        dummy = inFile_init.next();
+        dummy = inFile_init.next();
         // set minRandValue[c] and maxRandValue[c] (range for random values)
         dummy = inFile_init.next();
         if (dummy.equals("-Inf") || dummy.equals("+Inf")) {
@@ -2411,7 +2412,7 @@ public class MIRACore {
       }
       // mini-batch size
       else if (option.equals("-batchSize")) {
-	  batchSize = Integer.parseInt(args[i + 1]);
+        batchSize = Integer.parseInt(args[i + 1]);
       }
       // relaxation coefficient
       else if (option.equals("-C")) {

@@ -1330,14 +1330,14 @@ public class PROCore {
             + " consecutive iterations; exiting PRO.", 1);
         println("", 1);
 
-	if ( returnBest ) {
-	    //note that numParams >= bestLamba.size()-1 here!
-	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
-		lambda.set(f, bestLambda.get(f));
-	} else {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, finalLambda[f]);
-	}
+        if (returnBest) {
+          // note that numParams >= bestLamba.size()-1 here!
+          for (int f = 1; f <= bestLambda.size() - 1; ++f)
+            lambda.set(f, bestLambda.get(f));
+        } else {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, finalLambda[f]);
+        }
 
         break; // exit for (iteration) loop preemptively
       }
@@ -1347,14 +1347,14 @@ public class PROCore {
         println("Maximum number of PRO iterations reached; exiting PRO.", 1);
         println("", 1);
 
-	if ( returnBest ) {
-	    //note that numParams >= bestLamba.size()-1 here! 
-	    for ( int f = 1; f <= bestLambda.size()-1; ++f )
-		lambda.set(f, bestLambda.get(f));
-	} else {
-	    for ( int f = 1; f <= numParams; ++f )
-		lambda.set(f, finalLambda[f]);
-	}
+        if (returnBest) {
+          // note that numParams >= bestLamba.size()-1 here!
+          for (int f = 1; f <= bestLambda.size() - 1; ++f)
+            lambda.set(f, bestLambda.get(f));
+        } else {
+          for (int f = 1; f <= numParams; ++f)
+            lambda.set(f, finalLambda[f]);
+        }
 
         break; // exit for (iteration) loop
       }
@@ -1656,12 +1656,12 @@ public class PROCore {
       if (!isOptimizable[c]) { // skip next two values
         dummy = inFile_init.next();
         dummy = inFile_init.next();
-	dummy = inFile_init.next();
-	dummy = inFile_init.next();
+        dummy = inFile_init.next();
+        dummy = inFile_init.next();
       } else {
-	//the next two values are not used, only to be consistent with ZMERT's params file format
-	dummy = inFile_init.next();
-	dummy = inFile_init.next();
+        // the next two values are not used, only to be consistent with ZMERT's params file format
+        dummy = inFile_init.next();
+        dummy = inFile_init.next();
         // set minRandValue[c] and maxRandValue[c] (range for random values)
         dummy = inFile_init.next();
         if (dummy.equals("-Inf") || dummy.equals("+Inf")) {
