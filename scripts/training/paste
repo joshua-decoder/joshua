@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -C31
+#!/usr/bin/perl -C31
 
 # "Safe" version of paste that dies if the input files have different lengths.
 
