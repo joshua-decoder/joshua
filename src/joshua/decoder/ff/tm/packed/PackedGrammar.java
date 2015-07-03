@@ -515,7 +515,7 @@ public class PackedGrammar extends AbstractGrammar {
 
         ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
         for (int i = 0; i < num_rules; i++) {
-          if (type.equals("moses"))
+          if (type.equals("moses") || type.equals("phrase"))
             rules.add(new PackedPhrasePair(rule_position + 3 * i));
           else
             rules.add(new PackedRule(rule_position + 3 * i));

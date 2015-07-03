@@ -77,7 +77,7 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $BUNDLER = "$JOSHUA/scripts/support/run_bundler.py";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
-my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase" or "phrasal"
+my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase" or "moses" or "phrasal"
 my $SEARCH_ALGORITHM = "cky"; # or "stack" (for phrase-based)
 
 # Which GHKM extractor to use ("galley" or "moses")
@@ -370,7 +370,7 @@ foreach my $lmfile (@LMFILES) {
 # case-normalize this
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
 
-if ($GRAMMAR_TYPE eq "phrase") {
+if ($GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") {
   $SEARCH_ALGORITHM = "stack";
   $MAXSPAN = 0;
 }
@@ -506,8 +506,8 @@ if ($TUNER eq "kbmira" and ! defined $MOSES) {
   exit 1;
 }
 
-if ($GRAMMAR_TYPE eq "phrase" and ! defined $MOSES) {
-  print "* FATAL: building phrase-based models (--type phrase) requires setting the MOSES environment variable\n";
+if ($GRAMMAR_TYPE eq "moses" and ! defined $MOSES) {
+  print "* FATAL: building Moses phrase-based models (--type moses) requires setting the MOSES environment variable\n";
   exit 1;
 }
 
@@ -539,7 +539,7 @@ if (defined $HADOOP_CONF && ! -e $HADOOP_CONF) {
 ## Dependent variable setting ######################################################################
 ####################################################################################################
 
-my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "itg" or $GRAMMAR_TYPE eq "phrase") ? "X" : "OOV";
+my $OOV = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "itg" or $GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") ? "X" : "OOV";
 
 # The phrasal system should use the ITG grammar, allowing for limited distortion
 if ($GRAMMAR_TYPE eq "phrasal") {
@@ -864,8 +864,8 @@ PARSE:
 
 # Parsing only happens for SAMT grammars.
 
-if ($FIRST_STEP eq "PARSE" and ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal" or $GRAMMAR_TYPE eq "phrase")) {
-  print STDERR "* FATAL: parsing doesn't apply to hiero grammars; You need to add '--type samt|ghkm'\n";
+if ($FIRST_STEP eq "PARSE" and ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal" or $GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses")) {
+  print STDERR "* FATAL: parsing only applies to GHKM and SAMT grammars; you need to add '--type samt|ghkm'\n";
   exit;
 }
 
@@ -978,17 +978,18 @@ if (! defined $ALIGNMENT) {
   exit(1);
 }
 
-# Look for a pre-existing grammar, since building it is expensive, and something we want to
-# avoid if this is a rerun
+
+# Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
+# sure that this is the right behavior.
 if (-e "grammar.gz" && ! -z "grammar.gz") {
   chomp(my $is_empty = `gzip -cd grammar.gz | head | wc -l`);
   $GRAMMAR_FILE = "grammar.gz" unless ($is_empty == 0);
 }
 
-# If the grammar file wasn't specified
+# If the grammar file wasn't specified, or found, we need to build it!
 if (! defined $GRAMMAR_FILE) {
 
-  my $target_file = ($GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrasal" or $GRAMMAR_TYPE eq "phrase") ? $TRAIN{target} : $TRAIN{parsed};
+  my $target_file = ($GRAMMAR_TYPE eq "ghkm" or $GRAMMAR_TYPE eq "samt") ? $TRAIN{parsed} : $TRAIN{target};
 
   if ($GRAMMAR_TYPE eq "ghkm") {
     if ($GHKM_EXTRACTOR eq "galley") {
@@ -1039,7 +1040,7 @@ if (! defined $GRAMMAR_FILE) {
 
     $GRAMMAR_FILE = "grammar.gz";
 
-  } elsif ($GRAMMAR_TYPE eq "phrase") {
+  } elsif ($GRAMMAR_TYPE eq "moses") {
 
     mkdir("model") unless -d "model";
 
@@ -1078,17 +1079,13 @@ if (! defined $GRAMMAR_FILE) {
 
     $GRAMMAR_FILE = "model/phrase-table.gz";
 
-  } elsif ($GRAMMAR_TYPE eq "samt" or $GRAMMAR_TYPE eq "hiero") {
-
-    # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
-    # sure that this is the right behavior.
+  } elsif ($GRAMMAR_TYPE eq "samt" or $GRAMMAR_TYPE eq "hiero" or $GRAMMAR_TYPE eq "phrase") {
 
     # create the input file
     $cachepipe->cmd("thrax-input-file",
                     "$PASTE $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
                     $TRAIN{source}, $target_file, $ALIGNMENT,
                     "$DATA_DIRS{train}/thrax-input-file");
-
 
     # Rollout the hadoop cluster if needed.  This causes $HADOOP to be defined (pointing to the
     # unrolled directory).
@@ -1358,7 +1355,7 @@ if ($DO_FILTER_TM and defined $TUNE_GRAMMAR and ! $DOING_LATTICES and ! defined 
 # Create the glue grammars. This is done by looking at all the symbols in the grammar file and
 # creating all the needed rules. This is only done if there is a $TUNE_GRAMMAR defined (which
 # can be skipped if we skip straight to the tuning step).
-if (defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase") {
+if (defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-tune",
                     "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
@@ -1395,7 +1392,7 @@ if ($DO_BUILD_CLASS_LM) {
 if ($DOING_LATTICES) {
   push(@feature_functions, "SourcePath");
 }
-if ($GRAMMAR_TYPE eq "phrase") {
+if ($GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") {
   push(@feature_functions, "Distortion");
   push(@feature_functions, "PhrasePenalty");
 
@@ -1414,14 +1411,14 @@ if (defined $TUNE_GRAMMAR) {
   }
 
   # Glue grammars are only needed for hierarchical models
-  if ($GRAMMAR_TYPE ne "phrase") {
+  if ($GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
     # Glue grammar
     $weightstr .= "tm_${GLUE_OWNER}_0 1 ";
   }
 }
 
 my $tm_type = $GRAMMAR_TYPE;
-if ($GRAMMAR_TYPE eq "phrase") {
+if ($GRAMMAR_TYPE eq "moses") {
   $tm_type = "moses";
 }
 
@@ -1449,7 +1446,7 @@ if (defined $TUNE_GRAMMAR) {
   $tm_copy_config_args = " -tm0/type $tm_type -tm0/owner ${TM_OWNER} -tm0/maxspan $MAXSPAN";
 }
 # If we specified a new glue grammar, put that in
-if ($GRAMMAR_TYPE eq "phrase") {
+if ($GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") {
   # if there is no glue grammar, remove it from the config template
   $tm_copy_config_args .= " -tm1 DELETE";
 } elsif (defined $GLUE_GRAMMAR_FILE) {
@@ -1555,7 +1552,7 @@ my $testdir = "$RUNDIR/test";
 
 # Create and update the glue file, if the test grammar was provided (if not, we assume these
 # are in the $JOSHUA_CONFIG)
-if (defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase") {
+if (defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
                     "java -Xmx1g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",

@@ -57,7 +57,7 @@ if ($first_line =~ /^\[/) {
     exit 2;
   }
 } else {
-  # phrase-based grammar -- prepend nonterminal symbol
+  # Moses phrase-based grammar -- prepend nonterminal symbol and -log() the weights
   if (system("$CAT $grammar | $JOSHUA/scripts/support/moses_phrase_to_joshua.pl | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
     print STDERR "* FATAL: Couldn't sort the grammar (not enough memory? short on tmp space?)\n";
     exit 2;
