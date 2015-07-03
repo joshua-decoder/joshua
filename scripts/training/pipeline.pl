@@ -92,6 +92,9 @@ my $README = undef;
 # gzip-aware cat
 my $CAT = "$SCRIPTDIR/training/scat";
 
+# custom version of paste that dies on unequal file lengths
+my $PASTE = "$SCRIPTDIR/training/paste";
+
 # where processed data files are stored
 my $DATA_DIR = "data";
 
@@ -1082,7 +1085,7 @@ if (! defined $GRAMMAR_FILE) {
 
     # create the input file
     $cachepipe->cmd("thrax-input-file",
-                    "paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
+                    "$PASTE $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
                     $TRAIN{source}, $target_file, $ALIGNMENT,
                     "$DATA_DIRS{train}/thrax-input-file");
 
@@ -1746,7 +1749,7 @@ sub prepare_data {
   my $infiles =  join(" ", @infiles);
   my $outfiles = join(" ", @outfiles);
   $cachepipe->cmd("$label-copy-and-filter",
-                  "paste $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
+                  "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
                   @indeps, @outfiles);
   # Done concatenating and filtering files
 
@@ -1787,7 +1790,7 @@ sub prepare_data {
 
 		# trim training data
 		$cachepipe->cmd("$label-trim",
-										"paste $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $outfilelist",
+										"$PASTE $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $outfilelist",
                     @infiles,
                     @outfiles);
 		$prefix .= ".$maxlen";
