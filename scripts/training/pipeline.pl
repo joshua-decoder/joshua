@@ -1165,6 +1165,29 @@ if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
   $PREPPED{TUNE} = 1;
 }
 
+
+# figure out how many references there are
+my $numrefs = get_numrefs($TUNE{target});
+
+# make sure the dev source exist
+if (! -e $TUNE{source}) {
+  print STDERR "* FATAL: couldn't fine tuning source file '$TUNE{source}'\n";
+  exit 1;
+}
+if ($numrefs > 1) {
+  for my $i (0..$numrefs-1) {
+		if (! -e "$TUNE{target}.$i") {
+			print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}.$i'\n";
+			exit 1;
+		}
+  }
+} else {
+  if (! -e $TUNE{target}) {
+		print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}'\n";
+		exit 1;
+  }
+}
+
 sub compile_lm($) {
   my $lmfile = shift;
   if ($LM_TYPE eq "kenlm") {
@@ -1315,28 +1338,6 @@ if ($MERGE_LMS) {
 }
 
 system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
-
-# figure out how many references there are
-my $numrefs = get_numrefs($TUNE{target});
-
-# make sure the dev source exist
-if (! -e $TUNE{source}) {
-  print STDERR "* FATAL: couldn't fine tuning source file '$TUNE{source}'\n";
-  exit 1;
-}
-if ($numrefs > 1) {
-  for my $i (0..$numrefs-1) {
-		if (! -e "$TUNE{target}.$i") {
-			print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}.$i'\n";
-			exit 1;
-		}
-  }
-} else {
-  if (! -e $TUNE{target}) {
-		print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}'\n";
-		exit 1;
-  }
-}
 
 # Set $TUNE_GRAMMAR to a specifically-passed tuning grammar or the
 # main default grammar. Then update it if filtering was requested and
