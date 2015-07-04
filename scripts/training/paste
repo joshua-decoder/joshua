@@ -1,4 +1,4 @@
-#!/usr/bin/perl -C31
+#!/usr/bin/perl
 
 # "Safe" version of paste that dies if the input files have different lengths.
 
@@ -7,7 +7,7 @@ use warnings;
 use FileHandle;
 use List::Util qw/sum reduce/;
 
-my @fh = map { new FileHandle($_, "r") } @ARGV;
+my @fh = map { new FileHandle($_, "< :encoding(UTF-8)") } @ARGV;
 
 for (;;) {
   my @lines = map { $_->getline } @fh;
