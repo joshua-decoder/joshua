@@ -1481,8 +1481,9 @@ if (defined $TUNE_GRAMMAR) {
   }
 }
 
-# Update the config file location
-$JOSHUA_CONFIG = "$tunedir/model/joshua.config";
+# Copy the generated config to the tunedir, and update the config file location
+system("cp $tunedir/model/joshua.config $tunedir/joshua.config");
+$JOSHUA_CONFIG = "$tunedir/joshua.config";
 
 # Write the decoder run command. The decoder will use the config file in the bundled
 # directory, continually updating it.
