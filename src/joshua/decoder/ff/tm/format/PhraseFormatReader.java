@@ -1,7 +1,7 @@
 package joshua.decoder.ff.tm.format;
 
 import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.MosesPhraseRule;
+import joshua.decoder.ff.tm.PhraseRule;
 import joshua.util.io.LineReader;
 
 /***
@@ -19,38 +19,56 @@ import joshua.util.io.LineReader;
  *
  */
 
-public class MosesFormatReader extends HieroFormatReader {
+public class PhraseFormatReader extends HieroFormatReader {
 
   private int lhs;
+  
+  /* Whether we are reading a Moses phrase table or Thrax phrase table */
+  private boolean moses_format = false;
 
-  public MosesFormatReader(String grammarFile) {
+  public PhraseFormatReader(String grammarFile, boolean is_moses) {
     super(grammarFile);
     this.lhs = Vocabulary.id("[X]");
+    this.moses_format = is_moses;
   }
   
-  public MosesFormatReader() {
+  public PhraseFormatReader() {
     super();
     this.lhs = Vocabulary.id("[X]");
   }
   
   /**
-   * This munges a Moses-style phrase table into a grammar.
+   * When dealing with Moses format, this munges a Moses-style phrase table into a grammar.
    * 
    *    mots francaises ||| French words ||| 1 2 3 ||| 0-1 1-0
    *    
    * becomes
    * 
    *    [X] ||| [X,1] mots francaises ||| [X,1] French words ||| 1 2 3  ||| 0-1 1-0
+   *    
+   * For thrax-extracted phrasal grammars, it transforms
    * 
+   *    [X] ||| mots francaises ||| French words ||| 1 2 3 ||| 0-1 1-0
+   *
+   * into
+   * 
+   *    [X] ||| [X,1] mots francaises ||| [X,1] French words ||| 1 2 3 ||| 0-1 1-0
    */
   @Override
-  public MosesPhraseRule parseLine(String line) {
+  public PhraseRule parseLine(String line) {
     String[] fields = line.split(fieldDelimiter);
 
     int arity = 1;
     
+    /* For Thrax phrase-based grammars, skip over the beginning nonterminal */
+    int fieldIndex = 0;
+    if (! moses_format)
+      fieldIndex++;
+    
+    System.err.println(String.format("Starting with fieldIndex = %d", fieldIndex));
+    
     // foreign side
-    String[] foreignWords = fields[0].split("\\s+");
+    String[] foreignWords = fields[fieldIndex].split("\\s+");
     int[] french = new int[foreignWords.length + 1];
     french[0] = lhs; 
     for (int i = 0; i < foreignWords.length; i++) {
@@ -58,7 +76,8 @@ public class MosesFormatReader extends HieroFormatReader {
     }
 
     // English side
-    String[] englishWords = fields[1].split("\\s+");
+    fieldIndex++;
+    String[] englishWords = fields[fieldIndex].split("\\s+");
     int[] english = new int[englishWords.length + 1];
     english[0] = -1;
     for (int i = 0; i < englishWords.length; i++) {
@@ -66,14 +85,16 @@ public class MosesFormatReader extends HieroFormatReader {
     }
 
     // transform feature values
-    String sparse_features = fields[2];
+    fieldIndex++;
+    String sparse_features = fields[fieldIndex];
 
 //    System.out.println(String.format("parseLine: %s\n  ->%s", line, sparse_features));
 
     // alignments
-    String alignment = (fields.length > 3) ? fields[3] : null;
+    fieldIndex++;
+    String alignment = (fields.length > fieldIndex) ? fields[fieldIndex] : null;
 
-    return new MosesPhraseRule(lhs, french, english, sparse_features, arity, alignment);
+    return new PhraseRule(lhs, french, english, sparse_features, arity, alignment);
   }
   
   /**
@@ -82,9 +103,9 @@ public class MosesFormatReader extends HieroFormatReader {
    * @param args
    */
   public static void main(String[] args) {
-    MosesFormatReader reader = new MosesFormatReader();
+    PhraseFormatReader reader = new PhraseFormatReader();
     for (String line: new LineReader(System.in)) {
-      MosesPhraseRule rule = reader.parseLine(line);
+      PhraseRule rule = reader.parseLine(line);
       System.out.println(rule.textFormat());
     }    
   }

@@ -2,7 +2,7 @@ package joshua.decoder.ff.tm;
 
 /***
  * A class for reading in rules from a Moses phrase table. Most of the conversion work is done
- * in {@link joshua.decoder.ff.tm.format.MosesFormatReader}. This includes prepending every
+ * in {@link joshua.decoder.ff.tm.format.PhraseFormatReader}. This includes prepending every
  * rule with a nonterminal, so that the phrase-based decoder can assume the same hypergraph
  * format as the hierarchical decoder (by pretending to be a strictly left-branching grammar and
  * dispensing with the notion of coverage spans). However, prepending the nonterminals means all
@@ -16,11 +16,11 @@ package joshua.decoder.ff.tm;
  * @author Matt Post
  *
  */
-public class MosesPhraseRule extends Rule {
+public class PhraseRule extends Rule {
 
   private String mosesFeatureString = null;
   
-  public MosesPhraseRule(int lhs, int[] french, int[] english, String sparse_features, int arity,
+  public PhraseRule(int lhs, int[] french, int[] english, String sparse_features, int arity,
       String alignment) {
     super(lhs, french, english, null, arity, alignment);
     mosesFeatureString = sparse_features;

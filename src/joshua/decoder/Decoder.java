@@ -507,7 +507,7 @@ public class Decoder {
         String path = parsedArgs.get("path");
 
         Grammar grammar = null;
-        if (! type.equals("moses")) {
+        if (! type.equals("moses") && ! type.equals("phrase")) {
           if (new File(path).isDirectory()) {
             try {
               grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
@@ -529,7 +529,7 @@ public class Decoder {
               : -1;
 
           joshuaConfiguration.search_algorithm = "stack";
-          grammar = new PhraseTable(path, owner, joshuaConfiguration, maxSourceLen);
+          grammar = new PhraseTable(path, owner, type, joshuaConfiguration, maxSourceLen);
         }
 
         this.grammars.add(grammar);
