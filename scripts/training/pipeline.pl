@@ -1557,7 +1557,7 @@ if (defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "mo
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
                     "java -Xmx1g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
-                    $TEST_GRAMMAR,
+                    get_file_from_grammar($TEST_GRAMMAR),
                     "$DATA_DIRS{test}/grammar.glue");
     $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
     
