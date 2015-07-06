@@ -77,7 +77,7 @@ my $COPY_CONFIG = "$SCRIPTDIR/copy-config.pl";
 my $BUNDLER = "$JOSHUA/scripts/support/run_bundler.py";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd();
-my $GRAMMAR_TYPE = "hiero";  # or "itg" or "samt" or "ghkm" or "phrase" or "moses" or "phrasal"
+my $GRAMMAR_TYPE = undef; # hiero, itg, samt, ghkm, phrase, or moses
 my $SEARCH_ALGORITHM = "cky"; # or "stack" (for phrase-based)
 
 # Which GHKM extractor to use ("galley" or "moses")
@@ -365,6 +365,11 @@ foreach my $lmfile (@LMFILES) {
     print "* FATAL: couldn't find language model file '$lmfile'\n";
     exit 1;
   }
+}
+
+if (! defined $GRAMMAR_TYPE) {
+  print "* FATAL: You must define --type (hiero|samt|ghkm|phrase|moses)\n";
+  exit 47;
 }
 
 # case-normalize this
