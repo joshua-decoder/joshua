@@ -298,7 +298,7 @@ $TUNER = lc $TUNER;
 my $DOING_LATTICES = 0;
 
 # Prepend a space to the arguments list if it's non-empty and doesn't already have the space.
-my $JOSHUA_ARGS = $_JOSHUA_ARGS;
+my $JOSHUA_ARGS = "";
 
 my %DATA_DIRS = (
   train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
@@ -1488,6 +1488,7 @@ $JOSHUA_CONFIG = "$tunedir/joshua.config";
 # Write the decoder run command. The decoder will use the config file in the bundled
 # directory, continually updating it.
 $JOSHUA_ARGS .= " -output-format \"%i ||| %s ||| %f ||| %c\"";
+$JOSHUA_ARGS .= " $_JOSHUA_ARGS";
 
 open DEC_CMD, ">$tunedir/decoder_command";
 print DEC_CMD "cat $TUNE{source} | $tunedir/model/run-joshua.sh -m $JOSHUA_MEM -config $JOSHUA_CONFIG -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/output.nbest 2> $tunedir/joshua.log\n";
@@ -1614,7 +1615,7 @@ my $nbestoutput = "$testrun/output.nbest";
 my $output;
 
 # If we're decoding a lattice, also output the source side path we chose
-$JOSHUA_ARGS = $_JOSHUA_ARGS;
+$JOSHUA_ARGS = "";
 if ($DOING_LATTICES) {
   $JOSHUA_ARGS .= " -maxlen 0 -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
 }
@@ -1626,6 +1627,7 @@ if ($DO_MBR) {
   $JOSHUA_ARGS .= " -top-n 0 -output-format %s";
   $output = $bestoutput;
 }
+$JOSHUA_ARGS .= " $_JOSHUA_ARGS";
 
 # Write the decoder run command
 open DEC_CMD, ">$testrun/decoder_command";
