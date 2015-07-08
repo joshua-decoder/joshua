@@ -598,6 +598,15 @@ if ($TEST) {
   }
 }
 
+# Record the preprocessing scripts that were used
+mkdir("scripts") unless -e "scripts";
+symlink $NORMALIZER, "scripts/normalize.$SOURCE";
+symlink $NORMALIZER, "scripts/normalize.$TARGET";
+symlink $TOKENIZER_SOURCE, "scripts/tokenize.$SOURCE";
+symlink $TOKENIZER_TARGET, "scripts/tokenize.$TARGET";
+
+## Use of goto considered very useful
+
 if ($FIRST_STEP ne "FIRST") {
   if (@CORPORA > 1) {
 		print "* FATAL: you can't skip steps if you specify more than one --corpus\n";
