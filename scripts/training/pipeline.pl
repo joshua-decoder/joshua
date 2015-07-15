@@ -169,7 +169,7 @@ my $DO_BUILD_LM_FROM_CORPUS = 1;
 my $DO_BUILD_CLASS_LM = 0;
 my $CLASS_LM_CORPUS = undef;
 my $CLASS_MAP = undef;
-my $CLASS_LM_ORDER = 9;
+my $CLASS_LM_ORDER = 5;
 
 # whether to tokenize and lowercase training, tuning, and test data
 my $DO_PREPARE_CORPORA = 1;
@@ -1318,7 +1318,7 @@ if ($DO_BUILD_CLASS_LM) {
   my $mem = uc $BUILDLM_MEM;
   my $class_lmfile = "class_lm.gz";
   $cachepipe->cmd("classlm",
-                  "$JOSHUA/bin/lmplz -o 9 -T $TMPDIR -S $mem --discount_fallback=0.5 1 1.5 --verbose_header --text $CLASS_LM_CORPUS $LM_OPTIONS | gzip -9n > $class_lmfile",
+                  "$JOSHUA/bin/lmplz -o $CLASS_LM_ORDER -T $TMPDIR -S $mem --discount_fallback=0.5 1 1.5 --verbose_header --text $CLASS_LM_CORPUS $LM_OPTIONS | gzip -9n > $class_lmfile",
                   "$CLASS_LM_CORPUS",
                   $class_lmfile);
 }
