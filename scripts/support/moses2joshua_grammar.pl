@@ -9,11 +9,11 @@
 #
 # (1) The rule syntax. Moses' rules look like this:
 # 
-#     der [X][NN] [X] ||| of the [X][NN] [PP] ||| 0-0 0-1 1-2 ||| 1 ||| |||
+#     der [X][NN] [X] ||| of the [X][NN] [PP] ||| 0-0 0-1 1-2 ||| .301 .6989 ||| |||
 #
 # Whereas the corresponding Joshua rule looks like this:
 # 
-#     [PP] ||| der [NN] ||| of the [NN] ||| 1
+#     [PP] ||| der [NN,1] ||| of the [NN,1] ||| 0.5 0.2
 #
 # (This doesn't apply to phrase tables, of course).
 #
