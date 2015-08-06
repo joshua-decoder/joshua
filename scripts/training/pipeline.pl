@@ -103,6 +103,7 @@ my $DO_MBR = 0;
 
 # Which aligner to use. The options are "giza" or "berkeley".
 my $ALIGNER = "giza"; # "berkeley" or "giza" or "jacana"
+my $ALIGNER_CONF = "$JOSHUA/scripts/training/templates/alignment/word-align.conf";
 
 # Filter rules to the following maximum scope (Hopkins & Langmead, 2011).
 my $SCOPE = 3;
@@ -194,6 +195,9 @@ my $MERGE_LMS = 0;
 # Which tuner to use by default
 my $TUNER = "mert";  # or pro, mira, or kbmira (the latter calling out to Moses)
 
+# The metric to update to
+my $METRIC = "BLEU 4 closest";
+
 # The number of iterations of the mira to run
 my $TUNER_ITERATIONS = 15;
 
@@ -224,6 +228,7 @@ my $retval = GetOptions(
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
   "aligner-mem=s"     => \$ALIGNER_MEM,
+  "aligner-conf=s"   => \$ALIGNER_CONF,
   "giza-merge=s"      => \$GIZA_MERGE,
   "source=s"          => \$SOURCE,
   "target=s"         => \$TARGET,
@@ -264,6 +269,7 @@ my $retval = GetOptions(
   "tuner=s"           => \$TUNER,
   "tuner-mem=s"       => \$TUNER_MEM,
   "tuner-iterations=i" => \$TUNER_ITERATIONS,
+  "tuner-metric=s"    => \$METRIC,
   "thrax=s"           => \$THRAX,
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -516,8 +522,8 @@ if ($GRAMMAR_TYPE eq "moses" and ! defined $MOSES) {
   exit 1;
 }
 
-if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "local-mira" and $TUNER ne "pro" and $TUNER ne "kbmira") {
-  print "* FATAL: --tuner must be one of '[z]mert', 'pro', '[local]-mira', or 'kbmira'.\n";
+if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "pro" and $TUNER ne "kbmira") {
+  print "* FATAL: --tuner must be one of '[z]mert', 'pro', 'mira', or 'kbmira'.\n";
   exit 1;
 }
 
@@ -802,6 +808,7 @@ if (! defined $ALIGNMENT) {
   my $aligner_cmd = (
     "$SCRIPTDIR/training/paralign.pl "
     . " -aligner $ALIGNER"
+    . " -conf $ALIGNER_CONF"
     . " -num_threads 2"
     . " -giza_merge $GIZA_MERGE"
     . " -aligner_mem $ALIGNER_MEM"
