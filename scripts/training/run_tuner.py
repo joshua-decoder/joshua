@@ -44,7 +44,7 @@ ZMERT_CONFIG_TEMPLATE = """### MERT parameters
 -r       <REF>
 -rps     <NUMREFS>                   # references per sentence
 -p       <TUNEDIR>/params.txt        # parameter file
--m       BLEU 4 closest              # evaluation metric and its options
+-m       <METRIC>                    # evaluation metric and its options
 -maxIt   <ITERATIONS>                # maximum MERT iterations
 -ipi     20                          # number of intermediate initial points per iteration
 -cmd     <DECODER_COMMAND>           # file containing commands to run decoder
@@ -65,7 +65,7 @@ PRO_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -p	 <TUNEDIR>/params.txt
 
 #metric setting:
--m	 BLEU 4 closest
+-m	 <METRIC>
 #-m	 TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
 #-m	 TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
 #-m	 METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
@@ -282,7 +282,7 @@ def safe_symlink(to_path, from_path):
     os.symlink(to_path, from_path)
 
 
-def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output, iterations):
+def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output, metric, iterations):
     """Writes the config files for both Z-MERT and PRO (which run on the same codebase).
     Both of them write the file "params.txt", but they use different names for the config file,
     so that is a parameter."""
@@ -291,6 +291,7 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                    { 'REF': target,
                      'NUMREFS': num_refs,
                      'TUNEDIR': tunedir,
+                     'METRIC': metric,
                      'ITERATIONS': `iterations`,
                      'DECODER_COMMAND': command,
                      'DECODER_CONFIG': config,
@@ -335,7 +336,7 @@ def run_zmert(tunedir, source, target, command, config, output, opts):
 
     setup_configs(ZMERT_CONFIG_TEMPLATE, '%s/mert.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
-                  opts.iterations or 10)
+                  opts.metric, opts.iterations or 10)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.zmert.ZMERT -maxMem 4000 %s/mert.config > %s/mert.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -349,7 +350,7 @@ def run_pro(tunedir, source, target, command, config, output, opts):
 
     setup_configs(PRO_CONFIG_TEMPLATE, '%s/pro.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
-                  opts.iterations or 30)
+                  opts.metric, opts.iterations or 30)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -363,7 +364,7 @@ def run_mira(tunedir, source, target, command, config, output, opts):
 
     setup_configs(MIRA_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
-                  opts.iterations or 5)
+                  opts.metric, opts.iterations or 5)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.mira.MIRA %s/mira.config > %s/mira.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -419,6 +420,9 @@ def handle_args(clargs):
     parser.add_argument(
         '-i', '--iterations', type=int, 
         help='the maximum number of iterations to run the tuner for')
+    parser.add_argument(
+        '-m', '--metric', default='BLEU 4 closest',
+        help='the metric to optimize')
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='print informational messages'
