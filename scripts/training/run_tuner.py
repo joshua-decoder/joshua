@@ -276,7 +276,7 @@ def get_num_refs(prefix):
     
 
 def safe_symlink(to_path, from_path):
-    if (os.path.isfile(from_path)):
+    if os.path.isfile(from_path) or os.path.islink(from_path):
         os.unlink(from_path)
 
     os.symlink(to_path, from_path)
