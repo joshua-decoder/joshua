@@ -1095,7 +1095,6 @@ public class PROCore {
                 for (String featurePair : featVal_str) {
                   String[] pair = featurePair.split("=");
                   String name = pair[0];
-                  Double value = Double.parseDouble(pair[1]);
                   int featId = Vocabulary.id(name);
                   // need to identify newly fired feats here
                   if (featId > numParams) {

@@ -1,9 +1,5 @@
 package joshua.decoder.ff.lm;
 
-import java.io.BufferedReader;
-
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,6 +118,7 @@ public class LanguageModelFF extends StatefulFF {
     this.type = parsedArgs.get("lm_type");
     this.ngramOrder = Integer.parseInt(parsedArgs.get("lm_order")); 
     this.path = parsedArgs.get("lm_file");
+    
     if (parsedArgs.containsKey("class_map"))
       try {
         this.isClassLM = true;

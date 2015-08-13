@@ -897,13 +897,6 @@ public class MIRACore {
                 // extract feature value
                 featVal_str = feats_str.split("\\s+");
 
-                if (feats_str.indexOf('=') != -1) {
-                  for (String featurePair : featVal_str) {
-                    String[] pair = featurePair.split("=");
-                    String name = pair[0];
-                    Double value = Double.parseDouble(pair[1]);
-                  }
-                }
                 existingCandStats.put(sents_str, stats_str);
                 candCount[i] += 1;
                 newCandidatesAdded[it] += 1;
