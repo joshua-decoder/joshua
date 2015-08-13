@@ -9,7 +9,7 @@ closedir DIR;
 
 foreach my $dir (@dirs) {
   chomp(my $readme = `cat $dir/README`);
-  my $bleu = get_bleu("$dir/test/final-bleu");
+  my $bleu = get_scores("$dir/test/final-bleu", 100.0);
   my $time = get_time("$dir/test/final-times");
   # my $mbr =  get_bleu("$dir/test/final-bleu-mbr");
 
@@ -19,8 +19,9 @@ foreach my $dir (@dirs) {
   print "$dirstring\t$bleu\t$time\t$readme\n";
 }
 
-sub get_bleu {
-  my ($file) = @_;
+sub get_scores {
+  my ($file, $factor) = @_;
+  $factor = 1.0 unless $factor;
 
   my $score = 0.0;
   my $num_scores = 0;
@@ -32,7 +33,7 @@ sub get_bleu {
       $num_scores++ if $token eq "+";
     }
 
-    $score = $tokens[-1] * 100;
+    $score = $tokens[-1] * $factor;
   }
 
   return sprintf("%5.2f", $score) . "($num_scores)";
