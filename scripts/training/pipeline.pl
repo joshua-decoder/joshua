@@ -247,7 +247,7 @@ my $retval = GetOptions(
   "tune-grammar=s"    => \$_TUNE_GRAMMAR_FILE,
   "test-grammar=s"    => \$_TEST_GRAMMAR_FILE,
   "grammar=s"        => \$GRAMMAR_FILE,
-  "glue-grammar=s"     => \$GLUE_GRAMMAR_FILE,
+  "model=s"          => \$GRAMMAR_FILE,
   "maxspan=i"         => \$MAXSPAN,
   "mbr!"              => \$DO_MBR,
   "type=s"           => \$GRAMMAR_TYPE,
@@ -258,6 +258,7 @@ my $retval = GetOptions(
   "maxlen-test=i"        => \$MAXLEN_TEST,
   "tokenizer-source=s"      => \$TOKENIZER_SOURCE,
   "tokenizer-target=s"      => \$TOKENIZER_TARGET,
+  "normalizer=s"      => \$NORMALIZER,
   "joshua-config=s"   => \$_JOSHUA_CONFIG,
   "joshua-args=s"      => \$_JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
@@ -303,14 +304,18 @@ $TUNER = lc $TUNER;
 
 my $DOING_LATTICES = 0;
 
-# Prepend a space to the arguments list if it's non-empty and doesn't already have the space.
-my $JOSHUA_ARGS = "";
+my $JOSHUA_ARGS = (defined $_JOSHUA_ARGS) ? $_JOSHUA_ARGS : "";
 
 my %DATA_DIRS = (
   train => get_absolute_path("$RUNDIR/$DATA_DIR/train"),
   tune  => get_absolute_path("$RUNDIR/$DATA_DIR/tune"),
   test  => get_absolute_path("$RUNDIR/$DATA_DIR/test"),
 );
+
+if (! -x $NORMALIZER) {
+  print "* FATAL: couldn't find normalizer '$NORMALIZER'\n";
+  exit 1;
+}
 
 # capitalize these to offset a common error:
 $FIRST_STEP = uc($FIRST_STEP);
@@ -606,6 +611,8 @@ if ($TEST) {
 
 # Record the preprocessing scripts that were used
 mkdir("scripts") unless -e "scripts";
+unlink "scripts/normalize.$SOURCE";
+unlink "scripts/normalize.$TARGET";
 symlink $NORMALIZER, "scripts/normalize.$SOURCE";
 symlink $NORMALIZER, "scripts/normalize.$TARGET";
 symlink $TOKENIZER_SOURCE, "scripts/tokenize.$SOURCE";

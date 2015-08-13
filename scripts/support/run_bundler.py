@@ -103,6 +103,8 @@ options that may be useful during decoding include:
 """
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
+default_normalizer = os.path.join(JOSHUA_PATH, "scripts/training/normalize.pl")
+default_tokenizer = os.path.join(JOSHUA_PATH, "scripts/training/penn-treebank-tokenizer.perl")
 FILE_TYPE_TOKENS = ['lm', 'tm']
 FILE_TYPE_OPTIONS = ['-path', '-lm_file']
 
@@ -554,6 +556,15 @@ def handle_args(clargs):
     parser.add_argument(
         '--absolute', dest='absolute', action='store_true', default=False,
         help="Use absolute instead of relative paths for model file locations")
+    parser.add_argument(
+        '--source', dest='source',
+        help="Source language two-character code (ISO 639-1)")
+    parser.add_argument(
+        '--normalizer', default=default_normalizer,
+        help="source sentence normalizer that was applied to the model")
+    parser.add_argument(
+        '--tokenizer', default=default_tokenizer,
+        help="source sentence tokenizer that was applied to the model")
 
     return parser.parse_args(clargs)
 
