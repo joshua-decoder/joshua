@@ -193,7 +193,8 @@ my $GIZA_MERGE = "grow-diag-final";
 my $MERGE_LMS = 0;
 
 # Which tuner to use by default
-my $TUNER = "mert";  # or pro, mira, or kbmira (the latter calling out to Moses)
+my @TUNERS = ("mert", "pro", "mira", "adagrad", "kbmira");
+my $TUNER = "mert";
 
 # The metric to update to
 my $METRIC = "BLEU 4 closest";
@@ -528,8 +529,8 @@ if ($GRAMMAR_TYPE eq "moses" and ! defined $MOSES) {
   exit 1;
 }
 
-if ($TUNER ne "mert" and $TUNER ne "zmert" and $TUNER ne "mira" and $TUNER ne "pro" and $TUNER ne "kbmira") {
-  print "* FATAL: --tuner must be one of '[z]mert', 'pro', 'mira', or 'kbmira'.\n";
+if (! in($TUNER, \@TUNERS)) {
+  print "* FATAL: --tuner must be one of " . join(", ", @TUNERS) . $/;
   exit 1;
 }
 
@@ -1518,7 +1519,7 @@ close(DEC_CMD);
 chmod(0755,"$tunedir/decoder_command");
 
 # tune
-if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "mira") {
+if ($TUNER ne "kbmira") {
   $cachepipe->cmd(${TUNER}-${OPTIMIZER_RUN},
                   "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder $tunedir/decoder_command --decoder-config $JOSHUA_CONFIG --decoder-output-file $tunedir/output.nbest --decoder-log-file $tunedir/joshua.log --iterations $TUNER_ITERATIONS --metric '$METRIC'",
                   $TUNE{source},
@@ -1526,7 +1527,7 @@ if ($TUNER eq "mert" or $TUNER eq "zmert" or $TUNER eq "pro" or $TUNER eq "mira"
                   get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
                   "$tunedir/joshua.config.final");
 
-} elsif ($TUNER eq "kbmira") { # Moses' batch MIRA
+} else { # Moses' batch kbmira
   my $refs_path = $TUNE{target};
   $refs_path .= "." if (get_numrefs($TUNE{target}) > 1);
 
@@ -1984,6 +1985,12 @@ sub is_lattice {
   } else {
 		return 0;
   }
+}
+
+# Set membership: is value in array?
+sub in {
+  my ($value, $array) = @_;
+  return grep( /^$value$/, @$array );
 }
 
 # This function retrieves the names of all the features in the grammar. Dense features

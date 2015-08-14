@@ -130,7 +130,7 @@ MIRA_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -p <TUNEDIR>/params.txt
 
 #metric setting:
--m       BLEU 4 closest
+-m       <METRIC>
 #-m      TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
 #-m      TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
 #-m      METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
@@ -194,12 +194,92 @@ MIRA_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -runPercep 0
 """
 
+ADAGRAD_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
+# target sentences file name (in this case, file name prefix)
+-r	 <REF>
+
+# references per sentence
+-rps     <NUMREFS>
+
+# parameter file
+-p	 <TUNEDIR>/params.txt
+
+#metric setting:
+-m	 <METRIC>
+#-m	 TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
+#-m	 TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
+#-m	 METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
+#-m	 Meteor en lowercase '0.5 1.0 0.5 0.5' 'exact stem synonym paraphrase' '1.0 0.5 0.5 0.5' #CMU meteor interface
+
+# maximum iterations
+-maxIt	 <ITERATIONS>
+
+# file containing commands to run decoder
+-cmd	 <DECODER_COMMAND>
+
+# file prodcued by decoder
+-decOut	 <DECODER_OUTPUT>
+
+# decoder config file
+-dcfg	 <DECODER_CONFIG>
+
+# size of N-best list
+-N	 300
+
+# verbosity level (0-2; higher value => more verbose)
+-v	 1
+
+### PART 2: AdaGrad parameters
+#oracle selection method:
+#1: "hope"(default)
+#2: best metric score(ex: max BLEU)
+-oracleSelection 1 
+
+#prediction selection method:
+#1: "fear"(default)
+#2: max model score
+#3: worst metric score(ex: min BLEU)
+-predictionSelection 1
+
+#shuffle the training samples? (default:1)
+-needShuffle 1
+
+#average the weights after each epoch? (default:1)
+-needAvg 1
+
+#return the best weights during tuning? (default:1)
+-returnBest 1
+
+#when use BLEU/TER-BLEU as metric, use the pseudo corpus to compute BLEU? (default:1)
+-usePseudoCorpus 1
+
+#corpus decay coefficient (only valid when pseudo corpus is used for BLEU, default:0.99)
+-corpusDecay 0.99
+
+#scale the model score(in order to make it comparable to the metric score)?(default:1)
+-needScaling 1
+
+#options for scaling (only valid when -needScaling=1)
+-scoreRatio 5	#scale the model score so that abs(model_score/metric_score) \approx scoreRatio (default:5)
+
+#regularzation (0: no reg 1: l1-reg; 2: l2-reg. Default: 2)
+-regularization 2
+
+#regularization coefficient
+-lambda 0.1
+
+#step size coefficient
+-eta 0.1
+
+#mini-batch size (default: 10)
+-batchSize 10
+"""
+
 PARAMS_TEMPLATE = """<PARAMS>
 WordPenalty        ||| -2.844814  Opt  -Inf  +Inf  -5   0
 OOVPenalty         ||| 1          Fix     0     0   0   0
 normalization = absval 1 lm_0
 """
-
 
 def write_template(template, path, lookup):
     """Writes a template file, substituting variables of the form <NAME> for values found
@@ -372,7 +452,19 @@ def run_mira(tunedir, source, target, command, config, output, opts):
     safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.MIRA.final'),
                  os.path.join(tunedir, 'joshua.config.final'))
 
-    
+def run_adagrad():
+    """Runs ADAGRAD after setting up all its crazy file requirements."""
+
+    setup_configs(ADAGRAD_CONFIG_TEMPLATE, '%s/adagrad.config' % (tunedir),
+                  target, get_num_refs(target), tunedir, command, config, output,
+                  opts.metric, opts.iterations or 10)
+
+    tuner_mem = '4g'
+    call("java -d64 -Xmx%s -cp %s/class joshua.adagrad.AdaGrad %s/adagrad.config > %s/adagrad.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
+
+    safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.ADAGRAD.final'),
+                 os.path.join(tunedir, 'joshua.config.final'))
+
 def error_quit(message):
     logging.error(message)
     sys.exit(2)
@@ -398,7 +490,7 @@ def handle_args(clargs):
         help='path to tuning directory')
     parser.add_argument(
         '--tuner', default='zmert',
-        help='which tuner to use: zmert, pro, or mira')
+        help='which tuner to use: zmert, pro, mira, or adagrad')
     parser.add_argument(
         '--decoder', default='tune/decoder_command',
         help='The path to the decoder or wrapper script. This script is responsible for '
@@ -450,6 +542,9 @@ def main(argv):
         
     elif 'mira' in opts.tuner:
         run_mira(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
+
+    elif 'adagrad' in opts.tuner:
+        run_adagrad(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
 
 if __name__ == "__main__":
     try:
