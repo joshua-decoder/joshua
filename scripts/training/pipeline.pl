@@ -1520,7 +1520,7 @@ chmod(0755,"$tunedir/decoder_command");
 
 # tune
 if ($TUNER ne "kbmira") {
-  $cachepipe->cmd(${TUNER}-${OPTIMIZER_RUN},
+  $cachepipe->cmd("${TUNER}-${OPTIMIZER_RUN}",
                   "$SCRIPTDIR/training/run_tuner.py $TUNE{source} $TUNE{target} --tunedir $tunedir --tuner $TUNER --decoder $tunedir/decoder_command --decoder-config $JOSHUA_CONFIG --decoder-output-file $tunedir/output.nbest --decoder-log-file $tunedir/joshua.log --iterations $TUNER_ITERATIONS --metric '$METRIC'",
                   $TUNE{source},
                   $JOSHUA_CONFIG,
