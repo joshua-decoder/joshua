@@ -1511,7 +1511,7 @@ $JOSHUA_CONFIG = "$tunedir/joshua.config";
 # Write the decoder run command. The decoder will use the config file in the bundled
 # directory, continually updating it.
 $JOSHUA_ARGS .= " -output-format \"%i ||| %s ||| %f ||| %c\"";
-$JOSHUA_ARGS .= " $_JOSHUA_ARGS";
+$JOSHUA_ARGS .= " $_JOSHUA_ARGS" if defined $_JOSHUA_ARGS;
 
 open DEC_CMD, ">$tunedir/decoder_command";
 print DEC_CMD "cat $TUNE{source} | $tunemodeldir/run-joshua.sh -m $JOSHUA_MEM -config $JOSHUA_CONFIG -threads $NUM_THREADS $JOSHUA_ARGS > $tunedir/output.nbest 2> $tunedir/joshua.log\n";
