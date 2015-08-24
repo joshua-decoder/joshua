@@ -30,8 +30,9 @@ import joshua.util.io.LineReader;
  */
 public class JoshuaConfiguration {
   
-  // whether to use structured output
-  public Boolean use_structured_output = false;
+  // whether to construct a StructuredTranslation object for each request instead of 
+  // printing to stdout. Used when the Decoder is used from Java directly.
+  public Boolean construct_structured_output = false;
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
