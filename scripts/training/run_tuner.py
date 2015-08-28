@@ -412,7 +412,7 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
 
 
 def run_zmert(tunedir, source, target, command, config, output, opts):
-    """Runs Z-MERT after setting up all its crazy file requirements."""
+    """Runs Z-MERT after setting up all its file requirements."""
 
     setup_configs(ZMERT_CONFIG_TEMPLATE, '%s/mert.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
@@ -426,7 +426,7 @@ def run_zmert(tunedir, source, target, command, config, output, opts):
     
 
 def run_pro(tunedir, source, target, command, config, output, opts):
-    """Runs PRO after setting up all its crazy file requirements."""
+    """Runs PRO after setting up all its file requirements."""
 
     setup_configs(PRO_CONFIG_TEMPLATE, '%s/pro.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
@@ -440,7 +440,7 @@ def run_pro(tunedir, source, target, command, config, output, opts):
 
 
 def run_mira(tunedir, source, target, command, config, output, opts):
-    """Runs MIRA after setting up all its crazy file requirements."""
+    """Runs MIRA after setting up all its file requirements."""
 
     setup_configs(MIRA_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
@@ -452,8 +452,8 @@ def run_mira(tunedir, source, target, command, config, output, opts):
     safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.MIRA.final'),
                  os.path.join(tunedir, 'joshua.config.final'))
 
-def run_adagrad():
-    """Runs ADAGRAD after setting up all its crazy file requirements."""
+def run_adagrad(tunedir, source, target, command, config, output, opts):
+    """Runs ADAGRAD after setting up all its file requirements."""
 
     setup_configs(ADAGRAD_CONFIG_TEMPLATE, '%s/adagrad.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
