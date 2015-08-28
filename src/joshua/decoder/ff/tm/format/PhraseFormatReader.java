@@ -65,8 +65,6 @@ public class PhraseFormatReader extends HieroFormatReader {
     if (! moses_format)
       fieldIndex++;
     
-    System.err.println(String.format("Starting with fieldIndex = %d", fieldIndex));
-    
     // foreign side
     String[] foreignWords = fields[fieldIndex].split("\\s+");
     int[] french = new int[foreignWords.length + 1];
