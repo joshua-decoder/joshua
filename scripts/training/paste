@@ -7,6 +7,9 @@ use warnings;
 use FileHandle;
 use List::Util qw/sum reduce/;
 
+binmode STDIN, ':utf8';
+binmode STDOUT, ':utf8';
+
 my @fh = map { new FileHandle($_, "< :encoding(UTF-8)") } @ARGV;
 
 for (;;) {
