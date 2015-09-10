@@ -182,7 +182,7 @@ my $OPTIMIZER_RUN = 1;
 my $LM_GEN = "kenlm";
 my $LM_OPTIONS = "";
 
-my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX GRAMMAR PHRASE TUNE MERT PRO TEST LAST];
+my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MODEL GRAMMAR PHRASE TUNE MERT PRO TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 # Methods to use for merging alignments (see Koehn et al., 2003).
@@ -380,8 +380,9 @@ foreach my $lmfile (@LMFILES) {
   }
 }
 
-if (! defined $GRAMMAR_TYPE) {
-  print "* FATAL: You must define --type (hiero|samt|ghkm|phrase|moses)\n";
+my @GRAMMAR_TYPES = qw/hiero samt ghkm phrase moses/;
+if (! defined $GRAMMAR_TYPE or ! in($GRAMMAR_TYPE,\@GRAMMAR_TYPES)) {
+  print "* FATAL: You must define --type (" . join("|", @GRAMMAR_TYPES) . ")\n";
   exit 47;
 }
 
@@ -622,7 +623,7 @@ symlink $TOKENIZER_TARGET, "scripts/tokenize.$TARGET";
 
 ## STEP 1: filter and preprocess corpora #############################
 
-if (defined $ALIGNMENT and $STEPS{$FIRST_STEP} < $STEPS{ALIGNMENT}) {
+if (defined $ALIGNMENT and $STEPS{$FIRST_STEP} < $STEPS{ALIGN}) {
   print "* FATAL: it doesn't make sense to provide an alignment and then do\n";
   print "  tokenization.  Either remove --alignment or specify a first step\n";
   print "  of Thrax (--first-step THRAX)\n";
@@ -690,32 +691,32 @@ SUBSAMPLE:
     ;
 
 # subsample
-		if ($DO_SUBSAMPLE) {
-			mkdir("$DATA_DIRS{train}/subsampled") unless -d "$DATA_DIRS{train}/subsampled";
+if ($DO_SUBSAMPLE) {
+  mkdir("$DATA_DIRS{train}/subsampled") unless -d "$DATA_DIRS{train}/subsampled";
 
-			$cachepipe->cmd("subsample-manifest",
-											"echo corpus > $DATA_DIRS{train}/subsampled/manifest",
-											"$DATA_DIRS{train}/subsampled/manifest");
+  $cachepipe->cmd("subsample-manifest",
+                  "echo corpus > $DATA_DIRS{train}/subsampled/manifest",
+                  "$DATA_DIRS{train}/subsampled/manifest");
 
-			$cachepipe->cmd("subsample-testdata",
-											"cat $TUNE{source} $TEST{source} > $DATA_DIRS{train}/subsampled/test-data",
-											$TUNE{source},
-											$TEST{source},
-											"$DATA_DIRS{train}/subsampled/test-data");
+  $cachepipe->cmd("subsample-testdata",
+                  "cat $TUNE{source} $TEST{source} > $DATA_DIRS{train}/subsampled/test-data",
+                  $TUNE{source},
+                  $TEST{source},
+                  "$DATA_DIRS{train}/subsampled/test-data");
 
-			$cachepipe->cmd("subsample",
-											"java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $TARGET -f $SOURCE -epath $DATA_DIRS{train}/ -fpath $DATA_DIRS{train}/ -output $DATA_DIRS{train}/subsampled/subsampled.$MAXLEN -ratio 1.04 -test $DATA_DIRS{train}/subsampled/test-data -training $DATA_DIRS{train}/subsampled/manifest",
-											"$DATA_DIRS{train}/subsampled/manifest",
-											"$DATA_DIRS{train}/subsampled/test-data",
-											$TRAIN{source},
-											$TRAIN{target},
-											"$DATA_DIRS{train}/subsampled/subsampled.$MAXLEN.$TARGET",
-											"$DATA_DIRS{train}/subsampled/subsampled.$MAXLEN.$SOURCE");
+  $cachepipe->cmd("subsample",
+                  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $TARGET -f $SOURCE -epath $DATA_DIRS{train}/ -fpath $DATA_DIRS{train}/ -output $DATA_DIRS{train}/subsampled/subsampled.$MAXLEN -ratio 1.04 -test $DATA_DIRS{train}/subsampled/test-data -training $DATA_DIRS{train}/subsampled/manifest",
+                  "$DATA_DIRS{train}/subsampled/manifest",
+                  "$DATA_DIRS{train}/subsampled/test-data",
+                  $TRAIN{source},
+                  $TRAIN{target},
+                  "$DATA_DIRS{train}/subsampled/subsampled.$MAXLEN.$TARGET",
+                  "$DATA_DIRS{train}/subsampled/subsampled.$MAXLEN.$SOURCE");
 
-			# rewrite the symlinks to point to the subsampled corpus
-			foreach my $lang ($TARGET,$SOURCE) {
-				system("ln -sf subsampled/subsampled.$MAXLEN.$lang $DATA_DIRS{train}/corpus.$lang");
-			}
+  # rewrite the symlinks to point to the subsampled corpus
+  foreach my $lang ($TARGET,$SOURCE) {
+    system("ln -sf subsampled/subsampled.$MAXLEN.$lang $DATA_DIRS{train}/corpus.$lang");
+  }
 }
 
 maybe_quit("SUBSAMPLE");
@@ -937,6 +938,8 @@ maybe_quit("PARSE");
 
 ## THRAX #############################################################
 
+MODEL:
+    ;
 GRAMMAR:
     ;
 THRAX:
@@ -1135,8 +1138,7 @@ if (! defined $GRAMMAR_FILE) {
     system("mv $thrax_file.tmp $thrax_file");
 
     $cachepipe->cmd("thrax-run",
-                    "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' -D hadoop.tmp.dir=$TMPDIR $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar.gz",
-#                    "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar.gz; $HADOOP/bin/hadoop fs -rmr $THRAXDIR",
+                    "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' -D hadoop.tmp.dir=$TMPDIR $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar.gz; $HADOOP/bin/hadoop fs -rmr $THRAXDIR",
                     "$DATA_DIRS{train}/thrax-input-file",
                     $thrax_file,
                     "grammar.gz");
@@ -1360,20 +1362,22 @@ system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
 # main default grammar. Then update it if filtering was requested and
 # is possible.
 my $TUNE_GRAMMAR = $_TUNE_GRAMMAR_FILE || $GRAMMAR_FILE;
-if ($DO_FILTER_TM and defined $TUNE_GRAMMAR and ! $DOING_LATTICES and ! defined $_TUNE_GRAMMAR_FILE) {
+if ($DO_FILTER_TM and defined $GRAMMAR_FILE and ! $DOING_LATTICES and ! defined $_TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
-  $cachepipe->cmd("filter-tune",
-									"$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
-									$GRAMMAR_FILE,
-									$TUNE{source},
-									$TUNE_GRAMMAR);
+  if ($OPTIMIZER_RUN == 1 and ! is_packed($TUNE_GRAMMAR)) {
+    $cachepipe->cmd("filter-tune",
+                    "$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TUNE{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TUNE_GRAMMAR",
+                    $GRAMMAR_FILE,
+                    $TUNE{source},
+                    "$DATA_DIRS{tune}/grammar.filtered.gz");
+  }
 }
 
 # Create the glue grammars. This is done by looking at all the symbols in the grammar file and
 # creating all the needed rules. This is only done if there is a $TUNE_GRAMMAR defined (which
 # can be skipped if we skip straight to the tuning step).
-if (defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
+if ($OPTIMIZER_RUN == 1 and defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-tune",
                     "java -Xmx2g -cp $JOSHUA/lib/*:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
@@ -1484,11 +1488,13 @@ if ($GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") {
 }
 
 # Now build the bundle
-$cachepipe->cmd("tune-bundle",
-                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
-                $JOSHUA_CONFIG,
-                get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
-                "$tunemodeldir/run-joshua.sh");
+if ($OPTIMIZER_RUN == 1) {
+  $cachepipe->cmd("tune-bundle",
+                  "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
+                  $JOSHUA_CONFIG,
+                  get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
+                  "$tunemodeldir/run-joshua.sh");
+}
 
 # Update the tune grammar to its new location in the bundle
 if (defined $TUNE_GRAMMAR) {
@@ -1565,30 +1571,21 @@ system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
 # Define the test grammar, if it was provided
 my $TEST_GRAMMAR = $_TEST_GRAMMAR_FILE || $GRAMMAR_FILE;
 
-# Now filter, but only for the first optimizer run, and if it was requested and possible
-if ($DO_FILTER_TM and defined $TEST_GRAMMAR and ! $DOING_LATTICES and ! defined $_TEST_GRAMMAR_FILE 
-    and $OPTIMIZER_RUN == 1) {
-  $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
-  
-  $cachepipe->cmd("filter-test",
-                  "$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
-                  $GRAMMAR_FILE,
-                  $TEST{source},
-                  $TEST_GRAMMAR);
+if ($DO_FILTER_TM and defined $GRAMMAR_FILE and ! $DOING_LATTICES and ! defined $_TEST_GRAMMAR_FILE) {
+  # On the first test run, we take some pains to prepare and pack the model, which won't have
+  # to be done for subsequent runs
+  if ($OPTIMIZER_RUN == 1 and ! is_packed($TEST_GRAMMAR)) {
+    $TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
+
+    $cachepipe->cmd("filter-test",
+                    "$SCRIPTDIR/support/filter_grammar.sh -g $GRAMMAR_FILE $FILTERING -v $TEST{source} | $SCRIPTDIR/training/filter-rules.pl -bus$SCOPE | gzip -9n > $TEST_GRAMMAR",
+                    $GRAMMAR_FILE,
+                    $TEST{source},
+                    "$DATA_DIRS{test}/grammar.filtered.gz");
+  }
 }
 
-my $testdir;
-if ($OPTIMIZER_RUN == 1) {
-  $testdir = "$RUNDIR/test";
-  system("mkdir -p $testdir") unless -d $testdir;
-  symlink("$RUNDIR/test", "$RUNDIR/test/1");
-} else {
-  $testdir = "$RUNDIR/test/$OPTIMIZER_RUN";
-  system("mkdir -p $testdir") unless -d $testdir;
-}
-
-# On the first test run, we take some pains to prepare and pack the model, which won't have
-# to be done for subsequent runs
+# Create the glue grammar
 if ($OPTIMIZER_RUN == 1 and defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
@@ -1608,33 +1605,42 @@ if ($OPTIMIZER_RUN == 1 and defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase" 
   }
 }
 
-$tm_switch = "";
-$tm_copy_config_args = "";
-if (defined $TEST_GRAMMAR) {
-  if (! is_packed($TEST_GRAMMAR) and $DO_PACK_GRAMMARS) {
-    my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
-
-    if ($OPTIMIZER_RUN == 1) {
-      $cachepipe->cmd("test-pack",
-                      "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
-                      $TEST_GRAMMAR,
-                      "$packed_dir/vocabulary",
-                      "$packed_dir/encoding",
-                      "$packed_dir/slice_00000.source");
-      $TEST_GRAMMAR = $packed_dir;
-
-      $tm_switch .= " --pack-tm $TEST_GRAMMAR";
-    } else {
-      $tm_switch .= " --tm $TEST_GRAMMAR";
-    }
-
-    if (defined $GLUE_GRAMMAR_FILE) {
-      $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
-    }
-  }
+# Create the test directory
+my $testdir;
+if ($OPTIMIZER_RUN == 1) {
+  $testdir = "$RUNDIR/test";
+  system("mkdir -p $testdir") unless -d $testdir;
+  symlink("$RUNDIR/test", "$RUNDIR/test/1");
+} else {
+  $testdir = "$RUNDIR/test/$OPTIMIZER_RUN";
+  system("mkdir -p $testdir") unless -d $testdir;
 }
 
-# Build the filtered testing model
+$tm_switch = "";
+$tm_copy_config_args = "";
+if ($DO_PACK_GRAMMARS) {
+  my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
+  if ($OPTIMIZER_RUN == 1 and ! is_packed($TEST_GRAMMAR)) {
+    $cachepipe->cmd("test-pack",
+                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                    $TEST_GRAMMAR,
+                    "$packed_dir/vocabulary",
+                    "$packed_dir/encoding",
+                    "$packed_dir/slice_00000.source");
+  }
+  $TEST_GRAMMAR = $packed_dir;
+
+  $tm_switch .= " --pack-tm $TEST_GRAMMAR";
+} else {
+  $tm_switch .= " --tm $TEST_GRAMMAR";
+}
+
+# Add in the glue grammar
+if (defined $GLUE_GRAMMAR_FILE) {
+  $tm_switch .= " --tm $GLUE_GRAMMAR_FILE";
+}
+
+# Build the test model
 my $testmodeldir = "$RUNDIR/test/$OPTIMIZER_RUN/model";
 $cachepipe->cmd("test-bundle-${OPTIMIZER_RUN}",
                 "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $testmodeldir --copy-config-options '-top-n $NBEST -pop-limit 5000 -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch}",
