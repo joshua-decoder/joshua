@@ -79,6 +79,9 @@ import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 import joshua.util.io.LineReader;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 public class PackedGrammar extends AbstractGrammar {
 
   private EncoderConfiguration encoding;
@@ -91,6 +94,10 @@ public class PackedGrammar extends AbstractGrammar {
 
   // The grammar specification keyword (e.g., "thrax" or "moses")
   private String type;
+
+  // A rule cache for commonly used tries to avoid excess object allocations
+  // Testing shows there's up to ~95% hit rate when cache size is 5000 Trie nodes.
+  private final Cache<Trie, List<Rule>> cached_rules;
 
   public PackedGrammar(String grammar_dir, int span_limit, String owner, String type,
       JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
@@ -132,6 +139,7 @@ public class PackedGrammar extends AbstractGrammar {
     for (PackedSlice s : slices)
       count += s.estimated.length;
     root = new PackedRoot(slices);
+    cached_rules = CacheBuilder.newBuilder().maximumSize(joshuaConfiguration.cachedRuleSize).build();
 
     Decoder.LOG(1, String.format("Loaded %d rules", count));
   }
@@ -618,17 +626,24 @@ public class PackedGrammar extends AbstractGrammar {
 
       @Override
       public List<Rule> getRules() {
+        List<Rule> rules = cached_rules.getIfPresent(this);
+        if (rules != null) {
+          return rules;
+        }
+
         int num_children = source[position];
         int rule_position = position + 2 * (num_children + 1);
         int num_rules = source[rule_position - 1];
 
-        ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
+        rules = new ArrayList<Rule>(num_rules);
         for (int i = 0; i < num_rules; i++) {
           if (type.equals("moses") || type.equals("phrase"))
             rules.add(new PackedPhrasePair(rule_position + 3 * i));
           else
             rules.add(new PackedRule(rule_position + 3 * i));
         }
+
+        cached_rules.put(this, rules);
         return rules;
       }
 
@@ -684,6 +699,9 @@ public class PackedGrammar extends AbstractGrammar {
         }
         for (int i = 0; i < sorted.length; i++)
           source[rule_position + i] = sorted[i];
+
+        // Replace rules in cache with their sorted values on next getRules()
+        cached_rules.invalidate(this);
         this.sorted = true;
       }
 

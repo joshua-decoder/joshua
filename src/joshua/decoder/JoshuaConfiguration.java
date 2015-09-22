@@ -33,6 +33,10 @@ public class JoshuaConfiguration {
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
 
+  // A rule cache for commonly used tries to avoid excess object allocations
+  // Testing shows there's up to ~95% hit rate when cache size is 5000 Trie nodes.
+  public Integer cachedRuleSize = new Integer(5000);
+
   /*
    * The file to read the weights from (part of the sparse features implementation). Weights can
    * also just be listed in the main config file.
@@ -609,6 +613,9 @@ public class JoshuaConfiguration {
             // Check source sentence
             source_annotations = true;
 
+          } else if (parameter.equals(normalize_key("cached-rules-size"))) {
+              // Check source sentence
+              cachedRuleSize = Integer.parseInt(fds[1]);
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
