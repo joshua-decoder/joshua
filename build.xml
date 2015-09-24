@@ -62,7 +62,11 @@
     <!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX -->
   </target>
 
-  <target name="kenlm" depends="check-joshua-home" description="--> 'Make' the kenlm sofrtware in ${src}/joshua/decoder/ff/lm/kenlm/">
+  <target name="check-boost-root" unless="env.BOOST_ROOT" description="--> Prompt user to set BOOST_ROOT environment variable">
+    <fail message="Please set the $BOOST_ROOT environment variable." />
+  </target>
+
+  <target name="kenlm" depends="check-joshua-home,check-boost-root" description="--> 'Make' the kenlm sofrtware in ${src}/joshua/decoder/ff/lm/kenlm/">
     <exec executable="make">
       <arg value="-j" />
       <arg value="4" />
@@ -118,10 +122,6 @@
 
   <target name="thrax" depends="check-joshua-home" description="--> Build Thrax">
     <subant buildpath="thrax">
-      <property name="env.HADOOP" value="${lib}" />
-      <property name="env.HADOOP_VERSION" value="0.20.203.0" />
-      <property name="env.AWS_SDK" value="${JOSHUA}" />
-      <property name="env.AWS_VERSION" value="1.1.3" />
     </subant>
   </target>
 
@@ -129,7 +129,7 @@
        pipeline.pl and test/hadoop/ -->
   <target name="download-hadoop" depends="check-joshua-home" description="--> Download the Hadoop software">
     <get
-      src="http://archive.apache.org/dist/hadoop/core/hadoop-0.20.2/hadoop-0.20.2.tar.gz"
+      src="http://archive.apache.org/dist/hadoop/core/hadoop-2.5.2/hadoop-2.5.2.tar.gz"
       dest="${JOSHUA}/lib"
       usetimestamp="true"
       skipexisting="true" />
