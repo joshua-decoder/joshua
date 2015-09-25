@@ -1154,7 +1154,7 @@ if (! defined $GRAMMAR_FILE) {
     # clean up
     # TODO: clean up real hadoop clusters too
     # if ($HADOOP eq "hadoop") {
-    #   system("rm -rf $THRAXDIR hadoop hadoop-0.20.2");
+    #   system("rm -rf $THRAXDIR hadoop hadoop-2.5.2");
     # }
 
     $GRAMMAR_FILE = "grammar.gz";
@@ -1955,9 +1955,9 @@ sub rollout_hadoop_cluster {
   # if it's not already unpacked, unpack it
   if (! -d "hadoop") {
 
-    my $hadoop_tmp_dir = tempdir("hadoop-0.20.2.XXXX", DIR => $TMPDIR, CLEANUP => 1);
-		system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz -C $hadoop_tmp_dir");
-		system("ln -sf $hadoop_tmp_dir/hadoop-0.20.2 hadoop");
+    my $hadoop_tmp_dir = tempdir("hadoop-XXXX", DIR => $TMPDIR, CLEANUP => 0);
+		system("tar xzf $JOSHUA/lib/hadoop-2.5.2.tar.gz -C $hadoop_tmp_dir");
+		system("ln -sf $hadoop_tmp_dir/hadoop-2.5.2 hadoop");
     if (defined $HADOOP_CONF) {
       print STDERR "Copying HADOOP_CONF($HADOOP_CONF) to hadoop/conf/core-site.xml\n";
       system("cp $HADOOP_CONF hadoop/conf/core-site.xml");
@@ -1974,10 +1974,10 @@ sub stop_hadoop_cluster {
   }
 }
 
-sub teardown_hadoop_cluster {
-  stop_hadoop_cluster();
-  system("rm -f hadoop");
-}
+#sub teardown_hadoop_cluster {
+#  stop_hadoop_cluster();
+#  system("rm -f hadoop");
+#}
 
 sub is_lattice {
   my $file = shift;

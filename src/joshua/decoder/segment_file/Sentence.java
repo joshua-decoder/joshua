@@ -379,11 +379,14 @@ public class Sentence {
   }
 
   public Lattice<Token> getLattice() {
-    if (this.sourceLattice == null)
-      this.sourceLattice = (config.lattice_decoding && rawSource().startsWith("((("))
-        ? Lattice.createTokenLatticeFromPLF(rawSource())
-        : Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
+    if (this.sourceLattice == null) {
+      if (config.lattice_decoding && rawSource().startsWith("(((")) {
+        this.sourceLattice = Lattice.createTokenLatticeFromPLF(rawSource());
+        System.err.println("LATTICE");
+      } else
+        this.sourceLattice = Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
             rawSource(), Vocabulary.STOP_SYM));
+    }
     return this.sourceLattice;
   }
 
