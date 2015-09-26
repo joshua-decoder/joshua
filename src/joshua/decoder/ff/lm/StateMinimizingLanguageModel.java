@@ -125,7 +125,8 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
     StateProbPair pair = ((KenLM) languageModel).probRule(words, poolMap.get(sentID));
 
     // Record the prob
-    acc.add(name, pair.prob);
+//    acc.add(name, pair.prob);
+    acc.add(denseFeatureIndex, pair.prob);
 
     // Return the state
     return pair.state;

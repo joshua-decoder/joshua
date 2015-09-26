@@ -34,6 +34,8 @@ public class PhrasePenalty extends StatelessFF {
       this.owner = Vocabulary.id(parsedArgs.get("owner"));
     else // default
       this.owner = Vocabulary.id("pt"); 
+    
+    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   @Override
@@ -42,7 +44,8 @@ public class PhrasePenalty extends StatelessFF {
 
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
-      acc.add(name, value);
+//      acc.add(name, value);
+      acc.add(denseFeatureIndex, value);
 
     return null;
   }

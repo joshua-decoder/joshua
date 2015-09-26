@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
@@ -28,6 +29,11 @@ public class PhraseModel extends StatelessFF {
   
   private float[] phrase_weights = null;
 
+  /*
+   * The starting dense feature index 
+   */
+  private int featureIndex;
+
   public PhraseModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "tm_", args, config);
 
@@ -46,11 +52,21 @@ public class PhraseModel extends StatelessFF {
           "* FATAL: Your weights file contains an entry for '%s', shouldn't", name));
       System.exit(1);
     }
-    weights.put(name, 1.0f);
+    weights.increment(name, 1.0f);
     
-    int num_features = 0;
-    while (weights.containsKey(String.format("tm_%s_%d", owner, num_features)))
-      num_features++;
+    /*
+     * Determine the number of features by looking for their listings as weights. This works but
+     * is the wrong way to do it --- it should query one of the grammars for the number of dense
+     * weights, instead.
+     */
+    ArrayList<String> foundFeatures = new ArrayList<String>();
+    for (int i = 0; ; i++) {
+      String key = String.format("tm_%s_%d", owner, i);
+      if (! weights.containsKey(key))
+        break;
+      foundFeatures.add(key);
+    }
+    int num_features = foundFeatures.size();
 
     phrase_weights = new float[num_features];
     for (int i = 0; i < num_features; i++)
@@ -58,6 +74,9 @@ public class PhraseModel extends StatelessFF {
         
     // Store the owner.
     this.ownerID = Vocabulary.id(owner);
+    
+    featureIndex = weights.registerDenseFeatures(foundFeatures);
+    weights.set(featureIndex, 1.0f);
   }
 
   /**
@@ -95,7 +114,8 @@ public class PhraseModel extends StatelessFF {
 //          float score = rule.getFeatureVector().innerProduct(weights);
           rule.setPrecomputableCost(phrase_weights, weights);
         }
-        acc.add(name, rule.getPrecomputableCost());
+        acc.add(featureIndex, rule.getPrecomputableCost());
+//        acc.add(name, rule.getPrecomputableCost());
       } else {
         FeatureVector features = rule.getFeatureVector();
         for (String key : features.keySet())

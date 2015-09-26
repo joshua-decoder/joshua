@@ -1,5 +1,7 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -53,6 +55,17 @@ public abstract class FeatureFunction {
    * names, for templates that define multiple features.
    */
   protected String name = null;
+  
+  /*
+   * The list of features each function can contribute, along with the dense feature IDs.
+   */
+  protected String[] denseFeatureNames = null;
+  protected int[] denseFeatureIDs = null;
+
+  /*
+   * The first dense feature index
+   */
+  protected int denseFeatureIndex = -1; 
 
   // The list of arguments passed to the feature, and the hash for the parsed args
   protected String[] args;
@@ -70,7 +83,7 @@ public abstract class FeatureFunction {
   public String getName() {
     return name;
   }
-
+  
   // Whether the feature has state.
   public abstract boolean isStateful();
 
@@ -270,6 +283,7 @@ public abstract class FeatureFunction {
 
   public interface Accumulator {
     public void add(String name, float value);
+    public void add(int id, float value);
   }
 
   public class ScoreAccumulator implements Accumulator {
@@ -279,10 +293,16 @@ public abstract class FeatureFunction {
       this.score = 0.0f;
     }
 
+    @Override
     public void add(String name, float value) {
       if (weights.containsKey(name)) {
         score += value * weights.get(name);
       }
+    }
+    
+    @Override
+    public void add(int id, float value) {
+      score += value * weights.get(id);
     }
 
     public float getScore() {
@@ -297,12 +317,14 @@ public abstract class FeatureFunction {
       this.features = new FeatureVector();
     }
 
+    @Override
     public void add(String name, float value) {
-      if (features.containsKey(name)) {
-        features.put(name, features.get(name) + value);
-      } else {
-        features.put(name, value);
-      }
+      features.increment(name, value);
+    }
+    
+    @Override
+    public void add(int id, float value) {
+      features.increment(id,  value);
     }
 
     public FeatureVector getFeatures() {

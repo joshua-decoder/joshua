@@ -23,8 +23,6 @@ import edu.berkeley.nlp.lm.util.StrUtils;
  */
 public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
-
-
   private ArrayEncodedNgramLanguageModel<String> lm;
 
   private static final Logger logger = Logger.getLogger(LMGrammarBerkeley.class.getName());

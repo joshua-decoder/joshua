@@ -17,15 +17,21 @@ import java.util.Set;
  */
 
 public class FeatureVector {
+  private ArrayList<String> denseFeatureNames = null;
+  private ArrayList<Float> denseFeatures = null;
   private HashMap<String, Float> features;
 
   public FeatureVector() {
     features = new HashMap<String, Float>();
+    denseFeatureNames = new ArrayList<String>();
+    denseFeatures = new ArrayList<Float>();
   }
 
   public FeatureVector(String feature, float value) {
     features = new HashMap<String, Float>();
     features.put(feature, value);
+    denseFeatureNames = new ArrayList<String>();
+    denseFeatures = new ArrayList<Float>();
   }
 
   /**
@@ -75,6 +81,34 @@ public class FeatureVector {
       }
     }
   }
+  
+  /**
+   * Register one or more dense features with the global weight vector. This assumes them global
+   * IDs, and then returns the index of the first feature (from which the calling feature function
+   * can infer them all). This *must* be called by every feature function wishing to register
+   * dense features!
+   * 
+   * @param names
+   * @return
+   */
+  public int registerDenseFeatures(ArrayList<String> names) {
+    for (String name: names)
+      registerDenseFeature(name);
+
+    // this is the index of the first feature added
+    return denseFeatureNames.size() - names.size();
+  }
+  
+  public int registerDenseFeature(String name) {
+    denseFeatureNames.add(name);
+    denseFeatures.add(features.get(name));
+    Decoder.LOG(2, String.format("Assigning index %d to feature %s", denseFeatureNames.size() - 1, name));
+    return denseFeatureNames.size() - 1;
+  }
+  
+  public ArrayList<String> getDenseFeatures() {
+    return denseFeatureNames;
+  }
 
   public Set<String> keySet() {
     return features.keySet();
@@ -87,7 +121,7 @@ public class FeatureVector {
   public FeatureVector clone() {
     FeatureVector newOne = new FeatureVector();
     for (String key : this.features.keySet())
-      newOne.put(key, this.features.get(key));
+      newOne.set(key, this.features.get(key));
     return newOne;
   }
 
@@ -139,9 +173,32 @@ public class FeatureVector {
 
     return 0.0f;
   }
+  
+  public float get(int id) {
+    return denseFeatures.get(id);
+  }
 
-  public void put(String feature, float value) {
+  public void increment(String feature, float value) {
+    if (features.containsKey(feature))
+      features.put(feature, features.get(feature) + value);
+    else
+      features.put(feature, value);
+  }
+  
+  public void increment(int id, float value) {
+    while (denseFeatures.size() <= id)
+      denseFeatures.add(0.0f);
+    denseFeatures.set(id, denseFeatures.get(id) + value);
+  }
+  
+  public void set(String feature, float value) {
     features.put(feature, value);
+  }
+  
+  public void set(int id, float value) {
+    while (denseFeatures.size() <= id)
+      denseFeatures.add(0.0f);
+    denseFeatures.set(id, value);
   }
 
   public Map<String, Float> getMap() {
@@ -175,10 +232,9 @@ public class FeatureVector {
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
-    for (String key: Decoder.dense_feature_names) {
-      float value = features.containsKey(key) ? features.get(key) : 0.0f;
-      outputString += String.format("%s=%.3f ", key.replaceAll("_", "-"), value);
-      printed_keys.add(key);
+    for (int i = 0; i < denseFeatureNames.size(); i++) {
+      outputString += String.format("%s=%.3f ", denseFeatureNames.get(i).replaceAll("_", "-"), denseFeatures.get(i));
+      printed_keys.add(denseFeatureNames.get(i));
     }
     
     // Now print the sparse features
@@ -207,10 +263,9 @@ public class FeatureVector {
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
-    for (String key: Decoder.dense_feature_names) {
-      float value = features.containsKey(key) ? features.get(key) : 0.0f;
-      outputString += String.format("%s=%.3f ", key, value);
-      printed_keys.add(key);
+    for (int i = 0; i < denseFeatureNames.size(); i++) {
+      outputString += String.format("%s=%.3f ", denseFeatureNames.get(i), denseFeatures.get(i));
+      printed_keys.add(denseFeatureNames.get(i));
     }
     
     // Now print the rest of the features
@@ -223,8 +278,11 @@ public class FeatureVector {
     return outputString.trim();
   }
 
-  public static boolean isDense(String feature) {
-    return feature.startsWith("tm_") || feature.startsWith("lm_") || feature.equals("WordPenalty")
-        || feature.equals("Distortion") || feature.equals("PhrasePenalty");
+  public boolean isDense(String feature) {
+    for (String candidate: denseFeatureNames)
+      if (feature.equals(candidate))
+        return true;
+
+    return false;
   }
 }

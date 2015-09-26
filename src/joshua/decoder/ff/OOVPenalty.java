@@ -38,6 +38,8 @@ public class OOVPenalty extends StatelessFF {
     if (config.oovList != null)
       for (OOVItem item: config.oovList) 
         oovWeights.put(Vocabulary.id(item.label), item.weight);
+    
+    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   /**
@@ -50,7 +52,8 @@ public class OOVPenalty extends StatelessFF {
       Sentence sentence, Accumulator acc) {
     
     if (rule != null && this.ownerID == rule.getOwner()) {
-      acc.add(name, getValue(rule.getLHS()));
+//      acc.add(name, getValue(rule.getLHS()));
+      acc.add(denseFeatureIndex, getValue(rule.getLHS()));
     }
 
     return null;

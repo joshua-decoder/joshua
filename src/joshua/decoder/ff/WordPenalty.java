@@ -24,6 +24,8 @@ public final class WordPenalty extends StatelessFF {
     
     if (parsedArgs.containsKey("value"))
       OMEGA = Float.parseFloat(parsedArgs.get("value"));
+    
+    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   @Override
@@ -31,7 +33,8 @@ public final class WordPenalty extends StatelessFF {
       Sentence sentence, Accumulator acc) {
     
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE)
-      acc.add(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
+//    acc.add(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
+      acc.add(denseFeatureIndex, OMEGA * (rule.getEnglish().length - rule.getArity()));
 
     return null;
   }

@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.JoshuaConfiguration;

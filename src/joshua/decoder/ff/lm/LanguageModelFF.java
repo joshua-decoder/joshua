@@ -131,6 +131,8 @@ public class LanguageModelFF extends StatefulFF {
     this.weight = weights.get(name);
     
     initializeLM();
+    
+    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   /**
@@ -404,7 +406,8 @@ public class LanguageModelFF extends StatefulFF {
         }
       }
     }
-    acc.add(name, transitionLogP);
+//    acc.add(name, transitionLogP);
+    acc.add(denseFeatureIndex, transitionLogP);
 
     if (left_context != null) {
       return new NgramDPState(left_context, Arrays.copyOfRange(current, ccount - this.ngramOrder
@@ -446,7 +449,8 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     // Tell the accumulator
-    acc.add(name, res);
+//    acc.add(name, res);
+    acc.add(denseFeatureIndex, res);
 
     // State is the same
     return new NgramDPState(leftContext, rightContext);
