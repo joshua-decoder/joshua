@@ -22,6 +22,8 @@ public class Distortion extends StatelessFF {
       System.err.println("         Use -search phrase or remove this feature");
       System.exit(1);
     }
+    
+    weights.registerDenseFeature(name);
   }
 
   @Override
@@ -32,7 +34,8 @@ public class Distortion extends StatelessFF {
         int start_point = j - rule.getFrench().length + rule.getArity();
 
         int jump_size = Math.abs(tailNodes.get(0).j - start_point);
-        acc.add(name, -jump_size);
+//        acc.add(name, -jump_size);
+        acc.add(denseFeatureIndex, -jump_size); 
     }
     
 //    System.err.println(String.format("DISTORTION(%d, %d) from %d = %d", i, j, tailNodes != null ? tailNodes.get(0).j : -1, jump_size));
