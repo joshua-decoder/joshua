@@ -17,21 +17,34 @@ import java.util.Set;
  */
 
 public class FeatureVector {
-  private ArrayList<String> denseFeatureNames = null;
+  /*
+   * A list of the dense feature names. Increased via calls to registerDenseFeatures()
+   */
+  private static ArrayList<String> denseFeatureNames = new ArrayList<String>();
+
+  /*
+   * The values of each of the dense features, defaulting to 0.
+   */
   private ArrayList<Float> denseFeatures = null;
+
+  /*
+   * Value of sparse features.
+   */
   private HashMap<String, Float> features;
 
   public FeatureVector() {
     features = new HashMap<String, Float>();
-    denseFeatureNames = new ArrayList<String>();
-    denseFeatures = new ArrayList<Float>();
+    denseFeatures = new ArrayList<Float>(denseFeatureNames.size());
+    for (String name: denseFeatureNames)
+      denseFeatures.add(0.0f);
   }
 
   public FeatureVector(String feature, float value) {
     features = new HashMap<String, Float>();
     features.put(feature, value);
-    denseFeatureNames = new ArrayList<String>();
-    denseFeatures = new ArrayList<Float>();
+    denseFeatures = new ArrayList<Float>(denseFeatureNames.size());
+    for (String name: denseFeatureNames)
+      denseFeatures.add(0.0f);
   }
 
   /**
@@ -131,6 +144,9 @@ public class FeatureVector {
    * a value of 0.0f before subtraction.
    */
   public void subtract(FeatureVector other) {
+    for (int i = 0; i < denseFeatureNames.size(); i++)
+      denseFeatures.set(i, denseFeatures.get(i) - other.get(i));
+    
     for (String key : other.keySet()) {
       float oldValue = (features.containsKey(key)) ? features.get(key) : 0.0f;
       features.put(key, oldValue - other.get(key));
@@ -142,6 +158,9 @@ public class FeatureVector {
    * between the two being summed.
    */
   public void add(FeatureVector other) {
+    for (int i = 0; i < other.denseFeatures.size(); i++)
+      increment(i, other.get(i));
+    
     for (String key : other.keySet()) {
       if (!features.containsKey(key))
         features.put(key, other.get(key));
@@ -186,8 +205,6 @@ public class FeatureVector {
   }
   
   public void increment(int id, float value) {
-    while (denseFeatures.size() <= id)
-      denseFeatures.add(0.0f);
     denseFeatures.set(id, denseFeatures.get(id) + value);
   }
   
@@ -196,8 +213,6 @@ public class FeatureVector {
   }
   
   public void set(int id, float value) {
-    while (denseFeatures.size() <= id)
-      denseFeatures.add(0.0f);
     denseFeatures.set(id, value);
   }
 
@@ -276,13 +291,5 @@ public class FeatureVector {
         outputString += String.format("%s=%.3f ", key, features.get(key));
 
     return outputString.trim();
-  }
-
-  public boolean isDense(String feature) {
-    for (String candidate: denseFeatureNames)
-      if (feature.equals(candidate))
-        return true;
-
-    return false;
   }
 }
