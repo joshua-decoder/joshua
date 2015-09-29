@@ -26,13 +26,9 @@ public class PhraseModel extends StatelessFF {
 
   /* The owner of the grammar. */
   private int ownerID;
-  
-  private float[] phrase_weights = null;
+  private String owner;
 
-  /*
-   * The starting dense feature index 
-   */
-  private int featureIndex;
+  private float[] phrase_weights = null;
 
   public PhraseModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "tm_", args, config);
@@ -52,17 +48,17 @@ public class PhraseModel extends StatelessFF {
           "* FATAL: Your weights file contains an entry for '%s', shouldn't", name));
       System.exit(1);
     }
-    weights.increment(name, 1.0f);
-    
+
     /*
-     * Determine the number of features by looking for their listings as weights. This works but
-     * is the wrong way to do it --- it should query one of the grammars for the number of dense
-     * weights, instead.
+     * Determine the number of features by looking for their listings as weights.
+     * 
+     * TODO: This works but is the wrong way to do it --- should query one of the grammars for the
+     * number of dense weights, instead.
      */
     ArrayList<String> foundFeatures = new ArrayList<String>();
-    for (int i = 0; ; i++) {
+    for (int i = 0;; i++) {
       String key = String.format("tm_%s_%d", owner, i);
-      if (! weights.containsKey(key))
+      if (!weights.containsKey(key))
         break;
       foundFeatures.add(key);
     }
@@ -71,28 +67,39 @@ public class PhraseModel extends StatelessFF {
     phrase_weights = new float[num_features];
     for (int i = 0; i < num_features; i++)
       phrase_weights[i] = weights.get(String.format("tm_%s_%d", owner, i));
-        
+
     // Store the owner.
+    this.owner = owner;
     this.ownerID = Vocabulary.id(owner);
-    
-    featureIndex = weights.registerDenseFeatures(foundFeatures);
-    weights.set(featureIndex, 1.0f);
   }
 
   /**
-   * Estimates the cost of applying this rule, which is just the score of the precomputable
-   * feature functions.
+   * Just register a single weight, tm_OWNER, and use that to set its precomputed cost
+   */
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+
+    ArrayList<String> names = new ArrayList<String>();
+    for (int i = 0; i < phrase_weights.length; i++)
+      names.add(String.format("tm_%s_%d", owner, i));
+    return names;
+  }
+
+  /**
+   * Estimates the cost of applying this rule, which is just the score of the precomputable feature
+   * functions.
    */
   @Override
   public float estimateCost(final Rule rule, Sentence sentence) {
-    
+
     if (rule != null && rule.getOwner() == ownerID) {
       if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY)
         rule.setPrecomputableCost(phrase_weights, weights);
-        
+
       return rule.getPrecomputableCost();
     }
-    
+
     return 0.0f;
   }
 
@@ -111,11 +118,12 @@ public class PhraseModel extends StatelessFF {
        */
       if (acc instanceof ScoreAccumulator) {
         if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-//          float score = rule.getFeatureVector().innerProduct(weights);
+          // float score = rule.getFeatureVector().innerProduct(weights);
           rule.setPrecomputableCost(phrase_weights, weights);
         }
-        acc.add(featureIndex, rule.getPrecomputableCost());
-//        acc.add(name, rule.getPrecomputableCost());
+        for (int i1 = 0; i1 < phrase_weights.length; i1++)
+          acc.add(i1 + denseFeatureIndex, rule.denseWeights[i1]);
+        // acc.add(name, rule.getPrecomputableCost());
       } else {
         FeatureVector features = rule.getFeatureVector();
         for (String key : features.keySet())

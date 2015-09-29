@@ -1,5 +1,6 @@
 package joshua.decoder.ff.lm;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,8 +35,15 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
       System.err.println("*        Remove lm_type from line or set to 'kenlm'");
       System.exit(-1);
     }
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
     
-    denseFeatureIndex = weights.registerDenseFeature(name);
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   /**

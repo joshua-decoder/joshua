@@ -1,5 +1,6 @@
 package joshua.decoder.ff.phrase;
 
+import java.util.ArrayList;
 import java.util.List;	
 
 import joshua.decoder.JoshuaConfiguration;
@@ -22,8 +23,15 @@ public class Distortion extends StatelessFF {
       System.err.println("         Use -search phrase or remove this feature");
       System.exit(1);
     }
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
     
-    denseFeatureIndex = weights.registerDenseFeature(name);
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   @Override

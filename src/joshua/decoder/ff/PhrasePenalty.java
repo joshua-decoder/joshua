@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.List;	
 
 import joshua.corpus.Vocabulary;
@@ -34,8 +35,6 @@ public class PhrasePenalty extends StatelessFF {
       this.owner = Vocabulary.id(parsedArgs.get("owner"));
     else // default
       this.owner = Vocabulary.id("pt"); 
-    
-    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   @Override
@@ -48,6 +47,14 @@ public class PhrasePenalty extends StatelessFF {
       acc.add(denseFeatureIndex, value);
 
     return null;
+  }
+    
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
   
   /**

@@ -1,7 +1,6 @@
 package joshua.decoder.ff;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -94,6 +93,18 @@ public abstract class FeatureFunction {
     this.config = config;
 
     this.parsedArgs = FeatureFunction.parseArgs(args);
+  }
+  
+  /**
+   * Any feature function can use this to report dense features names to the master code. The 
+   * parameter tells the feature function the index of the first available dense feature ID; the feature
+   * function will then use IDs (id..id+names.size()-1).
+   * 
+   * @param id the id of the first dense feature id to use
+   * @return a list of dense feature names
+   */
+  public ArrayList<String> reportDenseFeatures(int id) {
+    return null;
   }
 
   public String logString() {

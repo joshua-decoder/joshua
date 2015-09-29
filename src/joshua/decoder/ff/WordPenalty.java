@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.JoshuaConfiguration;
@@ -24,8 +25,6 @@ public final class WordPenalty extends StatelessFF {
     
     if (parsedArgs.containsKey("value"))
       OMEGA = Float.parseFloat(parsedArgs.get("value"));
-    
-    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   @Override
@@ -37,6 +36,14 @@ public final class WordPenalty extends StatelessFF {
       acc.add(denseFeatureIndex, OMEGA * (rule.getEnglish().length - rule.getArity()));
 
     return null;
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
   
   @Override

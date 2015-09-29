@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -38,8 +39,15 @@ public class OOVPenalty extends StatelessFF {
     if (config.oovList != null)
       for (OOVItem item: config.oovList) 
         oovWeights.put(Vocabulary.id(item.label), item.weight);
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
     
-    denseFeatureIndex = weights.registerDenseFeature(name);
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   /**

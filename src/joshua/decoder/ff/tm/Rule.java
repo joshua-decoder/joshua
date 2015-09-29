@@ -39,6 +39,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
 
   // And a string containing the sparse ones
   protected String sparseFeatures;
+  public float[] denseWeights = null;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
@@ -241,6 +242,8 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
     int denseFeatureIndex = 0;
     float cost = 0.0f;
     
+    denseWeights = new float[phrase_weights.length]; 
+    
     if (!getFeatureString().trim().equals("")) {
       StringTokenizer st = new StringTokenizer(getFeatureString());
       while (st.hasMoreTokens()) {
@@ -248,10 +251,13 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
         if (token.indexOf('=') == -1) {
 //          System.err.println(String.format("VALUE(%s) = %.5f", token, -Float.parseFloat(token)));
           try {
-            cost += phrase_weights[denseFeatureIndex++] * -Float.parseFloat(token);
+            float value = -Float.parseFloat(token);
+            denseWeights[denseFeatureIndex] = value;
+            cost += phrase_weights[denseFeatureIndex] * value;
+            denseFeatureIndex++;
           } catch (java.lang.ArrayIndexOutOfBoundsException e) {
             /* This occurs if there are more values stored in the rule than there are weights
-             * found in the config file. Consistent with treating unfound weights as have a value
+             * found in the config file. Consistent with treating unfound weights as having a value
              * of 0, we just skip it here.
              */
             ;

@@ -634,7 +634,10 @@ public class Decoder {
 
     for (FeatureFunction feature : featureFunctions) {
       Decoder.LOG(1, String.format("FEATURE: %s", feature.logString()));
+      
     }
+
+    weights.registerDenseFeatures(featureFunctions);
   }
 
   /**

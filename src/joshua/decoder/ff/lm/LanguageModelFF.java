@@ -131,8 +131,15 @@ public class LanguageModelFF extends StatefulFF {
     this.weight = weights.get(name);
     
     initializeLM();
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
     
-    denseFeatureIndex = weights.registerDenseFeature(name);
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   /**

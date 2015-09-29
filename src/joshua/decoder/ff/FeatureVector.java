@@ -20,7 +20,7 @@ public class FeatureVector {
   /*
    * A list of the dense feature names. Increased via calls to registerDenseFeatures()
    */
-  private static ArrayList<String> denseFeatureNames = new ArrayList<String>();
+  private static ArrayList<String> DENSE_FEATURE_NAMES = new ArrayList<String>();
 
   /*
    * The values of each of the dense features, defaulting to 0.
@@ -34,16 +34,8 @@ public class FeatureVector {
 
   public FeatureVector() {
     features = new HashMap<String, Float>();
-    denseFeatures = new ArrayList<Float>(denseFeatureNames.size());
-    for (String name: denseFeatureNames)
-      denseFeatures.add(0.0f);
-  }
-
-  public FeatureVector(String feature, float value) {
-    features = new HashMap<String, Float>();
-    features.put(feature, value);
-    denseFeatures = new ArrayList<Float>(denseFeatureNames.size());
-    for (String name: denseFeatureNames)
+    denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
+    for (String name: DENSE_FEATURE_NAMES)
       denseFeatures.add(0.0f);
   }
 
@@ -104,23 +96,19 @@ public class FeatureVector {
    * @param names
    * @return
    */
-  public int registerDenseFeatures(ArrayList<String> names) {
-    for (String name: names)
-      registerDenseFeature(name);
-
-    // this is the index of the first feature added
-    return denseFeatureNames.size() - names.size();
-  }
-  
-  public int registerDenseFeature(String name) {
-    denseFeatureNames.add(name);
-    denseFeatures.add(features.get(name));
-    Decoder.LOG(2, String.format("Assigning index %d to feature %s", denseFeatureNames.size() - 1, name));
-    return denseFeatureNames.size() - 1;
+  public void registerDenseFeatures(ArrayList<FeatureFunction> featureFunctions) {
+    for (FeatureFunction feature: featureFunctions) {
+      ArrayList<String> names = feature.reportDenseFeatures(denseFeatures.size());
+      for (String name: names) {
+        DENSE_FEATURE_NAMES.add(name);
+        denseFeatures.add(features.get(name));
+        // TODO: remove from hash? I think no....
+      }
+    }
   }
   
   public ArrayList<String> getDenseFeatures() {
-    return denseFeatureNames;
+    return DENSE_FEATURE_NAMES;
   }
 
   public Set<String> keySet() {
@@ -144,7 +132,7 @@ public class FeatureVector {
    * a value of 0.0f before subtraction.
    */
   public void subtract(FeatureVector other) {
-    for (int i = 0; i < denseFeatureNames.size(); i++)
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++)
       denseFeatures.set(i, denseFeatures.get(i) - other.get(i));
     
     for (String key : other.keySet()) {
@@ -247,9 +235,9 @@ public class FeatureVector {
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
-    for (int i = 0; i < denseFeatureNames.size(); i++) {
-      outputString += String.format("%s=%.3f ", denseFeatureNames.get(i).replaceAll("_", "-"), denseFeatures.get(i));
-      printed_keys.add(denseFeatureNames.get(i));
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i).replaceAll("_", "-"), denseFeatures.get(i));
+      printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     
     // Now print the sparse features
@@ -278,9 +266,9 @@ public class FeatureVector {
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
-    for (int i = 0; i < denseFeatureNames.size(); i++) {
-      outputString += String.format("%s=%.3f ", denseFeatureNames.get(i), denseFeatures.get(i));
-      printed_keys.add(denseFeatureNames.get(i));
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i), denseFeatures.get(i));
+      printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     
     // Now print the rest of the features
