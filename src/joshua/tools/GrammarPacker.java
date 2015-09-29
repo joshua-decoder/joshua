@@ -150,9 +150,6 @@ public class GrammarPacker {
     logger.info("Writing encoding.");
     types.write(output + File.separator + "encoding");
 
-    logger.info("Freezing vocab.");
-    Vocabulary.freeze();
-
     logger.info("Writing vocab.");
     Vocabulary.write(output + File.separator + "vocabulary");
 
