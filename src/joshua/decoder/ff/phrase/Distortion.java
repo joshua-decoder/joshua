@@ -23,7 +23,7 @@ public class Distortion extends StatelessFF {
       System.exit(1);
     }
     
-    weights.registerDenseFeature(name);
+    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   @Override

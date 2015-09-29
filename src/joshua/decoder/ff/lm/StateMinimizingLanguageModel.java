@@ -34,6 +34,8 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
       System.err.println("*        Remove lm_type from line or set to 'kenlm'");
       System.exit(-1);
     }
+    
+    denseFeatureIndex = weights.registerDenseFeature(name);
   }
 
   /**
