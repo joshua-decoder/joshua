@@ -30,7 +30,12 @@ public final class WordPenalty extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       Sentence sentence, Accumulator acc) {
     
-    if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE)
+    /* Don't apply to start and end rules in phrase-based decoder.
+     * TODO: this is a hack. Shouldn't be doing a string comparison here. Find a more principled
+     * way to do this.
+     */
+    if (rule != null && (config.search_algorithm.equals("cky")
+        || (rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE)))
       acc.add(name, OMEGA * (rule.getEnglish().length - rule.getArity()));
 
     return null;
