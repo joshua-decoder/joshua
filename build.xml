@@ -62,11 +62,7 @@
     <!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX -->
   </target>
 
-  <target name="check-boost-root" unless="env.BOOST_ROOT" description="--> Prompt user to set BOOST_ROOT environment variable">
-    <fail message="Please set the $BOOST_ROOT environment variable." />
-  </target>
-
-  <target name="kenlm" depends="check-joshua-home,check-boost-root" description="Build KenLM">
+  <target name="kenlm" depends="check-joshua-home" description="Build KenLM">
     <exec executable="./build_kenlm.sh" dir="${env.JOSHUA}/jni" />
   </target>
 
