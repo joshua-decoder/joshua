@@ -221,6 +221,11 @@
     </exec>
     <exec executable="make">
       <arg value="-C" />
+      <arg value="src/kenlm" />
+      <arg value="clean" />
+    </exec>
+    <exec executable="make">
+      <arg value="-C" />
       <arg value="scripts/training/symal" />
       <arg value="clean" />
     </exec>
