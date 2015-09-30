@@ -2,7 +2,7 @@
 
 set -u
 
-export CXXFLAGS+=" -O3 -fPIC"
+export CXXFLAGS+=" -O3 -fPIC -DHAVE_ZLIB"
 export LDFLAGS+=" -lz"
 export CXX=${CXX:-g++}
 
