@@ -2,12 +2,12 @@
 
 set -u
 
-export CXXFLAGS+=" -DNDEBUG -O3 -fPIC -DHAVE_ZLIB"
+export CXXFLAGS+=" -O3 -fPIC"
 export LDFLAGS+=" -lz"
 export CXX=${CXX:-g++}
 
 cd $JOSHUA/src/kenlm
-cmake .
+cmake -DCMAKE_CXX_FLAGS="$CXXFLAGS" .
 make
 cp bin/{query,lmplz,build_binary} $JOSHUA/bin
 
@@ -19,4 +19,4 @@ else
   SUFFIX=so
 fi
 
-$CXX -I. -DKENLM_MAX_ORDER=9 -I$JAVA_HOME/include -I$JOSHUA/src/kenlm -I$JAVA_HOME/include/linux -I$JAVA_HOME/include/darwin $JOSHUA/jni/kenlm_wrap.cc lm/CMakeFiles/kenlm.dir/*.o util/CMakeFiles/kenlm_util.dir/*.o util/CMakeFiles/kenlm_util.dir/double-conversion/*.o -shared -o $JOSHUA/lib/libken.$SUFFIX $CXXFLAGS $LDFLAGS $RT
+$CXX -std=gnu++11 -I. -DKENLM_MAX_ORDER=9 -I$JAVA_HOME/include -I$JOSHUA/src/kenlm -I$JAVA_HOME/include/linux -I$JAVA_HOME/include/darwin $JOSHUA/jni/kenlm_wrap.cc lm/CMakeFiles/kenlm.dir/*.o util/CMakeFiles/kenlm_util.dir/*.o util/CMakeFiles/kenlm_util.dir/double-conversion/*.o -shared -o $JOSHUA/lib/libken.$SUFFIX $CXXFLAGS $LDFLAGS $RT
