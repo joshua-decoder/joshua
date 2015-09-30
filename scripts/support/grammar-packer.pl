@@ -47,23 +47,25 @@ my $name = basename($grammar);
 my (undef,$sorted_grammar) = tempfile("${name}XXXX", DIR => $opts{T}, UNLINK => 1);
 print STDERR "Sorting grammar to $sorted_grammar...\n" if $opts{v};
 
-# We need to sort by source side, which is field 0 (for phrase tables not listing the LHS)
-# or field 1 (convention, Thrax format)
+# For balanced grammar packing, we need to sort by the complete source side,
+# which is field 1 (for phrase tables not listing the LHS),
+# or field 2 ( conventional Thrax format).
+# For sorting, we temporarily replace the field separator " ||| " with tabs
+# to allow UNIX sort to work correctly with field numbers.
 chomp(my $first_line = `$CAT $grammar | head -n1`);
 if ($first_line =~ /^\[/) {
   # regular grammar
-  if (system("$CAT $grammar | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
+  if (system("$CAT $grammar | sed 's/ ||| /\t/g' | sort -k2,2 --buffer-size=$opts{m} -T $opts{T} | sed 's/\t/ ||| /g' | gzip -9n > $sorted_grammar")) {
     print STDERR "* FATAL: Couldn't sort the grammar (not enough memory? short on tmp space?)\n";
     exit 2;
   }
 } else {
   # Moses phrase-based grammar -- prepend nonterminal symbol and -log() the weights
-  if (system("$CAT $grammar | $JOSHUA/scripts/support/moses_phrase_to_joshua.pl | sort -k3,3 --buffer-size=$opts{m} -T $opts{T} | gzip -9n > $sorted_grammar")) {
+  if (system("$CAT $grammar | $JOSHUA/scripts/support/moses_phrase_to_joshua.pl | sed 's/ ||| /\t/g' | sort -k1,1 --buffer-size=$opts{m} -T $opts{T} | sed 's/\t/ ||| /g' | gzip -9n > $sorted_grammar")) {
     print STDERR "* FATAL: Couldn't sort the grammar (not enough memory? short on tmp space?)\n";
     exit 2;
   }
-}  
-#my $source_field = ($first_line =~ /^\[/) ? "3,3" : "1,1";
+}
 
 $grammar = $sorted_grammar;
 

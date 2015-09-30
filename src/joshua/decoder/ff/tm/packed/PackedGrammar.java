@@ -28,7 +28,15 @@ package joshua.decoder.ff.tm.packed;
  * shared vocabulary, and then rely on Joshua's ability to query multiple grammars for rules to
  * solve this problem. This is not currently implemented but could be done directly in the
  * Grammar Packer.
+ *
+ * *UPDATE 10/2015*
+ * The introduction of a SliceAggregatingTrie together with sorting the grammar by the full source string
+ * (not just by the first source word) allows distributing rules with the same first source word
+ * across multiple slices.
+ * @author fhieber
  */
+
+import static java.util.Collections.sort;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -47,6 +55,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
@@ -82,7 +91,9 @@ public class PackedGrammar extends AbstractGrammar {
     // Read the vocabulary.
     String vocabFile = grammar_dir + File.separator + "vocabulary";
     Decoder.LOG(1, String.format("Reading vocabulary: %s", vocabFile));
-    Vocabulary.read(vocabFile);
+    if (!Vocabulary.read(vocabFile)) {
+      throw new RuntimeException("mismatches or collisions while reading on-disk vocabulary");
+    }
     
     // Read the config
     String configFile = grammar_dir + File.separator + "config";
@@ -99,17 +110,18 @@ public class PackedGrammar extends AbstractGrammar {
     // Set phrase owner.
     this.owner = Vocabulary.id(owner);
 
-    String[] listing = new File(grammar_dir).list();
+    final List<String> listing = Arrays.asList(new File(grammar_dir).list());
+    sort(listing); // File.list() has arbitrary sort order
     slices = new ArrayList<PackedSlice>();
-    for (int i = 0; i < listing.length; i++) {
-      if (listing[i].startsWith("slice_") && listing[i].endsWith(".source"))
-        slices.add(new PackedSlice(grammar_dir + File.separator + listing[i].substring(0, 11)));
+    for (String prefix : listing) {
+      if (prefix.startsWith("slice_") && prefix.endsWith(".source"))
+        slices.add(new PackedSlice(grammar_dir + File.separator + prefix.substring(0, 11)));
     }
 
     long count = 0;
     for (PackedSlice s : slices)
       count += s.estimated.length;
-    root = new PackedRoot(this);
+    root = new PackedRoot(slices);
 
     Decoder.LOG(1, String.format("Loaded %d rules", count));
   }
@@ -141,26 +153,85 @@ public class PackedGrammar extends AbstractGrammar {
     return null;
   }
 
+  /**
+   * PackedRoot represents the root of the packed grammar trie.
+   * Tries for different source-side firstwords are organized in
+   * packedSlices on disk. A packedSlice can contain multiple trie
+   * roots (i.e. multiple source-side firstwords).
+   * The PackedRoot builds a lookup table, mapping from
+   * source-side firstwords to the addresses in the packedSlices
+   * that represent the subtrie for a particular firstword.
+   * If the GrammarPacker has to distribute rules for a
+   * source-side firstword across multiple slices, a
+   * SliceAggregatingTrie node is created that aggregates those 
+   * tries to hide
+   * this additional complexity from the grammar interface
+   * This feature allows packing of grammars where the list of rules
+   * for a single source-side firstword would exceed the maximum array
+   * size of Java (2gb).
+   */
   public final class PackedRoot implements Trie {
 
-    private HashMap<Integer, PackedSlice> lookup;
+    private final HashMap<Integer, Trie> lookup;
 
-    public PackedRoot(PackedGrammar grammar) {
-      lookup = new HashMap<Integer, PackedSlice>();
-
-      for (PackedSlice ps : grammar.slices) {
-        int num_children = ps.source[0];
-        for (int i = 0; i < num_children; i++)
-          lookup.put(ps.source[2 * i + 1], ps);
+    public PackedRoot(final List<PackedSlice> slices) {
+      final Map<Integer, List<Trie>> childTries = collectChildTries(slices);
+      lookup = buildLookupTable(childTries);
+    }
+    
+    /**
+     * Determines whether trie nodes for source first-words are spread over 
+     * multiple packedSlices by counting their occurrences.
+     * @param slices
+     * @return A mapping from first word ids to a list of trie nodes.
+     */
+    private Map<Integer, List<Trie>> collectChildTries(final List<PackedSlice> slices) {
+      final Map<Integer, List<Trie>> childTries = new HashMap<>();
+      for (PackedSlice packedSlice : slices) {
+        
+        // number of tries stored in this packedSlice
+        final int num_children = packedSlice.source[0];
+        for (int i = 0; i < num_children; i++) {
+          final int id = packedSlice.source[2 * i + 1];
+          
+          /* aggregate tries with same root id
+           * obtain a Trie node, already at the correct address in the packedSlice.
+           * In other words, the lookup index already points to the correct trie node in the packedSlice.
+           * packedRoot.match() thus can directly return the result of lookup.get(id);
+           */
+          if (!childTries.containsKey(id)) {
+            childTries.put(id, new ArrayList<>(1));
+          }
+          final Trie trie = packedSlice.root().match(id);
+          childTries.get(id).add(trie);
+        }
       }
+      return childTries;
+    }
+    
+    /**
+     * Build a lookup table for children tries.
+     * If the list contains only a single child node, a regular trie node
+     * is inserted into the table; otherwise a SliceAggregatingTrie node is
+     * created that hides this partitioning into multiple packedSlices
+     * upstream.
+     */
+    private HashMap<Integer,Trie> buildLookupTable(final Map<Integer, List<Trie>> childTries) {
+      HashMap<Integer,Trie> lookup = new HashMap<>(childTries.size());
+      for (int id : childTries.keySet()) {
+        final List<Trie> tries = childTries.get(id);
+        if (tries.size() == 1) {
+          lookup.put(id, tries.get(0));
+        } else {
+          lookup.put(id, new SliceAggregatingTrie(tries));
+        }
+      }
+      return lookup;
     }
 
     @Override
     public Trie match(int word_id) {
-      PackedSlice ps = lookup.get(word_id);
-      if (ps != null)
-        return ps.root().match(word_id);
-      return null;
+      return lookup.getOrDefault(word_id, null);
     }
 
     @Override
@@ -170,19 +241,12 @@ public class PackedGrammar extends AbstractGrammar {
 
     @Override
     public HashMap<Integer, ? extends Trie> getChildren() {
-      HashMap<Integer, Trie> children = new HashMap<Integer, Trie>();
-      for (int key : lookup.keySet())
-        children.put(key, match(key));
-      return children;
+      return lookup;
     }
 
     @Override
     public ArrayList<? extends Trie> getExtensions() {
-      ArrayList<Trie> tries = new ArrayList<Trie>();
-      for (int key : lookup.keySet()) {
-        tries.add(match(key));
-      }
-      return tries;
+      return new ArrayList<>(lookup.values());
     }
 
     @Override
@@ -226,6 +290,9 @@ public class PackedGrammar extends AbstractGrammar {
     private MappedByteBuffer alignments;
     private int[] alignmentLookup;
 
+    /**
+     * Provides a cache of packedTrie nodes to be used in getTrie.
+     */
     private HashMap<Integer, PackedTrie> tries;
 
     public PackedSlice(String prefix) throws IOException {
