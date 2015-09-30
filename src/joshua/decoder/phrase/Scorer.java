@@ -3,7 +3,7 @@ package joshua.decoder.phrase;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.lm.KenLM;
 
 public class Scorer {
 
