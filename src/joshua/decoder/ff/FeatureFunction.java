@@ -306,9 +306,7 @@ public abstract class FeatureFunction {
 
     @Override
     public void add(String name, float value) {
-      if (weights.containsKey(name)) {
-        score += value * weights.get(name);
-      }
+      score += value * weights.get(name);
     }
     
     @Override

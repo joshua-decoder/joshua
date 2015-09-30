@@ -412,11 +412,8 @@ public class Decoder {
         weights.set(pair[0], Float.parseFloat(pair[1]));
       }
 
-      if (!weights.containsKey("BLEU"))
-        Decoder.weights.increment("BLEU", 0.0f);
-
       Decoder.LOG(1, String.format("Read %d weights (%d of them dense)", weights.size(),
-          weights.getDenseFeatures().size()));
+          weights.DENSE_FEATURE_NAMES.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -433,7 +430,7 @@ public class Decoder {
 
       // This is mostly for compatibility with the Moses tuning script
       if (joshuaConfiguration.show_weights_and_quit) {
-        for (String key : weights.getDenseFeatures()) {
+        for (String key : weights.DENSE_FEATURE_NAMES) {
           System.out.println(String.format("%s= %.5f", mosesize(key), weights.get(key)));
         }
         System.exit(0);

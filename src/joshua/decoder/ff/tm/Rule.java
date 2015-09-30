@@ -38,8 +38,8 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   protected int arity;
 
   // And a string containing the sparse ones
-  protected String sparseFeatures;
-  public float[] denseWeights = null;
+  protected FeatureVector features = null;
+  protected String sparseFeatureString;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
@@ -80,7 +80,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
       int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.sparseFeatures = sparseFeatures;
+    this.sparseFeatureString = sparseFeatures;
     this.arity = arity;
     this.owner = owner;
     this.english = targetRhs;
@@ -90,7 +90,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.sparseFeatures = sparseFeatures;
+    this.sparseFeatureString = sparseFeatures;
     this.arity = arity;
     this.owner = -1;
     this.english = targetRhs;
@@ -202,10 +202,11 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
      * sparse (labeled) ones, but it's not required.
      */
 
-    FeatureVector features = (owner != -1)
+    if (features == null)
+      features = (owner != -1)
         ? new FeatureVector(getFeatureString(), "tm_" + Vocabulary.word(owner) + "_")
         : new FeatureVector();
-
+  
     return features;
   }
 
@@ -238,38 +239,26 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
     return precomputableCost;
   }
 
+  public float getDenseFeature(int k) {
+    return getFeatureVector().get(k);
+  }
+  
   public void setPrecomputableCost(float[] phrase_weights, FeatureVector weights) {
-    int denseFeatureIndex = 0;
     float cost = 0.0f;
-    
-    denseWeights = new float[phrase_weights.length]; 
-    
-    if (!getFeatureString().trim().equals("")) {
-      StringTokenizer st = new StringTokenizer(getFeatureString());
-      while (st.hasMoreTokens()) {
-        String token = st.nextToken();
-        if (token.indexOf('=') == -1) {
-//          System.err.println(String.format("VALUE(%s) = %.5f", token, -Float.parseFloat(token)));
-          try {
-            float value = -Float.parseFloat(token);
-            denseWeights[denseFeatureIndex] = value;
-            cost += phrase_weights[denseFeatureIndex] * value;
-            denseFeatureIndex++;
-          } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-            /* This occurs if there are more values stored in the rule than there are weights
-             * found in the config file. Consistent with treating unfound weights as having a value
-             * of 0, we just skip it here.
-             */
-            ;
-          }
-        } else {
-          int splitPoint = token.indexOf('=');
-          String name = token.substring(0, splitPoint);
-          float value = Float.parseFloat(token.substring(splitPoint + 1));
-          cost += weights.get(name) * value;
-        }
-      }
+
+//    System.err.println(String.format("// Setting precomputable cost for for %s/%s", getEnglishWords(), getFrenchWords()));
+    FeatureVector features = getFeatureVector();
+    for (int i = 0; i < features.getDenseFeatures().size() && i < phrase_weights.length; i++) {
+//      System.err.println(String.format("    %d -> %.5f", i, features.get(i)));
+      cost += phrase_weights[i] * features.get(i);
     }
+
+    for (String key: features.getSparseFeatures().keySet()) {
+//      System.err.println(String.format("    %s -> %.5f", key, features.get(key)));
+      cost += weights.get(key) * features.get(key);
+    }
+    
+//    System.err.println(String.format("-> %f", cost));
     
     this.precomputableCost = cost;
   }
@@ -358,7 +347,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   }
 
   public String getFeatureString() {
-    return sparseFeatures;
+    return sparseFeatureString;
   }
   
   /**

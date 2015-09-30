@@ -37,19 +37,6 @@ public class PhraseModel extends StatelessFF {
     this.name = String.format("tm_%s", owner);
 
     /*
-     * This is an efficiency hack; we cache the full dot product of the weights with the dense
-     * features, storing them as a value under the name "tm_OWNER". There won't be a weight for
-     * that, so we add a weight to the weights vector. This weight will never be output because when
-     * the k-best list is retrieved and the actual feature values asked for, the accumulator will
-     * fetch the fine-grained dense features.
-     */
-    if (weights.containsKey(name)) {
-      System.err.println(String.format(
-          "* FATAL: Your weights file contains an entry for '%s', shouldn't", name));
-      System.exit(1);
-    }
-
-    /*
      * Determine the number of features by looking for their listings as weights.
      * 
      * TODO: This works but is the wrong way to do it --- should query one of the grammars for the
@@ -58,7 +45,7 @@ public class PhraseModel extends StatelessFF {
     ArrayList<String> foundFeatures = new ArrayList<String>();
     for (int i = 0;; i++) {
       String key = String.format("tm_%s_%d", owner, i);
-      if (!weights.containsKey(key))
+      if (!weights.keySet().contains(key))
         break;
       foundFeatures.add(key);
     }
@@ -116,19 +103,19 @@ public class PhraseModel extends StatelessFF {
        * add each feature, but rather compute the inner product and add *that*. This is totally
        * cheating; the Accumulator is supposed to be a generic object. But without this cheat
        */
-      if (acc instanceof ScoreAccumulator) {
-        if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
-          // float score = rule.getFeatureVector().innerProduct(weights);
-          rule.setPrecomputableCost(phrase_weights, weights);
-        }
-        for (int i1 = 0; i1 < phrase_weights.length; i1++)
-          acc.add(i1 + denseFeatureIndex, rule.denseWeights[i1]);
-        // acc.add(name, rule.getPrecomputableCost());
-      } else {
-        FeatureVector features = rule.getFeatureVector();
-        for (String key : features.keySet())
-          acc.add(key, features.get(key));
+      if (rule.getPrecomputableCost() <= Float.NEGATIVE_INFINITY) {
+        // float score = rule.getFeatureVector().innerProduct(weights);
+        rule.setPrecomputableCost(phrase_weights, weights);
       }
+      
+//      System.err.println(String.format("RULE = %s / %f", rule.getEnglishWords(), rule.getPrecomputableCost()));
+      for (int k = 0; k < phrase_weights.length; k++) {
+//        System.err.println(String.format("k = %d, denseFeatureIndex = %d, owner = %s, ownerID = %d", k, denseFeatureIndex, owner, ownerID));
+        acc.add(k + denseFeatureIndex, rule.getDenseFeature(k));
+      }
+      
+      for (String key: rule.getFeatureVector().keySet())
+        acc.add(key, rule.getFeatureVector().get(key));
     }
 
     return null;

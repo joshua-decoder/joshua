@@ -32,15 +32,15 @@ public class PhraseRule extends Rule {
    */
   @Override
   public String getFeatureString() {
-    if (sparseFeatures == null) {
+    if (sparseFeatureString == null) {
       StringBuffer values = new StringBuffer();
       for (String value: mosesFeatureString.split(" ")) {
         float f = Float.parseFloat(value);
         values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
       }
-      sparseFeatures = values.toString().trim();
+      sparseFeatureString = values.toString().trim();
     }
-    return sparseFeatures;
+    return sparseFeatureString;
   }
   
   /**

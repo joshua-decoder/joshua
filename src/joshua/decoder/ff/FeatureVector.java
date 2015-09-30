@@ -1,7 +1,5 @@
 package joshua.decoder.ff;
 
-import joshua.decoder.Decoder;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +18,7 @@ public class FeatureVector {
   /*
    * A list of the dense feature names. Increased via calls to registerDenseFeatures()
    */
-  private static ArrayList<String> DENSE_FEATURE_NAMES = new ArrayList<String>();
+  public static ArrayList<String> DENSE_FEATURE_NAMES = new ArrayList<String>();
 
   /*
    * The values of each of the dense features, defaulting to 0.
@@ -30,10 +28,10 @@ public class FeatureVector {
   /*
    * Value of sparse features.
    */
-  private HashMap<String, Float> features;
+  private HashMap<String, Float> sparseFeatures;
 
   public FeatureVector() {
-    features = new HashMap<String, Float>();
+    sparseFeatures = new HashMap<String, Float>();
     denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
     for (String name: DENSE_FEATURE_NAMES)
       denseFeatures.add(0.0f);
@@ -60,6 +58,8 @@ public class FeatureVector {
    */
   public FeatureVector(String featureString, String prefix) {
 
+//    System.err.println(String.format("FEATURES_OF(%s, %s)", featureString, prefix));
+    
     /*
      * Read through the features on this rule, adding them to the feature vector. Unlabeled features
      * are converted to a canonical form.
@@ -67,21 +67,41 @@ public class FeatureVector {
      * Note that it's bad form to mix unlabeled features and the named feature index they are mapped
      * to, but we are being liberal in what we accept.
      * 
-     * IMPORTANT: Note that, for historical reasons, the sign is reversed on all scores.
+     * IMPORTANT: Note that, for historical reasons, the sign is reversed on all *dense* scores.
      * This is the source of *no end* of confusion and should be done away with.
      */
-    features = new HashMap<String, Float>();
+    sparseFeatures = new HashMap<String, Float>();
+    denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
+    
     int denseFeatureIndex = 0;
 
     if (!featureString.trim().equals("")) {
       for (String token : featureString.split("\\s+")) {
         if (token.indexOf('=') == -1) {
-          features.put(String.format("%s%d", prefix, denseFeatureIndex), -Float.parseFloat(token));
+          /*
+           * If we encounter an unlabeled feature, it is the next dense feature
+           */
+          while (denseFeatures.size() <= denseFeatureIndex)
+            denseFeatures.add(0.0f);
+          denseFeatures.set(denseFeatureIndex, -Float.parseFloat(token));
           denseFeatureIndex++;
         } else {
+          /*
+           * Labeled features are of two types: if they start with the prefix, they are actually
+           * dense feature in disguise; otherwise, they are proper sparse features.
+           */
           int splitPoint = token.indexOf('=');
-          features.put(token.substring(0, splitPoint),
-              Float.parseFloat(token.substring(splitPoint + 1)));
+          if (token.startsWith(prefix)) {
+//            System.err.println(String.format("  PREFIX=%s '%s'.substring(%d,%d) = %s", prefix, token, prefix.length(), splitPoint,
+//                token.substring(prefix.length(), splitPoint)));
+            int index = Integer.parseInt(token.substring(prefix.length(), splitPoint));
+            while (denseFeatures.size() <= index)
+              denseFeatures.add(0.0f);
+            denseFeatures.set(index, 1.0f * Float.parseFloat(token.substring(splitPoint + 1)));
+          } else {
+            sparseFeatures.put(token.substring(0, splitPoint),
+                Float.parseFloat(token.substring(splitPoint + 1)));
+          }
         }
       }
     }
@@ -101,28 +121,34 @@ public class FeatureVector {
       ArrayList<String> names = feature.reportDenseFeatures(denseFeatures.size());
       for (String name: names) {
         DENSE_FEATURE_NAMES.add(name);
-        denseFeatures.add(features.get(name));
-        // TODO: remove from hash? I think no....
+        denseFeatures.add(sparseFeatures.get(name));
+        sparseFeatures.remove(name);
       }
     }
   }
   
-  public ArrayList<String> getDenseFeatures() {
-    return DENSE_FEATURE_NAMES;
+  public ArrayList<Float> getDenseFeatures() {
+    return denseFeatures;
+  }
+  
+  public HashMap<String,Float> getSparseFeatures() {
+    return sparseFeatures;
   }
 
   public Set<String> keySet() {
-    return features.keySet();
+    return sparseFeatures.keySet();
   }
 
   public int size() {
-    return features.size();
+    return sparseFeatures.size() + denseFeatures.size();
   }
 
   public FeatureVector clone() {
     FeatureVector newOne = new FeatureVector();
-    for (String key : this.features.keySet())
-      newOne.set(key, this.features.get(key));
+    for (String key : this.sparseFeatures.keySet())
+      newOne.set(key, this.sparseFeatures.get(key));
+    for (int i = 0; i < denseFeatures.size(); i++)
+      newOne.set(i, denseFeatures.get(i));
     return newOne;
   }
 
@@ -132,12 +158,12 @@ public class FeatureVector {
    * a value of 0.0f before subtraction.
    */
   public void subtract(FeatureVector other) {
-    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++)
+    for (int i = 0; i < denseFeatures.size(); i++)
       denseFeatures.set(i, denseFeatures.get(i) - other.get(i));
     
     for (String key : other.keySet()) {
-      float oldValue = (features.containsKey(key)) ? features.get(key) : 0.0f;
-      features.put(key, oldValue - other.get(key));
+      float oldValue = (sparseFeatures.containsKey(key)) ? sparseFeatures.get(key) : 0.0f;
+      sparseFeatures.put(key, oldValue - other.get(key));
     }
   }
 
@@ -146,19 +172,18 @@ public class FeatureVector {
    * between the two being summed.
    */
   public void add(FeatureVector other) {
+    while (denseFeatures.size() < other.denseFeatures.size())
+      denseFeatures.add(0.0f);
+    
     for (int i = 0; i < other.denseFeatures.size(); i++)
       increment(i, other.get(i));
     
     for (String key : other.keySet()) {
-      if (!features.containsKey(key))
-        features.put(key, other.get(key));
+      if (!sparseFeatures.containsKey(key))
+        sparseFeatures.put(key, other.get(key));
       else
-        features.put(key, features.get(key) + other.get(key));
+        sparseFeatures.put(key, sparseFeatures.get(key) + other.get(key));
     }
-  }
-
-  public boolean containsKey(final String feature) {
-    return features.containsKey(feature);
   }
 
   /**
@@ -175,21 +200,22 @@ public class FeatureVector {
    * @return
    */
   public float get(String feature) {
-    if (features.containsKey(feature))
-      return features.get(feature);
-
+    if (sparseFeatures.containsKey(feature))
+      return sparseFeatures.get(feature);
     return 0.0f;
   }
   
   public float get(int id) {
-    return denseFeatures.get(id);
+    if (id < denseFeatures.size())
+      return denseFeatures.get(id);
+    return 0.0f;
   }
 
   public void increment(String feature, float value) {
-    if (features.containsKey(feature))
-      features.put(feature, features.get(feature) + value);
+    if (sparseFeatures.containsKey(feature))
+      sparseFeatures.put(feature, sparseFeatures.get(feature) + value);
     else
-      features.put(feature, value);
+      sparseFeatures.put(feature, value);
   }
   
   public void increment(int id, float value) {
@@ -197,7 +223,7 @@ public class FeatureVector {
   }
   
   public void set(String feature, float value) {
-    features.put(feature, value);
+    sparseFeatures.put(feature, value);
   }
   
   public void set(int id, float value) {
@@ -205,7 +231,7 @@ public class FeatureVector {
   }
 
   public Map<String, Float> getMap() {
-    return features;
+    return sparseFeatures;
   }
 
   /**
@@ -213,16 +239,18 @@ public class FeatureVector {
    */
   public float innerProduct(FeatureVector other) {
     float cost = 0.0f;
-    for (String key : features.keySet())
-      if (other.containsKey(key))
-        cost += features.get(key) * other.get(key);
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++)
+      cost += get(i) * other.get(i);
+    
+    for (String key : sparseFeatures.keySet())
+      cost += sparseFeatures.get(key) * other.get(key);
 
     return cost;
   }
 
   public void times(float value) {
-    for (String key : features.keySet())
-      features.put(key, features.get(key) * value);
+    for (String key : sparseFeatures.keySet())
+      sparseFeatures.put(key, sparseFeatures.get(key) * value);
   }
 
   /***
@@ -241,11 +269,11 @@ public class FeatureVector {
     }
     
     // Now print the sparse features
-    ArrayList<String> keys = new ArrayList<String>(features.keySet());
+    ArrayList<String> keys = new ArrayList<String>(sparseFeatures.keySet());
     Collections.sort(keys);
     for (String key: keys) {
       if (! printed_keys.contains(key)) {
-        float value = features.get(key);
+        float value = sparseFeatures.get(key);
         if (key.equals("OOVPenalty"))
           // force moses to see it as sparse
           key = "OOV_Penalty";
@@ -272,11 +300,11 @@ public class FeatureVector {
     }
     
     // Now print the rest of the features
-    ArrayList<String> keys = new ArrayList<String>(features.keySet());
+    ArrayList<String> keys = new ArrayList<String>(sparseFeatures.keySet());
     Collections.sort(keys);
     for (String key: keys)
       if (! printed_keys.contains(key))
-        outputString += String.format("%s=%.3f ", key, features.get(key));
+        outputString += String.format("%s=%.3f ", key, sparseFeatures.get(key));
 
     return outputString.trim();
   }

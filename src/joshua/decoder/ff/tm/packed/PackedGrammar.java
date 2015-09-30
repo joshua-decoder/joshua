@@ -785,7 +785,7 @@ public class PackedGrammar extends AbstractGrammar {
         @Override
         public FeatureVector getFeatureVector() {
           if (features == null) {
-            features = new FeatureVector(getFeatures(source[address + 2]), "");
+            features = new FeatureVector(getFeatures(source[address + 2]), "tm_" + Vocabulary.word(owner) + "_");
           }
 
           return features;
