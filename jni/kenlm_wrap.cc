@@ -272,7 +272,7 @@ VirtualBase *ConstructModel(const char *file_name) {
 
 extern "C" {
 
-JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
+JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_KenLM_construct(
     JNIEnv *env, jclass, jstring file_name) {
   const char *str = env->GetStringUTFChars(file_name, 0);
   if (!str)
@@ -283,8 +283,8 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
     ret = ConstructModel(str);
 
     // Get a class reference for the type pair that char
-    jclass local_chart_pair = env->FindClass("joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
-    UTIL_THROW_IF(!local_chart_pair, util::Exception, "Failed to find joshua/decoder/ff/lm/kenlm/jni/KenLM$StateProbPair");
+    jclass local_chart_pair = env->FindClass("joshua/decoder/ff/lm/KenLM$StateProbPair");
+    UTIL_THROW_IF(!local_chart_pair, util::Exception, "Failed to find joshua/decoder/ff/lm/KenLM$StateProbPair");
     jclass chart_pair = (jclass)env->NewGlobalRef(local_chart_pair);
     env->DeleteLocalRef(local_chart_pair);
 
@@ -301,30 +301,30 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(
   return reinterpret_cast<jlong>(ret);
 }
 
-JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(
+JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_KenLM_destroy(
     JNIEnv *env, jclass, jlong pointer) {
   VirtualBase *base = reinterpret_cast<VirtualBase*>(pointer);
   env->DeleteGlobalRef(base->ChartPair());
   delete base;
 }
 
-JNIEXPORT long JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_createPool(
+JNIEXPORT long JNICALL Java_joshua_decoder_ff_lm_KenLM_createPool(
     JNIEnv *env, jclass) {
   return reinterpret_cast<long>(new Chart());
 }
 
-JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroyPool(
+JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_KenLM_destroyPool(
     JNIEnv *env, jclass, jlong pointer) {
   Chart* chart = reinterpret_cast<Chart*>(pointer);
   delete chart;
 }
 
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_order(
+JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_KenLM_order(
     JNIEnv *env, jclass, jlong pointer) {
   return reinterpret_cast<VirtualBase*>(pointer)->Order();
 }
 
-JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_registerWord(
+JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_KenLM_registerWord(
     JNIEnv *env, jclass, jlong pointer, jstring word, jint id) {
   const char *str = env->GetStringUTFChars(word, 0);
   if (!str)
@@ -340,7 +340,7 @@ JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_registerWor
   return ret;
 }
 
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_prob(
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_KenLM_prob(
     JNIEnv *env, jclass, jlong pointer, jintArray arr) {
   jint length = env->GetArrayLength(arr);
   if (length <= 0)
@@ -353,7 +353,7 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_prob(
       values + length);
 }
 
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_KenLM_probString(
     JNIEnv *env, jclass, jlong pointer, jintArray arr, jint start) {
   jint length = env->GetArrayLength(arr);
   if (length <= start)
@@ -366,7 +366,7 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(
       values + length, start);
 }
 
-JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
+JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_KenLM_probRule(
   JNIEnv *env, jclass, jlong pointer, jlong chartPtr, jlongArray arr) {
   jint length = env->GetArrayLength(arr);
   // GCC only.
@@ -385,7 +385,7 @@ JNIEXPORT jobject JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probRule(
   return env->NewObject(base->ChartPair(), base->ChartPairInit(), (long)outStatePtr, prob);
 }
 
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_estimateRule(
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_KenLM_estimateRule(
   JNIEnv *env, jclass, jlong pointer, jlongArray arr) {
   jint length = env->GetArrayLength(arr);
   // GCC only.
