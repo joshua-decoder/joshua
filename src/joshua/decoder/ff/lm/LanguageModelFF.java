@@ -61,7 +61,7 @@ public class LanguageModelFF extends StatefulFF {
    */
   protected final int ngramOrder;
 
-  /**
+  /*
    * We cache the weight of the feature since there is only one.
    */
   protected float weight;
@@ -128,7 +128,8 @@ public class LanguageModelFF extends StatefulFF {
         e.printStackTrace();
       }
 
-    this.weight = weights.get(name);
+    // The dense feature initialization hasn't happened yet, so we have to retrieve this as sparse
+    this.weight = weights.getSparse(name);
     
     initializeLM();
   }

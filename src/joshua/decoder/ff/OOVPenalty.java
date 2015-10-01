@@ -77,7 +77,7 @@ public class OOVPenalty extends StatelessFF {
   @Override
   public float estimateCost(Rule rule, Sentence sentence) {
     if (rule != null && this.ownerID == rule.getOwner())
-      return weights.get(name) * getValue(rule.getLHS());
+      return weights.getDense(denseFeatureIndex) * getValue(rule.getLHS());
     return 0.0f;
   }
   

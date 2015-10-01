@@ -240,7 +240,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   }
 
   public float getDenseFeature(int k) {
-    return getFeatureVector().get(k);
+    return getFeatureVector().getDense(k);
   }
   
   public void setPrecomputableCost(float[] phrase_weights, FeatureVector weights) {
@@ -250,12 +250,12 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
     FeatureVector features = getFeatureVector();
     for (int i = 0; i < features.getDenseFeatures().size() && i < phrase_weights.length; i++) {
 //      System.err.println(String.format("    %d -> %.5f", i, features.get(i)));
-      cost += phrase_weights[i] * features.get(i);
+      cost += phrase_weights[i] * features.getDense(i);
     }
 
     for (String key: features.getSparseFeatures().keySet()) {
 //      System.err.println(String.format("    %s -> %.5f", key, features.get(key)));
-      cost += weights.get(key) * features.get(key);
+      cost += weights.getSparse(key) * features.getSparse(key);
     }
     
 //    System.err.println(String.format("-> %f", cost));

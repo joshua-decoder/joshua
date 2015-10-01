@@ -11,6 +11,14 @@ import java.util.Set;
  * An implementation of a sparse feature vector, using for representing both weights and feature
  * values.
  * 
+ * This class is used to hold both the decoder weights and the feature values accumulated across
+ * each edge. When features are read in upon decoder startup, they all start out as sparse features
+ * and are stored in the hash table. After the feature functions have been loaded, the decoder
+ * queries each of them for their sparse features via {@link registerDenseFeatures}. Those features
+ * returned by each decoder are then *removed* from the sparse feature hash and placed in the dense
+ * feature array. Therefore, when a feature registers a dense feature, it should take care to
+ * query either {@link getDense()} or {@link getSparse} when asking for the feature values later on. 
+ * 
  * @author Matt Post <post@cs.jhu.edu>
  */
 
@@ -159,11 +167,11 @@ public class FeatureVector {
    */
   public void subtract(FeatureVector other) {
     for (int i = 0; i < denseFeatures.size(); i++)
-      denseFeatures.set(i, denseFeatures.get(i) - other.get(i));
+      denseFeatures.set(i, denseFeatures.get(i) - other.getDense(i));
     
     for (String key : other.keySet()) {
       float oldValue = (sparseFeatures.containsKey(key)) ? sparseFeatures.get(key) : 0.0f;
-      sparseFeatures.put(key, oldValue - other.get(key));
+      sparseFeatures.put(key, oldValue - other.getSparse(key));
     }
   }
 
@@ -176,36 +184,35 @@ public class FeatureVector {
       denseFeatures.add(0.0f);
     
     for (int i = 0; i < other.denseFeatures.size(); i++)
-      increment(i, other.get(i));
+      increment(i, other.getDense(i));
     
     for (String key : other.keySet()) {
       if (!sparseFeatures.containsKey(key))
-        sparseFeatures.put(key, other.get(key));
+        sparseFeatures.put(key, other.getSparse(key));
       else
-        sparseFeatures.put(key, sparseFeatures.get(key) + other.get(key));
+        sparseFeatures.put(key, sparseFeatures.get(key) + other.getSparse(key));
     }
   }
 
   /**
-   * This method returns the weight of a feature if it exists and otherwise throws a runtime error.
-   * It is the duty of the programmer to check using the method containsKey if a feature with a
-   * certain name exists. Previously this method would return 0 if the key did not exists, but this
-   * lead to bugs in other parts of the code because Feature Names are often specified in capitals
-   * but then lowercased, but in using the get method the lowercase form is not used consistently.
-   * It is therefore good defensive programming to just throw an error when someone tries to get a
-   * feature that does not exist - this will automatically eliminate such hard to debug errors. This
-   * is what is now implemented.
+   * Return the weight of a sparse feature, indexed by its name.
    * 
    * @param feature
-   * @return
+   * @return the sparse feature's weight, or 0 if not found.
    */
-  public float get(String feature) {
+  public float getSparse(String feature) {
     if (sparseFeatures.containsKey(feature))
       return sparseFeatures.get(feature);
     return 0.0f;
   }
   
-  public float get(int id) {
+  /**
+   * Return the weight of a dense feature, indexed by its feature index.
+   * 
+   * @param id
+   * @return the dense feature's value, or 0 if not found.
+   */
+  public float getDense(int id) {
     if (id < denseFeatures.size())
       return denseFeatures.get(id);
     return 0.0f;
@@ -240,10 +247,10 @@ public class FeatureVector {
   public float innerProduct(FeatureVector other) {
     float cost = 0.0f;
     for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++)
-      cost += get(i) * other.get(i);
+      cost += getDense(i) * other.getDense(i);
     
     for (String key : sparseFeatures.keySet())
-      cost += sparseFeatures.get(key) * other.get(key);
+      cost += sparseFeatures.get(key) * other.getSparse(key);
 
     return cost;
   }

@@ -431,7 +431,7 @@ public class Decoder {
       // This is mostly for compatibility with the Moses tuning script
       if (joshuaConfiguration.show_weights_and_quit) {
         for (String key : weights.DENSE_FEATURE_NAMES) {
-          System.out.println(String.format("%s= %.5f", mosesize(key), weights.get(key)));
+          System.out.println(String.format("%s= %.5f", mosesize(key), weights.getSparse(key)));
         }
         System.exit(0);
       }

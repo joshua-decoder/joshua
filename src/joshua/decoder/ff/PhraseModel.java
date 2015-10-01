@@ -53,7 +53,7 @@ public class PhraseModel extends StatelessFF {
 
     phrase_weights = new float[num_features];
     for (int i = 0; i < num_features; i++)
-      phrase_weights[i] = weights.get(String.format("tm_%s_%d", owner, i));
+      phrase_weights[i] = weights.getSparse(String.format("tm_%s_%d", owner, i));
 
     // Store the owner.
     this.owner = owner;
@@ -115,7 +115,7 @@ public class PhraseModel extends StatelessFF {
       }
       
       for (String key: rule.getFeatureVector().keySet())
-        acc.add(key, rule.getFeatureVector().get(key));
+        acc.add(key, rule.getFeatureVector().getSparse(key));
     }
 
     return null;

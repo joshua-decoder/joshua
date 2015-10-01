@@ -109,7 +109,7 @@ public abstract class FeatureFunction {
 
   public String logString() {
     try {
-      return String.format("%s (weight %.3f)", name, weights.get(name));
+      return String.format("%s (weight %.3f)", name, weights.getSparse(name));
     } catch (RuntimeException e) {
       return name;
     }
@@ -306,12 +306,12 @@ public abstract class FeatureFunction {
 
     @Override
     public void add(String name, float value) {
-      score += value * weights.get(name);
+      score += value * weights.getSparse(name);
     }
     
     @Override
     public void add(int id, float value) {
-      score += value * weights.get(id);
+      score += value * weights.getDense(id);
     }
 
     public float getScore() {
