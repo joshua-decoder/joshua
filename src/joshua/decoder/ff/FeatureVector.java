@@ -41,8 +41,8 @@ public class FeatureVector {
   public FeatureVector() {
     sparseFeatures = new HashMap<String, Float>();
     denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
-    for (String name: DENSE_FEATURE_NAMES)
-      denseFeatures.add(0.0f);
+    for (int i = 0; i < denseFeatures.size(); i++)
+      denseFeatures.set(i, 0.0f);
   }
 
   /**
@@ -80,6 +80,8 @@ public class FeatureVector {
      */
     sparseFeatures = new HashMap<String, Float>();
     denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
+    for (int i = 0; i < denseFeatures.size(); i++)
+      denseFeatures.set(i, 0.0f);
     
     int denseFeatureIndex = 0;
 
@@ -129,7 +131,7 @@ public class FeatureVector {
       ArrayList<String> names = feature.reportDenseFeatures(denseFeatures.size());
       for (String name: names) {
         DENSE_FEATURE_NAMES.add(name);
-        denseFeatures.add(sparseFeatures.get(name));
+        denseFeatures.add(getSparse(name));
         sparseFeatures.remove(name);
       }
     }
@@ -206,6 +208,10 @@ public class FeatureVector {
     return 0.0f;
   }
   
+  public boolean hasValue(String name) {
+    return sparseFeatures.containsKey(name);
+  }
+  
   /**
    * Return the weight of a dense feature, indexed by its feature index.
    * 
@@ -219,14 +225,13 @@ public class FeatureVector {
   }
 
   public void increment(String feature, float value) {
-    if (sparseFeatures.containsKey(feature))
-      sparseFeatures.put(feature, sparseFeatures.get(feature) + value);
-    else
-      sparseFeatures.put(feature, value);
+    sparseFeatures.put(feature, getSparse(feature) + value);
   }
   
   public void increment(int id, float value) {
-    denseFeatures.set(id, denseFeatures.get(id) + value);
+    while (id >= denseFeatures.size())
+      denseFeatures.add(0.0f);
+    denseFeatures.set(id, getDense(id) + value);
   }
   
   public void set(String feature, float value) {
@@ -234,6 +239,8 @@ public class FeatureVector {
   }
   
   public void set(int id, float value) {
+    while (id >= denseFeatures.size())
+      denseFeatures.add(0.0f);
     denseFeatures.set(id, value);
   }
 
@@ -302,7 +309,7 @@ public class FeatureVector {
     
     // First print all the dense feature names in order
     for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
-      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i), denseFeatures.get(i));
+      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i), getDense(i));
       printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     

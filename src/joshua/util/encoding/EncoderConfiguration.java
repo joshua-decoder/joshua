@@ -24,10 +24,16 @@ public class EncoderConfiguration {
   
   private boolean labeled;
   
+  private int numDenseFeatures = 0;
+  
   public EncoderConfiguration() {
     this.outerToInner = new HashMap<Integer, Integer>();
   }
 
+  public int getNumDenseFeatures() {
+    return numDenseFeatures;
+  }
+  
   public int getNumFeatures() {
     return encoders.length;
   }
@@ -59,6 +65,10 @@ public class EncoderConfiguration {
       if (labeled) {
         String feature_name = in_stream.readUTF();
         outer_id = Vocabulary.id(feature_name);
+        try {
+          Integer.parseInt(feature_name);
+          numDenseFeatures++;
+        } catch (NumberFormatException e) {}
       } else {
         outer_id = in_stream.readInt();
       }

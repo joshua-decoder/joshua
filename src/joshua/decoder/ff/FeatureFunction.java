@@ -104,7 +104,7 @@ public abstract class FeatureFunction {
    * @return a list of dense feature names
    */
   public ArrayList<String> reportDenseFeatures(int id) {
-    return null;
+    return new ArrayList<String>();
   }
 
   public String logString() {

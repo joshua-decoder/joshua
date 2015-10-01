@@ -132,6 +132,11 @@ public class PackedGrammar extends AbstractGrammar {
     return num_rules;
   }
 
+  @Override
+  public int getNumDenseFeatures() {
+    return encoding.getNumDenseFeatures();
+  }
+
   public Rule constructManualRule(int lhs, int[] src, int[] tgt, float[] scores, int arity) {
     return null;
   }

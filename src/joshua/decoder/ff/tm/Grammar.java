@@ -64,6 +64,13 @@ public interface Grammar {
    * @return the number of rules stored in the grammar
    */
   int getNumRules();
+  
+  /**
+   * Returns the number of dense features.
+   * 
+   * @return the number of dense features
+   */
+  int getNumDenseFeatures();
 
   /**
    * This is used to construct a manual rule supported from outside the grammar, but the owner

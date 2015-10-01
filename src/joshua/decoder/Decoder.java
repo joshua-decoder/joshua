@@ -529,7 +529,7 @@ public class Decoder {
       String owner = Vocabulary.word(grammar.getOwner());
       if (! ownersSeen.contains(owner)) {
         this.featureFunctions.add(new PhraseModel(weights, new String[] { "tm", "-owner", owner },
-            joshuaConfiguration));
+            joshuaConfiguration, grammar));
         ownersSeen.add(owner);
       }
     }

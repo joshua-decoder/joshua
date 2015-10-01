@@ -7,6 +7,7 @@ import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.segment_file.Sentence;
@@ -30,29 +31,18 @@ public class PhraseModel extends StatelessFF {
 
   private float[] phrase_weights = null;
 
-  public PhraseModel(FeatureVector weights, String[] args, JoshuaConfiguration config) {
+  public PhraseModel(FeatureVector weights, String[] args, JoshuaConfiguration config, Grammar g) {
     super(weights, "tm_", args, config);
 
     String owner = parsedArgs.get("owner");
     this.name = String.format("tm_%s", owner);
 
     /*
-     * Determine the number of features by looking for their listings as weights.
-     * 
-     * TODO: This works but is the wrong way to do it --- should query one of the grammars for the
-     * number of dense weights, instead.
+     * Determine the number of features by querying the example grammar that was passed in.
      */
-    ArrayList<String> foundFeatures = new ArrayList<String>();
-    for (int i = 0;; i++) {
-      String key = String.format("tm_%s_%d", owner, i);
-      if (!weights.keySet().contains(key))
-        break;
-      foundFeatures.add(key);
-    }
-    int num_features = foundFeatures.size();
-
-    phrase_weights = new float[num_features];
-    for (int i = 0; i < num_features; i++)
+    phrase_weights = new float[g.getNumDenseFeatures()];
+//    System.err.println(String.format("GOT %d FEATURES FOR %s", g.getNumDenseFeatures(), owner));
+    for (int i = 0; i < phrase_weights.length; i++)
       phrase_weights[i] = weights.getSparse(String.format("tm_%s_%d", owner, i));
 
     // Store the owner.

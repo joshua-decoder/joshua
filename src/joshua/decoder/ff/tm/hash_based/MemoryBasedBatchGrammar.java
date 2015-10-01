@@ -1,6 +1,6 @@
 package joshua.decoder.ff.tm.hash_based;
 
-import java.io.IOException;	
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +41,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   /* The number of distinct source sides. */
   private int qtyRuleBins = 0;
 
+  private int numDenseFeatures = 0;
+
   /* The trie root. */
   private MemoryBasedTrie root = null;
 
@@ -48,7 +50,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   private String grammarFile;
 
   private GrammarReader<Rule> modelReader;
-  
+
   /* Whether the grammar's rules contain regular expressions. */
   private boolean isRegexpGrammar = false;
 
@@ -71,7 +73,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     this.owner = Vocabulary.id(owner);
   }
 
-  public MemoryBasedBatchGrammar(GrammarReader<Rule> gr,JoshuaConfiguration joshuaConfiguration) {
+  public MemoryBasedBatchGrammar(GrammarReader<Rule> gr, JoshuaConfiguration joshuaConfiguration) {
     // this.defaultOwner = Vocabulary.id(defaultOwner);
     // this.defaultLHS = Vocabulary.id(defaultLHSSymbol);
     this(joshuaConfiguration);
@@ -79,7 +81,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   }
 
   public MemoryBasedBatchGrammar(String formatKeyword, String grammarFile, String owner,
-      String defaultLHSSymbol, int spanLimit, JoshuaConfiguration joshuaConfiguration) throws IOException {
+      String defaultLHSSymbol, int spanLimit, JoshuaConfiguration joshuaConfiguration)
+      throws IOException {
 
     this(joshuaConfiguration);
     this.owner = Vocabulary.id(owner);
@@ -87,7 +90,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     this.spanLimit = spanLimit;
     this.grammarFile = grammarFile;
     this.setRegexpGrammar(formatKeyword.equals("regexp"));
-    
+
     // ==== loading grammar
     this.modelReader = createReader(formatKeyword, grammarFile);
     if (modelReader != null) {
@@ -98,7 +101,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
         }
     } else {
       Decoder.LOG(1, "Couldn't create a GrammarReader for file " + grammarFile + " with format "
-            + formatKeyword);
+          + formatKeyword);
     }
 
     this.printGrammar();
@@ -120,7 +123,6 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     return null;
   }
 
-
   // ===============================================================
   // Methods
   // ===============================================================
@@ -128,7 +130,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   public void setSpanLimit(int spanLimit) {
     this.spanLimit = spanLimit;
   }
-  
+
   @Override
   public int getNumRules() {
     return this.qtyRulesRead;
@@ -147,7 +149,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
     if (this.spanLimit == -1) { // mono-glue grammar
       return (i == 0);
     } else {
-//      System.err.println(String.format("%s HASRULEFORSPAN(%d,%d,%d)/%d = %s", Vocabulary.word(this.owner), i, j, pathLength, spanLimit, pathLength <= this.spanLimit));
+      // System.err.println(String.format("%s HASRULEFORSPAN(%d,%d,%d)/%d = %s",
+      // Vocabulary.word(this.owner), i, j, pathLength, spanLimit, pathLength <= this.spanLimit));
       return (pathLength <= this.spanLimit);
     }
   }
@@ -163,19 +166,22 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
 
     // TODO: Why two increments?
     this.qtyRulesRead++;
-    
-//    if (owner == -1) {
-//      System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
-//      System.exit(1);
-//    }
+
+    // if (owner == -1) {
+    // System.err.println("* FATAL: MemoryBasedBatchGrammar::addRule(): owner not set for grammar");
+    // System.exit(1);
+    // }
     rule.setOwner(owner);
+
+    if (numDenseFeatures == 0)
+      numDenseFeatures = rule.getFeatureVector().getDenseFeatures().size();
 
     // === identify the position, and insert the trie nodes as necessary
     MemoryBasedTrie pos = root;
     int[] french = rule.getFrench();
-    
+
     maxSourcePhraseLength = Math.max(maxSourcePhraseLength, french.length);
-    
+
     for (int k = 0; k < french.length; k++) {
       int curSymID = french[k];
 
@@ -207,7 +213,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   }
 
   protected void printGrammar() {
-    Decoder.LOG(1,  String.format("MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'", 
+    Decoder.LOG(1, String.format(
+        "MemoryBasedBatchGrammar: Read %d rules with %d distinct source sides from '%s'",
         this.qtyRulesRead, this.qtyRuleBins, grammarFile));
   }
 
@@ -221,7 +228,7 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   public boolean isRegexpGrammar() {
     return this.isRegexpGrammar;
   }
-  
+
   public void setRegexpGrammar(boolean value) {
     this.isRegexpGrammar = value;
   }
@@ -234,58 +241,60 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
    */
   @Override
   public void addOOVRules(int sourceWord, List<FeatureFunction> featureFunctions) {
-    
-    // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now almost
+
+    // TODO: _OOV shouldn't be outright added, since the word might not be OOV for the LM (but now
+    // almost
     // certainly is)
-    final int targetWord = this.joshuaConfiguration.mark_oovs
-        ? Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV")
-        : sourceWord;   
+    final int targetWord = this.joshuaConfiguration.mark_oovs ? Vocabulary.id(Vocabulary
+        .word(sourceWord) + "_OOV") : sourceWord;
 
     int[] sourceWords = { sourceWord };
     int[] targetWords = { targetWord };
     final String oovAlignment = "0-0";
-    
+
     if (this.joshuaConfiguration.oovList != null && this.joshuaConfiguration.oovList.size() != 0) {
-      for (OOVItem item: this.joshuaConfiguration.oovList) {
-        Rule oovRule = new Rule(
-            Vocabulary.id(item.label), sourceWords, targetWords, "", 0,
+      for (OOVItem item : this.joshuaConfiguration.oovList) {
+        Rule oovRule = new Rule(Vocabulary.id(item.label), sourceWords, targetWords, "", 0,
             oovAlignment);
         addRule(oovRule);
         oovRule.estimateRuleCost(featureFunctions);
       }
     } else {
       int nt_i = Vocabulary.id(this.joshuaConfiguration.default_non_terminal);
-      Rule oovRule = new Rule(nt_i, sourceWords, targetWords, "", 0,
-          oovAlignment);
+      Rule oovRule = new Rule(nt_i, sourceWords, targetWords, "", 0, oovAlignment);
       addRule(oovRule);
       oovRule.estimateRuleCost(featureFunctions);
     }
   }
-  
+
   /**
    * Adds a default set of glue rules.
    * 
-   * @param featureFunctions 
+   * @param featureFunctions
    */
   public void addGlueRules(ArrayList<FeatureFunction> featureFunctions) {
     HieroFormatReader reader = new HieroFormatReader();
 
     String goalNT = FormatUtils.cleanNonterminal(joshuaConfiguration.goal_symbol);
     String defaultNT = FormatUtils.cleanNonterminal(joshuaConfiguration.default_non_terminal);
-    
+
     String[] ruleStrings = new String[] {
         String.format("[%s] ||| %s ||| %s ||| 0", goalNT, Vocabulary.START_SYM,
             Vocabulary.START_SYM),
-        String.format("[%s] ||| [%s,1] [%s,2] ||| [%s,1] [%s,2] ||| -1", 
-            goalNT, goalNT, defaultNT, goalNT, defaultNT),
-        String.format("[%s] ||| [%s,1] %s ||| [%s,1] %s ||| 0", 
-            goalNT, goalNT, Vocabulary.STOP_SYM, goalNT, Vocabulary.STOP_SYM)
-    };
-    
-    for (String ruleString: ruleStrings) {
+        String.format("[%s] ||| [%s,1] [%s,2] ||| [%s,1] [%s,2] ||| -1", goalNT, goalNT, defaultNT,
+            goalNT, defaultNT),
+        String.format("[%s] ||| [%s,1] %s ||| [%s,1] %s ||| 0", goalNT, goalNT,
+            Vocabulary.STOP_SYM, goalNT, Vocabulary.STOP_SYM) };
+
+    for (String ruleString : ruleStrings) {
       Rule rule = reader.parseLine(ruleString);
       addRule(rule);
       rule.estimateRuleCost(featureFunctions);
     }
+  }
+
+  @Override
+  public int getNumDenseFeatures() {
+    return numDenseFeatures;
   }
 }
