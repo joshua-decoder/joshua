@@ -62,19 +62,8 @@
     <!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX -->
   </target>
 
-  <target name="check-boost-root" unless="env.BOOST_ROOT" description="--> Prompt user to set BOOST_ROOT environment variable">
-    <fail message="Please set the $BOOST_ROOT environment variable." />
-  </target>
-
-  <target name="kenlm" depends="check-joshua-home,check-boost-root" description="--> 'Make' the kenlm sofrtware in ${src}/joshua/decoder/ff/lm/kenlm/">
-    <exec executable="make">
-      <arg value="-j" />
-      <arg value="4" />
-      <arg value="-C" />
-      <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
-      <arg value="install" />
-      <arg value="BOOST_ROOT=${env.BOOST_ROOT}" />
-    </exec>
+  <target name="kenlm" depends="check-joshua-home" description="Build KenLM">
+    <exec executable="./build_kenlm.sh" dir="${JOSHUA}/jni" />
   </target>
 
   <target name="giza" depends="check-joshua-home" description="--> 'Make' the giza software in scripts/training/giza-pp/">
@@ -224,6 +213,11 @@
     <exec executable="make">
       <arg value="-C" />
       <arg value="scripts/training/giza-pp" />
+      <arg value="clean" />
+    </exec>
+    <exec executable="make">
+      <arg value="-C" />
+      <arg value="src/kenlm" />
       <arg value="clean" />
     </exec>
     <exec executable="make">
