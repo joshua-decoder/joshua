@@ -7,7 +7,9 @@ export LDFLAGS+=" -lz"
 export CXX=${CXX:-g++}
 
 cd $JOSHUA/src/kenlm
-cmake -DCMAKE_CXX_FLAGS="$CXXFLAGS" .
+[[ ! -d build ]] && mkdir build
+cd build
+cmake .. -DCMAKE_CXX_FLAGS="$CXXFLAGS" -DCMAKE_BUILD_TYPE=release
 make
 cp bin/{query,lmplz,build_binary} $JOSHUA/bin
 
