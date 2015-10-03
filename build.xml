@@ -417,6 +417,9 @@
     <fileset dir="${lib}">
       <include name="**/*.jar" />
     </fileset>
+    <fileset dir="${build}">
+      <include name="**/*.jar" />
+    </fileset>
   </path>
   
   <!-- target: ant-eclipse-download   =================================== -->
@@ -436,7 +439,7 @@
   
   <!-- target: eclipse   ================================================ -->
   <target name="eclipse" 
-          depends="clean-eclipse,init,ant-eclipse-download"
+          depends="clean-eclipse,init,jar,ant-eclipse-download"
           description="--> Create eclipse project files">
 
     <pathconvert property="eclipse.project">
