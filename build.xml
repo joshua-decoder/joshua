@@ -461,7 +461,7 @@
         <source path="${basedir}/thrax/src/" />
         <source path="${basedir}/src/kenlm/" />
 
-        <output path="${build}" />
+        <output path="${basedir}/build" />
       </classpath>
     </eclipse>
   </target>
