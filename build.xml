@@ -8,7 +8,6 @@
 
   <property name="JOSHUA" value="${basedir}" />
   <property name="src" value="${JOSHUA}/src" />
-  <property name="src" value="${JOSHUA}/src" />
   <property name="test" value="${JOSHUA}/test" />
   <property name="build" value="${JOSHUA}/class" />
   <property name="lib" value="${JOSHUA}/lib" />
@@ -457,9 +456,7 @@
         <library path="${basedir}/bin" exported="false" />
         <library pathref="eclipse.classpath" exported="false" />
         
-        <source path="${basedir}/src/joshua/" />
-        <source path="${basedir}/thrax/src/" />
-        <source path="${basedir}/src/kenlm/" />
+        <source path="${basedir}/src" />
 
         <output path="${basedir}/build" />
       </classpath>
