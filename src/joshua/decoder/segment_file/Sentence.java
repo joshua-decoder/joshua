@@ -94,8 +94,8 @@ public class Sentence {
         .replaceAll("\\]",  "-rsb-")
         .replaceAll("\\|",  "-pipe-");
   
-    // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
-    if (joshuaConfiguration.maxlen != 0 && isLinearChain())
+    // Only trim strings
+    if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
       adjustForLength(joshuaConfiguration.maxlen);
   }
   
