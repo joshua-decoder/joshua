@@ -189,7 +189,6 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
         String remainingArcs = arcMatcher.group(4);
 
-        System.err.println("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
         Token arcToken = new Token(arcLabel);
         currentNode.addArc(destinationNode, arcWeight, arcToken);
 
@@ -218,8 +217,6 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
     List<Node<Token>> nodeList = new ArrayList<Node<Token>>(nodes.values());
     Collections.sort(nodeList, new NodeIdentifierComparator());
-
-    System.err.println(nodeList.toString());
 
     return new Lattice<Token>(nodeList, latticeIsAmbiguous);
   }
