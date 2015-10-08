@@ -417,29 +417,26 @@
     <fileset dir="${lib}">
       <include name="**/*.jar" />
     </fileset>
-    <fileset dir="${build}">
-      <include name="**/*.jar" />
-    </fileset>
   </path>
   
   <!-- target: ant-eclipse-download   =================================== -->
   <target name="ant-eclipse-download" description="--> Downloads the ant-eclipse binary.">
     <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
-         dest="${build}/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+         dest="${src}/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
 
-    <untar src="${build}/ant-eclipse-1.0.bin.tar.bz2"
-           dest="${build}" compression="bzip2">
+    <untar src="${src}/ant-eclipse-1.0.bin.tar.bz2"
+           dest="${src}" compression="bzip2">
       <patternset>
         <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
       </patternset>
     </untar>
 
-    <delete file="${build}/ant-eclipse-1.0.bin.tar.bz2" />
+    <delete file="${src}/ant-eclipse-1.0.bin.tar.bz2" />
   </target>
   
   <!-- target: eclipse   ================================================ -->
   <target name="eclipse" 
-          depends="clean-eclipse,init,jar,ant-eclipse-download"
+          depends="init,jar,ant-eclipse-download"
           description="--> Create eclipse project files">
 
     <pathconvert property="eclipse.project">
@@ -449,16 +446,13 @@
   
     <taskdef name="eclipse"
              classname="prantl.ant.eclipse.EclipseTask"
-             classpath="${build}/lib/ant-eclipse-1.0-jvm1.2.jar" />
+             classpath="${src}/lib/ant-eclipse-1.0-jvm1.2.jar" />
     <eclipse updatealways="true">
       <project name="${eclipse.project}" />
       <classpath>
-        <library path="${basedir}/bin" exported="false" />
         <library pathref="eclipse.classpath" exported="false" />
-        
         <source path="${basedir}/src" />
-
-        <output path="${basedir}/build" />
+        <output path="${build}" />
       </classpath>
     </eclipse>
   </target>
