@@ -168,8 +168,6 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
         nodes.put(nodeID, currentNode);
       }
 
-      System.err.println("Node " + nodeID + ":");
-
       Matcher arcMatcher = arcPattern.matcher(nodeData);
       int numArcs = 0;
       if (!arcMatcher.matches()) {

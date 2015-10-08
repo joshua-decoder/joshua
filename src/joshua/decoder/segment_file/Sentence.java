@@ -381,8 +381,11 @@ public class Sentence {
   public Lattice<Token> getLattice() {
     if (this.sourceLattice == null) {
       if (config.lattice_decoding && rawSource().startsWith("(((")) {
+        if (config.search_algorithm.equals("stack")) {
+          System.err.println("* FATAL: lattice decoding currently not supported for stack-based search algorithm.");
+          System.exit(12);
+        }
         this.sourceLattice = Lattice.createTokenLatticeFromPLF(rawSource());
-        System.err.println("LATTICE");
       } else
         this.sourceLattice = Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
             rawSource(), Vocabulary.STOP_SYM));
