@@ -456,9 +456,9 @@
         <library path="${basedir}/bin" exported="false" />
         <library pathref="eclipse.classpath" exported="false" />
         
-        <source path="${basedir}/src" />
+        <source path="${basedir}/src/joshua" />
 
-        <output path="${basedir}/build" />
+        <output path="${build}" />
       </classpath>
     </eclipse>
   </target>
