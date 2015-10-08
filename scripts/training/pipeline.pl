@@ -1516,6 +1516,12 @@ $JOSHUA_CONFIG = "$tunedir/joshua.config";
 
 # Write the decoder run command. The decoder will use the config file in the bundled
 # directory, continually updating it.
+
+# If we're decoding a lattice, also output the source side path we chose
+$JOSHUA_ARGS = "";
+if ($DOING_LATTICES) {
+  $JOSHUA_ARGS .= " -maxlen 0 -lattice-decoding";
+}
 $JOSHUA_ARGS .= " -output-format \"%i ||| %s ||| %f ||| %c\"";
 $JOSHUA_ARGS .= " $_JOSHUA_ARGS" if defined $_JOSHUA_ARGS;
 
@@ -1668,7 +1674,7 @@ my $output;
 # If we're decoding a lattice, also output the source side path we chose
 $JOSHUA_ARGS = "";
 if ($DOING_LATTICES) {
-  $JOSHUA_ARGS .= " -maxlen 0 -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
+  $JOSHUA_ARGS .= " -maxlen 0 -lattice-decoding -output-format \"%i ||| %s ||| %e ||| %f ||| %c\"";
 }
 
 if ($DO_MBR) {

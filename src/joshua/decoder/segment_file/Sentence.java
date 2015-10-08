@@ -94,8 +94,8 @@ public class Sentence {
         .replaceAll("\\]",  "-rsb-")
         .replaceAll("\\|",  "-pipe-");
   
-    // A maxlen of 0 means no limit. Only trim lattices that are linear chains.
-    if (joshuaConfiguration.maxlen != 0 && isLinearChain())
+    // Only trim strings
+    if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
       adjustForLength(joshuaConfiguration.maxlen);
   }
   
@@ -346,7 +346,7 @@ public class Sentence {
     assert isLinearChain();
     List<Token> tokens = new ArrayList<Token>();
     for (Node<Token> node: getLattice().getNodes())
-      if (node.getOutgoingArcs().size() > 0) 
+      if (node != null && node.getOutgoingArcs().size() > 0) 
         tokens.add(node.getOutgoingArcs().get(0).getLabel());
     return tokens;
   }
@@ -381,8 +381,11 @@ public class Sentence {
   public Lattice<Token> getLattice() {
     if (this.sourceLattice == null) {
       if (config.lattice_decoding && rawSource().startsWith("(((")) {
+        if (config.search_algorithm.equals("stack")) {
+          System.err.println("* FATAL: lattice decoding currently not supported for stack-based search algorithm.");
+          System.exit(12);
+        }
         this.sourceLattice = Lattice.createTokenLatticeFromPLF(rawSource());
-        System.err.println("LATTICE");
       } else
         this.sourceLattice = Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
             rawSource(), Vocabulary.STOP_SYM));
