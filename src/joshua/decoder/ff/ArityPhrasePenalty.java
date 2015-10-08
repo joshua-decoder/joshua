@@ -31,9 +31,6 @@ public class ArityPhrasePenalty extends StatelessFF {
     this.owner = Vocabulary.id(parsedArgs.get("owner"));
     this.minArity = Integer.parseInt(parsedArgs.get("min-arity"));
     this.maxArity = Integer.parseInt(parsedArgs.get("max-arity"));
-
-    if (!weights.containsKey(name))
-      System.err.println("WARNING: no weight found for feature '" + name + "'");
   }
 
   /**

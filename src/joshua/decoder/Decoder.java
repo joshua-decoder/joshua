@@ -62,16 +62,6 @@ public class Decoder {
   private List<Grammar> grammars;
   private ArrayList<FeatureFunction> featureFunctions;
 
-  /*
-   * A sorted list of the feature names (so they can be output in the order they were read in)
-   */
-  public static ArrayList<String> feature_names = new ArrayList<String>();
-  
-  /*
-   * Just the dense features.
-   */
-  public static ArrayList<String> dense_feature_names = new ArrayList<String>();
-
   /* The feature weights. */
   public static FeatureVector weights;
 
@@ -419,29 +409,11 @@ public class Decoder {
           System.exit(17);
         }
 
-        /* Weights could be listed more than once if overridden from the command line */
-        if (! weights.containsKey(pair[0])) {
-          feature_names.add(pair[0]);
-          if (FeatureVector.isDense(pair[0]))
-            dense_feature_names.add(pair[0]);
-        }
-
-        weights.put(pair[0], Float.parseFloat(pair[1]));
+        weights.set(pair[0], Float.parseFloat(pair[1]));
       }
 
-      // This is mostly for compatibility with the Moses tuning script
-      if (joshuaConfiguration.show_weights_and_quit) {
-        for (String key : Decoder.dense_feature_names) {
-          System.out.println(String.format("%s= %.5f", mosesize(key), weights.get(key)));
-        }
-        System.exit(0);
-      }
-
-      if (!weights.containsKey("BLEU"))
-        Decoder.weights.put("BLEU", 0.0f);
-
-      Decoder.LOG(1, String.format("Read %d sparse and %d dense weights", weights.size()
-          - dense_feature_names.size(), dense_feature_names.size()));
+      Decoder.LOG(1, String.format("Read %d weights (%d of them dense)", weights.size(),
+          weights.DENSE_FEATURE_NAMES.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -456,6 +428,14 @@ public class Decoder {
       // Initialize the features: requires that LM model has been initialized.
       this.initializeFeatureFunctions();
 
+      // This is mostly for compatibility with the Moses tuning script
+      if (joshuaConfiguration.show_weights_and_quit) {
+        for (String key : weights.DENSE_FEATURE_NAMES) {
+          System.out.println(String.format("%s= %.5f", mosesize(key), weights.getSparse(key)));
+        }
+        System.exit(0);
+      }
+      
       // Sort the TM grammars (needed to do cube pruning)
       if (joshuaConfiguration.amortized_sorting) {
         Decoder.LOG(1, "Grammar sorting happening lazily on-demand.");
@@ -549,7 +529,7 @@ public class Decoder {
       String owner = Vocabulary.word(grammar.getOwner());
       if (! ownersSeen.contains(owner)) {
         this.featureFunctions.add(new PhraseModel(weights, new String[] { "tm", "-owner", owner },
-            joshuaConfiguration));
+            joshuaConfiguration, grammar));
         ownersSeen.add(owner);
       }
     }
@@ -589,11 +569,7 @@ public class Decoder {
           feature = demoses(feature);
         }
 
-        weights.put(feature, value);
-        feature_names.add(feature);
-        if (FeatureVector.isDense(feature))
-          dense_feature_names.add(feature);
-
+        weights.increment(feature, value);
       }
     } catch (FileNotFoundException ioe) {
       System.err.println("* FATAL: Can't find weights-file '" + fileName + "'");
@@ -655,7 +631,10 @@ public class Decoder {
 
     for (FeatureFunction feature : featureFunctions) {
       Decoder.LOG(1, String.format("FEATURE: %s", feature.logString()));
+      
     }
+
+    weights.registerDenseFeatures(featureFunctions);
   }
 
   /**

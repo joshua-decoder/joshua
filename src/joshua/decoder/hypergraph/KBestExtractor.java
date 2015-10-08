@@ -626,7 +626,7 @@ public class KBestExtractor {
      * @return
      */
     public float getCost() {
-      return cost - weights.get("BLEU") * bleu;
+      return cost - weights.getSparse("BLEU") * bleu;
     }
 
     public String toString() {

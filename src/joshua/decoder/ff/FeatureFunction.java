@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -53,6 +54,17 @@ public abstract class FeatureFunction {
    * names, for templates that define multiple features.
    */
   protected String name = null;
+  
+  /*
+   * The list of features each function can contribute, along with the dense feature IDs.
+   */
+  protected String[] denseFeatureNames = null;
+  protected int[] denseFeatureIDs = null;
+
+  /*
+   * The first dense feature index
+   */
+  protected int denseFeatureIndex = -1; 
 
   // The list of arguments passed to the feature, and the hash for the parsed args
   protected String[] args;
@@ -70,7 +82,7 @@ public abstract class FeatureFunction {
   public String getName() {
     return name;
   }
-
+  
   // Whether the feature has state.
   public abstract boolean isStateful();
 
@@ -82,10 +94,22 @@ public abstract class FeatureFunction {
 
     this.parsedArgs = FeatureFunction.parseArgs(args);
   }
+  
+  /**
+   * Any feature function can use this to report dense features names to the master code. The 
+   * parameter tells the feature function the index of the first available dense feature ID; the feature
+   * function will then use IDs (id..id+names.size()-1).
+   * 
+   * @param id the id of the first dense feature id to use
+   * @return a list of dense feature names
+   */
+  public ArrayList<String> reportDenseFeatures(int id) {
+    return new ArrayList<String>();
+  }
 
   public String logString() {
     try {
-      return String.format("%s (weight %.3f)", name, weights.get(name));
+      return String.format("%s (weight %.3f)", name, weights.getSparse(name));
     } catch (RuntimeException e) {
       return name;
     }
@@ -270,6 +294,7 @@ public abstract class FeatureFunction {
 
   public interface Accumulator {
     public void add(String name, float value);
+    public void add(int id, float value);
   }
 
   public class ScoreAccumulator implements Accumulator {
@@ -279,10 +304,14 @@ public abstract class FeatureFunction {
       this.score = 0.0f;
     }
 
+    @Override
     public void add(String name, float value) {
-      if (weights.containsKey(name)) {
-        score += value * weights.get(name);
-      }
+      score += value * weights.getSparse(name);
+    }
+    
+    @Override
+    public void add(int id, float value) {
+      score += value * weights.getDense(id);
     }
 
     public float getScore() {
@@ -297,12 +326,14 @@ public abstract class FeatureFunction {
       this.features = new FeatureVector();
     }
 
+    @Override
     public void add(String name, float value) {
-      if (features.containsKey(name)) {
-        features.put(name, features.get(name) + value);
-      } else {
-        features.put(name, value);
-      }
+      features.increment(name, value);
+    }
+    
+    @Override
+    public void add(int id, float value) {
+      features.increment(id,  value);
     }
 
     public FeatureVector getFeatures() {

@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,6 +40,15 @@ public class OOVPenalty extends StatelessFF {
       for (OOVItem item: config.oovList) 
         oovWeights.put(Vocabulary.id(item.label), item.weight);
   }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
+  }
 
   /**
    * OOV rules cover exactly one word, and such rules belong to a grammar whose owner is "oov". Each
@@ -50,7 +60,8 @@ public class OOVPenalty extends StatelessFF {
       Sentence sentence, Accumulator acc) {
     
     if (rule != null && this.ownerID == rule.getOwner()) {
-      acc.add(name, getValue(rule.getLHS()));
+//      acc.add(name, getValue(rule.getLHS()));
+      acc.add(denseFeatureIndex, getValue(rule.getLHS()));
     }
 
     return null;
@@ -66,7 +77,7 @@ public class OOVPenalty extends StatelessFF {
   @Override
   public float estimateCost(Rule rule, Sentence sentence) {
     if (rule != null && this.ownerID == rule.getOwner())
-      return weights.get(name) * getValue(rule.getLHS());
+      return weights.getDense(denseFeatureIndex) * getValue(rule.getLHS());
     return 0.0f;
   }
   

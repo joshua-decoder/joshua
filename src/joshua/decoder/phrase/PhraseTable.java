@@ -175,4 +175,9 @@ public class PhraseTable implements Grammar {
   public int getOwner() {
     return backend.getOwner();
   }
+
+  @Override
+  public int getNumDenseFeatures() {
+    return backend.getNumDenseFeatures();
+  }
 }

@@ -61,7 +61,7 @@ public class LanguageModelFF extends StatefulFF {
    */
   protected final int ngramOrder;
 
-  /**
+  /*
    * We cache the weight of the feature since there is only one.
    */
   protected float weight;
@@ -128,9 +128,19 @@ public class LanguageModelFF extends StatefulFF {
         e.printStackTrace();
       }
 
-    this.weight = weights.get(name);
+    // The dense feature initialization hasn't happened yet, so we have to retrieve this as sparse
+    this.weight = weights.getSparse(name);
     
     initializeLM();
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   /**
@@ -404,7 +414,8 @@ public class LanguageModelFF extends StatefulFF {
         }
       }
     }
-    acc.add(name, transitionLogP);
+//    acc.add(name, transitionLogP);
+    acc.add(denseFeatureIndex, transitionLogP);
 
     if (left_context != null) {
       return new NgramDPState(left_context, Arrays.copyOfRange(current, ccount - this.ngramOrder
@@ -446,7 +457,8 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     // Tell the accumulator
-    acc.add(name, res);
+//    acc.add(name, res);
+    acc.add(denseFeatureIndex, res);
 
     // State is the same
     return new NgramDPState(leftContext, rightContext);

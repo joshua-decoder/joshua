@@ -132,6 +132,11 @@ public class PackedGrammar extends AbstractGrammar {
     return num_rules;
   }
 
+  @Override
+  public int getNumDenseFeatures() {
+    return encoding.getNumDenseFeatures();
+  }
+
   public Rule constructManualRule(int lhs, int[] src, int[] tgt, float[] scores, int arity) {
     return null;
   }
@@ -785,7 +790,7 @@ public class PackedGrammar extends AbstractGrammar {
         @Override
         public FeatureVector getFeatureVector() {
           if (features == null) {
-            features = new FeatureVector(getFeatures(source[address + 2]), "");
+            features = new FeatureVector(getFeatures(source[address + 2]), "tm_" + Vocabulary.word(owner) + "_");
           }
 
           return features;

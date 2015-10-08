@@ -1,5 +1,6 @@
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.List;	
 
 import joshua.corpus.Vocabulary;
@@ -24,12 +25,10 @@ import joshua.decoder.segment_file.Sentence;
 public class PhrasePenalty extends StatelessFF {
 
   private int owner = 0;
-  private float weight = 0.0f;
   private float value = 1.0f;
   
   public PhrasePenalty(FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "PhrasePenalty", args, config);
-    this.weight = weights.get(name);
     if (parsedArgs.containsKey("owner"))
       this.owner = Vocabulary.id(parsedArgs.get("owner"));
     else // default
@@ -42,9 +41,17 @@ public class PhrasePenalty extends StatelessFF {
 
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
-      acc.add(name, value);
+      acc.add(denseFeatureIndex, value);
 
     return null;
+  }
+    
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
   
   /**
@@ -55,7 +62,7 @@ public class PhrasePenalty extends StatelessFF {
   public float estimateCost(Rule rule, Sentence sentence) {
     if (rule != null && rule != Hypothesis.BEGIN_RULE && rule != Hypothesis.END_RULE 
         && (owner == 0 || rule.getOwner() == owner))
-      return weight * value;
+      return weights.getDense(denseFeatureIndex) * value;
     return 0.0f;
   }
 }
