@@ -166,7 +166,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       } else {
         currentNode = new Node<Token>(nodeID);
         while (nodeID > nodes.size())
-          nodes.add(null);
+          nodes.add(new Node<Token>(nodes.size()));
         nodes.add(currentNode);
       }
 
@@ -187,7 +187,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
         } else {
           destinationNode = new Node<Token>(destinationNodeID);
           while (destinationNodeID > nodes.size())
-            nodes.add(null);
+            nodes.add(new Node<Token>(nodes.size()));
           nodes.add(destinationNode);
         }
 

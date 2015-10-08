@@ -346,7 +346,7 @@ public class Sentence {
     assert isLinearChain();
     List<Token> tokens = new ArrayList<Token>();
     for (Node<Token> node: getLattice().getNodes())
-      if (node.getOutgoingArcs().size() > 0) 
+      if (node != null && node.getOutgoingArcs().size() > 0) 
         tokens.add(node.getOutgoingArcs().get(0).getLabel());
     return tokens;
   }
