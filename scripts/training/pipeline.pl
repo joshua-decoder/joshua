@@ -1413,6 +1413,8 @@ if ($DO_BUILD_CLASS_LM) {
 
 if ($DOING_LATTICES) {
   push(@feature_functions, "SourcePath");
+
+  $weightstr .= "SourcePath 1.0 ";
 }
 if ($GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") {
   push(@feature_functions, "Distortion");
