@@ -7,6 +7,7 @@
   <property environment="env" />
 
   <property name="JOSHUA" value="${basedir}" />
+  <property name="KENLM" value="${basedir}/src/kenlm" />
   <property name="src" value="${JOSHUA}/src" />
   <property name="test" value="${JOSHUA}/test" />
   <property name="build" value="${JOSHUA}/class" />
@@ -209,15 +210,10 @@
   <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Delete the compiled files -->
-  <target name="clean" depends="clean-thrax,clean-java" description="--> Clean (remove) all build directories">
+  <target name="clean" depends="clean-thrax,clean-java,clean-kenlm" description="--> Clean (remove) all build directories">
     <exec executable="make">
       <arg value="-C" />
       <arg value="scripts/training/giza-pp" />
-      <arg value="clean" />
-    </exec>
-    <exec executable="make">
-      <arg value="-C" />
-      <arg value="src/kenlm" />
       <arg value="clean" />
     </exec>
     <exec executable="make">
@@ -244,11 +240,15 @@
   </target>
 
   <target name="clean-thrax" description="--> Delete just the thrax files">
-      <delete verbose="true" quiet="true">
+    <delete verbose="true" quiet="true">
       <fileset dir="${thraxlib}">
         <include name="**/*.class"/>
       </fileset>
     </delete>
+  </target>
+
+  <target name="clean-kenlm" description="--> Cleaning up KenLM">
+    <delete dir="${KENLM}/build" />
   </target>
 
   <!-- EXPERIMENTAL: Delete *all* generated files -->
