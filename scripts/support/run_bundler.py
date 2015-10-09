@@ -326,6 +326,7 @@ def recursive_copy(src, dest, symlink = False):
 
 def run_grammar_packer(src_path, dest_path):
     cmd = [os.path.join(JOSHUA_PATH, "scripts/support/grammar-packer.pl"),
+           "-T", opts.tmpdir,
            src_path, dest_path]
     logging.info(
         'Running the grammar-packer.pl script with the command: %s'
@@ -565,6 +566,9 @@ def handle_args(clargs):
     parser.add_argument(
         '--tokenizer', default=default_tokenizer,
         help="source sentence tokenizer that was applied to the model")
+    parser.add_argument(
+        '-T', dest='tmpdir', default='/tmp',
+        help="temp directory")
 
     return parser.parse_args(clargs)
 
@@ -714,6 +718,7 @@ def execute_operations(operations):
 
 
 def main(argv):
+    global opts
     opts = handle_args(argv[1:])
 
     logging.basicConfig(

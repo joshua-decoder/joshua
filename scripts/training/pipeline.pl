@@ -1490,7 +1490,7 @@ if ($GRAMMAR_TYPE eq "phrase" or $GRAMMAR_TYPE eq "moses") {
 # Now build the bundle
 if ($OPTIMIZER_RUN == 1) {
   $cachepipe->cmd("tune-bundle",
-                  "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
+                  "$BUNDLER --force --symlink --absolute --verbose -T $TMPDIR $JOSHUA_CONFIG $tunemodeldir --copy-config-options '-top-n $NBEST -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false -search $SEARCH_ALGORITHM -weights \"$weightstr\" $feature_functions ${tm_copy_config_args}' ${tm_switch}",
                   $JOSHUA_CONFIG,
                   get_file_from_grammar($TUNE_GRAMMAR) || $JOSHUA_CONFIG,
                   "$tunemodeldir/run-joshua.sh");
@@ -1649,7 +1649,7 @@ if (defined $GLUE_GRAMMAR_FILE) {
 # Build the test model
 my $testmodeldir = "$RUNDIR/test/$OPTIMIZER_RUN/model";
 $cachepipe->cmd("test-bundle-${OPTIMIZER_RUN}",
-                "$BUNDLER --force --symlink --absolute --verbose $JOSHUA_CONFIG $testmodeldir --copy-config-options '-top-n $NBEST -pop-limit 5000 -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch}",
+                "$BUNDLER --force --symlink --absolute --verbose -T $TMPDIR $JOSHUA_CONFIG $testmodeldir --copy-config-options '-top-n $NBEST -pop-limit 5000 -output-format \"%i ||| %s ||| %f ||| %c\" -mark-oovs false' ${tm_switch}",
                 $JOSHUA_CONFIG,
                 get_file_from_grammar($TEST_GRAMMAR) || $JOSHUA_CONFIG,
                 "$testmodeldir/joshua.config");
