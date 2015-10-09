@@ -1138,7 +1138,7 @@ if (! defined $GRAMMAR_FILE) {
     system("mv $thrax_file.tmp $thrax_file");
 
     $cachepipe->cmd("thrax-run",
-                    "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' -D hadoop.tmp.dir=$TMPDIR $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar.gz; $HADOOP/bin/hadoop fs -rmr $THRAXDIR",
+                    "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' -D hadoop.tmp.dir=$TMPDIR $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar.gz", #; $HADOOP/bin/hadoop fs -rm -r $THRAXDIR",
                     "$DATA_DIRS{train}/thrax-input-file",
                     $thrax_file,
                     "grammar.gz");
@@ -1147,9 +1147,9 @@ if (! defined $GRAMMAR_FILE) {
     stop_hadoop_cluster() if $HADOOP eq "hadoop";
 
     # cache the thrax-prep step, which depends on grammar.gz
-    if ($HADOOP ne "hadoop") {
-      $cachepipe->cmd("thrax-prep", "--cache-only");
-    }
+#    if ($HADOOP ne "hadoop") {
+#      $cachepipe->cmd("thrax-prep", "--cache-only");
+#    }
 
     # clean up
     # TODO: clean up real hadoop clusters too
