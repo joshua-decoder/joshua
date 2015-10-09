@@ -328,16 +328,16 @@ def parse_tm_line(line):
     return (owner, maxspan, path)
 
 
-def get_features(grammar_path):
-    """Opens the grammar at grammar_path and returns the list of features. Works for
-    both packed grammars and unpacked grammars. For packed grammars, the feature list
-    is complete, but for unpacked ones, only the features found on the first line are
-    returned. Dense features (unlabeled ones) are returned as sequential numbers
-    starting at 0."""
+def get_features(config_file):
+    """Queries the decoder for all dense features that will be fired by the feature
+    functions activated in the config file"""
 
-    features = check_output("%s/scripts/training/get_grammar_features.pl %s" % (JOSHUA, grammar_path), shell=True)
-    return features.strip().split('\n')
-
+    output = check_output("%s/bin/joshua-decoder -c %s -show-weights -v 0" % (JOSHUA, config_file), shell=True)
+    features = []
+    for index, item in enumerate(output.split('\n')):
+        if item != "":
+            features.append(tuple(item.split()))
+    return features
 
 def get_num_refs(prefix):
     """Determines how many references there are."""
@@ -377,32 +377,14 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                      'DECODER_CONFIG': config,
                      'DECODER_OUTPUT': output })
 
-    # Parse the config file, looking for tms, lms, and feature
-    # functions for which we need to provide initial weights
+    # Query the decoder for the list of dense parameters. These need to be listed in the
+    # config file or MERT will not know about them, despite them being listed in params.txt.
     params = []
-    lm_i = 0
-    for line in open(config):
-        if line.startswith('tm ='):
-            owner, span, path = parse_tm_line(line)
-
-            if not os.path.isabs(path):
-                path = os.path.join(os.path.dirname(config), path)
-
-            for f in get_features(path):
-                if re.match(r'^\d+$', f):
-                    params.append('tm_%s_%s ||| 1.0 Opt -Inf +Inf -1 +1' % (owner, f))
-                else:
-                    params.append('%s ||| 0.0 Opt -Inf +Inf -1 +1' % (f))
-
-        elif line.startswith('feature-function'):
-            if 'LanguageModel' in line:
-                params.append('lm_%d ||| 1.0 Opt 0.1 +Inf +0.5 +1.5' % (lm_i))
-                lm_i += 1
-            else:
-                ff = line.strip().split(' ', 2)[2]
-                if ff in ['SourcePath', 'PhrasePenalty', 'Distortion']:
-                    params.append('%s ||| 1.0 Opt -Inf +Inf -1 +1' % (ff))
-                    
+    for feature,weight in get_features(config):
+        if feature.startswith('lm_'):
+            params.append('%s ||| %s Opt 0.1 +Inf +0.5 +1.5' % (feature, weight))
+        else:
+            params.append('%s ||| %s Opt -Inf +Inf -1 +1' % (feature, weight))
     paramstr = '\n'.join(params)
     write_template(PARAMS_TEMPLATE, '%s/params.txt' % (tunedir),
                    { 'REF': target,
