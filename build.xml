@@ -15,23 +15,13 @@
   <property name="thraxlib" value="${JOSHUA}/thrax/bin" />
   <property name="doc" value="${JOSHUA}/doc" />
 
-  <!-- TODO: should these be made into 'path's instead of 'property's? -->
-  <property name="testng" value="${lib}/testng-6.7.jar" />
-  <!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
-
-  <property name="cli" value="commons-cli-1.2.jar"/>
-
   <path id="compile.all.classpath">
     <fileset dir="${lib}">
-      <include name="${cli}" />
-      <!-- Jung uses a BSD-like license, see ./lib/LICENSES/LICENSE-jung.txt -->
       <include name="jung-api-2.0.jar" />
       <include name="jung-graph-impl-2.0.jar" />
       <include name="jung-algorithms-2.0.jar" />
       <include name="jung-visualization-2.0.jar" />
-      <include name="collections-generic-4.01.jar" />
       <include name="berkeleylm.jar" />
-      <include name="junit-4.10.jar" />
     </fileset>
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
@@ -161,7 +151,7 @@
 
   <!-- Create a JAR file -->
   <target name="jar" depends="java,check-joshua-home" description="--> Create a JAR file of compiles classes">
-    <jar destfile="${build}/joshua.jar" index="true">
+    <jar destfile="${lib}/joshua.jar" index="true">
       <fileset dir="${build}">
         <include name="**/*.class" />
       </fileset>
@@ -200,7 +190,7 @@
 
   <!-- Create a JAR file of the source code -->
   <target name="source-jar" description="--> Create a JAR file of the source code">
-    <jar destfile="${build}/joshua-src.jar">
+    <jar destfile="${lib}/joshua-src.jar">
       <fileset dir="${build}">
         <include name="**/*.java" />
       </fileset>
@@ -251,37 +241,6 @@
     <delete dir="${KENLM}/build" />
   </target>
 
-  <!-- EXPERIMENTAL: Delete *all* generated files -->
-  <target name="distclean" depends="clean" description="--> EXPERIMENTAL: Delete *all* generated files">
-    <!-- BUG: this doesn't delete empty folders (neither ${build} itself, nor the class dirs (the latter makes sense since we don't traverse them)) -->
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="${build}">
-        <include name="joshua.jar" />
-        <include name="joshua-ui.jar" />
-      </fileset>
-    </delete>
-
-    <!-- HACK: these two work perfectly, but maybe problematic if people reset ${test} or ${doc} -->
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="${test}-output" />
-    </delete>
-
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="${doc}" includes="**/*.tmp" />
-      <fileset dir="${doc}/html" />
-      <fileset dir="${doc}/latex" />
-    </delete>
-
-    <delete verbose="true" quiet="true" file="joshua-fb.xml" />
-
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="tree_visualizer">
-        <include name="tree_visualizer.jar" />
-      </fileset>
-    </delete>
-  </target>
-
-
   <!-- Delete *all* generated files,
        including files and directories not tracked by git -->
   <target name="devel-clean" description="--> Delete *all* generated files, including files and directories not tracked by git">
@@ -303,17 +262,6 @@
     </exec>
   </target>
 
-  <!-- ~~~~~ Javadoc ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-  <!-- Compile the Javadocs into web pages -->
-  <target name="javadoc" description="--> Compile the Javadocs into web pages">
-    <mkdir dir="${doc}" />
-    <javadoc packagenames="joshua.*" classpath="${cli}" sourcepath="${src}" destdir="${doc}" author="true" version="true" charset="utf-8" overview="src/overview.html">
-      <link href="http://docs.oracle.com/javase/7/docs/api/" />
-      <link href="http://commons.apache.org/cli/api-release" />
-    </javadoc>
-  </target>
-
   <!-- ~~~~~ Doxygen ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <taskdef uri="antlib:org.doxygen.tools" resource="org/doxygen/tools/antlib.xml" classpath="${lib}/ant-doxygen-1.6.1.jar" />
@@ -331,28 +279,7 @@
     </exec>
   </target>
 
-  <!-- ~~~~~ TestNG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-  <!-- Define the unit testing task -->
-  <taskdef resource="testngtasks" classpath="${testng}" />
-
-
-  <!-- Compile the unit test code -->
-  <!-- FIXME: why is this broken out from the 'test' target? -->
-  <target name="compile-tests" depends="java" description="--> Compile the unit test code">
-    <javac compiler="javac1.5" srcdir="${test}/joshua/ui" destdir="${build}" classpath="${testng}:${build}" debug="on" encoding="utf8" />
-  </target>
-
-
-  <!-- Run the unit tests -->
-  <target name="testng" depends="all,compile-tests" description="--> Run the unit tests">
-    <testng classpath="${build}" sourcedir="${test}">
-      <jvmarg value="-Dfile.encoding=UTF8" />
-      <jvmarg value="-Xms256m" />
-      <jvmarg value="-Xmx256m" />
-      <xmlfileset dir="${test}" includes="testng.xml" />
-    </testng>
-  </target>
+  <!-- ~~~~~ Ivy ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <property name="ivy.install.version" value="2.2.0" />
   <condition property="ivy.home" value="${env.IVY_HOME}">
@@ -398,7 +325,6 @@
     <ivy:resolve file="${JOSHUA}/lib/ivy.xml" />
     <ivy:retrieve type="jar" />
   </target>
-
 
     <!-- target: clean-eclipse ============================================ -->
   <target name="clean-eclipse" depends="clean" 
