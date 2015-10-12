@@ -22,7 +22,7 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/src \
     joshua-$version/bin \
     joshua-$version/class \
-    joshua-$version/lib/{*jar,eng_sm6.gr,hadoop-0.20.2.tar.gz,README,LICENSES} \
+    joshua-$version/lib/{*jar,eng_sm6.gr,hadoop-2.5.2.tar.gz,README,LICENSES} \
     joshua-$version/scripts \
     joshua-$version/test \
     joshua-$version/examples \

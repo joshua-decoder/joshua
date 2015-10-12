@@ -4,14 +4,14 @@
 
 set -u
 
+export VERSION=2.5.2
+
 rm -rf thrax.log grammar.gz .grammar.crc thrax
 
-hadoop_dl_url=http://archive.apache.org/dist/hadoop/core/hadoop-0.20.2/hadoop-0.20.2.tar.gz
-[[ ! -f $JOSHUA/lib/hadoop-0.20.2.tar.gz ]] && wget -q -O $JOSHUA/lib/hadoop-0.20.2.tar.gz $hadoop_dl_url
-[[ ! -d hadoop-0.20.2 ]] && tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz
+[[ ! -d hadoop-$VERSION ]] && tar xzf $JOSHUA/lib/hadoop-$VERSION.tar.gz
 
 unset HADOOP HADOOP_HOME HADOOP_CONF_DIR
-export HADOOP=$(pwd)/hadoop-0.20.2
+export HADOOP=$(pwd)/hadoop-$VERSION
 
 # run hadoop
 $HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar input/thrax.conf thrax > thrax.log 2>&1 
@@ -19,7 +19,7 @@ $HADOOP/bin/hadoop fs -getmerge thrax/final grammar.gz
 
 size=$(perl -e "print +(stat('grammar.gz'))[7] . $/")
 
-rm -rf hadoop-0.20.2
+rm -rf hadoop-$VERSION
 if [[ $size -eq 989817 ]]; then
   rm -rf thrax.log grammar.gz .grammar.crc thrax
   exit 0
