@@ -1,5 +1,8 @@
 package joshua.decoder.ff.tm;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+
 /***
  * A class for reading in rules from a Moses phrase table. Most of the conversion work is done
  * in {@link joshua.decoder.ff.tm.format.PhraseFormatReader}. This includes prepending every
@@ -19,11 +22,20 @@ package joshua.decoder.ff.tm;
 public class PhraseRule extends Rule {
 
   private String mosesFeatureString = null;
+  private Supplier<byte[]> alignmentSupplier;
   
   public PhraseRule(int lhs, int[] french, int[] english, String sparse_features, int arity,
       String alignment) {
     super(lhs, french, english, null, arity, alignment);
     mosesFeatureString = sparse_features;
+    this.alignmentSupplier = Suppliers.memoize(() ->{
+        String[] tokens = getAlignmentString().split("[-\\s]+");
+        byte[] alignmentArray = new byte[tokens.length + 2];
+        alignmentArray[0] = alignmentArray[1] = 0;
+        for (int i = 0; i < tokens.length; i++)
+            alignmentArray[i + 2] = (byte) (Short.parseShort(tokens[i]) + 1);
+        return alignmentArray;
+    });
   }
 
   /** 
@@ -49,13 +61,6 @@ public class PhraseRule extends Rule {
    */
   @Override
   public byte[] getAlignment() {
-    if (alignment == null) {
-      String[] tokens = getAlignmentString().split("[-\\s]+");
-      alignment = new byte[tokens.length + 2];
-      alignment[0] = alignment[1] = 0;
-      for (int i = 0; i < tokens.length; i++)
-        alignment[i + 2] = (byte) (Short.parseShort(tokens[i]) + 1);
-    }
-    return alignment;
+    return this.alignmentSupplier.get();
   }
 }

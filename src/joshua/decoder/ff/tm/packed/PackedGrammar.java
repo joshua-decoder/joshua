@@ -79,6 +79,8 @@ import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 import joshua.util.io.LineReader;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
@@ -790,15 +792,54 @@ public class PackedGrammar extends AbstractGrammar {
        *
        */
       public final class PackedPhrasePair extends PackedRule {
+
+        private final Supplier<int[]> englishSupplier;
+        private final Supplier<byte[]> alignmentSupplier;
+
         public PackedPhrasePair(int address) {
           super(address);
+          englishSupplier = initializeEnglishSupplier();
+          alignmentSupplier = initializeAlignmentSupplier();
         }
 
         @Override
         public int getArity() {
           return PackedTrie.this.getArity() + 1;
         }
-        
+
+        /**
+         * Initialize a number of suppliers which get evaluated when their respective getters
+         * are called.
+         * Inner lambda functions are guaranteed to only be called once, because of this underlying
+         * structures are accessed in a threadsafe way.
+         * Guava's implementation makes sure only one read of a volatile variable occurs per get.
+         * This means this implementation should be as thread-safe and performant as possible.
+         */
+
+        private Supplier<int[]> initializeEnglishSupplier(){
+          Supplier<int[]> result = Suppliers.memoize(() ->{
+            int[] phrase = getTarget(source[address + 1]);
+            int[] tgt = new int[phrase.length + 1];
+            tgt[0] = -1;
+            for (int i = 0; i < phrase.length; i++)
+              tgt[i+1] = phrase[i];
+            return tgt;
+          });
+          return result;
+        }
+
+        private Supplier<byte[]> initializeAlignmentSupplier(){
+          Supplier<byte[]> result = Suppliers.memoize(() ->{
+            byte[] raw_alignment = getAlignmentArray(source[address + 2]);
+            byte[] points = new byte[raw_alignment.length + 2];
+            points[0] = points[1] = 0;
+            for (int i = 0; i < raw_alignment.length; i++)
+              points[i + 2] = (byte) (raw_alignment[i] + 1);
+            return points;
+          });
+          return result;
+        }
+
         /**
          * Take the English phrase of the underlying rule and prepend an [X].
          * 
@@ -806,16 +847,8 @@ public class PackedGrammar extends AbstractGrammar {
          */
         @Override
         public int[] getEnglish() {
-          if (tgt == null) {
-            int[] phrase = getTarget(source[address + 1]);
-            tgt = new int[phrase.length + 1];
-            tgt[0] = -1;
-            for (int i = 0; i < phrase.length; i++)
-              tgt[i+1] = phrase[i];
-          }
-          return tgt;
+          return this.englishSupplier.get();
         }
-
         
         /**
          * Take the French phrase of the underlying rule and prepend an [X].
@@ -838,27 +871,51 @@ public class PackedGrammar extends AbstractGrammar {
          */
         @Override
         public byte[] getAlignment() {
-          // alignments is the underlying raw alignment data
-          if (alignments != null) {
-            byte[] a = getAlignmentArray(source[address + 2]);
-            byte[] points = new byte[a.length + 2];
-            points[0] = points[1] = 0;
-            for (int i = 0; i < a.length; i++)
-              points[i + 2] = (byte) (a[i] + 1);
-            return points;
+          // if no alignments in grammar do not fail
+          if (alignments == null) {
+            return null;
           }
-          return null;
+
+          return this.alignmentSupplier.get();
         }
       }
 
       public class PackedRule extends Rule {
         protected final int address;
-
-        protected int[] tgt = null;
-        private FeatureVector features = null;
+        private final Supplier<int[]> englishSupplier;
+        private final Supplier<FeatureVector> featureVectorSupplier;
+        private final Supplier<byte[]> alignmentsSupplier;
 
         public PackedRule(int address) {
           this.address = address;
+          this.englishSupplier = intializeEnglishSupplier();
+          this.featureVectorSupplier = initializeFeatureVectorSupplier();
+          this.alignmentsSupplier = initializeAlignmentsSupplier();
+        }
+
+        private Supplier<int[]> intializeEnglishSupplier(){
+          Supplier<int[]> result = Suppliers.memoize(() ->{
+            return getTarget(source[address + 1]);
+          });
+          return result;
+        }
+
+        private Supplier<FeatureVector> initializeFeatureVectorSupplier(){
+          Supplier<FeatureVector> result = Suppliers.memoize(() ->{
+            return new FeatureVector(getFeatures(source[address + 2]), "tm_" + Vocabulary.word(owner) + "_");
+          });
+          return result;
+        }
+
+        private Supplier<byte[]> initializeAlignmentsSupplier(){
+          Supplier<byte[]> result = Suppliers.memoize(()->{
+            // if no alignments in grammar do not fail
+            if (alignments == null){
+              return null;
+            }
+            return getAlignmentArray(source[address + 2]);
+          });
+          return result;
         }
 
         @Override
@@ -894,10 +951,7 @@ public class PackedGrammar extends AbstractGrammar {
 
         @Override
         public int[] getEnglish() {
-          if (tgt == null) {
-            tgt = getTarget(source[address + 1]);
-          }
-          return tgt;
+          return this.englishSupplier.get();
         }
 
         @Override
@@ -911,18 +965,17 @@ public class PackedGrammar extends AbstractGrammar {
 
         @Override
         public FeatureVector getFeatureVector() {
-          if (features == null) {
-            features = new FeatureVector(getFeatures(source[address + 2]), "tm_" + Vocabulary.word(owner) + "_");
-          }
-
-          return features;
+          return this.featureVectorSupplier.get();
         }
         
         @Override
         public byte[] getAlignment() {
-          if (alignments != null)
-            return getAlignmentArray(source[address + 2]);
-          return null;
+          return this.alignmentsSupplier.get();
+        }
+        
+        @Override
+        public String getAlignmentString() {
+            throw new RuntimeException("AlignmentString not implemented for PackedRule!");
         }
 
         @Override

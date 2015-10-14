@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.FeatureFunction;
@@ -43,6 +46,8 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   protected FeatureVector features = null;
   protected String sparseFeatureString;
 
+  private final Supplier<byte[]> alignmentSupplier;
+
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
    * of the feature function
@@ -63,7 +68,6 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
 
   // The alignment string, e.g., 0-0 0-1 1-1 2-1
   private String alignmentString;
-  protected byte[] alignment = null;
 
   /**
    * Constructs a new rule using the provided parameters. The owner and rule id for this rule are
@@ -86,16 +90,12 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
     this.arity = arity;
     this.owner = owner;
     this.english = targetRhs;
+    alignmentSupplier = initializeAlignmentSupplier();
   }
 
   // Sparse feature version
   public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
-    this.lhs = lhs;
-    this.pFrench = sourceRhs;
-    this.sparseFeatureString = sparseFeatures;
-    this.arity = arity;
-    this.owner = -1;
-    this.english = targetRhs;
+    this(lhs, sourceRhs, targetRhs, sparseFeatures, arity, -1);
   }
 
   public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, String alignment) {
@@ -105,6 +105,22 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   
   public Rule() {
     this.lhs = -1;
+    alignmentSupplier = initializeAlignmentSupplier();
+  }
+
+  private Supplier<byte[]> initializeAlignmentSupplier(){
+    Supplier<byte[]> result = Suppliers.memoize(() ->{
+      byte[] alignment = null;
+      String alignmentString = getAlignmentString();
+      if (alignmentString != null) {
+        String[] tokens = alignmentString.split("[-\\s]+");
+        alignment = new byte[tokens.length];
+        for (int i = 0; i < tokens.length; i++)
+          alignment[i] = (byte) Short.parseShort(tokens[i]);
+      }
+      return alignment;
+    });
+    return result;
   }
 
   // ===============================================================
@@ -351,23 +367,17 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   public String getFeatureString() {
     return sparseFeatureString;
   }
-  
+
   /**
    * Returns an alignment as a sequence of integers. The integers at positions i and i+1 are paired,
    * with position i indexing the source and i+1 the target.
    */
   public byte[] getAlignment() {
-    if (alignment == null && getAlignmentString() != null) {
-      String[] tokens = getAlignmentString().split("[-\\s]+");
-      alignment = new byte[tokens.length];
-      for (int i = 0; i < tokens.length; i++)
-        alignment[i] = (byte) Short.parseShort(tokens[i]);
-    }
-    return alignment;
+    return this.alignmentSupplier.get();
   }
   
   public String getAlignmentString() {
-    return alignmentString;
+    return this.alignmentString;
   }
 
   /**
