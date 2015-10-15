@@ -352,9 +352,7 @@ public class Decoder {
    */
   private String mosesize(String feature) {
     if (joshuaConfiguration.moses) {
-      if (feature.equals("OOVPenalty"))
-        return "OOV_Penalty";
-      else if (feature.startsWith("tm_") || feature.startsWith("lm_"))
+      if (feature.startsWith("tm_") || feature.startsWith("lm_"))
         return feature.replace("_", "-");
     }
     
