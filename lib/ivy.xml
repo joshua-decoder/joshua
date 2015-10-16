@@ -7,5 +7,8 @@
     <dependency org="net.sf.jung" name="jung-graph-impl" rev="2.0"/>
     <dependency org="net.sf.jung" name="jung-visualization" rev="2.0"/>
     <dependency org="org.apache.commons" name="commons-cli" rev="1.2"/>
+    <dependency org="org.testng" name="testng" rev="6.7"/>
+    <dependency org="junit"  name="junit" rev="4.10" />
+    <dependency org="net.sourceforge.collections" name="collections-generic" rev="4.01"/>
   </dependencies>
 </ivy-module>
