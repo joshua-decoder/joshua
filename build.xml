@@ -196,7 +196,15 @@
   <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Delete the compiled files -->
-  <target name="clean" depends="clean-thrax,clean-java,clean-kenlm" description="--> Clean (remove) all build directories">
+  <target name="clean" depends="clean-thrax,clean-java,clean-kenlm,clean-giza" description="--> Clean (remove) all build directories">
+    <delete file="${lib}/libken.so" />
+    <delete file="tree_visualizer/tree_visualizer.jar" />
+    <delete dir="doc/html" />
+    <delete dir="doc/latex" />
+  </target>
+
+  <!-- Clean up GIZA and symal code -->
+  <target name="clean-giza" description="--> Clean GIZA and symal">
     <exec executable="make">
       <arg value="-C" />
       <arg value="${src}/giza-pp" />
@@ -207,13 +215,6 @@
       <arg value="${src}/symal" />
       <arg value="clean" />
     </exec>
-    <exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
-      <arg value="clean" />
-    </exec>
-    <delete file="${lib}/libken.so" />
-    <delete file="tree_visualizer/tree_visualizer.jar" />
-    <delete dir="doc/html" />
-    <delete dir="doc/latex" />
   </target>
 
   <!-- Delete just the java files -->
