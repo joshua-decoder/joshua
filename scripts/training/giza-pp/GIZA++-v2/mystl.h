@@ -19,16 +19,8 @@ using namespace _STL;
 #include <string>
 #include <utility>
 
-#if __GNUC__==2
-#include <hash_map>
-#elsif __GNUC__==3
-#include <ext/hash_map>
-using __gnu_cxx::hash_map;
-#else
-#include <tr1/unordered_map>
+#include <unordered_map>
 #define hash_map unordered_map
-using namespace std::tr1;
-#endif
 
 #include <vector>
 #include <iostream>

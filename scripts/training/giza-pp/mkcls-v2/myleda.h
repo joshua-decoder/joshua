@@ -27,7 +27,7 @@ USA.
 #define myleda_HEADER_defined
 #include <map>
 #include <set>
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include "myassert.h"
 #include "FixedArray.h"
 using namespace std;
@@ -110,7 +110,7 @@ public:
 };
 
 inline int Hash(int value) { return value; }
-#define MY_HASH_BASE std::tr1::unordered_map<A,B>
+#define MY_HASH_BASE std::unordered_map<A,B>
 
 template<class A,class B>
 class leda_h_array : public MY_HASH_BASE
