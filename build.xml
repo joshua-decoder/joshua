@@ -62,22 +62,15 @@
       <arg value="-j" />
       <arg value="4" />
       <arg value="-C" />
-      <arg value="scripts/training/giza-pp/" />
+      <arg value="${src}/giza-pp/" />
       <arg value="all" />
       <arg value="install" />
     </exec>
     <exec executable="make">
       <arg value="-C" />
-      <arg value="scripts/training/symal/" />
+      <arg value="${src}/symal" />
       <arg value="all" />
     </exec>
-    <!-- 	  <exec executable="./configure" dir="scripts/training/MGIZA" /> -->
-    <!-- 	  <exec executable="make"> -->
-    <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
-    <!--       </exec> -->
-    <!-- 	  <exec executable="cp"> -->
-    <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
-    <!--       </exec> -->
   </target>
 
   <target name="parallelize" depends="check-joshua-home" description="--> 'Make' the parallelize software in scripts/training/parallelize/">
@@ -203,12 +196,12 @@
   <target name="clean" depends="clean-thrax,clean-java,clean-kenlm" description="--> Clean (remove) all build directories">
     <exec executable="make">
       <arg value="-C" />
-      <arg value="scripts/training/giza-pp" />
+      <arg value="${src}/giza-pp" />
       <arg value="clean" />
     </exec>
     <exec executable="make">
       <arg value="-C" />
-      <arg value="scripts/training/symal" />
+      <arg value="${src}/symal" />
       <arg value="clean" />
     </exec>
     <exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
