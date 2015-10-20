@@ -20,7 +20,7 @@ $HADOOP/bin/hadoop fs -getmerge thrax/final grammar.gz
 size=$(perl -e "print +(stat('grammar.gz'))[7] . $/")
 
 rm -rf hadoop-$VERSION
-if [[ $size -eq 989817 ]]; then
+if [[ $size -eq 1004401 ]]; then
   rm -rf thrax.log grammar.gz .grammar.crc thrax
   exit 0
 else
