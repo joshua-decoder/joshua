@@ -134,7 +134,7 @@ public class SliceAggregatingTrie implements Trie, RuleCollection {
   
   @Override
   public Trie match(int wordId) {
-    return lookup.getOrDefault(wordId, null);
+    return lookup.get(wordId);
   }
 
   @Override
@@ -180,12 +180,18 @@ public class SliceAggregatingTrie implements Trie, RuleCollection {
   
   @Override
   public List<Rule> getRules() {
-    return !hasRules() ? emptyList() : trieWithRules.getRuleCollection().getRules();
+    if (!hasRules()) {
+      return emptyList();
+    }
+    return trieWithRules.getRuleCollection().getRules();
   }
   
   @Override
   public List<Rule> getSortedRules(List<FeatureFunction> models) {
-    return !hasRules() ? emptyList() : trieWithRules.getRuleCollection().getSortedRules(models);
+    if (!hasRules()) {
+      return emptyList();
+    }
+    return trieWithRules.getRuleCollection().getSortedRules(models);
   }
 
   @Override

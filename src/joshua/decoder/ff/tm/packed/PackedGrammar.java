@@ -68,6 +68,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
+import joshua.decoder.ff.tm.packed.SliceAggregatingTrie;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 import joshua.util.io.LineReader;
@@ -200,7 +201,7 @@ public class PackedGrammar extends AbstractGrammar {
            * packedRoot.match() thus can directly return the result of lookup.get(id);
            */
           if (!childTries.containsKey(id)) {
-            childTries.put(id, new ArrayList<>(1));
+            childTries.put(id, new ArrayList<Trie>(1));
           }
           final Trie trie = packedSlice.root().match(id);
           childTries.get(id).add(trie);
@@ -231,7 +232,7 @@ public class PackedGrammar extends AbstractGrammar {
 
     @Override
     public Trie match(int word_id) {
-      return lookup.getOrDefault(word_id, null);
+      return lookup.get(word_id);
     }
 
     @Override
