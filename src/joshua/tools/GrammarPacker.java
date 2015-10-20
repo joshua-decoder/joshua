@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -28,18 +27,21 @@ public class GrammarPacker {
 
   private static final Logger logger = Logger.getLogger(GrammarPacker.class.getName());
 
-  // Approximate maximum size of a slice in number of rules
-  private static int SLICE_SIZE;
   // Size limit for slice in bytes.
-  private static int DATA_SIZE_LIMIT;
+  private static int DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
   // Estimated average number of feature entries for one rule.
-  private static int DATA_SIZE_ESTIMATE;
+  private static int DATA_SIZE_ESTIMATE = 20;
+
+  private static final String SOURCE_WORDS_SEPARATOR = " ||| ";
 
   // Output directory name.
   private String output;
 
   // Input grammar to be packed.
   private String grammar;
+
+  // Approximate maximum size of a slice in number of rules
+  private int approximateMaximumSliceSize;
 
   private boolean labeled;
 
@@ -54,20 +56,16 @@ public class GrammarPacker {
 
   private int max_source_len;
 
-  static {
-    SLICE_SIZE = 1000000;
-    DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
-    DATA_SIZE_ESTIMATE = 20;
-  }
-
   public GrammarPacker(String grammar_filename, String config_filename, String output_filename,
-      String alignments_filename, String featuredump_filename, boolean grammar_alignments)
+      String alignments_filename, String featuredump_filename, boolean grammar_alignments,
+      int approximateMaximumSliceSize)
       throws IOException {
     this.labeled = true;
     this.grammar = grammar_filename;
     this.output = output_filename;
     this.dump = featuredump_filename;
     this.grammarAlignments = grammar_alignments;
+    this.approximateMaximumSliceSize = approximateMaximumSliceSize;
     this.max_source_len = 0;
 
     // TODO: Always open encoder config? This is debatable.
@@ -79,7 +77,7 @@ public class GrammarPacker {
       logger.info("No alignments file or grammar specified, skipping.");
     } else if (alignments != null && !new File(alignments_filename).exists()) {
       logger.severe("Alignments file does not exist: " + alignments);
-      System.exit(0);
+      System.exit(1);
     }
 
     if (config_filename != null) {
@@ -88,12 +86,13 @@ public class GrammarPacker {
     } else {
       logger.info("No config specified. Attempting auto-detection of feature types.");
     }
+    logger.info(String.format("Approximate maximum slice size (in # of rules) set to %s", approximateMaximumSliceSize));
 
     File working_dir = new File(output);
     working_dir.mkdir();
     if (!working_dir.exists()) {
       logger.severe("Failed creating output directory.");
-      System.exit(0);
+      System.exit(1);
     }
   }
 
@@ -110,11 +109,11 @@ public class GrammarPacker {
 
       if (fields.length < 2) {
         logger.severe("Incomplete line in config.");
-        System.exit(0);
+        System.exit(1);
       }
       if ("slice_size".equals(fields[0])) {
         // Number of records to concurrently load into memory for sorting.
-        SLICE_SIZE = Integer.parseInt(fields[1]);
+        approximateMaximumSliceSize = Integer.parseInt(fields[1]);
       }
     }
     reader.close();
@@ -167,13 +166,12 @@ public class GrammarPacker {
     encoderConfig.load(output + File.separator + "encoding");
 
     logger.info("Beginning packing pass.");
-    Queue<PackingFileTuple> slices = new PriorityQueue<PackingFileTuple>();
     // Actual binarization pass. Slice and pack source, target and data.
     grammar_reader = new LineReader(grammar);
 
     if (packAlignments && !grammarAlignments)
       alignment_reader = new LineReader(alignments);
-    binarize(grammar_reader, alignment_reader, slices);
+    binarize(grammar_reader, alignment_reader);
     logger.info("Packing complete.");
 
     logger.info("Packed grammar in: " + output);
@@ -252,14 +250,22 @@ public class GrammarPacker {
     }
   }
 
-  private void binarize(LineReader grammar_reader, LineReader alignment_reader,
-      Queue<PackingFileTuple> slices) throws IOException {
+  /**
+   * Returns a String encoding the first two source words.
+   * If there is only one source word, use empty string for the second.
+   */
+  private String getFirstTwoSourceWords(final String[] source_words) {
+    return source_words[0] + SOURCE_WORDS_SEPARATOR + ((source_words.length > 1) ? source_words[1] : "");
+  }
+
+  private void binarize(LineReader grammar_reader, LineReader alignment_reader) throws IOException {
     int counter = 0;
     int slice_counter = 0;
     int num_slices = 0;
 
     boolean ready_to_flush = false;
-    String first_source_word = null;
+    // to determine when flushing is possible
+    String prev_first_two_source_words = null;
 
     PackingTrie<SourceValue> source_trie = new PackingTrie<SourceValue>();
     PackingTrie<TargetValue> target_trie = new PackingTrie<TargetValue>();
@@ -303,23 +309,33 @@ public class GrammarPacker {
 
       // Reached slice limit size, indicate that we're closing up.
       if (!ready_to_flush
-          && (slice_counter > SLICE_SIZE || feature_buffer.overflowing() || (packAlignments && alignment_buffer
-              .overflowing()))) {
+          && (slice_counter > approximateMaximumSliceSize
+              || feature_buffer.overflowing()
+              || (packAlignments && alignment_buffer.overflowing()))) {
         ready_to_flush = true;
-        first_source_word = source_words[0];
+        // store the first two source words when slice size limit was reached
+        prev_first_two_source_words = getFirstTwoSourceWords(source_words);
       }
-      // Finished closing up.
-      if (ready_to_flush && !first_source_word.equals(source_words[0])) {
-        slices.add(flush(source_trie, target_trie, feature_buffer, alignment_buffer, num_slices));
-        source_trie.clear();
-        target_trie.clear();
-        feature_buffer.clear();
-        if (packAlignments)
-          alignment_buffer.clear();
+      // ready to flush
+      if (ready_to_flush) {
+        final String first_two_source_words = getFirstTwoSourceWords(source_words);
+        // the grammar can only be partitioned at the level of first two source word changes.
+        // Thus, we can only flush if the current first two source words differ from the ones
+        // when the slice size limit was reached.
+        if (!first_two_source_words.equals(prev_first_two_source_words)) {
+          logger.warning(String.format("ready to flush and first two words have changed (%s vs. %s)", prev_first_two_source_words, first_two_source_words));
+          logger.info(String.format("flushing %d rules to slice.", slice_counter));
+          flush(source_trie, target_trie, feature_buffer, alignment_buffer, num_slices);
+          source_trie.clear();
+          target_trie.clear();
+          feature_buffer.clear();
+          if (packAlignments)
+            alignment_buffer.clear();
 
-        num_slices++;
-        slice_counter = 0;
-        ready_to_flush = false;
+          num_slices++;
+          slice_counter = 0;
+          ready_to_flush = false;
+        }
       }
 
       int alignment_index = -1;
@@ -401,7 +417,8 @@ public class GrammarPacker {
       }
       target_trie.add(target, tv);
     }
-    slices.add(flush(source_trie, target_trie, feature_buffer, alignment_buffer, num_slices));
+    // flush last slice
+    flush(source_trie, target_trie, feature_buffer, alignment_buffer, num_slices);
   }
 
   /**
@@ -418,7 +435,7 @@ public class GrammarPacker {
    * @param id
    * @throws IOException
    */
-  private PackingFileTuple flush(PackingTrie<SourceValue> source_trie,
+  private void flush(PackingTrie<SourceValue> source_trie,
       PackingTrie<TargetValue> target_trie, FeatureBuffer feature_buffer,
       AlignmentBuffer alignment_buffer, int id) throws IOException {
     // Make a slice object for this piece of the grammar.
@@ -543,8 +560,6 @@ public class GrammarPacker {
     feature_stream.close();
     if (packAlignments)
       alignment_stream.close();
-
-    return slice;
   }
 
   public static void main(String[] args) throws IOException {
@@ -554,6 +569,7 @@ public class GrammarPacker {
     String alignments_filename = null;
     String featuredump_filename = null;
     boolean grammar_alignments = false;
+    int approximate_slice_size = 1000000;
 
     if (args.length < 1 || args[0].equals("-h")) {
       System.err.println("Usage: " + GrammarPacker.class.toString());
@@ -563,6 +579,7 @@ public class GrammarPacker {
       System.err.println("   [-fa alignment_file  alignment_file]");
       System.err.println("   [-ga                 alignments in grammar]");
       System.err.println("   [-d dump_file        dump feature stats]");
+      System.err.println("   [-s slice_size       approximate slice sice in # of rules]");
       System.err.println();
       System.exit(-1);
     }
@@ -580,11 +597,13 @@ public class GrammarPacker {
         grammar_alignments = true;
       } else if ("-d".equals(args[i]) && (i < args.length - 1)) {
         featuredump_filename = args[++i];
+      } else if ("-s".equals(args[i]) && (i < args.length - 1)) {
+        approximate_slice_size = Integer.parseInt(args[++i]);
       }
     }
     if (grammar_filename == null) {
       logger.severe("Grammar file not specified.");
-      return;
+      System.exit(1);
     }
     if (!new File(grammar_filename).exists()) {
       logger.severe("Grammar file not found: " + grammar_filename);
@@ -603,13 +622,13 @@ public class GrammarPacker {
     if (new File(output_filename).exists()) {
       logger.severe("File or directory already exists: " + output_filename);
       logger.severe("Will not overwrite.");
-      return;
+      System.exit(1);
     } else {
       logger.info("Will be writing to " + output_filename);
     }
 
     GrammarPacker packer = new GrammarPacker(grammar_filename, config_filename, output_filename,
-        alignments_filename, featuredump_filename, grammar_alignments);
+        alignments_filename, featuredump_filename, grammar_alignments, approximate_slice_size);
     packer.pack();
   }
 
@@ -755,7 +774,7 @@ public class GrammarPacker {
 
     // Allocate a reasonably-sized buffer for the feature data.
     private void allocate() {
-      backing = new byte[SLICE_SIZE * DATA_SIZE_ESTIMATE];
+      backing = new byte[approximateMaximumSliceSize * DATA_SIZE_ESTIMATE];
       buffer = ByteBuffer.wrap(backing);
     }
 
