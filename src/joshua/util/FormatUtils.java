@@ -2,8 +2,6 @@ package joshua.util;
 
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -13,12 +11,8 @@ import java.util.regex.Pattern;
  * @author Lane Schwartz
  */
 public class FormatUtils {
-
-  private static Map<String, String> cache;
-
-  static {
-    cache = new HashMap<String, String>();
-  }
+  
+  private static final String INDEX_SEPARATOR = ",";
 
   /**
    * Determines whether the string is a nonterminal by checking that the first character is [
@@ -34,31 +28,38 @@ public class FormatUtils {
   /**
    * Nonterminals are stored in the vocabulary in square brackets. This removes them when you 
    * just want the raw nonterminal word.
+   * Supports indexed and non-indexed nonTerminals:
+   * [GOAL] -> GOAL
+   * [X,1] -> [X]
    * 
    * @param nt the nonterminal, e.g., "[GOAL]"
    * @return the cleaned nonterminal, e.g., "GOAL"
    */
-  public static String cleanNonterminal(String nt) {
-    if (isNonterminal(nt))
+  public static String cleanNonTerminal(String nt) {
+    if (isNonterminal(nt)) {
+      if (isIndexedNonTerminal(nt)) {
+        // strip ",.*]"
+        return nt.substring(1, nt.indexOf(INDEX_SEPARATOR));
+      }
+      // strip "]"
       return nt.substring(1, nt.length() - 1);
+    }
     return nt;
   }
-
-  public static String cleanIndexedNonterminal(String nt) {
-    return nt.substring(1, nt.length() - 3);
+  
+  private static boolean isIndexedNonTerminal(String nt) {
+    return nt.contains(INDEX_SEPARATOR);
   }
 
-  public static String stripNt(String nt) {
-    String stripped = cache.get(nt);
-    if (stripped == null) {
-      stripped = markup(cleanIndexedNonterminal(nt));
-      cache.put(nt, stripped);
-    }
-    return stripped;
+  /**
+   * Removes the index from a nonTerminal: [X,1] -> [X].
+   */
+  public static String stripNonTerminalIndex(String nt) {
+    return markup(cleanNonTerminal(nt));
   }
 
   public static int getNonterminalIndex(String nt) {
-    return Integer.parseInt(nt.substring(nt.length() - 2, nt.length() - 1));
+    return Integer.parseInt(nt.substring(nt.indexOf(INDEX_SEPARATOR) + 1, nt.length() - 1));
   }
 
   /**
@@ -75,7 +76,7 @@ public class FormatUtils {
   }
 
   public static String markup(String nt, int index) {
-    return "[" + nt + "," + index + "]";
+    return "[" + nt + INDEX_SEPARATOR + index + "]";
   }
 
   /**

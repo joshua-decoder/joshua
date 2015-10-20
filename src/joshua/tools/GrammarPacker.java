@@ -1,5 +1,7 @@
 package joshua.tools;
 
+import static joshua.decoder.ff.tm.packed.PackedGrammar.VOCABULARY_FILENAME;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -39,6 +41,14 @@ public class GrammarPacker {
 
   // Input grammar to be packed.
   private String grammar;
+
+  public String getGrammar() {
+    return grammar;
+  }
+  
+  public String getOutputDirectory() {
+    return output;
+  }
 
   // Approximate maximum size of a slice in number of rules
   private int approximateMaximumSliceSize;
@@ -149,8 +159,7 @@ public class GrammarPacker {
     logger.info("Writing encoding.");
     types.write(output + File.separator + "encoding");
 
-    logger.info("Writing vocab.");
-    Vocabulary.write(output + File.separator + "vocabulary");
+    writeVocabulary();
 
     String configFile = output + File.separator + "config";
     logger.info(String.format("Writing config to '%s'", configFile));
@@ -215,18 +224,21 @@ public class GrammarPacker {
 
       Vocabulary.id(lhs);
       try {
-        // Add symbols to vocabulary.
+        /* Add symbols to vocabulary.
+         * NOTE: In case of nonterminals, we add both stripped versions ("[X]")
+         * and "[X,1]" to the vocabulary.
+         */
         for (String source_word : source) {
-          if (FormatUtils.isNonterminal(source_word))
-            Vocabulary.id(FormatUtils.stripNt(source_word));
-          else
-            Vocabulary.id(source_word);
+          Vocabulary.id(source_word);
+          if (FormatUtils.isNonterminal(source_word)) {
+            Vocabulary.id(FormatUtils.stripNonTerminalIndex(source_word));
+          }
         }
         for (String target_word : target) {
-          if (FormatUtils.isNonterminal(target_word))
-            Vocabulary.id(FormatUtils.stripNt(target_word));
-          else
-            Vocabulary.id(target_word);
+          Vocabulary.id(target_word);
+          if (FormatUtils.isNonterminal(target_word)) {
+            Vocabulary.id(FormatUtils.stripNonTerminalIndex(target_word));
+          }
         }
       } catch (java.lang.StringIndexOutOfBoundsException e) {
         System.err.println(String.format("* Skipping bad grammar line '%s'", line));
@@ -399,7 +411,7 @@ public class GrammarPacker {
       int[] source = new int[source_words.length];
       for (int i = 0; i < source_words.length; i++) {
         if (FormatUtils.isNonterminal(source_words[i]))
-          source[i] = Vocabulary.id(FormatUtils.stripNt(source_words[i]));
+          source[i] = Vocabulary.id(FormatUtils.stripNonTerminalIndex(source_words[i]));
         else
           source[i] = Vocabulary.id(source_words[i]);
       }
@@ -417,7 +429,7 @@ public class GrammarPacker {
       }
       target_trie.add(target, tv);
     }
-    // flush last slice
+    // flush last slice and clear buffers
     flush(source_trie, target_trie, feature_buffer, alignment_buffer, num_slices);
   }
 
@@ -562,74 +574,10 @@ public class GrammarPacker {
       alignment_stream.close();
   }
 
-  public static void main(String[] args) throws IOException {
-    String grammar_filename = null;
-    String config_filename = null;
-    String output_prefix = null;
-    String alignments_filename = null;
-    String featuredump_filename = null;
-    boolean grammar_alignments = false;
-    int approximate_slice_size = 1000000;
-
-    if (args.length < 1 || args[0].equals("-h")) {
-      System.err.println("Usage: " + GrammarPacker.class.toString());
-      System.err.println("    -g grammar_file     translation grammar to process");
-      System.err.println("    -p packed_name      prefix for *.packed output directory");
-      System.err.println("   [-c config_file      packing configuration file]");
-      System.err.println("   [-fa alignment_file  alignment_file]");
-      System.err.println("   [-ga                 alignments in grammar]");
-      System.err.println("   [-d dump_file        dump feature stats]");
-      System.err.println("   [-s slice_size       approximate slice sice in # of rules]");
-      System.err.println();
-      System.exit(-1);
-    }
-
-    for (int i = 0; i < args.length; i++) {
-      if ("-g".equals(args[i]) && (i < args.length - 1)) {
-        grammar_filename = args[++i];
-      } else if ("-p".equals(args[i]) && (i < args.length - 1)) {
-        output_prefix = args[++i];
-      } else if ("-c".equals(args[i]) && (i < args.length - 1)) {
-        config_filename = args[++i];
-      } else if ("-fa".equals(args[i]) && (i < args.length - 1)) {
-        alignments_filename = args[++i];
-      } else if ("-ga".equals(args[i])) {
-        grammar_alignments = true;
-      } else if ("-d".equals(args[i]) && (i < args.length - 1)) {
-        featuredump_filename = args[++i];
-      } else if ("-s".equals(args[i]) && (i < args.length - 1)) {
-        approximate_slice_size = Integer.parseInt(args[++i]);
-      }
-    }
-    if (grammar_filename == null) {
-      logger.severe("Grammar file not specified.");
-      System.exit(1);
-    }
-    if (!new File(grammar_filename).exists()) {
-      logger.severe("Grammar file not found: " + grammar_filename);
-    }
-    if (config_filename != null && !new File(config_filename).exists()) {
-      logger.severe("Config file not found: " + config_filename);
-    }
-
-    String output_filename = null;
-    if (output_prefix != null) {
-      output_filename = output_prefix;
-    } else {
-      output_filename = grammar_filename + ".packed";
-    }
-
-    if (new File(output_filename).exists()) {
-      logger.severe("File or directory already exists: " + output_filename);
-      logger.severe("Will not overwrite.");
-      System.exit(1);
-    } else {
-      logger.info("Will be writing to " + output_filename);
-    }
-
-    GrammarPacker packer = new GrammarPacker(grammar_filename, config_filename, output_filename,
-        alignments_filename, featuredump_filename, grammar_alignments, approximate_slice_size);
-    packer.pack();
+  public void writeVocabulary() throws IOException {
+    final String vocabularyFilename = output + File.separator + VOCABULARY_FILENAME;
+    logger.info("Writing vocabulary to " + vocabularyFilename);
+    Vocabulary.write(vocabularyFilename);
   }
 
   /**

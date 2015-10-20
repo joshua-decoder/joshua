@@ -80,6 +80,8 @@ public class PackedGrammar extends AbstractGrammar {
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
 
+  public static final String VOCABULARY_FILENAME = "vocabulary";
+
   // The grammar specification keyword (e.g., "thrax" or "moses")
   private String type;
 
@@ -90,7 +92,7 @@ public class PackedGrammar extends AbstractGrammar {
     this.type = type;
 
     // Read the vocabulary.
-    String vocabFile = grammar_dir + File.separator + "vocabulary";
+    String vocabFile = grammar_dir + File.separator + VOCABULARY_FILENAME;
     Decoder.LOG(1, String.format("Reading vocabulary: %s", vocabFile));
     if (!Vocabulary.read(vocabFile)) {
       throw new RuntimeException("mismatches or collisions while reading on-disk vocabulary");
