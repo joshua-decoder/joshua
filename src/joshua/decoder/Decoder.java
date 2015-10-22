@@ -476,6 +476,9 @@ public class Decoder {
   private void initializeTranslationGrammars() throws IOException {
     
     if (joshuaConfiguration.tms.size() > 0) {
+      
+      // collect packedGrammars to check if they use a shared vocabulary
+      final List<PackedGrammar> packed_grammars = new ArrayList<>();
 
       // tm = {thrax/hiero,packed,samt,moses} OWNER LIMIT FILE
       for (String tmLine : joshuaConfiguration.tms) {
@@ -492,7 +495,9 @@ public class Decoder {
         if (! type.equals("moses") && ! type.equals("phrase")) {
           if (new File(path).isDirectory()) {
             try {
-              grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+              PackedGrammar packed_grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+              packed_grammars.add(packed_grammar);
+              grammar = packed_grammar;
             } catch (FileNotFoundException e) {
               System.err.println(String.format("Couldn't load packed grammar from '%s'", path));
               System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
@@ -516,6 +521,9 @@ public class Decoder {
 
         this.grammars.add(grammar);
       }
+
+      checkSharedVocabularyChecksumsForPackedGrammars(packed_grammars);
+
     } else {
       Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("glue", joshuaConfiguration);
@@ -523,7 +531,7 @@ public class Decoder {
       glueGrammar.addGlueRules(featureFunctions);
       this.grammars.add(glueGrammar);
     }
-
+    
     /* Now create a feature function for each owner */
     HashSet<String> ownersSeen = new HashSet<String>();
 
@@ -538,6 +546,26 @@ public class Decoder {
       
     Decoder.LOG(1, String.format("Memory used %.1f MB",
         ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
+  }
+  
+  /**
+   * Checks if multiple packedGrammars have the same vocabulary by comparing their vocabulary file checksums.
+   */
+  private static void checkSharedVocabularyChecksumsForPackedGrammars(final List<PackedGrammar> packed_grammars) {
+    String previous_checksum = "";
+    for (PackedGrammar grammar : packed_grammars) {
+      final String checksum = grammar.computeVocabularyChecksum();
+      if (previous_checksum.isEmpty()) {
+        previous_checksum = checksum;
+      } else {
+        if (!checksum.equals(previous_checksum)) {
+          throw new RuntimeException(
+              "Trying to load multiple packed grammars with different vocabularies!" +
+              "Have you packed them jointly?");
+        }
+        previous_checksum = checksum;
+      }
+    }
   }
 
   /*

@@ -44,11 +44,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -79,6 +85,7 @@ public class PackedGrammar extends AbstractGrammar {
 
   private PackedRoot root;
   private ArrayList<PackedSlice> slices;
+  private final File vocabFile; // store path to vocabulary file
 
   public static final String VOCABULARY_FILENAME = "vocabulary";
 
@@ -92,7 +99,7 @@ public class PackedGrammar extends AbstractGrammar {
     this.type = type;
 
     // Read the vocabulary.
-    String vocabFile = grammar_dir + File.separator + VOCABULARY_FILENAME;
+    vocabFile = new File(grammar_dir + File.separator + VOCABULARY_FILENAME);
     Decoder.LOG(1, String.format("Reading vocabulary: %s", vocabFile));
     if (!Vocabulary.read(vocabFile)) {
       throw new RuntimeException("mismatches or collisions while reading on-disk vocabulary");
@@ -154,6 +161,33 @@ public class PackedGrammar extends AbstractGrammar {
 
   public Rule constructManualRule(int lhs, int[] src, int[] tgt, float[] scores, int arity) {
     return null;
+  }
+  
+  /**
+   * Computes the MD5 checksum of the vocabulary file.
+   * Can be used for comparing vocabularies across multiple packedGrammars.
+   */
+  public String computeVocabularyChecksum() {
+    MessageDigest md;
+    try {
+      md = MessageDigest.getInstance("MD5");
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("Unknown checksum algorithm");
+    }
+    byte[] buffer = new byte[1024];
+    try (final InputStream is = Files.newInputStream(Paths.get(vocabFile.toString()));
+        DigestInputStream dis = new DigestInputStream(is, md)) {
+      while (dis.read(buffer) != -1) {}
+    } catch (IOException e) {
+      throw new RuntimeException("Can not find vocabulary file. This should not happen.");
+    }
+    byte[] digest = md.digest();
+    // convert the byte to hex format
+    StringBuffer sb = new StringBuffer("");
+    for (int i = 0; i < digest.length; i++) {
+      sb.append(Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1));
+    }
+    return sb.toString();
   }
 
   /**

@@ -51,7 +51,7 @@ public class CreateGlueGrammar {
     // in case of a packedGrammar, we read the serialized vocabulary,
     // collecting all cleaned nonTerminal symbols.
     if (grammar_file.isDirectory()) {
-      Vocabulary.read(grammarPath + File.separator + VOCABULARY_FILENAME);
+      Vocabulary.read(new File(grammarPath + File.separator + VOCABULARY_FILENAME));
       for (int i = 0; i < Vocabulary.size(); ++i) {
         final String token = Vocabulary.word(i);
         if (isNonterminal(token)) {
