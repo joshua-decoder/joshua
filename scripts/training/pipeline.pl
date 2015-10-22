@@ -1630,7 +1630,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
   if ($OPTIMIZER_RUN == 1 and ! is_packed($TEST_GRAMMAR)) {
     $cachepipe->cmd("test-pack",
-                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM -g $TEST_GRAMMAR -o $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/encoding",
