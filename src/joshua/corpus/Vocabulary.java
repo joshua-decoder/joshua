@@ -67,9 +67,8 @@ public class Vocabulary {
    * @return Returns true if vocabulary was read without mismatches or collisions.
    * @throws IOException
    */
-  public static boolean read(String file_name) throws IOException {
+  public static boolean read(final File vocab_file) throws IOException {
     synchronized (lock) {
-      File vocab_file = new File(file_name);
       DataInputStream vocab_stream =
           new DataInputStream(new BufferedInputStream(new FileInputStream(vocab_file)));
       int size = vocab_stream.readInt();

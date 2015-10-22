@@ -275,8 +275,8 @@ public class MemoryBasedBatchGrammar extends AbstractGrammar {
   public void addGlueRules(ArrayList<FeatureFunction> featureFunctions) {
     HieroFormatReader reader = new HieroFormatReader();
 
-    String goalNT = FormatUtils.cleanNonterminal(joshuaConfiguration.goal_symbol);
-    String defaultNT = FormatUtils.cleanNonterminal(joshuaConfiguration.default_non_terminal);
+    String goalNT = FormatUtils.cleanNonTerminal(joshuaConfiguration.goal_symbol);
+    String defaultNT = FormatUtils.cleanNonTerminal(joshuaConfiguration.default_non_terminal);
 
     String[] ruleStrings = new String[] {
         String.format("[%s] ||| %s ||| %s ||| 0", goalNT, Vocabulary.START_SYM,
