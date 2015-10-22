@@ -374,11 +374,11 @@
       <project name="${eclipse.project}" />
       <classpath>
         <library pathref="eclipse.classpath" exported="false" />
-        <source path="${basedir}/src" />
+        <source path="${basedir}/src" excluding="${basedir}/src/kenlm | ${basedir}/src/joshua/decoder/ff/lm/kenlm" />
         <output path="${build}" />
       </classpath>
     </eclipse>
   </target>
-
+  
 </project>
 
