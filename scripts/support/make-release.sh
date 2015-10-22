@@ -5,16 +5,27 @@
 set -u
 
 cd $JOSHUA
-ant clean java
+ant java version
 
-version=$(cat $JOSHUA/VERSION | grep ^current | awk '{print $NF}')
+if [[ ! -e VERSION ]]; then
+  echo "* FATAL: can't find the version file!"
+  exit
+fi
+
+version=$(grep ^release VERSION | awk '{print $NF}')
+commit=$(grep ^current VERSION | awk '{print $NF}')
+clean=$(echo $commit | cut -d- -f2)
+
+if [[ $clean != "0" ]]; then
+  version=$commit
+fi
+
+echo "Bundling up joshua-$version"
 
 [[ ! -d release ]] && mkdir release
 rm -f joshua-$version && ln -s $JOSHUA joshua-$version
 
 wget -r http://joshua-decoder.org/
-
-ant version
 
 tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
@@ -27,7 +38,6 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/test \
     joshua-$version/examples \
     joshua-$version/thrax/bin/thrax.jar \
-    joshua-$version/thrax/scripts \
     joshua-$version/joshua-decoder.org
 
 rm -f joshua-$version
