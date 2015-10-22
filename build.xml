@@ -342,6 +342,14 @@
     </fileset>
   </path>
   
+  <!-- classpath for generating eclipse project -->
+  <path id="eclipse.source.classpath">
+    <fileset dir="${basedir}/src/">
+      <include name="**/*.java" />
+      <exclude name="${basedir}/src/kenlm" />
+    </fileset>
+  </path>
+  
   <!-- target: ant-eclipse-download   =================================== -->
   <target name="ant-eclipse-download" description="--> Downloads the ant-eclipse binary.">
     <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
@@ -374,11 +382,11 @@
       <project name="${eclipse.project}" />
       <classpath>
         <library pathref="eclipse.classpath" exported="false" />
-        <source path="${basedir}/src" />
+        <source path="${basedir}/src" excluding="${basedir}/src/kenlm | ${basedir}/src/joshua/decoder/ff/lm/kenlm" />
         <output path="${build}" />
       </classpath>
     </eclipse>
   </target>
-
+  
 </project>
 
