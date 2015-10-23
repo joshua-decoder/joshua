@@ -133,8 +133,8 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
   }
 
   public static Lattice<Token> createTokenLatticeFromPLF(String data) {
-    Map<Integer, Node<Token>> nodes = new HashMap<Integer, Node<Token>>();
-
+    ArrayList<Node<Token>> nodes = new ArrayList<Node<Token>>();
+    
     // This matches a sequence of tuples, which describe arcs leaving this node
     Pattern nodePattern = Pattern.compile("(.+?)\\(\\s*(\\(.+?\\),\\s*)\\s*\\)(.*)");
 
@@ -151,7 +151,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
     int nodeID = 0;
     Node<Token> startNode = new Node<Token>(nodeID);
-    nodes.put(nodeID, startNode);
+    nodes.add(startNode);
 
     while (nodeMatcher.matches()) {
 
@@ -161,14 +161,14 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       nodeID++;
 
       Node<Token> currentNode = null;
-      if (nodes.containsKey(nodeID)) {
+      if (nodeID < nodes.size() && nodes.get(nodeID) != null) {
         currentNode = nodes.get(nodeID);
       } else {
         currentNode = new Node<Token>(nodeID);
-        nodes.put(nodeID, currentNode);
+        while (nodeID > nodes.size())
+          nodes.add(new Node<Token>(nodes.size()));
+        nodes.add(currentNode);
       }
-
-      logger.fine("Node " + nodeID + ":");
 
       Matcher arcMatcher = arcPattern.matcher(nodeData);
       int numArcs = 0;
@@ -182,16 +182,17 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
         int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
 
         Node<Token> destinationNode;
-        if (nodes.containsKey(destinationNodeID)) {
+        if (destinationNodeID < nodes.size() && nodes.get(destinationNodeID) != null) {
           destinationNode = nodes.get(destinationNodeID);
         } else {
           destinationNode = new Node<Token>(destinationNodeID);
-          nodes.put(destinationNodeID, destinationNode);
+          while (destinationNodeID > nodes.size())
+            nodes.add(new Node<Token>(nodes.size()));
+          nodes.add(destinationNode);
         }
 
         String remainingArcs = arcMatcher.group(4);
 
-        logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
         Token arcToken = new Token(arcLabel);
         currentNode.addArc(destinationNode, arcWeight, arcToken);
 
@@ -204,26 +205,18 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     }
 
     /* Add <s> to the start of the lattice. */
-    if (nodes.containsKey(1)) {
+    if (nodes.size() > 1 && nodes.get(1) != null) {
       Node<Token> firstNode = nodes.get(1);
       startNode.addArc(firstNode, 0.0f, new Token(Vocabulary.START_SYM));
     }
 
-    /* Add </s> as a final state, and connect it to all end-state nodes. */
-    Node<Token> endNode = new Node<Token>(++nodeID);
-    for (Node<Token> node : nodes.values()) {
-      if (node.getOutgoingArcs().size() == 0)
-        node.addArc(endNode, 0.0f, new Token(Vocabulary.STOP_SYM));
-    }
-    // Add the endnode after the above loop so as to avoid a self-loop.
-    nodes.put(nodeID, endNode);
+    /* Add </s> as a final state, connect it to the previous end-state */
+    nodeID = nodes.get(nodes.size()-1).getNumber() + 1;
+    Node<Token> endNode = new Node<Token>(nodeID);
+    nodes.get(nodes.size()-1).addArc(endNode, 0.0f, new Token(Vocabulary.STOP_SYM));
+    nodes.add(endNode);
 
-    List<Node<Token>> nodeList = new ArrayList<Node<Token>>(nodes.values());
-    Collections.sort(nodeList, new NodeIdentifierComparator());
-
-    logger.fine(nodeList.toString());
-
-    return new Lattice<Token>(nodeList, latticeIsAmbiguous);
+    return new Lattice<Token>(nodes, latticeIsAmbiguous);
   }
 
   /**

@@ -44,7 +44,7 @@ ZMERT_CONFIG_TEMPLATE = """### MERT parameters
 -r       <REF>
 -rps     <NUMREFS>                   # references per sentence
 -p       <TUNEDIR>/params.txt        # parameter file
--m       BLEU 4 closest              # evaluation metric and its options
+-m       <METRIC>                    # evaluation metric and its options
 -maxIt   <ITERATIONS>                # maximum MERT iterations
 -ipi     20                          # number of intermediate initial points per iteration
 -cmd     <DECODER_COMMAND>           # file containing commands to run decoder
@@ -65,7 +65,7 @@ PRO_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -p	 <TUNEDIR>/params.txt
 
 #metric setting:
--m	 BLEU 4 closest
+-m	 <METRIC>
 #-m	 TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
 #-m	 TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
 #-m	 METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
@@ -130,7 +130,7 @@ MIRA_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -p <TUNEDIR>/params.txt
 
 #metric setting:
--m       BLEU 4 closest
+-m       <METRIC>
 #-m      TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
 #-m      TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
 #-m      METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
@@ -194,12 +194,92 @@ MIRA_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
 -runPercep 0
 """
 
+ADAGRAD_CONFIG_TEMPLATE = """### Part 1: parameters similar to Z-MERT
+# target sentences file name (in this case, file name prefix)
+-r	 <REF>
+
+# references per sentence
+-rps     <NUMREFS>
+
+# parameter file
+-p	 <TUNEDIR>/params.txt
+
+#metric setting:
+-m	 <METRIC>
+#-m	 TER nocase punc 5 5 joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1
+#-m	 TER-BLEU nocase punc 20 50  joshua/zmert/tercom-0.7.25/tercom.7.25.jar 1 4 closest
+#-m	 METEOR en norm_yes keepPunc 2  #old meteor interface  #Z-MERT Meteor interface(not working)
+#-m	 Meteor en lowercase '0.5 1.0 0.5 0.5' 'exact stem synonym paraphrase' '1.0 0.5 0.5 0.5' #CMU meteor interface
+
+# maximum iterations
+-maxIt	 <ITERATIONS>
+
+# file containing commands to run decoder
+-cmd	 <DECODER_COMMAND>
+
+# file prodcued by decoder
+-decOut	 <DECODER_OUTPUT>
+
+# decoder config file
+-dcfg	 <DECODER_CONFIG>
+
+# size of N-best list
+-N	 300
+
+# verbosity level (0-2; higher value => more verbose)
+-v	 1
+
+### PART 2: AdaGrad parameters
+#oracle selection method:
+#1: "hope"(default)
+#2: best metric score(ex: max BLEU)
+-oracleSelection 1 
+
+#prediction selection method:
+#1: "fear"(default)
+#2: max model score
+#3: worst metric score(ex: min BLEU)
+-predictionSelection 1
+
+#shuffle the training samples? (default:1)
+-needShuffle 1
+
+#average the weights after each epoch? (default:1)
+-needAvg 1
+
+#return the best weights during tuning? (default:1)
+-returnBest 1
+
+#when use BLEU/TER-BLEU as metric, use the pseudo corpus to compute BLEU? (default:1)
+-usePseudoCorpus 1
+
+#corpus decay coefficient (only valid when pseudo corpus is used for BLEU, default:0.99)
+-corpusDecay 0.99
+
+#scale the model score(in order to make it comparable to the metric score)?(default:1)
+-needScaling 1
+
+#options for scaling (only valid when -needScaling=1)
+-scoreRatio 5	#scale the model score so that abs(model_score/metric_score) \approx scoreRatio (default:5)
+
+#regularzation (0: no reg 1: l1-reg; 2: l2-reg. Default: 2)
+-regularization 2
+
+#regularization coefficient
+-lambda 0.1
+
+#step size coefficient
+-eta 0.1
+
+#mini-batch size (default: 10)
+-batchSize 10
+"""
+
 PARAMS_TEMPLATE = """<PARAMS>
 WordPenalty        ||| -2.844814  Opt  -Inf  +Inf  -5   0
 OOVPenalty         ||| 1          Fix     0     0   0   0
 normalization = absval 1 lm_0
 """
-
 
 def write_template(template, path, lookup):
     """Writes a template file, substituting variables of the form <NAME> for values found
@@ -248,16 +328,16 @@ def parse_tm_line(line):
     return (owner, maxspan, path)
 
 
-def get_features(grammar_path):
-    """Opens the grammar at grammar_path and returns the list of features. Works for
-    both packed grammars and unpacked grammars. For packed grammars, the feature list
-    is complete, but for unpacked ones, only the features found on the first line are
-    returned. Dense features (unlabeled ones) are returned as sequential numbers
-    starting at 0."""
+def get_features(config_file):
+    """Queries the decoder for all dense features that will be fired by the feature
+    functions activated in the config file"""
 
-    features = check_output("%s/scripts/training/get_grammar_features.pl %s" % (JOSHUA, grammar_path), shell=True)
-    return features.strip().split('\n')
-
+    output = check_output("%s/bin/joshua-decoder -c %s -show-weights -v 0" % (JOSHUA, config_file), shell=True)
+    features = []
+    for index, item in enumerate(output.split('\n')):
+        if item != "":
+            features.append(tuple(item.split()))
+    return features
 
 def get_num_refs(prefix):
     """Determines how many references there are."""
@@ -276,13 +356,13 @@ def get_num_refs(prefix):
     
 
 def safe_symlink(to_path, from_path):
-    if (os.path.isfile(from_path)):
+    if os.path.isfile(from_path) or os.path.islink(from_path):
         os.unlink(from_path)
 
     os.symlink(to_path, from_path)
 
 
-def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output, iterations):
+def setup_configs(template, template_dest, target, num_refs, tunedir, command, config, output, metric, iterations):
     """Writes the config files for both Z-MERT and PRO (which run on the same codebase).
     Both of them write the file "params.txt", but they use different names for the config file,
     so that is a parameter."""
@@ -291,37 +371,20 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
                    { 'REF': target,
                      'NUMREFS': num_refs,
                      'TUNEDIR': tunedir,
+                     'METRIC': metric,
                      'ITERATIONS': `iterations`,
                      'DECODER_COMMAND': command,
                      'DECODER_CONFIG': config,
                      'DECODER_OUTPUT': output })
 
-    # Parse the config file, looking for tms, lms, and feature
-    # functions for which we need to provide initial weights
+    # Query the decoder for the list of dense parameters. These need to be listed in the
+    # config file or MERT will not know about them, despite them being listed in params.txt.
     params = []
-    lm_i = 0
-    for line in open(config):
-        if line.startswith('tm ='):
-            owner, span, path = parse_tm_line(line)
-
-            if not os.path.isabs(path):
-                path = os.path.join(os.path.dirname(config), path)
-
-            for f in get_features(path):
-                if re.match(r'^\d+$', f):
-                    params.append('tm_%s_%s ||| 1.0 Opt -Inf +Inf -1 +1' % (owner, f))
-                else:
-                    params.append('%s ||| 0.0 Opt -Inf +Inf -1 +1' % (f))
-
-        elif line.startswith('feature-function'):
-            if 'LanguageModel' in line:
-                params.append('lm_%d ||| 1.0 Opt 0.1 +Inf +0.5 +1.5' % (lm_i))
-                lm_i += 1
-            else:
-                ff = line.strip().split(' ', 2)[2]
-                if ff in ['SourcePath', 'PhrasePenalty', 'Distortion']:
-                    params.append('%s ||| 1.0 Opt -Inf +Inf -1 +1' % (ff))
-                    
+    for feature,weight in get_features(config):
+        if feature.startswith('lm_'):
+            params.append('%s ||| %s Opt 0.1 +Inf +0.5 +1.5' % (feature, weight))
+        else:
+            params.append('%s ||| %s Opt -Inf +Inf -1 +1' % (feature, weight))
     paramstr = '\n'.join(params)
     write_template(PARAMS_TEMPLATE, '%s/params.txt' % (tunedir),
                    { 'REF': target,
@@ -331,11 +394,11 @@ def setup_configs(template, template_dest, target, num_refs, tunedir, command, c
 
 
 def run_zmert(tunedir, source, target, command, config, output, opts):
-    """Runs Z-MERT after setting up all its crazy file requirements."""
+    """Runs Z-MERT after setting up all its file requirements."""
 
     setup_configs(ZMERT_CONFIG_TEMPLATE, '%s/mert.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
-                  opts.iterations or 10)
+                  opts.metric, opts.iterations or 10)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.zmert.ZMERT -maxMem 4000 %s/mert.config > %s/mert.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -345,11 +408,11 @@ def run_zmert(tunedir, source, target, command, config, output, opts):
     
 
 def run_pro(tunedir, source, target, command, config, output, opts):
-    """Runs PRO after setting up all its crazy file requirements."""
+    """Runs PRO after setting up all its file requirements."""
 
     setup_configs(PRO_CONFIG_TEMPLATE, '%s/pro.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
-                  opts.iterations or 30)
+                  opts.metric, opts.iterations or 30)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.pro.PRO %s/pro.config > %s/pro.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -359,11 +422,11 @@ def run_pro(tunedir, source, target, command, config, output, opts):
 
 
 def run_mira(tunedir, source, target, command, config, output, opts):
-    """Runs MIRA after setting up all its crazy file requirements."""
+    """Runs MIRA after setting up all its file requirements."""
 
     setup_configs(MIRA_CONFIG_TEMPLATE, '%s/mira.config' % (tunedir),
                   target, get_num_refs(target), tunedir, command, config, output,
-                  opts.iterations or 5)
+                  opts.metric, opts.iterations or 5)
 
     tuner_mem = '4g'
     call("java -d64 -Xmx%s -cp %s/class joshua.mira.MIRA %s/mira.config > %s/mira.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
@@ -371,7 +434,19 @@ def run_mira(tunedir, source, target, command, config, output, opts):
     safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.MIRA.final'),
                  os.path.join(tunedir, 'joshua.config.final'))
 
-    
+def run_adagrad(tunedir, source, target, command, config, output, opts):
+    """Runs ADAGRAD after setting up all its file requirements."""
+
+    setup_configs(ADAGRAD_CONFIG_TEMPLATE, '%s/adagrad.config' % (tunedir),
+                  target, get_num_refs(target), tunedir, command, config, output,
+                  opts.metric, opts.iterations or 10)
+
+    tuner_mem = '4g'
+    call("java -d64 -Xmx%s -cp %s/class joshua.adagrad.AdaGrad %s/adagrad.config > %s/adagrad.log 2>&1" % (tuner_mem, JOSHUA, tunedir, tunedir), shell=True)
+
+    safe_symlink(os.path.join(os.path.dirname(config),'joshua.config.ADAGRAD.final'),
+                 os.path.join(tunedir, 'joshua.config.final'))
+
 def error_quit(message):
     logging.error(message)
     sys.exit(2)
@@ -397,7 +472,7 @@ def handle_args(clargs):
         help='path to tuning directory')
     parser.add_argument(
         '--tuner', default='zmert',
-        help='which tuner to use: zmert, pro, or mira')
+        help='which tuner to use: zmert, pro, mira, or adagrad')
     parser.add_argument(
         '--decoder', default='tune/decoder_command',
         help='The path to the decoder or wrapper script. This script is responsible for '
@@ -419,6 +494,9 @@ def handle_args(clargs):
     parser.add_argument(
         '-i', '--iterations', type=int, 
         help='the maximum number of iterations to run the tuner for')
+    parser.add_argument(
+        '-m', '--metric', default='BLEU 4 closest',
+        help='the metric to optimize')
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='print informational messages'
@@ -446,6 +524,9 @@ def main(argv):
         
     elif 'mira' in opts.tuner:
         run_mira(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
+
+    elif 'adagrad' in opts.tuner:
+        run_adagrad(opts.tunedir, opts.source, opts.target, opts.decoder, opts.decoder_config, opts.decoder_output_file, opts)
 
 if __name__ == "__main__":
     try:

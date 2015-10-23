@@ -90,8 +90,8 @@ public class ComputeNodeResult {
       
       if (Decoder.VERBOSE >= 4)
         System.err.println(String.format("-> FEATURE %s = %.3f * %.3f = %.3f", 
-            feature.getName(), acc.getScore() / Decoder.weights.get(feature.getName()),
-            Decoder.weights.get(feature.getName()), acc.getScore()));
+            feature.getName(), acc.getScore() / Decoder.weights.getSparse(feature.getName()),
+            Decoder.weights.getSparse(feature.getName()), acc.getScore()));
 
       if (feature.isStateful()) {
         futureCostEstimate += feature.estimateFutureCost(rule, newState, sentence);

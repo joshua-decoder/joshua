@@ -11,7 +11,12 @@ while (my $line = <>) {
   my @tokens = split(/ \|\|\| /, $line);
 
   unshift(@tokens, "[X]");
-  $tokens[3] = join(" ", map { -log($_) } split(' ', $tokens[3]));
+  $tokens[3] = join(" ", map { -mylog($_) } split(' ', $tokens[3]));
 
   print join(" ||| ", @tokens);
+}
+
+sub mylog {
+  my ($num) = @_;
+  return ($num == 0) ? -100 : log($num);
 }

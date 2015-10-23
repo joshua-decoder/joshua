@@ -1,5 +1,6 @@
 package joshua.decoder.ff.lm;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -7,8 +8,8 @@ import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM.StateProbPair;
+import joshua.decoder.ff.lm.KenLM;
+import joshua.decoder.ff.lm.KenLM.StateProbPair;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.KenLMState;
 import joshua.decoder.ff.tm.Rule;
@@ -34,6 +35,15 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
       System.err.println("*        Remove lm_type from line or set to 'kenlm'");
       System.exit(-1);
     }
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   /**
@@ -125,7 +135,8 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
     StateProbPair pair = ((KenLM) languageModel).probRule(words, poolMap.get(sentID));
 
     // Record the prob
-    acc.add(name, pair.prob);
+//    acc.add(name, pair.prob);
+    acc.add(denseFeatureIndex, pair.prob);
 
     // Return the state
     return pair.state;

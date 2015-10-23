@@ -15,7 +15,6 @@ import stat
 from subprocess import CalledProcessError, Popen, PIPE
 import sys
 
-
 EXAMPLE = r"""
 Example invocation:
 
@@ -23,17 +22,17 @@ $JOSHUA/scripts/support/run_bundler.py \
   --force \
   --verbose \
   /path/to/origin/directory/test/model/joshua.config \
-  --root /path/to/origin/directory \
+  --root /path/to/origin/directory/test/model \
   new-bundle-directory \
   --copy-config-options \
     '-top-n 1 -output-format %S -mark-oovs false' \
-  --pack-tm 'pt /path/to/origin/directory/grammar.gz'
+  --pack-tm /path/to/origin/directory/grammar.gz
 
 Note: The options included in the value string for the --copy-config-options
 argument can either be Joshua options or options for the
 $JOSHUA/scripts/copy-config.pl script. The order of the --[pack-]tm options must
 be in the same order as the grammar configuration lines they intend to
-override in the joshua.config file.
+override in the joshua.config file, and there can be only one --pack-tm option.
 """
 
 README_TEMPLATE = """Joshua Configuration Run Bundle
@@ -104,6 +103,8 @@ options that may be useful during decoding include:
 """
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
+default_normalizer = os.path.join(JOSHUA_PATH, "scripts/training/normalize.pl")
+default_tokenizer = os.path.join(JOSHUA_PATH, "scripts/training/penn-treebank-tokenizer.perl")
 FILE_TYPE_TOKENS = ['lm', 'tm']
 FILE_TYPE_OPTIONS = ['-path', '-lm_file']
 
@@ -325,6 +326,7 @@ def recursive_copy(src, dest, symlink = False):
 
 def run_grammar_packer(src_path, dest_path):
     cmd = [os.path.join(JOSHUA_PATH, "scripts/support/grammar-packer.pl"),
+           "-T", opts.tmpdir,
            src_path, dest_path]
     logging.info(
         'Running the grammar-packer.pl script with the command: %s'
@@ -555,6 +557,18 @@ def handle_args(clargs):
     parser.add_argument(
         '--absolute', dest='absolute', action='store_true', default=False,
         help="Use absolute instead of relative paths for model file locations")
+    parser.add_argument(
+        '--source', dest='source',
+        help="Source language two-character code (ISO 639-1)")
+    parser.add_argument(
+        '--normalizer', default=default_normalizer,
+        help="source sentence normalizer that was applied to the model")
+    parser.add_argument(
+        '--tokenizer', default=default_tokenizer,
+        help="source sentence tokenizer that was applied to the model")
+    parser.add_argument(
+        '-T', dest='tmpdir', default='/tmp',
+        help="temp directory")
 
     return parser.parse_args(clargs)
 
@@ -704,6 +718,7 @@ def execute_operations(operations):
 
 
 def main(argv):
+    global opts
     opts = handle_args(argv[1:])
 
     logging.basicConfig(

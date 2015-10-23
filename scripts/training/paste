@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+# "Safe" version of paste that dies if the input files have different lengths.
+
+use strict;
+use warnings;
+use FileHandle;
+use List::Util qw/sum reduce/;
+
+binmode STDIN, ':utf8';
+binmode STDOUT, ':utf8';
+
+my @fh = map { new FileHandle($_, "< :encoding(UTF-8)") } @ARGV;
+
+for (;;) {
+  my @lines = map { $_->getline } @fh;
+  
+  my $num_done = grep { ! defined $_ } @lines;
+  if ($num_done > 0 and $num_done < @lines) {
+    print STDERR "* FATAL! unequal file lengths.\n";
+    exit 1;
+  }
+  last if $num_done == @lines;
+
+  chomp(@lines);
+  print join("\t", @lines) . $/;
+}

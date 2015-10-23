@@ -76,8 +76,8 @@ public class TargetBigram extends StatefulFF {
       }
 
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      System.err.println(String.format("* FATAL: couldn't load TargetBigram vocabulary '%s'", filename));
+      System.exit(1);
     }
   }
 

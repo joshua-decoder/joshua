@@ -5,6 +5,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import joshua.util.io.LineReader;
+
 /**
  * @author orluke
  * 
@@ -18,8 +20,9 @@ public class ArgsParser {
    * executed from the command line.
    * 
    * @param args
+   * @throws IOException 
    */
-  public ArgsParser(String[] args, JoshuaConfiguration joshuaConfiguration) {
+  public ArgsParser(String[] args, JoshuaConfiguration joshuaConfiguration) throws IOException {
 
     /*
      * Look for a verbose flag, -v.
@@ -35,7 +38,10 @@ public class ArgsParser {
         }
       
         if (args[i].equals("-version")) {
-          System.out.println("The Joshua machine translator, version 6.0 (git: ");
+          LineReader reader = new LineReader(String.format("%s/VERSION", System.getenv("JOSHUA")));
+          reader.readLine();
+          String version = reader.readLine().split("\\s+")[2];
+          System.out.println(String.format("The Joshua machine translator, version %s", version));
           System.out.println("joshua-decoder.org");
           System.exit(0);
 

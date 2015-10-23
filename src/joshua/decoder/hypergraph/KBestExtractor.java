@@ -626,7 +626,7 @@ public class KBestExtractor {
      * @return
      */
     public float getCost() {
-      return cost - weights.get("BLEU") * bleu;
+      return cost - weights.getSparse("BLEU") * bleu;
     }
 
     public String toString() {
@@ -901,9 +901,9 @@ public class KBestExtractor {
         if (word.startsWith("[") && word.endsWith("]"))
           quotedWords += String.format("%s ", word);
         else
-          quotedWords += String.format(" \"%s\"", word);
+        quotedWords += String.format("\"%s\" ", word);
 
-      return quotedWords.substring(1);
+      return quotedWords.substring(0, quotedWords.length() - 1);
     }
 
     @Override

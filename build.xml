@@ -7,6 +7,7 @@
   <property environment="env" />
 
   <property name="JOSHUA" value="${basedir}" />
+  <property name="KENLM" value="${basedir}/src/kenlm" />
   <property name="src" value="${JOSHUA}/src" />
   <property name="test" value="${JOSHUA}/test" />
   <property name="build" value="${JOSHUA}/class" />
@@ -14,23 +15,17 @@
   <property name="thraxlib" value="${JOSHUA}/thrax/bin" />
   <property name="doc" value="${JOSHUA}/doc" />
 
-  <!-- TODO: should these be made into 'path's instead of 'property's? -->
-  <property name="testng" value="${lib}/testng-6.7.jar" />
-  <!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
-
-  <property name="cli" value="commons-cli-1.2.jar"/>
-
   <path id="compile.all.classpath">
     <fileset dir="${lib}">
-      <include name="${cli}" />
-      <!-- Jung uses a BSD-like license, see ./lib/LICENSES/LICENSE-jung.txt -->
       <include name="jung-api-2.0.jar" />
       <include name="jung-graph-impl-2.0.jar" />
       <include name="jung-algorithms-2.0.jar" />
       <include name="jung-visualization-2.0.jar" />
-      <include name="collections-generic-4.01.jar" />
       <include name="berkeleylm.jar" />
       <include name="junit-4.10.jar" />
+      <include name="commons-cli-1.2.jar" />
+      <include name="collections-generic-4.01.jar" />
+      <include name="args4j-2.0.29.jar" />
     </fileset>
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
@@ -57,33 +52,13 @@
     <!-- </if> -->
   </target>
 
-  <!-- Set git version -->
-  <target name="git-version" description="--> Store latest git commit ID">
-    <exec executable="git">
-      <arg value="rev-parse"/>
-      <arg value="--short"/>
-      <arg value="HEAD"/>
-    </exec>
-  </target>
-
-  <target name="set-joshua-version" unless="env.JOSHUA_VERSION" description="--> Prompt user to set Joshua version environment variable">
-    <fail message="Please set the $JOSHUA_VERSION environment variable." />
-  </target>
-
   <target name="set-java-home" unless="env.JAVA_HOME" description="--> Prompt user to set JAVA_HOME environment variable">
     <fail message="Please set the $JAVA_HOME environment variable." />
     <!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX -->
   </target>
 
-  <target name="kenlm" depends="check-joshua-home" description="--> 'Make' the kenlm sofrtware in ${src}/joshua/decoder/ff/lm/kenlm/">
-    <exec executable="make">
-      <arg value="-j" />
-      <arg value="4" />
-      <arg value="-C" />
-      <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
-      <arg value="install" />
-      <arg value="BOOST_ROOT=${env.BOOST_ROOT}" />
-    </exec>
+  <target name="kenlm" depends="check-joshua-home" description="--> Build KenLM">
+    <exec executable="./build_kenlm.sh" dir="${JOSHUA}/jni" />
   </target>
 
   <target name="giza" depends="check-joshua-home" description="--> 'Make' the giza software in scripts/training/giza-pp/">
@@ -91,22 +66,15 @@
       <arg value="-j" />
       <arg value="4" />
       <arg value="-C" />
-      <arg value="scripts/training/giza-pp/" />
+      <arg value="${src}/giza-pp/" />
       <arg value="all" />
       <arg value="install" />
     </exec>
     <exec executable="make">
       <arg value="-C" />
-      <arg value="scripts/training/symal/" />
+      <arg value="${src}/symal" />
       <arg value="all" />
     </exec>
-    <!-- 	  <exec executable="./configure" dir="scripts/training/MGIZA" /> -->
-    <!-- 	  <exec executable="make"> -->
-    <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
-    <!--       </exec> -->
-    <!-- 	  <exec executable="cp"> -->
-    <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
-    <!--       </exec> -->
   </target>
 
   <target name="parallelize" depends="check-joshua-home" description="--> 'Make' the parallelize software in scripts/training/parallelize/">
@@ -131,10 +99,6 @@
 
   <target name="thrax" depends="check-joshua-home" description="--> Build Thrax">
     <subant buildpath="thrax">
-      <property name="env.HADOOP" value="${lib}" />
-      <property name="env.HADOOP_VERSION" value="0.20.203.0" />
-      <property name="env.AWS_SDK" value="${JOSHUA}" />
-      <property name="env.AWS_VERSION" value="1.1.3" />
     </subant>
   </target>
 
@@ -142,7 +106,7 @@
        pipeline.pl and test/hadoop/ -->
   <target name="download-hadoop" depends="check-joshua-home" description="--> Download the Hadoop software">
     <get
-      src="http://archive.apache.org/dist/hadoop/core/hadoop-0.20.2/hadoop-0.20.2.tar.gz"
+      src="http://archive.apache.org/dist/hadoop/core/hadoop-2.5.2/hadoop-2.5.2.tar.gz"
       dest="${JOSHUA}/lib"
       usetimestamp="true"
       skipexisting="true" />
@@ -170,9 +134,9 @@
   </target>
 
   <!-- Compile the Java code. -->
-  <target name="java" depends="check-joshua-home" description="--> Compile the Java code">
+  <target name="java" depends="check-joshua-home,version" description="--> Compile the Java code">
     <mkdir dir="${build}" />
-    <javac compiler="javac1.7" srcdir="${src}" destdir="${build}" classpathref="compile.all.classpath" debug="on" encoding="utf8" sourcepath="" includeantruntime="false">
+    <javac srcdir="${src}" destdir="${build}" classpathref="compile.all.classpath" debug="on" encoding="utf8" sourcepath="" includeantruntime="false">
       <!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
       <include name="**/*.java" />
 
@@ -184,7 +148,7 @@
 
   <!-- Create a JAR file -->
   <target name="jar" depends="java,check-joshua-home" description="--> Create a JAR file of compiles classes">
-    <jar destfile="${build}/joshua.jar" index="true">
+    <jar destfile="${lib}/joshua.jar" index="true">
       <fileset dir="${build}">
         <include name="**/*.class" />
       </fileset>
@@ -211,15 +175,19 @@
   </target>
 
   <!-- Create a versioned release -->
-  <target name="release" depends="set-joshua-version, devel-clean, init, thrax" description="--> Create a versioned release">
-    <exec executable="./scripts/support/make-release.sh">
-      <arg value="${env.JOSHUA_VERSION}" />
+  <target name="release" depends="devel-clean, init, thrax, version" description="--> Create a versioned release">
+    <exec executable="./scripts/support/make-release.sh" />
+  </target>
+
+    <!-- Set git version -->
+  <target name="version" description="Build VERSION file">
+    <exec executable="./scripts/support/write-version.sh">
     </exec>
   </target>
 
   <!-- Create a JAR file of the source code -->
   <target name="source-jar" description="--> Create a JAR file of the source code">
-    <jar destfile="${build}/joshua-src.jar">
+    <jar destfile="${lib}/joshua-src.jar">
       <fileset dir="${build}">
         <include name="**/*.java" />
       </fileset>
@@ -229,19 +197,25 @@
   <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Delete the compiled files -->
-  <target name="clean" depends="clean-thrax,clean-java" description="--> Clean (remove) all build directories">
-    <exec executable="make">
-      <arg value="-C" />
-      <arg value="scripts/training/giza-pp" />
-      <arg value="clean" />
-    </exec>
-    <exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
-      <arg value="clean" />
-    </exec>
+  <target name="clean" depends="clean-thrax,clean-java,clean-kenlm,clean-giza" description="--> Clean (remove) all build directories">
     <delete file="${lib}/libken.so" />
     <delete file="tree_visualizer/tree_visualizer.jar" />
     <delete dir="doc/html" />
     <delete dir="doc/latex" />
+  </target>
+
+  <!-- Clean up GIZA and symal code -->
+  <target name="clean-giza" description="--> Clean GIZA and symal">
+    <exec executable="make">
+      <arg value="-C" />
+      <arg value="${src}/giza-pp" />
+      <arg value="clean" />
+    </exec>
+    <exec executable="make">
+      <arg value="-C" />
+      <arg value="${src}/symal" />
+      <arg value="clean" />
+    </exec>
   </target>
 
   <!-- Delete just the java files -->
@@ -254,43 +228,16 @@
   </target>
 
   <target name="clean-thrax" description="--> Delete just the thrax files">
-      <delete verbose="true" quiet="true">
+    <delete verbose="true" quiet="true">
       <fileset dir="${thraxlib}">
         <include name="**/*.class"/>
       </fileset>
     </delete>
   </target>
 
-  <!-- EXPERIMENTAL: Delete *all* generated files -->
-  <target name="distclean" depends="clean" description="--> EXPERIMENTAL: Delete *all* generated files">
-    <!-- BUG: this doesn't delete empty folders (neither ${build} itself, nor the class dirs (the latter makes sense since we don't traverse them)) -->
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="${build}">
-        <include name="joshua.jar" />
-        <include name="joshua-ui.jar" />
-      </fileset>
-    </delete>
-
-    <!-- HACK: these two work perfectly, but maybe problematic if people reset ${test} or ${doc} -->
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="${test}-output" />
-    </delete>
-
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="${doc}" includes="**/*.tmp" />
-      <fileset dir="${doc}/html" />
-      <fileset dir="${doc}/latex" />
-    </delete>
-
-    <delete verbose="true" quiet="true" file="joshua-fb.xml" />
-
-    <delete verbose="true" quiet="true" includeEmptyDirs="true">
-      <fileset dir="tree_visualizer">
-        <include name="tree_visualizer.jar" />
-      </fileset>
-    </delete>
+  <target name="clean-kenlm" description="--> Cleaning up KenLM">
+    <delete dir="${KENLM}/build" />
   </target>
-
 
   <!-- Delete *all* generated files,
        including files and directories not tracked by git -->
@@ -313,17 +260,6 @@
     </exec>
   </target>
 
-  <!-- ~~~~~ Javadoc ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-  <!-- Compile the Javadocs into web pages -->
-  <target name="javadoc" description="--> Compile the Javadocs into web pages">
-    <mkdir dir="${doc}" />
-    <javadoc packagenames="joshua.*" classpath="${cli}" sourcepath="${src}" destdir="${doc}" author="true" version="true" charset="utf-8" overview="src/overview.html">
-      <link href="http://docs.oracle.com/javase/7/docs/api/" />
-      <link href="http://commons.apache.org/cli/api-release" />
-    </javadoc>
-  </target>
-
   <!-- ~~~~~ Doxygen ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <taskdef uri="antlib:org.doxygen.tools" resource="org/doxygen/tools/antlib.xml" classpath="${lib}/ant-doxygen-1.6.1.jar" />
@@ -341,28 +277,7 @@
     </exec>
   </target>
 
-  <!-- ~~~~~ TestNG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-  <!-- Define the unit testing task -->
-  <taskdef resource="testngtasks" classpath="${testng}" />
-
-
-  <!-- Compile the unit test code -->
-  <!-- FIXME: why is this broken out from the 'test' target? -->
-  <target name="compile-tests" depends="java" description="--> Compile the unit test code">
-    <javac compiler="javac1.5" srcdir="${test}/joshua/ui" destdir="${build}" classpath="${testng}:${build}" debug="on" encoding="utf8" />
-  </target>
-
-
-  <!-- Run the unit tests -->
-  <target name="testng" depends="all,compile-tests" description="--> Run the unit tests">
-    <testng classpath="${build}" sourcedir="${test}">
-      <jvmarg value="-Dfile.encoding=UTF8" />
-      <jvmarg value="-Xms256m" />
-      <jvmarg value="-Xmx256m" />
-      <xmlfileset dir="${test}" includes="testng.xml" />
-    </testng>
-  </target>
+  <!-- ~~~~~ Ivy ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <property name="ivy.install.version" value="2.2.0" />
   <condition property="ivy.home" value="${env.IVY_HOME}">
@@ -406,7 +321,64 @@
     <property name="ivy.default.ivy.user.dir" value="${JOSHUA}/lib" />
     <ivy:configure file="${JOSHUA}/lib/ivysettings.xml" />
     <ivy:resolve file="${JOSHUA}/lib/ivy.xml" />
-    <ivy:retrieve type="jar" />
+    <ivy:retrieve type="jar,bundle" />
+  </target>
+
+    <!-- target: clean-eclipse ============================================ -->
+  <target name="clean-eclipse" depends="clean" 
+    description="--> cleans the eclipse project"/> 
+
+  <!-- ================================================================== -->
+  <!-- Eclipse targets                                                    -->
+  <!-- ================================================================== -->
+
+  <!-- classpath for generating eclipse project -->
+  <path id="eclipse.classpath">
+    <fileset dir="${lib}">
+      <include name="**.jar" />
+      <exclude name="ant-eclipse-1.0-jvm1.2.jar" />
+    </fileset>
+    <fileset dir="${lib}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+  
+  <!-- target: ant-eclipse-download   =================================== -->
+  <target name="ant-eclipse-download" description="--> Downloads the ant-eclipse binary.">
+    <get src="http://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
+         dest="${src}/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+
+    <untar src="${src}/ant-eclipse-1.0.bin.tar.bz2"
+           dest="${src}" compression="bzip2">
+      <patternset>
+        <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
+      </patternset>
+    </untar>
+
+    <delete file="${src}/ant-eclipse-1.0.bin.tar.bz2" />
+  </target>
+  
+  <!-- target: eclipse   ================================================ -->
+  <target name="eclipse" 
+          depends="init,jar,ant-eclipse-download"
+          description="--> Create eclipse project files">
+
+    <pathconvert property="eclipse.project">
+      <path path="${basedir}"/>
+      <regexpmapper from="^.*/([^/]+)$$" to="\1" handledirsep="yes"/>
+    </pathconvert>
+  
+    <taskdef name="eclipse"
+             classname="prantl.ant.eclipse.EclipseTask"
+             classpath="${src}/lib/ant-eclipse-1.0-jvm1.2.jar" />
+    <eclipse updatealways="true">
+      <project name="${eclipse.project}" />
+      <classpath>
+        <library pathref="eclipse.classpath" exported="false" />
+        <source path="${basedir}/src" />
+        <output path="${build}" />
+      </classpath>
+    </eclipse>
   </target>
 
 </project>

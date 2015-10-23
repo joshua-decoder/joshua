@@ -6,17 +6,14 @@
 binmode(STDIN, ":encoding(utf8)");
 binmode(STDOUT, ":encoding(utf8)");
 
-use FindBin qw($Bin);
 use strict;
-#use Time::HiRes;
 
-my $mydir = "$Bin/nonbreaking_prefixes";
+my $mydir = "$ENV{JOSHUA}/scripts/training/nonbreaking_prefixes";
 
 my %NONBREAKING_PREFIX = ();
 my $language = "en";
-my $QUIET = 0;
+my $QUIET = 1;
 my $HELP = 0;
-
 
 my $use_penn_treebank_tokenization = 1;
 
@@ -25,7 +22,7 @@ my $use_penn_treebank_tokenization = 1;
 while (@ARGV) {
 	$_ = shift;
 	/^-l$/ && ($language = shift, next);
-	/^-q$/ && ($QUIET = 1, next);
+	/^-v$/ && ($QUIET = 0, next);
 	/^-h$/ && ($HELP = 1, next);
 }
 

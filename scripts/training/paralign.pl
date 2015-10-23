@@ -24,6 +24,8 @@ while (@ARGV) {
   $args{lc $key} = $value;
 }
 
+my $aligner_conf = $args{conf} || "$JOSHUA/scripts/training/templates/alignment/word-align.conf";
+
 my $cachepipe = new CachePipe();
 $cachepipe->omit_cmd();
 
@@ -39,7 +41,7 @@ while (my $chunkno = <>) {
   if ($args{aligner} eq "giza") {
     run_giza($chunkdir, $chunkno, $args{num_threads} > 1);
   } elsif ($args{aligner} eq "berkeley") {
-    run_berkeley_aligner($chunkdir, $chunkno);
+    run_berkeley_aligner($chunkdir, $chunkno, $aligner_conf);
   } elsif ($args{aligner} eq "jacana") {
     run_jacana_aligner($chunkdir, $chunkno);
   }
@@ -59,10 +61,10 @@ sub run_giza {
 }
 
 sub run_berkeley_aligner {
-  my ($chunkdir,$chunkno) = @_;
+  my ($chunkdir, $chunkno, $aligner_conf) = @_;
 
   # copy and modify the config file
-  open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
+  open FROM, $aligner_conf or die "can't read berkeley alignment template";
   open TO, ">", "alignments/$chunkno/word-align.conf" or die "can't write to 'alignments/$chunkno/word-align.conf'";
   while (<FROM>) {
     s/<SOURCE>/$args{source}.$chunkno/g;

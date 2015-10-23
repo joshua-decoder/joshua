@@ -34,13 +34,13 @@ public class PhraseTable implements Grammar {
    * @param config
    * @throws IOException
    */
-  public PhraseTable(String grammarFile, String owner, JoshuaConfiguration config, int maxSource) 
+  public PhraseTable(String grammarFile, String owner, String type, JoshuaConfiguration config, int maxSource) 
       throws IOException {
     this.config = config;
     int spanLimit = 0;
     
     if (new File(grammarFile).isDirectory()) {
-      this.backend = new PackedGrammar(grammarFile, spanLimit, owner, "moses", config);
+      this.backend = new PackedGrammar(grammarFile, spanLimit, owner, type, config);
       if (this.backend.getMaxSourcePhraseLength() == -1) {
         System.err.println("FATAL: Using a packed grammar for a phrase table backend requires that you");
         System.err.println("       packed the grammar with Joshua 6.0.2 or greater");
@@ -48,7 +48,7 @@ public class PhraseTable implements Grammar {
       }
 
     } else {
-      this.backend = new MemoryBasedBatchGrammar("moses", grammarFile, owner, "[X]", spanLimit, config);
+      this.backend = new MemoryBasedBatchGrammar(type, grammarFile, owner, "[X]", spanLimit, config);
     }
   }
   
@@ -174,5 +174,10 @@ public class PhraseTable implements Grammar {
   @Override
   public int getOwner() {
     return backend.getOwner();
+  }
+
+  @Override
+  public int getNumDenseFeatures() {
+    return backend.getNumDenseFeatures();
   }
 }

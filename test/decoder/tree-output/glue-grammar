@@ -3,3 +3,4 @@
 [GOAL] ||| [GOAL,1] [D,2] ||| [GOAL,1] [D,2] ||| -1
 [GOAL] ||| [GOAL,1] [S,2] ||| [GOAL,1] [S,2] ||| -1
 [GOAL] ||| [GOAL,1] </s> ||| [GOAL,1] </s> ||| 0
+[GOAL] ||| <s> [NP\DT] </s> ||| <s> [NP\DT,1] </s> ||| -1

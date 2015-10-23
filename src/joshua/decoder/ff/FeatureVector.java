@@ -1,7 +1,5 @@
 package joshua.decoder.ff;
 
-import joshua.decoder.Decoder;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,19 +11,38 @@ import java.util.Set;
  * An implementation of a sparse feature vector, using for representing both weights and feature
  * values.
  * 
+ * This class is used to hold both the decoder weights and the feature values accumulated across
+ * each edge. When features are read in upon decoder startup, they all start out as sparse features
+ * and are stored in the hash table. After the feature functions have been loaded, the decoder
+ * queries each of them for their sparse features via {@link registerDenseFeatures}. Those features
+ * returned by each decoder are then *removed* from the sparse feature hash and placed in the dense
+ * feature array. Therefore, when a feature registers a dense feature, it should take care to
+ * query either {@link getDense()} or {@link getSparse} when asking for the feature values later on. 
+ * 
  * @author Matt Post <post@cs.jhu.edu>
  */
 
 public class FeatureVector {
-  private HashMap<String, Float> features;
+  /*
+   * A list of the dense feature names. Increased via calls to registerDenseFeatures()
+   */
+  public static ArrayList<String> DENSE_FEATURE_NAMES = new ArrayList<String>();
+
+  /*
+   * The values of each of the dense features, defaulting to 0.
+   */
+  private ArrayList<Float> denseFeatures = null;
+
+  /*
+   * Value of sparse features.
+   */
+  private HashMap<String, Float> sparseFeatures;
 
   public FeatureVector() {
-    features = new HashMap<String, Float>();
-  }
-
-  public FeatureVector(String feature, float value) {
-    features = new HashMap<String, Float>();
-    features.put(feature, value);
+    sparseFeatures = new HashMap<String, Float>();
+    denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
+    for (int i = 0; i < denseFeatures.size(); i++)
+      denseFeatures.set(i, 0.0f);
   }
 
   /**
@@ -49,6 +66,8 @@ public class FeatureVector {
    */
   public FeatureVector(String featureString, String prefix) {
 
+//    System.err.println(String.format("FEATURES_OF(%s, %s)", featureString, prefix));
+    
     /*
      * Read through the features on this rule, adding them to the feature vector. Unlabeled features
      * are converted to a canonical form.
@@ -56,38 +75,90 @@ public class FeatureVector {
      * Note that it's bad form to mix unlabeled features and the named feature index they are mapped
      * to, but we are being liberal in what we accept.
      * 
-     * IMPORTANT: Note that, for historical reasons, the sign is reversed on all scores.
+     * IMPORTANT: Note that, for historical reasons, the sign is reversed on all *dense* scores.
      * This is the source of *no end* of confusion and should be done away with.
      */
-    features = new HashMap<String, Float>();
+    sparseFeatures = new HashMap<String, Float>();
+    denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
+    for (int i = 0; i < denseFeatures.size(); i++)
+      denseFeatures.set(i, 0.0f);
+    
     int denseFeatureIndex = 0;
 
     if (!featureString.trim().equals("")) {
       for (String token : featureString.split("\\s+")) {
         if (token.indexOf('=') == -1) {
-          features.put(String.format("%s%d", prefix, denseFeatureIndex), -Float.parseFloat(token));
+          /*
+           * If we encounter an unlabeled feature, it is the next dense feature
+           */
+          while (denseFeatures.size() <= denseFeatureIndex)
+            denseFeatures.add(0.0f);
+          denseFeatures.set(denseFeatureIndex, -Float.parseFloat(token));
           denseFeatureIndex++;
         } else {
+          /*
+           * Labeled features are of two types: if they start with the prefix, they are actually
+           * dense feature in disguise; otherwise, they are proper sparse features.
+           */
           int splitPoint = token.indexOf('=');
-          features.put(token.substring(0, splitPoint),
-              Float.parseFloat(token.substring(splitPoint + 1)));
+          if (token.startsWith(prefix)) {
+//            System.err.println(String.format("  PREFIX=%s '%s'.substring(%d,%d) = %s", prefix, token, prefix.length(), splitPoint,
+//                token.substring(prefix.length(), splitPoint)));
+            int index = Integer.parseInt(token.substring(prefix.length(), splitPoint));
+            while (denseFeatures.size() <= index)
+              denseFeatures.add(0.0f);
+            denseFeatures.set(index, 1.0f * Float.parseFloat(token.substring(splitPoint + 1)));
+          } else {
+            sparseFeatures.put(token.substring(0, splitPoint),
+                Float.parseFloat(token.substring(splitPoint + 1)));
+          }
         }
       }
     }
   }
+  
+  /**
+   * Register one or more dense features with the global weight vector. This assumes them global
+   * IDs, and then returns the index of the first feature (from which the calling feature function
+   * can infer them all). This *must* be called by every feature function wishing to register
+   * dense features!
+   * 
+   * @param names
+   * @return
+   */
+  public void registerDenseFeatures(ArrayList<FeatureFunction> featureFunctions) {
+    for (FeatureFunction feature: featureFunctions) {
+      ArrayList<String> names = feature.reportDenseFeatures(denseFeatures.size());
+      for (String name: names) {
+        DENSE_FEATURE_NAMES.add(name);
+        denseFeatures.add(getSparse(name));
+        sparseFeatures.remove(name);
+      }
+    }
+  }
+  
+  public ArrayList<Float> getDenseFeatures() {
+    return denseFeatures;
+  }
+  
+  public HashMap<String,Float> getSparseFeatures() {
+    return sparseFeatures;
+  }
 
   public Set<String> keySet() {
-    return features.keySet();
+    return sparseFeatures.keySet();
   }
 
   public int size() {
-    return features.size();
+    return sparseFeatures.size() + denseFeatures.size();
   }
 
   public FeatureVector clone() {
     FeatureVector newOne = new FeatureVector();
-    for (String key : this.features.keySet())
-      newOne.put(key, this.features.get(key));
+    for (String key : this.sparseFeatures.keySet())
+      newOne.set(key, this.sparseFeatures.get(key));
+    for (int i = 0; i < denseFeatures.size(); i++)
+      newOne.set(i, denseFeatures.get(i));
     return newOne;
   }
 
@@ -97,9 +168,12 @@ public class FeatureVector {
    * a value of 0.0f before subtraction.
    */
   public void subtract(FeatureVector other) {
+    for (int i = 0; i < denseFeatures.size(); i++)
+      denseFeatures.set(i, denseFeatures.get(i) - other.getDense(i));
+    
     for (String key : other.keySet()) {
-      float oldValue = (features.containsKey(key)) ? features.get(key) : 0.0f;
-      features.put(key, oldValue - other.get(key));
+      float oldValue = (sparseFeatures.containsKey(key)) ? sparseFeatures.get(key) : 0.0f;
+      sparseFeatures.put(key, oldValue - other.getSparse(key));
     }
   }
 
@@ -108,44 +182,70 @@ public class FeatureVector {
    * between the two being summed.
    */
   public void add(FeatureVector other) {
+    while (denseFeatures.size() < other.denseFeatures.size())
+      denseFeatures.add(0.0f);
+    
+    for (int i = 0; i < other.denseFeatures.size(); i++)
+      increment(i, other.getDense(i));
+    
     for (String key : other.keySet()) {
-      if (!features.containsKey(key))
-        features.put(key, other.get(key));
+      if (!sparseFeatures.containsKey(key))
+        sparseFeatures.put(key, other.getSparse(key));
       else
-        features.put(key, features.get(key) + other.get(key));
+        sparseFeatures.put(key, sparseFeatures.get(key) + other.getSparse(key));
     }
   }
 
-  public boolean containsKey(final String feature) {
-    return features.containsKey(feature);
-  }
-
   /**
-   * This method returns the weight of a feature if it exists and otherwise throws a runtime error.
-   * It is the duty of the programmer to check using the method containsKey if a feature with a
-   * certain name exists. Previously this method would return 0 if the key did not exists, but this
-   * lead to bugs in other parts of the code because Feature Names are often specified in capitals
-   * but then lowercased, but in using the get method the lowercase form is not used consistently.
-   * It is therefore good defensive programming to just throw an error when someone tries to get a
-   * feature that does not exist - this will automatically eliminate such hard to debug errors. This
-   * is what is now implemented.
+   * Return the weight of a sparse feature, indexed by its name.
    * 
    * @param feature
-   * @return
+   * @return the sparse feature's weight, or 0 if not found.
    */
-  public float get(String feature) {
-    if (features.containsKey(feature))
-      return features.get(feature);
-
+  public float getSparse(String feature) {
+    if (sparseFeatures.containsKey(feature))
+      return sparseFeatures.get(feature);
+    return 0.0f;
+  }
+  
+  public boolean hasValue(String name) {
+    return sparseFeatures.containsKey(name);
+  }
+  
+  /**
+   * Return the weight of a dense feature, indexed by its feature index.
+   * 
+   * @param id
+   * @return the dense feature's value, or 0 if not found.
+   */
+  public float getDense(int id) {
+    if (id < denseFeatures.size())
+      return denseFeatures.get(id);
     return 0.0f;
   }
 
-  public void put(String feature, float value) {
-    features.put(feature, value);
+  public void increment(String feature, float value) {
+    sparseFeatures.put(feature, getSparse(feature) + value);
+  }
+  
+  public void increment(int id, float value) {
+    while (id >= denseFeatures.size())
+      denseFeatures.add(0.0f);
+    denseFeatures.set(id, getDense(id) + value);
+  }
+  
+  public void set(String feature, float value) {
+    sparseFeatures.put(feature, value);
+  }
+  
+  public void set(int id, float value) {
+    while (id >= denseFeatures.size())
+      denseFeatures.add(0.0f);
+    denseFeatures.set(id, value);
   }
 
   public Map<String, Float> getMap() {
-    return features;
+    return sparseFeatures;
   }
 
   /**
@@ -153,16 +253,18 @@ public class FeatureVector {
    */
   public float innerProduct(FeatureVector other) {
     float cost = 0.0f;
-    for (String key : features.keySet())
-      if (other.containsKey(key))
-        cost += features.get(key) * other.get(key);
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++)
+      cost += getDense(i) * other.getDense(i);
+    
+    for (String key : sparseFeatures.keySet())
+      cost += sparseFeatures.get(key) * other.getSparse(key);
 
     return cost;
   }
 
   public void times(float value) {
-    for (String key : features.keySet())
-      features.put(key, features.get(key) * value);
+    for (String key : sparseFeatures.keySet())
+      sparseFeatures.put(key, sparseFeatures.get(key) * value);
   }
 
   /***
@@ -175,18 +277,17 @@ public class FeatureVector {
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
-    for (String key: Decoder.dense_feature_names) {
-      float value = features.containsKey(key) ? features.get(key) : 0.0f;
-      outputString += String.format("%s=%.3f ", key.replaceAll("_", "-"), value);
-      printed_keys.add(key);
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i).replaceAll("_", "-"), denseFeatures.get(i));
+      printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     
     // Now print the sparse features
-    ArrayList<String> keys = new ArrayList<String>(features.keySet());
+    ArrayList<String> keys = new ArrayList<String>(sparseFeatures.keySet());
     Collections.sort(keys);
     for (String key: keys) {
       if (! printed_keys.contains(key)) {
-        float value = features.get(key);
+        float value = sparseFeatures.get(key);
         if (key.equals("OOVPenalty"))
           // force moses to see it as sparse
           key = "OOV_Penalty";
@@ -207,24 +308,18 @@ public class FeatureVector {
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
-    for (String key: Decoder.dense_feature_names) {
-      float value = features.containsKey(key) ? features.get(key) : 0.0f;
-      outputString += String.format("%s=%.3f ", key, value);
-      printed_keys.add(key);
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i), getDense(i));
+      printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     
     // Now print the rest of the features
-    ArrayList<String> keys = new ArrayList<String>(features.keySet());
+    ArrayList<String> keys = new ArrayList<String>(sparseFeatures.keySet());
     Collections.sort(keys);
     for (String key: keys)
       if (! printed_keys.contains(key))
-        outputString += String.format("%s=%.3f ", key, features.get(key));
+        outputString += String.format("%s=%.3f ", key, sparseFeatures.get(key));
 
     return outputString.trim();
-  }
-
-  public static boolean isDense(String feature) {
-    return feature.startsWith("tm_") || feature.startsWith("lm_") || feature.equals("WordPenalty")
-        || feature.equals("Distortion") || feature.equals("PhrasePenalty");
   }
 }

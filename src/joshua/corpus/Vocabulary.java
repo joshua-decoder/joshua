@@ -1,5 +1,7 @@
 package joshua.corpus;
 
+import static joshua.util.FormatUtils.isNonterminal;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -8,48 +10,40 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import joshua.decoder.Decoder;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.util.FormatUtils;
-import joshua.util.MurmurHash;
 
 /**
- * Static singular vocabulary class. Supports vocabulary freezing and (de-)serialization into a
- * vocabulary file.
+ * Static singular vocabulary class.
+ * Supports (de-)serialization into a vocabulary file.
  * 
  * @author Juri Ganitkevitch
  */
 
 public class Vocabulary {
 
-  private static ArrayList<NGramLanguageModel> lms;
+  private final static ArrayList<NGramLanguageModel> lms = new ArrayList<NGramLanguageModel>();
 
-  private static TreeMap<Long, Integer> hashToId;
-  private static ArrayList<String> idToString;
-  private static TreeMap<Long, String> hashToString;
+  private static List<String> idToString;
+  private static Map<String, Integer> stringToId;
+  
+  private static volatile List<Integer> nonTerminalIndices;
 
   private static final Integer lock = new Integer(0);
 
-  private static final int UNKNOWN_ID;
-  private static final String UNKNOWN_WORD;
+  static final int UNKNOWN_ID = 0;
+  static final String UNKNOWN_WORD = "<unk>";
 
   public static final String START_SYM = "<s>";
   public static final String STOP_SYM = "</s>";
   
   static {
-
-    UNKNOWN_ID = 0;
-    UNKNOWN_WORD = "<unk>";
-
-    lms = new ArrayList<NGramLanguageModel>();
-
     clear();
   }
 
@@ -73,9 +67,8 @@ public class Vocabulary {
    * @return Returns true if vocabulary was read without mismatches or collisions.
    * @throws IOException
    */
-  public static boolean read(String file_name) throws IOException {
+  public static boolean read(final File vocab_file) throws IOException {
     synchronized (lock) {
-      File vocab_file = new File(file_name);
       DataInputStream vocab_stream =
           new DataInputStream(new BufferedInputStream(new FileInputStream(vocab_file)));
       int size = vocab_stream.readInt();
@@ -109,42 +102,22 @@ public class Vocabulary {
     }
   }
 
-  public static void freeze() {
-    synchronized (lock) {
-      int current_id = 1;
-
-      TreeMap<Long, Integer> hash_to_id = new TreeMap<Long, Integer>();
-      ArrayList<String> id_to_string = new ArrayList<String>(idToString.size() + 1);
-      id_to_string.add(UNKNOWN_ID, UNKNOWN_WORD);
-
-      Map.Entry<Long, Integer> walker = hashToId.firstEntry();
-      while (walker != null) {
-        String word = hashToString.get(walker.getKey());
-        hash_to_id.put(walker.getKey(), (walker.getValue() < 0 ? -current_id : current_id));
-        id_to_string.add(current_id, word);
-        current_id++;
-        walker = hashToId.higherEntry(walker.getKey());
-      }
-      idToString = id_to_string;
-      hashToId = hash_to_id;
-    }
-  }
-
+  /**
+   * Get the id of the token if it already exists, new id is created otherwise.
+   * 
+   * TODO: currently locks for every call.
+   * Separate constant (frozen) ids from changing (e.g. OOV) ids.
+   * Constant ids could be immutable -> no locking.
+   * Alternatively: could we use ConcurrentHashMap to not have to lock if actually contains it and only lock for modifications? 
+   */
   public static int id(String token) {
     synchronized (lock) {
-      long hash = 0;
-      try {
-        hash = MurmurHash.hash64(token);
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-      }
-      String hash_word = hashToString.get(hash);
-      if (hash_word != null) {
-        if (!token.equals(hash_word)) {
-          Decoder.LOG(1, String.format("MurmurHash for the following symbols collides: '%s', '%s'", hash_word, token));
-        }
-        return hashToId.get(hash);
+      if (stringToId.containsKey(token)) {
+        return stringToId.get(token);
       } else {
+        if (nonTerminalIndices != null && nt(token)) {
+          throw new IllegalArgumentException("After the nonterminal indices have been set by calling getNonterminalIndices you can't call id on new nonterminals anymore.");
+        }
         int id = idToString.size() * (nt(token) ? -1 : 1);
 
         // register this (token,id) mapping with each language
@@ -154,8 +127,7 @@ public class Vocabulary {
           lm.registerWord(token, Math.abs(id));
 
         idToString.add(token);
-        hashToString.put(hash, token);
-        hashToId.put(hash, id);
+        stringToId.put(token, id);
         return id;
       }
     }
@@ -180,8 +152,10 @@ public class Vocabulary {
   }
 
   public static String word(int id) {
-    id = Math.abs(id);
-    return idToString.get(id);
+    synchronized (lock) {
+      id = Math.abs(id);
+      return idToString.get(id);
+    }
   }
 
   public static String getWords(int[] ids) {
@@ -199,27 +173,35 @@ public class Vocabulary {
     return sb.deleteCharAt(sb.length() - 1).toString();
   }
   
-  private static boolean isNonterminal(String word) {
-    return (word.substring(0,1).equals("[") && (word.substring(word.length() - 1,word.length()).equals("]")));
-  }
-  
   /**
-   * This method returns a list of all indices corresponding to Nonterminals in the Vocabulary
-   * @return
+   * This method returns a list of all (positive) indices
+   * corresponding to Nonterminals in the Vocabulary.
    */
   public static List<Integer> getNonterminalIndices()
   {
-    List<Integer> result = new ArrayList<Integer>();
-    for(int i = 0; i < idToString.size(); i++)
-    {
-      String word = idToString.get(i);
-      if(isNonterminal(word)){  
-        result.add(i);
+    if (nonTerminalIndices == null) {
+      synchronized (lock) {
+        if (nonTerminalIndices == null) {
+          nonTerminalIndices = findNonTerminalIndices();
+        }
       }
-    } 
-    return result;
+    }
+    return nonTerminalIndices;
   }
-  
+
+  /**
+   * Iterates over the Vocabulary and finds all non terminal indices.
+   */
+  private static List<Integer> findNonTerminalIndices() {
+    List<Integer> nonTerminalIndices = new ArrayList<Integer>();
+    for(int i = 0; i < idToString.size(); i++) {
+      final String word = idToString.get(i);
+      if(isNonterminal(word)){
+        nonTerminalIndices.add(i);
+      }
+    }
+    return nonTerminalIndices;
+  }
 
   public static int getUnknownId() {
     return UNKNOWN_ID;
@@ -253,59 +235,20 @@ public class Vocabulary {
     return FormatUtils.getNonterminalIndex(word(id));
   }
 
-  private static void clear() {
-    hashToId = new TreeMap<Long, Integer>();
-    hashToString = new TreeMap<Long, String>();
-    idToString = new ArrayList<String>();
-
-    idToString.add(UNKNOWN_ID, UNKNOWN_WORD);
-  }
-
   /**
-   * Used to indicate that a query has been made for a symbol that is not known.
-   * 
-   * @author Lane Schwartz
+   * Clears the vocabulary and initializes it with an unknown word.
+   * Registered language models are left unchanged.
    */
-  public static class UnknownSymbolException extends RuntimeException {
+  public static void clear() {
+    synchronized (lock) {
+      nonTerminalIndices = null;
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Constructs an exception indicating that the specified identifier cannot be found in the
-     * symbol table.
-     * 
-     * @param id Integer identifier
-     */
-    public UnknownSymbolException(int id) {
-      super("Identifier " + id + " cannot be found in the symbol table");
-    }
-
-    /**
-     * Constructs an exception indicating that the specified symbol cannot be found in the symbol
-     * table.
-     * 
-     * @param symbol String symbol
-     */
-    public UnknownSymbolException(String symbol) {
-      super("Symbol " + symbol + " cannot be found in the symbol table");
+      idToString = new ArrayList<String>();
+      stringToId = new HashMap<String, Integer>();      
+  
+      idToString.add(UNKNOWN_ID, UNKNOWN_WORD);
+      stringToId.put(UNKNOWN_WORD, UNKNOWN_ID);
     }
   }
-
-  /**
-   * Used to indicate that word hashing has produced a collision.
-   * 
-   * @author Juri Ganitkevitch
-   */
-  public static class HashCollisionException extends RuntimeException {
-
-    private static final long serialVersionUID = 1L;
-
-    public HashCollisionException(String first, String second) {
-      super("MurmurHash for the following symbols collides: '" + first + "', '" + second + "'");
-    }
-  }
-
-  public static Iterator<String> wordIterator() {
-    return idToString.iterator();
-  }
+  
 }

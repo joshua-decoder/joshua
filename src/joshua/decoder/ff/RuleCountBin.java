@@ -30,7 +30,7 @@ public class RuleCountBin extends StatelessFF {
     if (rule.getOwner() != Vocabulary.id("pt"))
       return null;
     
-    float rarityPenalty = -rule.getFeatureVector().get(String.format("tm_pt_%d", field));
+    float rarityPenalty = -rule.getFeatureVector().getSparse(String.format("tm_pt_%d", field));
     int count = (int) (1.0 - Math.log(rarityPenalty));
 
     String feature = "RuleCountBin_inf";

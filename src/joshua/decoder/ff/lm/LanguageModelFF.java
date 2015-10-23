@@ -1,9 +1,5 @@
 package joshua.decoder.ff.lm;
 
-import java.io.BufferedReader;
-
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +14,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.StatefulFF;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.lm.KenLM;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
@@ -65,7 +61,7 @@ public class LanguageModelFF extends StatefulFF {
    */
   protected final int ngramOrder;
 
-  /**
+  /*
    * We cache the weight of the feature since there is only one.
    */
   protected float weight;
@@ -102,15 +98,16 @@ public class LanguageModelFF extends StatefulFF {
      */
     private void read(String file_name) throws IOException {
 
-      File class_file = new File(file_name);
-      BufferedReader br = new BufferedReader(new FileReader(class_file));
-      String line;
-
-      while ((line = br.readLine()) != null) {
+      int lineno = 0;
+      for (String line: new joshua.util.io.LineReader(file_name, false)) {
+        lineno++;
         String[] lineComp = line.trim().split("\\s+");
-        this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+        try {
+          this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+          System.err.println(String.format("* WARNING: bad vocab line #%d '%s'", lineno, line));
+        }
       }
-      br.close();
     }
 
   }
@@ -121,6 +118,7 @@ public class LanguageModelFF extends StatefulFF {
     this.type = parsedArgs.get("lm_type");
     this.ngramOrder = Integer.parseInt(parsedArgs.get("lm_order")); 
     this.path = parsedArgs.get("lm_file");
+    
     if (parsedArgs.containsKey("class_map"))
       try {
         this.isClassLM = true;
@@ -130,9 +128,19 @@ public class LanguageModelFF extends StatefulFF {
         e.printStackTrace();
       }
 
-    this.weight = weights.get(name);
+    // The dense feature initialization hasn't happened yet, so we have to retrieve this as sparse
+    this.weight = weights.getSparse(name);
     
     initializeLM();
+  }
+  
+  @Override
+  public ArrayList<String> reportDenseFeatures(int index) {
+    denseFeatureIndex = index;
+    
+    ArrayList<String> names = new ArrayList<String>();
+    names.add(name);
+    return names;
   }
 
   /**
@@ -406,7 +414,8 @@ public class LanguageModelFF extends StatefulFF {
         }
       }
     }
-    acc.add(name, transitionLogP);
+//    acc.add(name, transitionLogP);
+    acc.add(denseFeatureIndex, transitionLogP);
 
     if (left_context != null) {
       return new NgramDPState(left_context, Arrays.copyOfRange(current, ccount - this.ngramOrder
@@ -448,7 +457,8 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     // Tell the accumulator
-    acc.add(name, res);
+//    acc.add(name, res);
+    acc.add(denseFeatureIndex, res);
 
     // State is the same
     return new NgramDPState(leftContext, rightContext);

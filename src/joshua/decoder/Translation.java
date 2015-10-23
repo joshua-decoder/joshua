@@ -47,7 +47,7 @@ public class Translation {
 
         // We must put this weight as zero, otherwise we get an error when we try to retrieve it
         // without checking
-        Decoder.weights.put("BLEU", 0);
+        Decoder.weights.increment("BLEU", 0);
 
         String best = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
         best = best.substring(best.indexOf(' ') + 1, best.lastIndexOf(' '));
@@ -74,10 +74,10 @@ public class Translation {
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
           if (joshuaConfiguration.rescoreForest) {
-            Decoder.weights.put("BLEU", joshuaConfiguration.rescoreForestWeight);
+            Decoder.weights.increment("BLEU", joshuaConfiguration.rescoreForestWeight);
             kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
-            Decoder.weights.put("BLEU", -joshuaConfiguration.rescoreForestWeight);
+            Decoder.weights.increment("BLEU", -joshuaConfiguration.rescoreForestWeight);
             kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
           }
         }

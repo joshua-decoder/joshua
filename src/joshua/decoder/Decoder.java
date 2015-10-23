@@ -19,7 +19,6 @@ import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
-import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.io.TranslationRequest;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
@@ -62,16 +61,6 @@ public class Decoder {
    */
   private List<Grammar> grammars;
   private ArrayList<FeatureFunction> featureFunctions;
-
-  /*
-   * A sorted list of the feature names (so they can be output in the order they were read in)
-   */
-  public static ArrayList<String> feature_names = new ArrayList<String>();
-  
-  /*
-   * Just the dense features.
-   */
-  public static ArrayList<String> dense_feature_names = new ArrayList<String>();
 
   /* The feature weights. */
   public static FeatureVector weights;
@@ -363,9 +352,7 @@ public class Decoder {
    */
   private String mosesize(String feature) {
     if (joshuaConfiguration.moses) {
-      if (feature.equals("OOVPenalty"))
-        return "OOV_Penalty";
-      else if (feature.startsWith("tm_") || feature.startsWith("lm_"))
+      if (feature.startsWith("tm_") || feature.startsWith("lm_"))
         return feature.replace("_", "-");
     }
     
@@ -420,29 +407,11 @@ public class Decoder {
           System.exit(17);
         }
 
-        /* Weights could be listed more than once if overridden from the command line */
-        if (! weights.containsKey(pair[0])) {
-          feature_names.add(pair[0]);
-          if (FeatureVector.isDense(pair[0]))
-            dense_feature_names.add(pair[0]);
-        }
-
-        weights.put(pair[0], Float.parseFloat(pair[1]));
+        weights.set(pair[0], Float.parseFloat(pair[1]));
       }
 
-      // This is mostly for compatibility with the Moses tuning script
-      if (joshuaConfiguration.show_weights_and_quit) {
-        for (String key : Decoder.dense_feature_names) {
-          System.out.println(String.format("%s= %.5f", mosesize(key), weights.get(key)));
-        }
-        System.exit(0);
-      }
-
-      if (!weights.containsKey("BLEU"))
-        Decoder.weights.put("BLEU", 0.0f);
-
-      Decoder.LOG(1, String.format("Read %d sparse and %d dense weights", weights.size()
-          - dense_feature_names.size(), dense_feature_names.size()));
+      Decoder.LOG(1, String.format("Read %d weights (%d of them dense)", weights.size(),
+          weights.DENSE_FEATURE_NAMES.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -457,6 +426,18 @@ public class Decoder {
       // Initialize the features: requires that LM model has been initialized.
       this.initializeFeatureFunctions();
 
+      // This is mostly for compatibility with the Moses tuning script
+      if (joshuaConfiguration.show_weights_and_quit) {
+        for (int i = 0; i < weights.DENSE_FEATURE_NAMES.size(); i++) {
+          String name = weights.DENSE_FEATURE_NAMES.get(i);
+          if (joshuaConfiguration.moses) 
+            System.out.println(String.format("%s= %.5f", mosesize(name), weights.getDense(i)));
+          else
+            System.out.println(String.format("%s %.5f", name, weights.getDense(i)));
+        }
+        System.exit(0);
+      }
+      
       // Sort the TM grammars (needed to do cube pruning)
       if (joshuaConfiguration.amortized_sorting) {
         Decoder.LOG(1, "Grammar sorting happening lazily on-demand.");
@@ -495,6 +476,9 @@ public class Decoder {
   private void initializeTranslationGrammars() throws IOException {
     
     if (joshuaConfiguration.tms.size() > 0) {
+      
+      // collect packedGrammars to check if they use a shared vocabulary
+      final List<PackedGrammar> packed_grammars = new ArrayList<>();
 
       // tm = {thrax/hiero,packed,samt,moses} OWNER LIMIT FILE
       for (String tmLine : joshuaConfiguration.tms) {
@@ -508,10 +492,12 @@ public class Decoder {
         String path = parsedArgs.get("path");
 
         Grammar grammar = null;
-        if (! type.equals("moses")) {
+        if (! type.equals("moses") && ! type.equals("phrase")) {
           if (new File(path).isDirectory()) {
             try {
-              grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+              PackedGrammar packed_grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+              packed_grammars.add(packed_grammar);
+              grammar = packed_grammar;
             } catch (FileNotFoundException e) {
               System.err.println(String.format("Couldn't load packed grammar from '%s'", path));
               System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
@@ -530,11 +516,14 @@ public class Decoder {
               : -1;
 
           joshuaConfiguration.search_algorithm = "stack";
-          grammar = new PhraseTable(path, owner, joshuaConfiguration, maxSourceLen);
+          grammar = new PhraseTable(path, owner, type, joshuaConfiguration, maxSourceLen);
         }
 
         this.grammars.add(grammar);
       }
+
+      checkSharedVocabularyChecksumsForPackedGrammars(packed_grammars);
+
     } else {
       Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("glue", joshuaConfiguration);
@@ -542,7 +531,7 @@ public class Decoder {
       glueGrammar.addGlueRules(featureFunctions);
       this.grammars.add(glueGrammar);
     }
-
+    
     /* Now create a feature function for each owner */
     HashSet<String> ownersSeen = new HashSet<String>();
 
@@ -550,13 +539,33 @@ public class Decoder {
       String owner = Vocabulary.word(grammar.getOwner());
       if (! ownersSeen.contains(owner)) {
         this.featureFunctions.add(new PhraseModel(weights, new String[] { "tm", "-owner", owner },
-            joshuaConfiguration));
+            joshuaConfiguration, grammar));
         ownersSeen.add(owner);
       }
     }
       
     Decoder.LOG(1, String.format("Memory used %.1f MB",
         ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
+  }
+  
+  /**
+   * Checks if multiple packedGrammars have the same vocabulary by comparing their vocabulary file checksums.
+   */
+  private static void checkSharedVocabularyChecksumsForPackedGrammars(final List<PackedGrammar> packed_grammars) {
+    String previous_checksum = "";
+    for (PackedGrammar grammar : packed_grammars) {
+      final String checksum = grammar.computeVocabularyChecksum();
+      if (previous_checksum.isEmpty()) {
+        previous_checksum = checksum;
+      } else {
+        if (!checksum.equals(previous_checksum)) {
+          throw new RuntimeException(
+              "Trying to load multiple packed grammars with different vocabularies!" +
+              "Have you packed them jointly?");
+        }
+        previous_checksum = checksum;
+      }
+    }
   }
 
   /*
@@ -590,11 +599,7 @@ public class Decoder {
           feature = demoses(feature);
         }
 
-        weights.put(feature, value);
-        feature_names.add(feature);
-        if (FeatureVector.isDense(feature))
-          dense_feature_names.add(feature);
-
+        weights.increment(feature, value);
       }
     } catch (FileNotFoundException ioe) {
       System.err.println("* FATAL: Can't find weights-file '" + fileName + "'");
@@ -656,7 +661,10 @@ public class Decoder {
 
     for (FeatureFunction feature : featureFunctions) {
       Decoder.LOG(1, String.format("FEATURE: %s", feature.logString()));
+      
     }
+
+    weights.registerDenseFeatures(featureFunctions);
   }
 
   /**

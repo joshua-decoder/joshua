@@ -74,12 +74,6 @@ class DotChart {
 
   /* If enabled, rule terminals are treated as regular expressions. */
   private final boolean regexpMatching;
-  /*
-   * nonTerminalMatcher determines the behavior of nonterminal matching: strict or soft-syntactic
-   * matching
-   */
-  private final NonterminalMatcher nonTerminalMatcher;
-
 
   // ===============================================================
   // Static fields
@@ -106,8 +100,7 @@ class DotChart {
 
 
 
-  public DotChart(Lattice<Token> input, Grammar grammar, Chart chart,
-      NonterminalMatcher nonTerminalMatcher, boolean regExpMatching) {
+  public DotChart(Lattice<Token> input, Grammar grammar, Chart chart, boolean regExpMatching) {
 
     this.dotChart = chart;
     this.pGrammar = grammar;
@@ -115,7 +108,6 @@ class DotChart {
     this.sentLen = input.size();
 
     this.dotcells = new ChartSpan<DotCell>(sentLen, null);
-    this.nonTerminalMatcher = nonTerminalMatcher;
     this.regexpMatching = regExpMatching;
 
     seed();
@@ -269,17 +261,11 @@ class DotChart {
          * undocumented feature that introduces a complexity, in that the next "word" in the grammar
          * rule might match more than one outgoing arc in the grammar trie.
          */
-        List<Trie> child_tnodes = nonTerminalMatcher.produceMatchingChildTNodesNonterminalLevel(
-            dotNode, superNode);
-
-        if (!child_tnodes.isEmpty()) {
-          for (Trie child_tnode : child_tnodes) {
-            if (child_tnode != null) {
-              if ((!skipUnary) || (child_tnode.hasExtensions())) {
-                addDotItem(child_tnode, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
-                    .getSourcePath().extendNonTerminal());
-              }
-            }
+        Trie child_node = dotNode.getTrieNode().match(superNode.lhs);
+        if (child_node != null) {
+          if ((!skipUnary) || (child_node.hasExtensions())) {
+            addDotItem(child_node, i, j, dotNode.getAntSuperNodes(), superNode, dotNode
+                .getSourcePath().extendNonTerminal());
           }
         }
       }

@@ -1,5 +1,8 @@
 package joshua.decoder;
 
+import static joshua.util.FormatUtils.cleanNonTerminal;
+import static joshua.util.FormatUtils.markup;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -438,11 +441,11 @@ public class JoshuaConfiguration {
             lattice_decoding = true;
 
           } else if (parameter.equals(normalize_key("default-non-terminal"))) {
-            default_non_terminal = String.format("[%s]", FormatUtils.cleanNonterminal(fds[1].trim()));
+            default_non_terminal = markup(cleanNonTerminal(fds[1].trim()));
             logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 
           } else if (parameter.equals(normalize_key("goal-symbol"))) {
-            goal_symbol = String.format("[%s]", FormatUtils.cleanNonterminal(fds[1].trim()));
+            goal_symbol = markup(cleanNonTerminal(fds[1].trim()));
             logger.finest("goalSymbol: " + goal_symbol);
 
           } else if (parameter.equals(normalize_key("weights-file"))) {
