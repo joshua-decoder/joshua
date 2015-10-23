@@ -39,9 +39,9 @@ delete $ENV{CDPATH};
 
 my $HADOOP = $ENV{HADOOP};
 my $MOSES = $ENV{MOSES};
-delete $ENV{GREP_OPTIONS};
-
+my $METEOR = $ENV{METEOR};
 my $THRAX = "$JOSHUA/thrax";
+delete $ENV{GREP_OPTIONS};
 
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
@@ -1726,11 +1726,13 @@ $cachepipe->cmd("test-bleu-${OPTIMIZER_RUN}",
 # Update the BLEU summary.
 compute_bleu_summary("test/*/bleu", "test/final-bleu");
 
-$cachepipe->cmd("test-meteor-${OPTIMIZER_RUN}",
-                "$JOSHUA/bin/meteor $output $TEST{target} > $testdir/meteor",
-                $bestoutput,
-                "$testdir/meteor");
-compute_meteor_summary("test/*/meteor", "test/final-meteor");
+if (defined $METEOR) {
+  $cachepipe->cmd("test-meteor-${OPTIMIZER_RUN}",
+                  "$JOSHUA/bin/meteor $output $TEST{target} $TARGET > $testdir/meteor",
+                  $bestoutput,
+                  "$testdir/meteor");
+  compute_meteor_summary("test/*/meteor", "test/final-meteor");
+}
 
 if ($DO_MBR) {
   my $numlines = `cat $TEST{source} | wc -l`;
@@ -2096,7 +2098,7 @@ sub compute_meteor_summary {
   open CMD, "grep '^Final score' $filepattern |";
   my @F = split(' ', <CMD>);
   close(CMD);
-  push(@scores, 100.0 * $F[-1]);
+  push(@scores, 1.0 * $F[-1]);
 
   if (scalar @scores) {
     my $final_score = sum(@scores) / (scalar @scores);
