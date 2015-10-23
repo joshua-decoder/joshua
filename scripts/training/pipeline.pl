@@ -1821,9 +1821,16 @@ sub prepare_data {
 
   my $infiles =  join(" ", @infiles);
   my $outfiles = join(" ", @outfiles);
-  $cachepipe->cmd("$label-copy-and-filter",
-                  "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
-                  @indeps, @outfiles);
+  # only skip blank lines for training data
+  if ($label eq "train") {
+    $cachepipe->cmd("$label-copy-and-filter",
+                    "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
+                    @indeps, @outfiles);
+  } else {
+    $cachepipe->cmd("$label-copy-and-filter",
+                    "$PASTE $infiles | $SCRIPTDIR/training/split2files.pl $outfiles",
+                    @indeps, @outfiles);
+  }
   # Done concatenating and filtering files
 
   my $prefix = "$label";
