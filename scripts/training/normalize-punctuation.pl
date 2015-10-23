@@ -79,7 +79,7 @@ while(<STDIN>) {
     s/(\.+)\"(\s*[^<])/\"$1$2/g; # don't fix period at end of sentence
   }
 
-  print STDERR $_ if /﻿/;
+#  print STDERR "BAD LINE (with <feff>): $_" if /﻿/;
 
   if ($language eq "de" || $language eq "es" || $language eq "cz" || $language eq "cs" || $language eq "fr") {
     s/(\d)\xA0(\d)/$1,$2/g;
