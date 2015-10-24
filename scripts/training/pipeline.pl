@@ -1212,7 +1212,7 @@ sub compile_lm($) {
   if ($LM_TYPE eq "kenlm") {
     my $kenlm_file = basename($lmfile, ".gz") . ".kenlm";
     $cachepipe->cmd("compile-kenlm",
-                    "$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary $lmfile $kenlm_file",
+                    "$JOSHUA/bin/build_binary $lmfile $kenlm_file",
                     $lmfile, $kenlm_file);
     return $kenlm_file;
 
