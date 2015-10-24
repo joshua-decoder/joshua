@@ -618,6 +618,8 @@ unlink "scripts/normalize.$SOURCE";
 unlink "scripts/normalize.$TARGET";
 symlink $NORMALIZER, "scripts/normalize.$SOURCE";
 symlink $NORMALIZER, "scripts/normalize.$TARGET";
+unlink "scripts/tokenize.$SOURCE";
+unlink "scripts/tokenize.$TARGET";
 symlink $TOKENIZER_SOURCE, "scripts/tokenize.$SOURCE";
 symlink $TOKENIZER_TARGET, "scripts/tokenize.$TARGET";
 
