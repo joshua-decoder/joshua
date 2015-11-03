@@ -50,7 +50,7 @@ public class Translation {
         Decoder.weights.increment("BLEU", 0);
 
         String best = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-        best = best.substring(best.indexOf(' ') + 1, best.lastIndexOf(' '));
+        best = best.substring(new String("<s>").length() + 1, best.lastIndexOf("</s>"));
         
         Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
             best));
