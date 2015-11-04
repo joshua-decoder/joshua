@@ -1,9 +1,9 @@
 6.0.5 (October 23, 2015)
 ========================
 
-- KenLM updated, includes lastly improved cmake-based build
+- KenLM updated, includes vastly improved cmake-based build
 - Fix for grammar packing that previously limited the size of grammars (esp. Hiero)
-- Support for decoding with multiple packed grammars (if packed together)
+- Support for packing and decoding with multiple packed grammars (if packed together)
 - Feature functions now report dense features, for more efficient handling
 - Added AdaGrad and internal MIRA
 - Pipeline:
