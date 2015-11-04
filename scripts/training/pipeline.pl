@@ -618,6 +618,8 @@ unlink "scripts/normalize.$SOURCE";
 unlink "scripts/normalize.$TARGET";
 symlink $NORMALIZER, "scripts/normalize.$SOURCE";
 symlink $NORMALIZER, "scripts/normalize.$TARGET";
+unlink "scripts/tokenize.$SOURCE";
+unlink "scripts/tokenize.$TARGET";
 symlink $TOKENIZER_SOURCE, "scripts/tokenize.$SOURCE";
 symlink $TOKENIZER_TARGET, "scripts/tokenize.$TARGET";
 
@@ -1212,7 +1214,7 @@ sub compile_lm($) {
   if ($LM_TYPE eq "kenlm") {
     my $kenlm_file = basename($lmfile, ".gz") . ".kenlm";
     $cachepipe->cmd("compile-kenlm",
-                    "$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary $lmfile $kenlm_file",
+                    "$JOSHUA/bin/build_binary $lmfile $kenlm_file",
                     $lmfile, $kenlm_file);
     return $kenlm_file;
 

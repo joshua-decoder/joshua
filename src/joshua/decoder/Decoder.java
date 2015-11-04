@@ -17,12 +17,15 @@ import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
 import joshua.util.FileUtility;
+import joshua.util.FormatUtils;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -532,6 +535,26 @@ public class Decoder {
       this.grammars.add(glueGrammar);
     }
     
+    /* Create an epsilon-deleting grammar */
+    if (joshuaConfiguration.lattice_decoding) {
+      Decoder.LOG(1, "Creating an epsilon-deleting grammar");
+      MemoryBasedBatchGrammar latticeGrammar = new MemoryBasedBatchGrammar("lattice", joshuaConfiguration);
+      latticeGrammar.setSpanLimit(-1);
+      HieroFormatReader reader = new HieroFormatReader();
+
+      String goalNT = FormatUtils.cleanNonTerminal(joshuaConfiguration.goal_symbol);
+      String defaultNT = FormatUtils.cleanNonTerminal(joshuaConfiguration.default_non_terminal);
+
+      String ruleString = String.format("[%s] ||| [%s,1] <eps> ||| [%s,1] ||| ", goalNT, goalNT, defaultNT,
+          goalNT, defaultNT);
+
+      Rule rule = reader.parseLine(ruleString);
+      latticeGrammar.addRule(rule);
+      rule.estimateRuleCost(featureFunctions);
+
+      this.grammars.add(latticeGrammar);
+    }
+
     /* Now create a feature function for each owner */
     HashSet<String> ownersSeen = new HashSet<String>();
 

@@ -158,7 +158,7 @@ public class FeatureVector {
     for (String key : this.sparseFeatures.keySet())
       newOne.set(key, this.sparseFeatures.get(key));
     for (int i = 0; i < denseFeatures.size(); i++)
-      newOne.set(i, denseFeatures.get(i));
+      newOne.set(i, getDense(i));
     return newOne;
   }
 
@@ -169,7 +169,7 @@ public class FeatureVector {
    */
   public void subtract(FeatureVector other) {
     for (int i = 0; i < denseFeatures.size(); i++)
-      denseFeatures.set(i, denseFeatures.get(i) - other.getDense(i));
+      denseFeatures.set(i, getDense(i) - other.getDense(i));
     
     for (String key : other.keySet()) {
       float oldValue = (sparseFeatures.containsKey(key)) ? sparseFeatures.get(key) : 0.0f;
@@ -213,7 +213,8 @@ public class FeatureVector {
   }
   
   /**
-   * Return the weight of a dense feature, indexed by its feature index.
+   * Return the weight of a dense feature, indexed by its feature index, or 0.0f, if the feature
+   * is not found. In other words, this is a safe way to query the dense feature vector.
    * 
    * @param id
    * @return the dense feature's value, or 0 if not found.
@@ -278,7 +279,7 @@ public class FeatureVector {
     
     // First print all the dense feature names in order
     for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
-      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i).replaceAll("_", "-"), denseFeatures.get(i));
+      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i).replaceAll("_", "-"), getDense(i));
       printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     

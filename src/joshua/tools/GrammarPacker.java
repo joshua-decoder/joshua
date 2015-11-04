@@ -202,7 +202,7 @@ public class GrammarPacker {
       if (line.startsWith("[")) {
         // hierarchical model
         if (fields.size() < 4) {
-          logger.warning("Incomplete grammar line at line " + counter);
+          logger.warning(String.format("Incomplete grammar line at line %d: '%s'", counter, line));
           continue;
         }
         lhs = fields.remove(0);
