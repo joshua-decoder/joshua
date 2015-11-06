@@ -4,6 +4,6 @@
 
 set -u
 
-LANG=$1
+lang=$1
 
-$JOSHUA/scripts/training/normalize-punctuation.pl $LANG | $JOSHUA/scripts/training/penn-treebank-tokenizer.perl -l $LANG | $JOSHUA/scripts/lowercase.perl
+$JOSHUA/scripts/training/normalize-punctuation.pl $lang | $JOSHUA/scripts/training/penn-treebank-tokenizer.perl -l $lang | $JOSHUA/scripts/lowercase.perl

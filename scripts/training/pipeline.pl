@@ -39,9 +39,9 @@ delete $ENV{CDPATH};
 
 my $HADOOP = $ENV{HADOOP};
 my $MOSES = $ENV{MOSES};
-delete $ENV{GREP_OPTIONS};
-
+my $METEOR = $ENV{METEOR};
 my $THRAX = "$JOSHUA/thrax";
+delete $ENV{GREP_OPTIONS};
 
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
@@ -618,6 +618,8 @@ unlink "scripts/normalize.$SOURCE";
 unlink "scripts/normalize.$TARGET";
 symlink $NORMALIZER, "scripts/normalize.$SOURCE";
 symlink $NORMALIZER, "scripts/normalize.$TARGET";
+unlink "scripts/tokenize.$SOURCE";
+unlink "scripts/tokenize.$TARGET";
 symlink $TOKENIZER_SOURCE, "scripts/tokenize.$SOURCE";
 symlink $TOKENIZER_TARGET, "scripts/tokenize.$TARGET";
 
@@ -1212,7 +1214,7 @@ sub compile_lm($) {
   if ($LM_TYPE eq "kenlm") {
     my $kenlm_file = basename($lmfile, ".gz") . ".kenlm";
     $cachepipe->cmd("compile-kenlm",
-                    "$JOSHUA/src/joshua/decoder/ff/lm/kenlm/build_binary $lmfile $kenlm_file",
+                    "$JOSHUA/bin/build_binary $lmfile $kenlm_file",
                     $lmfile, $kenlm_file);
     return $kenlm_file;
 
@@ -1380,7 +1382,7 @@ if ($DO_FILTER_TM and defined $GRAMMAR_FILE and ! $DOING_LATTICES and ! defined 
 if ($OPTIMIZER_RUN == 1 and defined $TUNE_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-tune",
-                    "java -Xmx2g -cp $THRAX/lib/hadoop-common-2.5.2.jar:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
+                    "java -Xmx2g -cp $JOSHUA/lib/args4j-2.0.29.jar:$JOSHUA/class joshua.decoder.ff.tm.CreateGlueGrammar -g $TUNE_GRAMMAR > $DATA_DIRS{tune}/grammar.glue",
                     get_file_from_grammar($TUNE_GRAMMAR),
                     "$DATA_DIRS{tune}/grammar.glue");
     $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
@@ -1597,7 +1599,7 @@ if ($DO_FILTER_TM and defined $GRAMMAR_FILE and ! $DOING_LATTICES and ! defined 
 if ($OPTIMIZER_RUN == 1 and defined $TEST_GRAMMAR and $GRAMMAR_TYPE ne "phrase" and $GRAMMAR_TYPE ne "moses") {
   if (! defined $GLUE_GRAMMAR_FILE) {
     $cachepipe->cmd("glue-test",
-                    "java -Xmx1g -cp $THRAX/lib/hadoop-common-2.5.2.jar:$THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
+                    "java -Xmx2g -cp $JOSHUA/lib/args4j-2.0.29.jar:$JOSHUA/class joshua.decoder.ff.tm.CreateGlueGrammar -g $TEST_GRAMMAR > $DATA_DIRS{test}/grammar.glue",
                     get_file_from_grammar($TEST_GRAMMAR),
                     "$DATA_DIRS{test}/grammar.glue");
     $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
@@ -1630,7 +1632,7 @@ if ($DO_PACK_GRAMMARS) {
   my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
   if ($OPTIMIZER_RUN == 1 and ! is_packed($TEST_GRAMMAR)) {
     $cachepipe->cmd("test-pack",
-                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM $TEST_GRAMMAR $packed_dir",
+                    "$SCRIPTDIR/support/grammar-packer.pl -T $TMPDIR -m $PACKER_MEM -g $TEST_GRAMMAR -o $packed_dir",
                     $TEST_GRAMMAR,
                     "$packed_dir/vocabulary",
                     "$packed_dir/encoding",
@@ -1726,11 +1728,13 @@ $cachepipe->cmd("test-bleu-${OPTIMIZER_RUN}",
 # Update the BLEU summary.
 compute_bleu_summary("test/*/bleu", "test/final-bleu");
 
-$cachepipe->cmd("test-meteor-${OPTIMIZER_RUN}",
-                "$JOSHUA/bin/meteor $output $TEST{target} > $testdir/meteor",
-                $bestoutput,
-                "$testdir/meteor");
-compute_meteor_summary("test/*/meteor", "test/final-meteor");
+if (defined $METEOR) {
+  $cachepipe->cmd("test-meteor-${OPTIMIZER_RUN}",
+                  "$JOSHUA/bin/meteor $output $TEST{target} $TARGET > $testdir/meteor",
+                  $bestoutput,
+                  "$testdir/meteor");
+  compute_meteor_summary("test/*/meteor", "test/final-meteor");
+}
 
 if ($DO_MBR) {
   my $numlines = `cat $TEST{source} | wc -l`;
@@ -1819,9 +1823,16 @@ sub prepare_data {
 
   my $infiles =  join(" ", @infiles);
   my $outfiles = join(" ", @outfiles);
-  $cachepipe->cmd("$label-copy-and-filter",
-                  "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
-                  @indeps, @outfiles);
+  # only skip blank lines for training data
+  if ($label eq "train") {
+    $cachepipe->cmd("$label-copy-and-filter",
+                    "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
+                    @indeps, @outfiles);
+  } else {
+    $cachepipe->cmd("$label-copy-and-filter",
+                    "$PASTE $infiles | $SCRIPTDIR/training/split2files.pl $outfiles",
+                    @indeps, @outfiles);
+  }
   # Done concatenating and filtering files
 
   my $prefix = "$label";
@@ -2096,7 +2107,7 @@ sub compute_meteor_summary {
   open CMD, "grep '^Final score' $filepattern |";
   my @F = split(' ', <CMD>);
   close(CMD);
-  push(@scores, 100.0 * $F[-1]);
+  push(@scores, 1.0 * $F[-1]);
 
   if (scalar @scores) {
     my $final_score = sum(@scores) / (scalar @scores);

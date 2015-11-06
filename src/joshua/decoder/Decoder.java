@@ -17,12 +17,15 @@ import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.decoder.io.TranslationRequest;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
 import joshua.util.FileUtility;
+import joshua.util.FormatUtils;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -476,6 +479,9 @@ public class Decoder {
   private void initializeTranslationGrammars() throws IOException {
     
     if (joshuaConfiguration.tms.size() > 0) {
+      
+      // collect packedGrammars to check if they use a shared vocabulary
+      final List<PackedGrammar> packed_grammars = new ArrayList<>();
 
       // tm = {thrax/hiero,packed,samt,moses} OWNER LIMIT FILE
       for (String tmLine : joshuaConfiguration.tms) {
@@ -492,7 +498,9 @@ public class Decoder {
         if (! type.equals("moses") && ! type.equals("phrase")) {
           if (new File(path).isDirectory()) {
             try {
-              grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+              PackedGrammar packed_grammar = new PackedGrammar(path, span_limit, owner, type, joshuaConfiguration);
+              packed_grammars.add(packed_grammar);
+              grammar = packed_grammar;
             } catch (FileNotFoundException e) {
               System.err.println(String.format("Couldn't load packed grammar from '%s'", path));
               System.err.println("Perhaps it doesn't exist, or it may be an old packed file format.");
@@ -516,12 +524,35 @@ public class Decoder {
 
         this.grammars.add(grammar);
       }
+
+      checkSharedVocabularyChecksumsForPackedGrammars(packed_grammars);
+
     } else {
       Decoder.LOG(1, "* WARNING: no grammars supplied!  Supplying dummy glue grammar.");
       MemoryBasedBatchGrammar glueGrammar = new MemoryBasedBatchGrammar("glue", joshuaConfiguration);
       glueGrammar.setSpanLimit(-1);
       glueGrammar.addGlueRules(featureFunctions);
       this.grammars.add(glueGrammar);
+    }
+    
+    /* Create an epsilon-deleting grammar */
+    if (joshuaConfiguration.lattice_decoding) {
+      Decoder.LOG(1, "Creating an epsilon-deleting grammar");
+      MemoryBasedBatchGrammar latticeGrammar = new MemoryBasedBatchGrammar("lattice", joshuaConfiguration);
+      latticeGrammar.setSpanLimit(-1);
+      HieroFormatReader reader = new HieroFormatReader();
+
+      String goalNT = FormatUtils.cleanNonTerminal(joshuaConfiguration.goal_symbol);
+      String defaultNT = FormatUtils.cleanNonTerminal(joshuaConfiguration.default_non_terminal);
+
+      String ruleString = String.format("[%s] ||| [%s,1] <eps> ||| [%s,1] ||| ", goalNT, goalNT, defaultNT,
+          goalNT, defaultNT);
+
+      Rule rule = reader.parseLine(ruleString);
+      latticeGrammar.addRule(rule);
+      rule.estimateRuleCost(featureFunctions);
+
+      this.grammars.add(latticeGrammar);
     }
 
     /* Now create a feature function for each owner */
@@ -538,6 +569,26 @@ public class Decoder {
       
     Decoder.LOG(1, String.format("Memory used %.1f MB",
         ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0)));
+  }
+  
+  /**
+   * Checks if multiple packedGrammars have the same vocabulary by comparing their vocabulary file checksums.
+   */
+  private static void checkSharedVocabularyChecksumsForPackedGrammars(final List<PackedGrammar> packed_grammars) {
+    String previous_checksum = "";
+    for (PackedGrammar grammar : packed_grammars) {
+      final String checksum = grammar.computeVocabularyChecksum();
+      if (previous_checksum.isEmpty()) {
+        previous_checksum = checksum;
+      } else {
+        if (!checksum.equals(previous_checksum)) {
+          throw new RuntimeException(
+              "Trying to load multiple packed grammars with different vocabularies!" +
+              "Have you packed them jointly?");
+        }
+        previous_checksum = checksum;
+      }
+    }
   }
 
   /*

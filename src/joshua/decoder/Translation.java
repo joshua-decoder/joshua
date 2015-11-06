@@ -50,7 +50,7 @@ public class Translation {
         Decoder.weights.increment("BLEU", 0);
 
         String best = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-        best = best.substring(best.indexOf(' ') + 1, best.lastIndexOf(' '));
+        best = best.substring(new String("<s>").length() + 1, best.lastIndexOf("</s>"));
         
         Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
             best));
@@ -88,26 +88,20 @@ public class Translation {
 
       } else {
         
-        if (source.isEmpty()) {
-          // Empty output just gets echoed back
-          out.write("");
-          out.newLine();
-        } else {
-          // Failed translations get empty formatted outputs
-          // @formatter:off
-          String outputString = joshuaConfiguration.outputFormat
-              .replace("%s", source.source())
-              .replace("%e", "")
-              .replace("%S", "")
-              .replace("%t", "()")
-              .replace("%i", Integer.toString(source.id()))
-              .replace("%f", "")
-              .replace("%c", "0.000");
-          // @formatter:on
+        // Failed translations and blank lines get empty formatted outputs
+        // @formatter:off
+        String outputString = joshuaConfiguration.outputFormat
+            .replace("%s", source.source())
+            .replace("%e", "")
+            .replace("%S", "")
+            .replace("%t", "()")
+            .replace("%i", Integer.toString(source.id()))
+            .replace("%f", "")
+            .replace("%c", "0.000");
+        // @formatter:on
 
-          out.write(outputString);
-          out.newLine();
-        }
+        out.write(outputString);
+        out.newLine();
       }
 
       out.flush();

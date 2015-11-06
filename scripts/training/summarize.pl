@@ -3,20 +3,23 @@
 use strict;
 use warnings;
 
-opendir DIR, "." or die;
+my $basedir = shift(@ARGV) || ".";
+
+opendir DIR, $basedir or die;
 my @dirs = sort { $a <=> $b } grep /^\d[\d\.]*$/, readdir DIR;
 closedir DIR;
 
 foreach my $dir (@dirs) {
-  chomp(my $readme = `cat $dir/README`);
-  my $bleu = get_scores("$dir/test/final-bleu", 100.0);
-  my $time = get_time("$dir/test/final-times");
+  chomp(my $readme = `[[ -e "$basedir/$dir/README" ]] && cat $basedir/$dir/README`);
+  my $bleu = get_scores("$basedir/$dir/test/final-bleu", 100.0);
+  my $meteor = get_scores("$basedir/$dir/test/final-meteor", 100.0);
+  my $time = get_time("$basedir/$dir/test/final-times");
   # my $mbr =  get_bleu("$dir/test/final-bleu-mbr");
 
   my $dirstring = dirstring($dir);
 
   # print "$dirstring\t$bleu\t$mbr\t$readme\n";
-  print "$dirstring\t$bleu\t$time\t$readme\n";
+  print "$dirstring\t$bleu\t$meteor\t$time\t$readme\n";
 }
 
 sub get_scores {
@@ -35,6 +38,8 @@ sub get_scores {
 
     $score = $tokens[-1] * $factor;
   }
+
+  $score /= $factor if $score > $factor;
 
   return sprintf("%5.2f", $score) . "($num_scores)";
 }

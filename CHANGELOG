@@ -1,3 +1,22 @@
+6.0.5 (October 23, 2015)
+========================
+
+- KenLM updated, includes vastly improved cmake-based build
+- Fix for grammar packing that previously limited the size of grammars (esp. Hiero)
+- Support for packing and decoding with multiple packed grammars (if packed together)
+- Feature functions now report dense features, for more efficient handling
+- Added AdaGrad and internal MIRA
+- Pipeline:
+  - Alignment of different chunks now parallelized
+  - Computes meteor scores if $METEOR is defined
+  - Updated to use Hadoop 2.5.2
+  - Reworked how multiple tuning runs (for optimizer instability) function 
+- Maven compatibility
+- Developers
+  - Ant eclipse target
+  - Added code formatting spec for Eclipse import
+- Many bugfixes and other improvements
+
 6.0.4 (June 15, 2015)
 =====================
 

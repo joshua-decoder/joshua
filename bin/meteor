@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+if [[ -z $3 ]]; then
+  echo "Usage: meteor output reference lang"
+  exit 1
+fi
+
+output=$1
+reference=$2
+lang=$3
+
+java -Xmx2G -jar $METEOR/meteor-*.jar $output $reference -l $lang

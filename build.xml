@@ -25,6 +25,7 @@
       <include name="junit-4.10.jar" />
       <include name="commons-cli-1.2.jar" />
       <include name="collections-generic-4.01.jar" />
+      <include name="args4j-2.0.29.jar" />
     </fileset>
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
@@ -320,7 +321,7 @@
     <property name="ivy.default.ivy.user.dir" value="${JOSHUA}/lib" />
     <ivy:configure file="${JOSHUA}/lib/ivysettings.xml" />
     <ivy:resolve file="${JOSHUA}/lib/ivy.xml" />
-    <ivy:retrieve type="jar" />
+    <ivy:retrieve type="jar,bundle" />
   </target>
 
     <!-- target: clean-eclipse ============================================ -->
