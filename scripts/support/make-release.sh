@@ -41,5 +41,18 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/thrax/bin/thrax.jar \
     joshua-$version/joshua-decoder.org
 
+ln -sf joshua-$version release/joshua-runtime-$version
+tar czf release/joshua-runtime-$version.tgz \
+    --exclude='*~' --exclude='#*' \
+    joshua-runtime-$version/{README.md,VERSION,CHANGELOG,build.xml,logging.properties} \
+    joshua-runtime-$version/src \
+    joshua-runtime-$version/jni \
+    joshua-runtime-$version/bin \
+    joshua-runtime-$version/class \
+    joshua-$version/lib/{ant*,jung*,berkeleylm*jar,junit*jar,README,LICENSES} \
+    joshua-runtime-$version/scripts \
+    joshua-runtime-$version/examples \
+    joshua-runtime-$version/joshua-decoder.org
+
 rm -f joshua-$version
 rm -f VERSION
