@@ -31,6 +31,7 @@ tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
     joshua-$version/{README.md,VERSION,CHANGELOG,build.xml,logging.properties} \
     joshua-$version/src \
+    joshua-$version/jni \
     joshua-$version/bin \
     joshua-$version/class \
     joshua-$version/lib/{*jar,eng_sm6.gr,hadoop-2.5.2.tar.gz,README,LICENSES} \
