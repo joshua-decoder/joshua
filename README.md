@@ -59,6 +59,6 @@ Then, compile Joshua by typing:
 
 The basic method for invoking the decoder looks like this:
 
-    cat SOURCE | $JOSHUA/bin/joshua -m MEM -c CONFIG OPTIONS > OUTPUT
+    cat SOURCE | $JOSHUA/bin/joshua-decoder -m MEM -c CONFIG OPTIONS > OUTPUT
 
 Some example usage scenarios and scripts can be found in the [examples/](https://github.com/joshua-decoder/joshua/tree/master/examples) directory.
