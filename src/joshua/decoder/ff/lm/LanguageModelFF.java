@@ -54,9 +54,8 @@ import joshua.decoder.segment_file.Sentence;
  */
 public class LanguageModelFF extends StatefulFF {
 
-  private static int LM_INDEX = 0;
-  public static int START_SYM_ID;
-  public static int STOP_SYM_ID;
+  public static int LM_INDEX = 0;
+  private int startSymbolId;
 
   /**
    * N-gram language model. We assume the language model is in ARPA format for equivalent state:
@@ -164,7 +163,7 @@ public class LanguageModelFF extends StatefulFF {
    * @param type
    * @param path
    */
-  public void initializeLM() {
+  protected void initializeLM() {
     if (type.equals("kenlm")) {
       this.languageModel = new KenLM(ngramOrder, path);
     
@@ -180,8 +179,7 @@ public class LanguageModelFF extends StatefulFF {
     Vocabulary.registerLanguageModel(this.languageModel);
     Vocabulary.id(config.default_non_terminal);
     
-    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
-    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
+    startSymbolId = Vocabulary.id(Vocabulary.START_SYM);
   }
 
   public NGramLanguageModel getLM() {
@@ -310,7 +308,7 @@ public class LanguageModelFF extends StatefulFF {
     int[] enWords = rule.getEnglish();
 
     List<Integer> words = new ArrayList<Integer>();
-    boolean skipStart = (enWords[0] == START_SYM_ID);
+    boolean skipStart = (enWords[0] == startSymbolId);
 
     /*
      * Move through the words, accumulating language model costs each time we have an n-gram (n >=
@@ -349,7 +347,7 @@ public class LanguageModelFF extends StatefulFF {
 
       boolean considerIncompleteNgrams = true;
       boolean skipStart = true;
-      if (words.get(0) != START_SYM_ID) {
+      if (words.get(0) != startSymbolId) {
         skipStart = false;
       }
       estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
@@ -506,5 +504,13 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     return score;
+  }
+  
+  /**
+   * Public method to set LM_INDEX back to 0.
+   * Required if multiple instances of the JoshuaDecoder live in the same JVM.
+   */
+  public static void resetLmIndex() {
+    LM_INDEX = 0;
   }
 }

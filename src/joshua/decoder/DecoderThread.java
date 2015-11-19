@@ -146,7 +146,7 @@ public class DecoderThread extends Thread {
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;
     Decoder.LOG(1, String.format("Input %d: Translation took %.3f seconds", sentence.id(), seconds));
-    Decoder.LOG(1, String.format("Memory used after sentence %d is %.1f MB", sentence.id(), (Runtime
+    Decoder.LOG(1, String.format("Input %d: Memory used is %.1f MB", sentence.id(), (Runtime
         .getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0));
 
     /* Return the translation unless we're doing synchronous parsing. */
