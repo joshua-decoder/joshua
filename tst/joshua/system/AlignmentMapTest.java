@@ -22,6 +22,7 @@ public class AlignmentMapTest {
 
   @Before
   public void setUp() throws Exception {
+    Vocabulary.clear();
     int[] sourceRhs = {Vocabulary.id("A1"),Vocabulary.id("A2"),-1,Vocabulary.id("B"),Vocabulary.id("C"),-2};
     int[] targetRhs = {Vocabulary.id("c"),Vocabulary.id("b1"),-1,Vocabulary.id("b2"),-4,Vocabulary.id("a")};
     int arity = 2; // 2 non terminals

@@ -33,7 +33,6 @@ public class MultithreadedTranslationTests {
 
   @Before
   public void setUp() throws Exception {
-    Vocabulary.clear();
     joshuaConfig = new JoshuaConfiguration();
     joshuaConfig.search_algorithm = "cky";
     joshuaConfig.mark_oovs = false;
@@ -71,7 +70,6 @@ public class MultithreadedTranslationTests {
 
   @After
   public void tearDown() throws Exception {
-    Vocabulary.clear();
     this.decoder.cleanUp();
     this.decoder = null;
     Decoder.VERBOSE = previousLogLevel;
