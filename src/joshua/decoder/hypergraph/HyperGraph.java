@@ -84,7 +84,7 @@ public class HyperGraph {
     }
     
     @Override
-    public void apply(HGNode node) {
+    public void apply(HGNode node, int index) {
       if (! nodesVisited.contains(node)) {
         if (node.bestHyperedge.getRule() != null) {
           hg.numNodes++;
@@ -98,21 +98,19 @@ public class HyperGraph {
   private class HyperGraphDumper implements WalkerFunction {
 
     private int node_number = 1;
-    private int sentID = -1;
     private List<FeatureFunction> model = null;
     private PrintWriter out = null;
     
     private HashMap<HGNode, Integer> nodeMap;
     
-    public HyperGraphDumper(PrintWriter out, int sentID, List<FeatureFunction> model) {
+    public HyperGraphDumper(PrintWriter out, List<FeatureFunction> model) {
       this.out = out;
-      this.sentID = sentID;
       this.model = model;
       this.nodeMap = new HashMap<HGNode, Integer>();
     }
     
     @Override
-    public void apply(HGNode node) {
+    public void apply(HGNode node, int index) {
       if (! nodeMap.containsKey(node)) { // Make sure each node is listed only once
         nodeMap.put(node,  this.node_number);
 
@@ -157,7 +155,7 @@ public class HyperGraph {
     count();
     out.println("# target ||| features");
     out.println(String.format("%d %d", numNodes, numEdges));
-    new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, sentence.id(), model));
+    new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, model));
     out.close();
   }
 

@@ -61,7 +61,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
     outStream = out;
   }
 
-  public void apply(HGNode node) {
+  public void apply(HGNode node, int index) {
     // System.err.printf("VISITING NODE: %s\n", getLabelWithSpan(node));
     for (HyperEdge e : node.hyperedges) {
       Rule r = getRuleWithSpans(e, node);

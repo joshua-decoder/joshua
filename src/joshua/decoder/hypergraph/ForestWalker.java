@@ -46,8 +46,12 @@ public class ForestWalker {
     this.traversalType = traversal;
     visitedNodes = new HashSet<HGNode>();
   }
-
+  
   public void walk(HGNode node, WalkerFunction walker) {
+      walk(node, walker, 0);
+  }
+
+  public void walk(HGNode node, WalkerFunction walker, int nodeIndex) {
     // short circuit
     if (visitedNodes.contains(node))
       return;
@@ -55,19 +59,21 @@ public class ForestWalker {
     visitedNodes.add(node);
     
     if (this.traversalType == TRAVERSAL.PREORDER)
-      walker.apply(node);
+      walker.apply(node, 0);
 
     if (node.getHyperEdges() != null) {
       for (HyperEdge edge : node.getHyperEdges()) {
         if (edge.getTailNodes() != null) {
+          int tailNodeIndex = 0;
           for (HGNode tailNode : edge.getTailNodes()) {
-            walk(tailNode, walker);
+            walk(tailNode, walker, tailNodeIndex);
+            tailNodeIndex++;
           }
         }
       }
     }
     
     if (this.traversalType == TRAVERSAL.POSTORDER)
-      walker.apply(node);
+      walker.apply(node, nodeIndex);
   }
 }

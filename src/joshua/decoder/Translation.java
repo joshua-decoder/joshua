@@ -18,18 +18,21 @@
  */
 package joshua.decoder;
 
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiFeatures;
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiString;
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiWordAlignments;
+import static joshua.util.FormatUtils.removeSentenceMarkers;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.ff.lm.StateMinimizingLanguageModel;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-import joshua.decoder.hypergraph.ViterbiExtractor;
-import joshua.decoder.hypergraph.WordAlignmentState;
 import joshua.decoder.io.DeNormalize;
 import joshua.decoder.segment_file.Sentence;
 
@@ -50,18 +53,7 @@ public class Translation {
    */
   private String output = null;
 
-  /**
-   * The raw one-best translation.
-   */
-  private String rawTranslation = null;
-  
-  public String rawTranslation() {
-    return rawTranslation;
-  }
-
-  private WordAlignmentState alignment = null;
-  private float score = 0;
-  private float translationTime;
+  private StructuredTranslation structuredTranslation = null;
   
   public Translation(Sentence source, HyperGraph hypergraph, 
       List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
@@ -69,8 +61,9 @@ public class Translation {
     
     if (joshuaConfiguration.use_structured_output) {
       
-      // create structured output instead of the String manipulation below.
-      createStructuredOutput(source, hypergraph);
+      structuredTranslation = new StructuredTranslation(
+          source, hypergraph, featureFunctions);
+      this.output = structuredTranslation.getTranslationString();
       
     } else {
 
@@ -85,54 +78,59 @@ public class Translation {
 
           long startTime = System.currentTimeMillis();
 
-        // We must put this weight as zero, otherwise we get an error when we try to retrieve it
-        // without checking
-        Decoder.weights.increment("BLEU", 0);
-
-        rawTranslation = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-        rawTranslation = rawTranslation.substring(new String("<s>").length() + 1, rawTranslation.lastIndexOf("</s>"));
-        
-        Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
-            rawTranslation));
-        
-        if (joshuaConfiguration.topN == 0) {
+          // We must put this weight as zero, otherwise we get an error when we try to retrieve it
+          // without checking
+          Decoder.weights.increment("BLEU", 0);
           
-          /*
-           * Setting topN to 0 turns off k-best extraction, in which case we need to parse through
-           * the output-string, with the understanding that we can only substitute variables for the
-           * output string, sentence number, and model score.
-           */
-          String translation = joshuaConfiguration.outputFormat.replace("%s", rawTranslation)
-              .replace("%S", DeNormalize.processSingleLine(rawTranslation))
-              .replace("%c", String.format("%.3f", hypergraph.goalNode.getScore()))
-              .replace("%i", String.format("%d", source.id()));
-          
-          /* %a causes output of word level alignments between input and output hypothesis */
-          if (joshuaConfiguration.outputFormat.contains("%a")) {
-            translation = translation.replace("%a", ViterbiExtractor.extractViterbiAlignment(hypergraph.goalNode));
-          }
-
-          out.write(translation);
-          out.newLine();
-          
-        } else  {
-          KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, false, joshuaConfiguration);
-          kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
-
-          if (joshuaConfiguration.rescoreForest) {
-            Decoder.weights.increment("BLEU", joshuaConfiguration.rescoreForestWeight);
+          if (joshuaConfiguration.topN == 0) {
+            
+            /* construct Viterbi output */
+            final String best = getViterbiString(hypergraph);
+            
+            Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
+                best));
+            
+            /*
+             * Setting topN to 0 turns off k-best extraction, in which case we need to parse through
+             * the output-string, with the understanding that we can only substitute variables for the
+             * output string, sentence number, and model score.
+             */
+            String translation = joshuaConfiguration.outputFormat
+                .replace("%s", removeSentenceMarkers(best))
+                .replace("%S", DeNormalize.processSingleLine(best))
+                .replace("%c", String.format("%.3f", hypergraph.goalNode.getScore()))
+                .replace("%i", String.format("%d", source.id()));
+            
+            if (joshuaConfiguration.outputFormat.contains("%a")) {
+              translation = translation.replace("%a", getViterbiWordAlignments(hypergraph));
+            }
+            
+            if (joshuaConfiguration.outputFormat.contains("%f")) {
+              final FeatureVector features = getViterbiFeatures(hypergraph, featureFunctions, source);
+              translation = translation.replace("%f", joshuaConfiguration.moses ? features.mosesString() : features.toString());
+            }
+            
+            out.write(translation);
+            out.newLine();
+            
+          } else {
+            
+            final KBestExtractor kBestExtractor = new KBestExtractor(
+                source, featureFunctions, Decoder.weights, false, joshuaConfiguration);
             kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
 
-            Decoder.weights.increment("BLEU", -joshuaConfiguration.rescoreForestWeight);
-            kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+            if (joshuaConfiguration.rescoreForest) {
+              Decoder.weights.increment("BLEU", joshuaConfiguration.rescoreForestWeight);
+              kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+
+              Decoder.weights.increment("BLEU", -joshuaConfiguration.rescoreForestWeight);
+              kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
+            }
           }
-        }
 
           float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
           Decoder.LOG(1, String.format("Input %d: %d-best extraction took %.3f seconds", id(),
               joshuaConfiguration.topN, seconds));
-          this.translationTime = seconds;
-          
 
       } else {
         
@@ -175,39 +173,6 @@ public class Translation {
     
   }
 
-  /**
-   * Instead of returning a single string with output information appended
-   * (if JoshuaConfig.use_structured_output == false),
-   * write Viterbi information (score, translation, word alignment) to member
-   * variables for easier access from outside pipelines.
-   */
-  private void createStructuredOutput(Sentence source, HyperGraph hypergraph) {
-    
-    this.translationTime = 0;
-    
-    long startTime = System.currentTimeMillis();
-
-    if (hypergraph != null) {
-
-      this.output = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-      // trims whitespaces (same idiom as in existing Joshua code (65)
-      this.output = this.output.substring(this.output.indexOf(' ') + 1, this.output.lastIndexOf(' ')); 
-      this.alignment = ViterbiExtractor.buildViterbiAlignment(hypergraph.goalNode);
-      this.score = hypergraph.goalNode.getScore();
-
-    } else {
-      
-      this.output = this.source.source();
-      this.alignment = null;
-      
-    }
-    
-    this.translationTime = (System.currentTimeMillis() - startTime) / 1000.0f;
-    
-    Decoder.LOG(1, String.format("Translation %d: %.3f %s (%.3f)", source.id(), hypergraph.goalNode.getScore(), this.output, this.translationTime));
-    
-  }
-
   public Sentence getSourceSentence() {
     return this.source;
   }
@@ -221,32 +186,17 @@ public class Translation {
     return output;
   }
   
-  public float getTranslationTime() {
-    return translationTime;
-  }
-
-  public String getTranslationString() {
-    return (output == null) ? "" : output.trim();
-  }
-
-  public List<List<Integer>> getWordAlignment() {
-    return alignment.toFinalList();
-  }
-  
-  public String getWordAlignmentString() {
-    return (alignment == null) ? "" : alignment.toFinalString();
-  }
-
-  public float getTranslationScore() {
-    return score;
-  }
-  
-  public List<String> getTranslationTokens() {
-    return Arrays.asList(getTranslationString().split("\\s+"));
-  }
-  
-  public String getDeNormalizedTranslation() {
-    return DeNormalize.processSingleLine(getTranslationString());
+  /**
+   * Returns the StructuredTranslation object
+   * if JoshuaConfiguration.construct_structured_output == True.
+   * @throws RuntimeException if StructuredTranslation object not set.
+   * @return
+   */
+  public StructuredTranslation getStructuredTranslation() {
+    if (structuredTranslation == null) {
+      throw new RuntimeException("No StructuredTranslation object created. You should set JoshuaConfigration.construct_structured_output = true");
+    }
+    return structuredTranslation;
   }
   
 }

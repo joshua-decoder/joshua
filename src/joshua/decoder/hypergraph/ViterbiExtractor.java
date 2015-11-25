@@ -18,11 +18,14 @@
  */
 package joshua.decoder.hypergraph;
 
+import static java.util.Collections.emptyList;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -31,92 +34,97 @@ import joshua.decoder.ff.tm.Rule;
 
 public class ViterbiExtractor {
 
-  // get one-best string under item
-  public static String extractViterbiString(HGNode node) {
-    StringBuffer res = new StringBuffer();
-
-    HyperEdge edge = node.bestHyperedge;
-    Rule rl = edge.getRule();
-
-    if (null == rl) { // deductions under "goal item" does not have rule
-      if (edge.getTailNodes().size() != 1) {
-        throw new RuntimeException("deduction under goal item have not equal one item");
+  /**
+   * This function recursively visits the nodes of the Viterbi derivation in a depth-first
+   * traversal, applying the walker to each of the nodes. It provides a more general framework for
+   * implementing operations on a tree.
+   * 
+   * @param node the node to start viterbi traversal from
+   * @param walker an implementation of the WalkerFunction interface, to be applied to each node in
+   *        the tree
+   * @param nodeIndex the tail node index of the given node. This allows implementations of the
+   *        WalkerFunction to associate nonTerminals with the index of node in the outgoing edges
+   *        list of tail nodes.
+   */
+  public static void viterbiWalk(
+      final HGNode node,
+      final WalkerFunction walker,
+      final int nodeIndex) {
+    // apply the walking function to the node
+    walker.apply(node, nodeIndex);
+    // recurse on the anterior nodes of the best hyperedge in source order
+    final HyperEdge bestEdge = node.bestHyperedge;
+    final List<HGNode> tailNodes = bestEdge.getTailNodes();
+    if (tailNodes != null) {
+      for (int tailNodeIndex = 0; tailNodeIndex < tailNodes.size(); tailNodeIndex++) {
+        viterbiWalk(tailNodes.get(tailNodeIndex), walker, tailNodeIndex);
       }
-      return extractViterbiString(edge.getTailNodes().get(0));
     }
-    int[] english = rl.getEnglish();
-    for (int c = 0; c < english.length; c++) {
-      if (Vocabulary.nt(english[c])) {
-        int id = -(english[c] + 1);
-        HGNode child = (HGNode) edge.getTailNodes().get(id);
-        res.append(extractViterbiString(child));
-      } else {
-        res.append(Vocabulary.word(english[c]));
-      }
-      if (c < english.length - 1) res.append(' ');
-    }
-    return res.toString();
   }
   
-  public static String extractViterbiAlignment(HGNode node) {
-    WordAlignmentState viterbiAlignment = buildViterbiAlignment(node);
-    return viterbiAlignment.toFinalString();
+  public static void viterbiWalk(final HGNode node, final WalkerFunction walker) {
+    viterbiWalk(node, walker, 0);
   }
   
-  // get one-best alignment for Viterbi string
-  public static WordAlignmentState buildViterbiAlignment(HGNode node) {
-    HyperEdge edge = node.bestHyperedge;
-    Rule rl = edge.getRule();  
-    if (rl == null) { // deductions under "goal item" does not have rule
-      if (edge.getTailNodes().size() != 1)
-        throw new RuntimeException("deduction under goal item have not equal one item");
-      return buildViterbiAlignment(edge.getTailNodes().get(0));
-    }
-    WordAlignmentState waState = new WordAlignmentState(rl, node.i);
-    if (edge.getTailNodes() != null) {
-      int[] english = rl.getEnglish();
-      for (int c = 0; c < english.length; c++) {
-        if (Vocabulary.nt(english[c])) {
-          // determines the index in the tail node array by
-          // the index of the nonterminal in the source [english[c] gives a negative
-          // int]
-          int index = -(english[c] + 1);
-          waState.substituteIn(buildViterbiAlignment(edge.getTailNodes().get(index)));
-        }
-      }
-    }
-    return waState;
+  /**
+   * Returns the Viterbi translation of the Hypergraph (includes sentence markers)
+   */
+  public static String getViterbiString(final HyperGraph hg) {
+    if (hg == null)
+      return "";
+    
+    final WalkerFunction viterbiOutputStringWalker = new OutputStringExtractor(false);
+    viterbiWalk(hg.goalNode, viterbiOutputStringWalker);
+    return viterbiOutputStringWalker.toString();
   }
-
-  // ######## find 1best hypergraph#############
+  
+  /**
+   * Returns the Viterbi feature vector
+   */
+  public static FeatureVector getViterbiFeatures(
+      final HyperGraph hg,
+      final List<FeatureFunction> featureFunctions,
+      final Sentence sentence) {
+    if (hg == null)
+      return new FeatureVector();
+    
+    final FeatureVectorExtractor extractor = new FeatureVectorExtractor(
+        featureFunctions, sentence);
+      viterbiWalk(hg.goalNode, extractor);
+      return extractor.getFeatures();
+  }
+  
+  /**
+   * Returns the Viterbi Word Alignments as String.
+   */
+  public static String getViterbiWordAlignments(final HyperGraph hg) {
+    if (hg == null)
+      return "";
+    
+    final WordAlignmentExtractor wordAlignmentWalker = new WordAlignmentExtractor();
+    viterbiWalk(hg.goalNode, wordAlignmentWalker);
+    return wordAlignmentWalker.toString();
+  }
+  
+  /**
+   * Returns the Viterbi Word Alignments as list of lists (target-side).
+   */
+  public static List<List<Integer>> getViterbiWordAlignmentList(final HyperGraph hg) {
+    if (hg == null)
+      return emptyList();
+    
+    final WordAlignmentExtractor wordAlignmentWalker = new WordAlignmentExtractor();
+    viterbiWalk(hg.goalNode, wordAlignmentWalker);
+    return wordAlignmentWalker.getFinalWordAlignments();
+  }
+  
+  /** find 1best hypergraph */
   public static HyperGraph getViterbiTreeHG(HyperGraph hg_in) {
     HyperGraph res =
         new HyperGraph(cloneNodeWithBestHyperedge(hg_in.goalNode), -1, -1, null); 
     // TODO: number of items/deductions
     get1bestTreeNode(res.goalNode);
     return res;
-  }
-
-  /**
-   * This function recursively visits the nodes of the Viterbi derivation in a depth-first
-   * traversal, applying the walker to each of the nodes. It provides a more general framework for
-   * implementing operations on a tree.
-   * 
-   * @param node the node to start traversal from
-   * @param walker an implementation of the ViterbieWalker interface, to be applied to each node in
-   *        the tree
-   */
-  public static void walk(HGNode node, WalkerFunction walker) {
-    // apply the walking function to the node
-    walker.apply(node);
-
-    // recurse on the anterior nodes of the best hyperedge
-    HyperEdge bestEdge = node.bestHyperedge;
-    if (null != bestEdge.getTailNodes()) {
-      for (HGNode antNode : bestEdge.getTailNodes()) {
-        walk(antNode, walker);
-      }
-    }
   }
 
   private static void get1bestTreeNode(HGNode it) {
@@ -151,5 +159,4 @@ public class ViterbiExtractor {
             antNodes, inEdge.getSourcePath());
     return res;
   }
-  // ###end
 }

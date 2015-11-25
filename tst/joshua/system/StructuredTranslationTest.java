@@ -1,6 +1,7 @@
 package joshua.system;
 
 import static java.util.Arrays.asList;
+import static joshua.decoder.ff.FeatureVector.DENSE_FEATURE_NAMES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -13,6 +14,7 @@ import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.StructuredTranslation;
 import joshua.decoder.Translation;
+import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.segment_file.Sentence;
 
 import org.junit.After;
@@ -56,7 +58,6 @@ public class StructuredTranslationTest {
 
   @Before
   public void setUp() throws Exception {
-    Vocabulary.clear();
     joshuaConfig = new JoshuaConfiguration();
     joshuaConfig.search_algorithm = "cky";
     joshuaConfig.mark_oovs = false;
@@ -76,7 +77,7 @@ public class StructuredTranslationTest {
     joshuaConfig.weights.add("tm_pt_4 1");
     joshuaConfig.weights.add("tm_pt_5 1");
     joshuaConfig.weights.add("tm_glue_0 1");
-    joshuaConfig.weights.add("OOVPenalty 2");
+    joshuaConfig.weights.add("OOVPenalty 1");
     decoder = new Decoder(joshuaConfig, ""); // second argument (configFile
                                              // is not even used by the
                                              // constructor/initialize)
@@ -84,7 +85,6 @@ public class StructuredTranslationTest {
 
   @After
   public void tearDown() throws Exception {
-    Vocabulary.clear();
     decoder.cleanUp();
     decoder = null;
   }
@@ -106,9 +106,24 @@ public class StructuredTranslationTest {
     // THEN
     assertEquals(EXPECTED_TRANSLATION + " | " + EXPECTED_WORD_ALIGNMENT_STRING, translation);
   }
+  
+  @Test
+  public void givenInput_whenRegularOutputFormatWithTopN1_thenExpectedOutput() {
+    // GIVEN
+    joshuaConfig.construct_structured_output = false;
+    joshuaConfig.outputFormat = "%s | %e | %a | %c";
+    joshuaConfig.topN = 1;
+    
+    // WHEN
+    final String translation = decode(INPUT).toString().trim();
+    
+    // THEN
+    assertEquals(EXPECTED_TRANSLATION + " | " + INPUT + " | " + EXPECTED_WORD_ALIGNMENT_STRING + String.format(" | %.3f", EXPECTED_SCORE),
+        translation);
+  }
 
   @Test
-  public void givenInput_whenSaarStructuredOutputFormat_thenExpectedOutput() {
+  public void givenInput_whenStructuredOutputFormat_thenExpectedOutput() {
     // GIVEN
     joshuaConfig.construct_structured_output = true;
     
@@ -130,7 +145,7 @@ public class StructuredTranslationTest {
   }
   
   @Test
-  public void givenEmptyInput_whenSaarStructuredOutputFormat_thenEmptyOutput() {
+  public void givenEmptyInput_whenStructuredOutputFormat_thenEmptyOutput() {
     // GIVEN
     joshuaConfig.construct_structured_output = true;
     
@@ -149,7 +164,7 @@ public class StructuredTranslationTest {
   }
   
   @Test
-  public void givenOOVInput_whenSaarStructuredOutputFormat_thenOOVOutput() {
+  public void givenOOVInput_whenStructuredOutputFormat_thenOOVOutput() {
     // GIVEN
     joshuaConfig.construct_structured_output = true;
     final String input = "gabarbl";
@@ -164,7 +179,7 @@ public class StructuredTranslationTest {
     // THEN
     assertEquals(input, translationString);
     assertTrue(translatedTokens.contains(input));
-    assertEquals(-199.0, translationScore, 0.00001);
+    assertEquals(-99.0, translationScore, 0.00001);
     assertTrue(wordAlignment.contains(asList(0)));
   }
   

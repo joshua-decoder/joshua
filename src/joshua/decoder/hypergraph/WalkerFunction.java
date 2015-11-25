@@ -20,10 +20,15 @@ package joshua.decoder.hypergraph;
 
 /**
  * Classes implementing this interface define a single function that is applied to each node. This
- * interface is used for various walkers (ViterbiExtractor, ForestWalker).
+ * interface is used for various walkers (ViterbiExtractor).
  */
 public interface WalkerFunction {
 
-  void apply(HGNode node);
+  /**
+   * Function that is applied to node at tail node index nodeIndex.
+   * nodeIndex indicates the index of node in the list of tailnodes for the
+   * outgoing edge.
+   */
+  void apply(HGNode node, int nodeIndex);
 
 }

@@ -598,9 +598,14 @@ public class JoshuaConfiguration {
             search_algorithm = fds[1];
             
             if (!search_algorithm.equals("cky") && !search_algorithm.equals("stack")) {
-              System.err.println("* FATAL: -search must be one of 'stack' (for phrase-based decoding)");
-              System.err.println("*   or 'cky' (for hierarchical / syntactic decoding)");
-              System.exit(1);
+              throw new RuntimeException(
+                  "-search must be one of 'stack' (for phrase-based decoding) " +
+                  "or 'cky' (for hierarchical / syntactic decoding)");
+            }
+            
+            if (search_algorithm.equals("cky") && include_align_index) {
+              throw new RuntimeException(
+                  "include_align_index is currently not supported with cky search");
             }
 
           } else if (parameter.equals(normalize_key("reordering-limit"))) {
