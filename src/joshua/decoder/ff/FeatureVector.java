@@ -78,10 +78,7 @@ public class FeatureVector {
      * IMPORTANT: Note that, for historical reasons, the sign is reversed on all *dense* scores.
      * This is the source of *no end* of confusion and should be done away with.
      */
-    sparseFeatures = new HashMap<String, Float>();
-    denseFeatures = new ArrayList<Float>(DENSE_FEATURE_NAMES.size());
-    for (int i = 0; i < denseFeatures.size(); i++)
-      denseFeatures.set(i, 0.0f);
+    this();
     
     int denseFeatureIndex = 0;
 

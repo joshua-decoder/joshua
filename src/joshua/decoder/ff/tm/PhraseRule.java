@@ -21,44 +21,54 @@ import com.google.common.base.Suppliers;
  */
 public class PhraseRule extends Rule {
 
-  private String mosesFeatureString = null;
-  private Supplier<byte[]> alignmentSupplier;
+
+  private final String mosesFeatureString;
+  private final Supplier<byte[]> alignmentSupplier;
+  private final Supplier<String> sparseFeaturesStringSupplier;
   
   public PhraseRule(int lhs, int[] french, int[] english, String sparse_features, int arity,
       String alignment) {
     super(lhs, french, english, null, arity, alignment);
-    mosesFeatureString = sparse_features;
-    this.alignmentSupplier = Suppliers.memoize(() ->{
-        String[] tokens = getAlignmentString().split("[-\\s]+");
-        byte[] alignmentArray = new byte[tokens.length + 2];
-        alignmentArray[0] = alignmentArray[1] = 0;
-        for (int i = 0; i < tokens.length; i++)
-            alignmentArray[i + 2] = (byte) (Short.parseShort(tokens[i]) + 1);
-        return alignmentArray;
-    });
+    this.mosesFeatureString = sparse_features;
+    this.alignmentSupplier = initializeAlignmentSupplier();
+    this.sparseFeaturesStringSupplier = initializeSparseFeaturesStringSupplier();
   }
-
+  
   /** 
    * Moses features are probabilities; we need to convert them here by taking the negative log prob.
    * We do this only when the rule is used to amortize.
    */
-  @Override
-  public String getFeatureString() {
-    if (sparseFeatureString == null) {
+  private Supplier<String> initializeSparseFeaturesStringSupplier() {
+    return Suppliers.memoize(() ->{
       StringBuffer values = new StringBuffer();
       for (String value: mosesFeatureString.split(" ")) {
         float f = Float.parseFloat(value);
         values.append(String.format("%f ", f <= 0.0 ? -100 : -Math.log(f)));
       }
-      sparseFeatureString = values.toString().trim();
-    }
-    return sparseFeatureString;
+      return values.toString().trim();
+    });
   }
-  
+
   /**
    * This is the exact same as the parent implementation, but we need to add 1 to each alignment
    * point to account for the nonterminal [X] that was prepended to each rule. 
    */
+  private Supplier<byte[]> initializeAlignmentSupplier(){
+    return Suppliers.memoize(() ->{
+      String[] tokens = getAlignmentString().split("[-\\s]+");
+      byte[] alignmentArray = new byte[tokens.length + 2];
+      alignmentArray[0] = alignmentArray[1] = 0;
+      for (int i = 0; i < tokens.length; i++)
+          alignmentArray[i + 2] = (byte) (Short.parseShort(tokens[i]) + 1);
+      return alignmentArray;
+    });
+  }
+
+  @Override
+  public String getFeatureString() {
+    return this.sparseFeaturesStringSupplier.get();
+  }
+  
   @Override
   public byte[] getAlignment() {
     return this.alignmentSupplier.get();

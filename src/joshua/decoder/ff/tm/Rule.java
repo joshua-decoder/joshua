@@ -43,10 +43,9 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   protected int arity;
 
   // And a string containing the sparse ones
-  protected FeatureVector features = null;
-  protected String sparseFeatureString;
-
-  private final Supplier<byte[]> alignmentSupplier;
+  //protected final String sparseFeatureString;
+  protected final Supplier<String> sparseFeatureStringSupplier;
+  private final Supplier<FeatureVector> featuresSupplier;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
@@ -68,12 +67,15 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
 
   // The alignment string, e.g., 0-0 0-1 1-1 2-1
   private String alignmentString;
+  private final Supplier<byte[]> alignmentSupplier;
 
   /**
-   * Constructs a new rule using the provided parameters. The owner and rule id for this rule are
+   * Constructs a new rule using the provided parameters. Rule id for this rule is
    * undefined. Note that some of the sparse features may be unlabeled, but they cannot be mapped to
    * their default names ("tm_OWNER_INDEX") until later, when we know the owner of the rule. This is
    * not known until the rule is actually added to a grammar in Grammar::addRule().
+   * 
+   * Constructor used by other constructors below;
    * 
    * @param lhs Left-hand side of the rule.
    * @param sourceRhs Source language right-hand side of the rule.
@@ -82,34 +84,63 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
    */
-  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity,
-      int owner) {
+  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.sparseFeatureString = sparseFeatures;
     this.arity = arity;
     this.owner = owner;
     this.english = targetRhs;
-    alignmentSupplier = initializeAlignmentSupplier();
+    this.sparseFeatureStringSupplier = Suppliers.memoize(() -> { return sparseFeatures; });
+    this.featuresSupplier = initializeFeatureSupplierFromString();
+    this.alignmentSupplier = initializeAlignmentSupplier();
+  }
+  
+  /**
+   * Constructor used by PackedGrammar's sortRules().
+   */
+  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, FeatureVector features, int arity, int owner) {
+    this.lhs = lhs;
+    this.pFrench = sourceRhs;
+    this.arity = arity;
+    this.owner = owner;
+    this.english = targetRhs;
+    this.featuresSupplier = Suppliers.memoize(() -> { return features; });
+    this.sparseFeatureStringSupplier = initializeSparseFeaturesStringSupplier();
+    this.alignmentSupplier = initializeAlignmentSupplier();
   }
 
-  // Sparse feature version
+  /**
+   * Constructor used for SamtFormatReader and GrammarBuilderWalkerFunction's getRuleWithSpans()
+   * Owner set to -1
+   */
   public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
     this(lhs, sourceRhs, targetRhs, sparseFeatures, arity, -1);
   }
 
+  /**
+   * Constructor used for addOOVRules(), HieroFormatReader and PhraseRule.
+   */
   public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, String alignment) {
     this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
     this.alignmentString = alignment;
   }
   
+  /**
+   * Constructor (implicitly) used by PackedRule
+   */
   public Rule() {
     this.lhs = -1;
-    alignmentSupplier = initializeAlignmentSupplier();
+    this.sparseFeatureStringSupplier = initializeSparseFeaturesStringSupplier();
+    this.featuresSupplier = initializeFeatureSupplierFromString();
+    this.alignmentSupplier = initializeAlignmentSupplier();
   }
 
+  // ==========================================================================
+  // Lazy loading Suppliers for alignments, feature vector, and feature strings
+  // ==========================================================================
+  
   private Supplier<byte[]> initializeAlignmentSupplier(){
-    Supplier<byte[]> result = Suppliers.memoize(() ->{
+    return Suppliers.memoize(() ->{
       byte[] alignment = null;
       String alignmentString = getAlignmentString();
       if (alignmentString != null) {
@@ -120,7 +151,29 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
       }
       return alignment;
     });
-    return result;
+  }
+  
+  /**
+   * If Rule was constructed with sparseFeatures String, we lazily populate the
+   * FeatureSupplier.
+   */
+  private Supplier<FeatureVector> initializeFeatureSupplierFromString(){
+    return Suppliers.memoize(() ->{
+      if (owner != -1) {
+        return new FeatureVector(getFeatureString(), "tm_" + Vocabulary.word(owner) + "_");
+      } else {
+        return new FeatureVector();
+      }
+    });
+  }
+  
+  /**
+   * If Rule was constructed with a FeatureVector, we lazily populate the sparseFeaturesStringSupplier.
+   */
+  private Supplier<String> initializeSparseFeaturesStringSupplier() {
+    return Suppliers.memoize(() -> {
+      return getFeatureVector().toString();
+    });
   }
 
   // ===============================================================
@@ -214,18 +267,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
    * specified as labeled features of the form "tm_OWNER_INDEX", but the former format is preferred.
    */
   public FeatureVector getFeatureVector() {
-    /*
-     * Now read the feature scores, which can be any number of dense features and sparse features.
-     * Any unlabeled feature becomes a dense feature. By convention, dense features should precede
-     * sparse (labeled) ones, but it's not required.
-     */
-
-    if (features == null)
-      features = (owner != -1)
-        ? new FeatureVector(getFeatureString(), "tm_" + Vocabulary.word(owner) + "_")
-        : new FeatureVector();
-  
-    return features;
+    return featuresSupplier.get();
   }
 
   /**
@@ -263,20 +305,14 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   
   public void setPrecomputableCost(float[] phrase_weights, FeatureVector weights) {
     float cost = 0.0f;
-
-//    System.err.println(String.format("// Setting precomputable cost for for %s/%s", getEnglishWords(), getFrenchWords()));
     FeatureVector features = getFeatureVector();
     for (int i = 0; i < features.getDenseFeatures().size() && i < phrase_weights.length; i++) {
-//      System.err.println(String.format("    %d -> %.5f", i, features.get(i)));
       cost += phrase_weights[i] * features.getDense(i);
     }
 
     for (String key: features.getSparseFeatures().keySet()) {
-//      System.err.println(String.format("    %s -> %.5f", key, features.get(key)));
       cost += weights.getSparse(key) * features.getSparse(key);
     }
-    
-//    System.err.println(String.format("-> %f", cost));
     
     this.precomputableCost = cost;
   }
@@ -365,7 +401,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   }
 
   public String getFeatureString() {
-    return sparseFeatureString;
+    return sparseFeatureStringSupplier.get();
   }
 
   /**

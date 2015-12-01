@@ -28,6 +28,8 @@ public class MultithreadedTranslationTests {
   private JoshuaConfiguration joshuaConfig = null;
   private Decoder decoder = null;
   private static final String INPUT = "A K B1 U Z1 Z2 B2 C";
+  private int previousLogLevel;
+  private final static long NANO_SECONDS_PER_SECOND = 1_000_000_000;
 
   @Before
   public void setUp() throws Exception {
@@ -62,6 +64,9 @@ public class MultithreadedTranslationTests {
                                                   // (configFile)
                                                   // is not even used by the
                                                   // constructor/initialize.
+
+    previousLogLevel = Decoder.VERBOSE;
+    Decoder.VERBOSE = 0;
   }
 
   @After
@@ -69,6 +74,7 @@ public class MultithreadedTranslationTests {
     Vocabulary.clear();
     this.decoder.cleanUp();
     this.decoder = null;
+    Decoder.VERBOSE = previousLogLevel;
   }
 
 
@@ -102,10 +108,16 @@ public class MultithreadedTranslationTests {
     Translations translations = this.decoder.decodeAll(req);
     ArrayList<Translation> translationResults = new ArrayList<Translation>();
 
+
+    final long translationStartTime = System.nanoTime();
     Translation t;
     while ((t = translations.next()) != null) {
       translationResults.add(t);
     }
+
+    final long translationEndTime = System.nanoTime();
+    final double pipelineLoadDurationInSeconds = (translationEndTime - translationStartTime) / ((double)NANO_SECONDS_PER_SECOND);
+    System.err.println(String.format("%.2f seconds", pipelineLoadDurationInSeconds));
 
     // THEN
     assertTrue(translationResults.size() == inputLines);

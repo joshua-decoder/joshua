@@ -468,46 +468,39 @@ public class PackedGrammar extends AbstractGrammar {
     }
 
     /**
-     * NEW VERSION
-     * 
-     * Returns a string version of the features associated with a rule (represented as a block ID).
+     * Returns the FeatureVector associated with a rule (represented as a block ID).
      * These features are in the form "feature1=value feature2=value...". By default, unlabeled
-     * features are named using the pattern
-     * 
-     * tm_OWNER_INDEX
-     * 
-     * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
-     * of the feature found in the grammar.
-     * 
+     * features are named using the pattern.
      * @param block_id
-     * @return
+     * @return feature vector
      */
 
-    private final String getFeatures(int block_id) {
-      int feature_position = featureLookup[block_id];
+    private final FeatureVector loadFeatureVector(int block_id) {
+      int featurePosition = featureLookup[block_id];
+      final int numFeatures = encoding.readId(features, featurePosition);
 
-      // The number of non-zero features stored with the rule.
-      int num_features = encoding.readId(features, feature_position);
+      featurePosition += EncoderConfiguration.ID_SIZE;
+      final FeatureVector featureVector = new FeatureVector();
+      FloatEncoder encoder;
+      String featureName;
 
-      feature_position += EncoderConfiguration.ID_SIZE;
-      StringBuilder sb = new StringBuilder();
-
-      for (int i = 0; i < num_features; i++) {
-        int feature_id = encoding.readId(features, feature_position);
-        FloatEncoder encoder = encoding.encoder(feature_id);
-
-        String feature_name = Vocabulary.word(encoding.outerId(feature_id));
+      for (int i = 0; i < numFeatures; i++) {
+        final int innerId = encoding.readId(features, featurePosition);
+        final int outerId = encoding.outerId(innerId);
+        encoder = encoding.encoder(innerId);
+        // TODO (fhieber): why on earth are dense feature ids (ints) encoded in the vocabulary?
+        featureName = Vocabulary.word(outerId);
+        final float value = encoder.read(features, featurePosition);
         try {
-          int index = Integer.parseInt(feature_name);
-          sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
-              -encoder.read(features, feature_position)));
+          int index = Integer.parseInt(featureName);
+          featureVector.increment(index, -value);
         } catch (NumberFormatException e) {
-          sb.append(String.format(" %s=%.5f", feature_name, encoder.read(features, feature_position)));
+          featureVector.increment(featureName, value);
         }
-
-        feature_position += EncoderConfiguration.ID_SIZE + encoder.size();
+        featurePosition += EncoderConfiguration.ID_SIZE + encoder.size();
       }
-      return sb.toString().trim();
+      
+      return featureVector;
     }
 
     /**
@@ -697,7 +690,7 @@ public class PackedGrammar extends AbstractGrammar {
           block_id = source[rules[i]];
 
           Rule rule = new Rule(source[rule_position + 3 * i], src,
-              getTarget(target_address), getFeatures(block_id), arity, owner);
+              getTarget(target_address), loadFeatureVector(block_id), arity, owner);
           estimated[block_id] = rule.estimateRuleCost(models);
           precomputable[block_id] = rule.getPrecomputableCost();
         }
@@ -923,8 +916,8 @@ public class PackedGrammar extends AbstractGrammar {
 
         private Supplier<FeatureVector> initializeFeatureVectorSupplier(){
           Supplier<FeatureVector> result = Suppliers.memoize(() ->{
-            return new FeatureVector(getFeatures(source[address + 2]), "tm_" + Vocabulary.word(owner) + "_");
-          });
+            return loadFeatureVector(source[address + 2]);
+         });
           return result;
         }
 
