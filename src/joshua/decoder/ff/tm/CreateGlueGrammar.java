@@ -70,7 +70,6 @@ public class CreateGlueGrammar {
           continue;
         }
         final String lhs = line.substring(lhsStart, lhsEnd);
-        System.err.println(lhs);
         nonTerminalSymbols.add(lhs);
       }
     }
