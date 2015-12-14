@@ -56,10 +56,8 @@ public class SentenceFilteredGrammar extends MemoryBasedBatchGrammar {
     int origCount = getNumRules(baseGrammar.getTrieRoot());
     long startTime = System.currentTimeMillis();
 
-    /* Filter the rules */
+    /* Filter the rules; returns non-null object */
     this.filteredTrie = filter(baseGrammar.getTrieRoot());
-    if (filteredTrie == null)
-      filteredTrie = new SentenceFilteredTrie(baseGrammar.getTrieRoot());
     int filteredCount = getNumRules();
 
     float seconds = (System.currentTimeMillis() - startTime) / 1000.0f;

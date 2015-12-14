@@ -43,20 +43,20 @@ public class RuleShape extends StatelessFF {
   }
   
   private String pattern(int[] ids) {
-    String pattern = "";
+    StringBuilder pattern = new StringBuilder();
     int curtype = gettype(ids[0]);
     int curcount = 1;
     for (int i = 1; i < ids.length; i++) {
       if (gettype(ids[i]) != curtype) {
-        pattern += String.format("%s%s_", curtype < 0 ? "N" : "x", curcount > 1 ? "+" : "");
+        pattern.append(String.format("%s%s_", curtype < 0 ? "N" : "x", curcount > 1 ? "+" : ""));
         curtype = gettype(ids[i]);
         curcount = 1;
       } else {
         curcount++;
       }
     }
-    pattern += String.format("%s%s_", curtype < 0 ? "N" : "x", curcount > 1 ? "+" : "");
-    return pattern;
+    pattern.append(String.format("%s%s_", curtype < 0 ? "N" : "x", curcount > 1 ? "+" : ""));
+    return pattern.toString();
   }
   
   @Override

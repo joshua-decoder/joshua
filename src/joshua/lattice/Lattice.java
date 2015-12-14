@@ -199,8 +199,8 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       while (arcMatcher.matches()) {
         numArcs++;
         String arcLabel = arcMatcher.group(1);
-        float arcWeight = Float.valueOf(arcMatcher.group(2));
-        int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
+        float arcWeight = Float.parseFloat(arcMatcher.group(2));
+        int destinationNodeID = nodeID + Integer.parseInt(arcMatcher.group(3));
 
         Node<Token> destinationNode;
         if (destinationNodeID < nodes.size() && nodes.get(destinationNodeID) != null) {
@@ -279,7 +279,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
       while (arcMatcher.matches()) {
         String arcLabel = arcMatcher.group(1);
         float arcWeight = Float.valueOf(arcMatcher.group(2));
-        int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
+        int destinationNodeID = nodeID + Integer.parseInt(arcMatcher.group(3));
 
         Node<String> destinationNode;
         if (nodes.containsKey(destinationNodeID)) {

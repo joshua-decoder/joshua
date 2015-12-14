@@ -58,7 +58,7 @@ public class TranslationRequestStream {
   private StreamHandler requestHandler = null;
 
   /* Whether the request has been killed by a broken client connection. */
-  private boolean isShutDown = false;
+  private volatile boolean isShutDown = false;
 
   public TranslationRequestStream(BufferedReader reader, JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;

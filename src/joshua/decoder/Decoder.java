@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import com.google.common.base.Strings;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
 import joshua.decoder.JoshuaConfiguration.INPUT_TYPE;
@@ -639,7 +641,7 @@ public class Decoder {
       
       
       /* Add command-line-passed weights to the weights array for processing below */
-      if (joshuaConfiguration.weight_overwrite != "") {
+      if (!Strings.isNullOrEmpty(joshuaConfiguration.weight_overwrite)) {
         String[] tokens = joshuaConfiguration.weight_overwrite.split("\\s+");
         for (int i = 0; i < tokens.length; i += 2) {
           String feature = tokens[i];
