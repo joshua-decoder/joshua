@@ -18,7 +18,9 @@
  */
  package joshua.system;
 
-import static org.junit.Assert.assertEquals;
+import static joshua.corpus.Vocabulary.registerLanguageModel;
+import static joshua.corpus.Vocabulary.unregisterLanguageModels;
+import static org.junit.Assert.*;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
@@ -29,22 +31,23 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Integration test for KenLM integration into Joshua This test will setup a
- * Joshua instance that loads libkenlm.so
- *
- * @author kellens
+ * KenLM JNI interface tests.
+ * Loads libken.{so,dylib}.
+ * If run in Eclipse, add -Djava.library.path=build/lib to JVM arguments
+ * of the run configuration.
  */
 public class KenLmTest {
 
+  private static final String LANGUAGE_MODEL_PATH = "resources/kenlm/oilers.kenlm";
+
   @Test
-  public void givenKenLmUsed_whenTranslationsCalled_thenVerifyJniWithSampleCall() {
+  public void givenKenLm_whenQueryingForNgramProbability_thenProbIsCorrect() {
     // GIVEN
-    String languageModelPath = "resources/kenlm/oilers.kenlm";
+    KenLM kenLm = new KenLM(3, LANGUAGE_MODEL_PATH);
+    int[] words = Vocabulary.addAll("Wayne Gretzky");
+    registerLanguageModel(kenLm);
 
     // WHEN
-    KenLM kenLm = new KenLM(3, languageModelPath);
-    Vocabulary.registerLanguageModel(kenLm);
-    int[] words = Vocabulary.addAll("Wayne Gretzky");
     float probability = kenLm.prob(words);
 
     // THEN
@@ -52,15 +55,41 @@ public class KenLmTest {
         Float.MIN_VALUE);
   }
   
+  @Test
+  public void givenKenLm_whenQueryingForNgramProbability_thenIdAndStringMethodsReturnTheSame() {
+    // GIVEN
+    KenLM kenLm = new KenLM(LANGUAGE_MODEL_PATH);
+    registerLanguageModel(kenLm);
+    String sentence = "Wayne Gretzky";
+    String[] words = sentence.split("\\s+");
+    int[] ids = Vocabulary.addAll(sentence);
+
+    // WHEN
+    float prob_string = kenLm.prob(words);
+    float prob_id = kenLm.prob(ids);
+
+    // THEN
+    assertEquals("ngram probabilities differ for word and id based n-gram query", prob_string, prob_id,
+            Float.MIN_VALUE);
+
+  }
+
+  @Test
+  public void givenKenLm_whenIsKnownWord_thenReturnValuesAreCorrect() {
+    KenLM kenLm = new KenLM(LANGUAGE_MODEL_PATH);
+    assertTrue(kenLm.isKnownWord("Wayne"));
+    assertFalse(kenLm.isKnownWord("Wayne2222"));
+  }
+
   @Before
   public void setUp() throws Exception {
     Vocabulary.clear();
-    Vocabulary.unregisterLanguageModels();
+    unregisterLanguageModels();
   }
-  
+
   @After
   public void tearDown() throws Exception {
     Vocabulary.clear();
-    Vocabulary.unregisterLanguageModels();
+    unregisterLanguageModels();
   }
 }
