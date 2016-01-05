@@ -8,12 +8,13 @@ use strict;
 use warnings;
 
 while (my $line = <>) {
+  chomp($line);
   my @tokens = split(/ \|\|\| /, $line);
 
   unshift(@tokens, "[X]");
   $tokens[3] = join(" ", map { -mylog($_) } split(' ', $tokens[3]));
 
-  print join(" ||| ", @tokens);
+  print join(" ||| ", @tokens) . $/;
 }
 
 sub mylog {
