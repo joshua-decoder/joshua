@@ -106,7 +106,7 @@
   </target>
 
   <target name="berkeleylm" depends="check-joshua-home" description="--> Build BerkeleyLM">
-    <subant buildpath="src/berkeleylm">
+    <subant target="jar" buildpath="src/berkeleylm">
     </subant>
   </target>
 
@@ -139,7 +139,7 @@
   <target name="setup" if="devel-env">
     <antcall inheritAll="true" inheritRefs="true" target="init"/>
     <antcall inheritAll="true" inheritRefs="true" target="thrax"/>
-    <antcall inheritAll="true" inheritRefs="true" target="src/berkeleylm"/>
+    <antcall inheritAll="true" inheritRefs="true" target="berkeleylm"/>
   </target>
 
   <!-- Compile the Java code. -->
