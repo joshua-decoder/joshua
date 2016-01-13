@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
+import joshua.decoder.Decoder;
 import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
 import edu.berkeley.nlp.lm.StringWordIndexer;
@@ -62,10 +63,10 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
     try { // try binary format (even gzipped)
       lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String>readLmBinary(lm_file);
-      logger.info("Loading Berkeley LM from binary " + lm_file);
+      Decoder.LOG(1, "Loading Berkeley LM from binary " + lm_file);
     } catch (RuntimeException e) {
       ConfigOptions opts = new ConfigOptions();
-      logger.info("Loading Berkeley LM from ARPA file " + lm_file);
+      Decoder.LOG(1, "Loading Berkeley LM from ARPA file " + lm_file);
       final StringWordIndexer wordIndexer = new StringWordIndexer();
       ArrayEncodedNgramLanguageModel<String> berkeleyLm =
           LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
