@@ -30,13 +30,16 @@
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
     </fileset>
+    <fileset dir="${src}/berkeleylm/jar">
+      <include name="berkeleylm.jar" />
+    </fileset>
   </path>
 
   <!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
   <!-- Create the build directory for compiled class files -->
-  <target name="init" depends="check-joshua-home, resolve, download-thrax, download-hadoop" 
-    description="--> Check for environment variables, retrieve dependencies with ivy, download Thrax and Hadoop is required">
+  <target name="init" depends="check-joshua-home, resolve, download-submodules, download-hadoop" 
+    description="--> Check for environment variables, retrieve dependencies with ivy, download git dependencies, and get Hadoop">
   </target>
 
   <!-- Check for environment variables -->
@@ -86,7 +89,7 @@
     </exec>
   </target>
 
-  <target name="download-thrax" depends="check-joshua-home" description="--> Download the Thrax software">
+  <target name="download-submodules" depends="check-joshua-home" description="--> Download submodules">
     <exec executable="git">
       <arg value="submodule" />
       <arg value="init" />
@@ -99,6 +102,11 @@
 
   <target name="thrax" depends="check-joshua-home" description="--> Build Thrax">
     <subant buildpath="thrax">
+    </subant>
+  </target>
+
+  <target name="berkeleylm" depends="check-joshua-home" description="--> Build BerkeleyLM">
+    <subant buildpath="src/berkeleylm">
     </subant>
   </target>
 
@@ -131,6 +139,7 @@
   <target name="setup" if="devel-env">
     <antcall inheritAll="true" inheritRefs="true" target="init"/>
     <antcall inheritAll="true" inheritRefs="true" target="thrax"/>
+    <antcall inheritAll="true" inheritRefs="true" target="src/berkeleylm"/>
   </target>
 
   <!-- Compile the Java code. -->

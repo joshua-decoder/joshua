@@ -1,3 +1,6 @@
 [submodule "thrax"]
 	path = thrax
 	url = http://github.com/joshua-decoder/thrax.git
+[submodule "berkeleylm"]
+	path = src/berkeleylm
+	url = git@github.com:joshua-decoder/berkeleylm

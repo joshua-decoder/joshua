@@ -45,11 +45,11 @@ ln -sf joshua-$version release/joshua-runtime-$version
 tar czf release/joshua-runtime-$version.tgz \
     --exclude='*~' --exclude='#*' \
     joshua-runtime-$version/{README.md,VERSION,CHANGELOG,build.xml,logging.properties} \
-    joshua-runtime-$version/src/{joshua,kenlm} \
+    joshua-runtime-$version/src/{joshua,kenlm,berkeleylm} \
     joshua-runtime-$version/jni \
     joshua-runtime-$version/bin \
     joshua-runtime-$version/class \
-    joshua-runtime-$version/lib/{ant*,jung*,berkeleylm*jar,junit*jar,README,LICENSES} \
+    joshua-runtime-$version/lib/{ant*,jung*,junit*jar,README,LICENSES} \
     joshua-runtime-$version/scripts \
     joshua-runtime-$version/examples \
     joshua-runtime-$version/joshua-decoder.org
