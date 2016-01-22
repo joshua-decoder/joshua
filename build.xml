@@ -31,7 +31,7 @@
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
     </fileset>
-    <fileset dir="${src}/berkeleylm/jar">
+    <fileset dir="${external}/berkeleylm/jar">
       <include name="berkeleylm.jar" />
     </fileset>
   </path>
@@ -107,7 +107,7 @@
   </target>
 
   <target name="berkeleylm" depends="check-joshua-home" description="--> Build BerkeleyLM">
-    <subant target="jar" buildpath="src/berkeleylm">
+    <subant target="jar" buildpath="${external}/berkeleylm">
     </subant>
   </target>
 

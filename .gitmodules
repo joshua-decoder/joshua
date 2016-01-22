@@ -2,5 +2,5 @@
 	path = thrax
 	url = http://github.com/joshua-decoder/thrax.git
 [submodule "berkeleylm"]
-	path = src/berkeleylm
+	path = ext/berkeleylm
 	url = git@github.com:joshua-decoder/berkeleylm
