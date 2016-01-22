@@ -11,8 +11,8 @@ my $JOSHUA = $ENV{JOSHUA};
 
 my $ZCAT = "gzip -cd";
 my $BZCAT = "bzcat";
-my $SYMAL = "$JOSHUA/scripts/src/symal/symal";
-my $GIZA2BAL = "$JOSHUA/scripts/src/symal/giza2bal.pl";
+my $SYMAL = "$JOSHUA/ext/symal/symal";
+my $GIZA2BAL = "$JOSHUA/ext/symal/giza2bal.pl";
 
 my ($_F,$_E,$_ROOT_DIR,$_CORPUS,$_PARALLEL);
 my ($_HMM_ALIGN,$_FINAL_ALIGNMENT_MODEL,$_GIZA_EXTENSION,$_DICTIONARY,$_MGIZA,$_MGIZA_CPUS,$_GIZA_E2F,$_GIZA_F2E,$_GIZA_OPTION,$_ONLY_PRINT_GIZA,$_ALIGNMENT);

@@ -7,7 +7,7 @@ export CXXFLAGS+=" -O3 -fPIC -DHAVE_ZLIB"
 export LDFLAGS+=" -lz"
 export CXX=${CXX:-g++}
 
-cd $JOSHUA/src/kenlm
+cd $JOSHUA/ext/kenlm
 [[ ! -d build ]] && mkdir build
 cd build
 cmake .. -DKENLM_MAX_ORDER=$KENLM_MAX_ORDER -DCMAKE_BUILD_TYPE=Release
