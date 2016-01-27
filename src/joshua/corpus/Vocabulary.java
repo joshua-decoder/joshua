@@ -1,7 +1,5 @@
 package joshua.corpus;
 
-import static joshua.util.FormatUtils.isNonterminal;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -34,7 +32,6 @@ public class Vocabulary {
   private static List<String> idToString;
   private static Map<String, Integer> stringToId;
   private static final StampedLock lock = new StampedLock();
-  private static volatile List<Integer> nonTerminalIndices;
 
   static final int UNKNOWN_ID = 0;
   static final String UNKNOWN_WORD = "<unk>";
@@ -123,23 +120,12 @@ public class Vocabulary {
         return resultId;
       }
     }
-else {
-        if (nonTerminalIndices != null && nt(token)) {
-          throw new IllegalArgumentException(
-              "After the nonterminal indices have been set by calling getNonterminalIndices you can't call id on new nonterminals anymore.");
-        }
-      }
 
     // The optimistic read failed, try a read with a stamped read lock
     long read_lock_stamp = lock.readLock();
     try {
       if (stringToId.containsKey(token)) {
         return stringToId.get(token);
-      } else {
-        if (nonTerminalIndices != null && nt(token)) {
-          throw new IllegalArgumentException(
-              "After the nonterminal indices have been set by calling getNonterminalIndices you can't call id on new nonterminals anymore.");
-        }
       }
     } finally {
       lock.unlockRead(read_lock_stamp);
@@ -213,32 +199,6 @@ else {
     for (int id : ids)
       sb.append(word(id)).append(" ");
     return sb.deleteCharAt(sb.length() - 1).toString();
-  }
-
-  /**
-   * This method returns a list of all (positive) indices
-   * corresponding to Nonterminals in the Vocabulary.
-   */
-  public static synchronized List<Integer> getNonterminalIndices()
-  {
-    if (nonTerminalIndices == null) {
-      nonTerminalIndices = findNonTerminalIndices();
-    }
-    return nonTerminalIndices;
-  }
-
-  /**
-   * Iterates over the Vocabulary and finds all non terminal indices.
-   */
-  private static List<Integer> findNonTerminalIndices() {
-    List<Integer> nonTerminalIndices = new ArrayList<>();
-    for(int i = 0; i < idToString.size(); i++) {
-      final String word = idToString.get(i);
-      if(isNonterminal(word)){
-        nonTerminalIndices.add(i);
-      }
-    }
-    return nonTerminalIndices;
   }
 
   public static int getUnknownId() {
