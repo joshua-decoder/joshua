@@ -51,7 +51,7 @@ public class ForestWalker {
       walk(node, walker, 0);
   }
 
-  public void walk(HGNode node, WalkerFunction walker, int nodeIndex) {
+  private void walk(HGNode node, WalkerFunction walker, int nodeIndex) {
     // short circuit
     if (visitedNodes.contains(node))
       return;
