@@ -155,7 +155,37 @@ public class Decoder {
        * allows parallelization across the sentences of the request.
        */
       for (;;) {
-        Sentence sentence = request.next();
+        Sentence sentence = null;
+        try {
+          sentence = request.next();
+        } catch (MetaDataException meta) {
+          if (meta.type().equals("set_weight")) {
+            // Change a decoder weight
+            String[] tokens = meta.tokens();
+            if (tokens.length != 3) {
+              System.err.println("* Error: weight change requires three tokens");
+            } else {
+              float old_weight = Decoder.weights.getWeight(tokens[1]);
+              Decoder.weights.set(tokens[1], Float.parseFloat(tokens[2]));
+              System.err.println(String.format("@set_weight: %s %.3f -> %.3f", 
+                  tokens[1], old_weight,
+                  Decoder.weights.getWeight(tokens[1])));
+            }
+            
+          } else if (meta.type().equals("get_weight")) {
+            String[] tokens = meta.tokens();
+            System.err.println(String.format("%s = %f", tokens[1], Decoder.weights.getWeight(tokens[1])));
+            
+          } else if (meta.type().equals("add_rule")) {
+            // Add a rule to the custom grammar, if present
+            
+          } else if (meta.type().equals("remove_rule")) {
+            // Remove a rule from a custom grammar, if present
+          }
+
+          continue;
+        }
+        
         if (sentence == null) {
           response.finish();
           break;

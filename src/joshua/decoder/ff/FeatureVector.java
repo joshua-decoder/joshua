@@ -195,6 +195,19 @@ public class FeatureVector {
         sparseFeatures.put(key, sparseFeatures.get(key) + other.getSparse(key));
     }
   }
+  
+  /**
+   * Return the weight of a feature by name, after checking to determine if it is sparse or dense.
+   * 
+   */
+  public float getWeight(String feature) {
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+      if (DENSE_FEATURE_NAMES.get(i).equals(feature)) {
+        return getDense(i);
+      }
+    }
+    return getSparse(feature);
+  }
 
   /**
    * Return the weight of a sparse feature, indexed by its name.
@@ -234,8 +247,22 @@ public class FeatureVector {
       denseFeatures.add(0.0f);
     denseFeatures.set(id, getDense(id) + value);
   }
-  
+
+  /**
+   * Set the value of a feature. We need to first determine whether the feature is a dense or
+   * sparse one, then set accordingly.
+   * 
+   * @param feature
+   * @param value
+   */
   public void set(String feature, float value) {
+    for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+      if (DENSE_FEATURE_NAMES.get(i).equals(feature)) {
+        denseFeatures.set(i, value);
+        return;
+      }
+    }
+    // No dense feature was found; assume it's sparse
     sparseFeatures.put(feature, value);
   }
   

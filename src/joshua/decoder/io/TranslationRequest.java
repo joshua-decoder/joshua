@@ -6,7 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
+import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.MetaDataException;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -42,7 +44,7 @@ public class TranslationRequest {
    * Returns the next sentence item, then sets it to null, so that hasNext() will know to produce a
    * new one.
    */
-  public synchronized Sentence next() {
+  public synchronized Sentence next() throws MetaDataException {
     nextSentence = null;
     
     if (isShutDown)
@@ -52,6 +54,10 @@ public class TranslationRequest {
       String line = reader.readLine();
 
       if (line != null) {
+        
+        if (line.startsWith("@"))
+          throw new MetaDataException(line);
+
         sentenceNo++;
         nextSentence = new Sentence(line, sentenceNo, joshuaConfiguration);
 //        } else if (ParsedSentence.matches(line)) {
@@ -78,5 +84,9 @@ public class TranslationRequest {
 
   public void shutdown() {
     isShutDown = true;
+  }
+  
+  public boolean isShutDown() {
+    return isShutDown;
   }
 }
