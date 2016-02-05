@@ -881,7 +881,9 @@ public class KBestExtractor {
        */
       Tree fragment = Tree.getFragmentFromYield(rule.getEnglishWords());
       if (fragment == null) {
-        String subtree = String.format("(%s %s)", unbracketedLHS, quoteTerminals(rule.getEnglishWords()));
+        String subtree = String.format("(%s{%d-%d} %s)", unbracketedLHS, 
+            state.parentNode.i, state.parentNode.j, 
+            quoteTerminals(rule.getEnglishWords()));
         fragment = Tree.fromString(subtree);
       }
       
