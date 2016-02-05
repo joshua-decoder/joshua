@@ -118,7 +118,7 @@ my $JOSHUA_MEM = "3100m";
 
 # the amount of memory available for hadoop processes (passed to
 # Hadoop via -Dmapred.child.java.opts
-my $HADOOP_MEM = "2g";
+my $HADOOP_MEM = "4g";
 
 # The location of a custom core-site.xml file, if desired (optional).
 my $HADOOP_CONF = undef;
