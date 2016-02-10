@@ -24,6 +24,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.Decoder;
@@ -37,7 +39,7 @@ import edu.berkeley.nlp.lm.util.StrUtils;
 
 /**
  * This class wraps Berkeley LM.
- * 
+ *
  * @author adpauls@gmail.com
  */
 public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
@@ -120,9 +122,9 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
     for (int j = startIndex; j < order && j <= sentenceLength; j++) {
       // TODO: startIndex dependens on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm,
       // start_index=2. othercase, need to check)
-      int[] ngram = Arrays.copyOfRange(sentence, 0, j);
-      double logProb = ngramLogProbability_helper(ngram, false);
+      double logProb = ngramLogProbability_helper(sentence, 0, j, false);
       if (logger.isLoggable(Level.FINE)) {
+        int[] ngram = Arrays.copyOfRange(sentence, 0, j);
         String words = Vocabulary.getWords(ngram);
         logger.fine("\tlogp ( " + words + " )  =  " + logProb);
       }
@@ -131,9 +133,9 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
     // regular-order ngrams
     for (int i = 0; i <= sentenceLength - order; i++) {
-      int[] ngram = Arrays.copyOfRange(sentence, i, i + order);
-      double logProb =  ngramLogProbability_helper(ngram, false);
+      double logProb =  ngramLogProbability_helper(sentence, i, order, false);
       if (logger.isLoggable(Level.FINE)) {
+        int[] ngram = Arrays.copyOfRange(sentence, i, i + order);
         String words = Vocabulary.getWords(ngram);
         logger.fine("\tlogp ( " + words + " )  =  " + logProb);
       }
@@ -147,26 +149,26 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
   public float ngramLogProbability_helper(int[] ngram, int order) {
     return ngramLogProbability_helper(ngram, false);
   }
-  
-  protected float ngramLogProbability_helper(int[] ngram, boolean log) {
 
+  protected float ngramLogProbability_helper(int[] ngram, boolean log) {
+    return ngramLogProbability_helper(ngram, 0, ngram.length, log);
+  }
+
+  protected float ngramLogProbability_helper(int sentence[], int ngramStartPos, int ngramLength, boolean log) {
     int[] mappedNgram = arrayScratch.get();
-    if (mappedNgram.length < ngram.length) {
-      arrayScratch.set(mappedNgram = new int[mappedNgram.length * 2]);
+    if (mappedNgram.length < ngramLength) {
+      mappedNgram = new int[mappedNgram.length * 2];
+      arrayScratch.set(mappedNgram);
     }
-    for (int i = 0; i < ngram.length; ++i) {
-      mappedNgram[i] = vocabIdToMyIdMapping[ngram[i]];
+    for (int i = 0; i < ngramLength; ++i) {
+      mappedNgram[i] = vocabIdToMyIdMapping[sentence[ngramStartPos + i]];
     }
 
     if (log && logRequests) {
-      final int[] copyOf = Arrays.copyOf(mappedNgram, ngram.length);
-      for (int i = 0; i < copyOf.length; ++i)
-        if (copyOf[i] < 0) copyOf[i] = unkIndex;
-      logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(), copyOf)));
+      dumpBuffer(mappedNgram, ngramLength);
     }
-    final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
 
-    return res;
+    return lm.getLogProb(mappedNgram, 0, ngramLength);
   }
 
   public static void setLogRequests(Handler handler) {
@@ -182,5 +184,20 @@ public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
   @Override
   public float ngramLogProbability(int[] ngram, int order) {
     return ngramLogProbability(ngram);
+  }
+
+  private void dumpBuffer(int[] buffer, int len) {
+    final int[] copyOf = Arrays.copyOf(buffer, len);
+    for (int i = 0; i < copyOf.length; ++i) {
+      if (copyOf[i] < 0) {
+        copyOf[i] = unkIndex;
+      }
+    }
+    logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(), copyOf)));
+  }
+
+  @VisibleForTesting
+  ArrayEncodedNgramLanguageModel<String> getLM() {
+    return lm;
   }
 }
