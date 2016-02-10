@@ -23,4 +23,4 @@ else
 fi
 
 [[ ! -d "$JOSHUA/lib" ]] && mkdir "$JOSHUA/lib"
-$CXX -std=gnu++11 -I. -DKENLM_MAX_ORDER=$KENLM_MAX_ORDER -I$JAVA_HOME/include -I$JOSHUA/src/kenlm -I$JAVA_HOME/include/linux -I$JAVA_HOME/include/darwin $JOSHUA/jni/kenlm_wrap.cc lm/CMakeFiles/kenlm.dir/*.o util/CMakeFiles/kenlm_util.dir/*.o util/CMakeFiles/kenlm_util.dir/double-conversion/*.o -shared -o $JOSHUA/lib/libken.$SUFFIX $CXXFLAGS $LDFLAGS $RT
+$CXX -std=gnu++11 -I. -DKENLM_MAX_ORDER=$KENLM_MAX_ORDER -I$JAVA_HOME/include -I$JOSHUA/ext/kenlm -I$JAVA_HOME/include/linux -I$JAVA_HOME/include/darwin $JOSHUA/jni/kenlm_wrap.cc lm/CMakeFiles/kenlm.dir/*.o util/CMakeFiles/kenlm_util.dir/*.o util/CMakeFiles/kenlm_util.dir/double-conversion/*.o -shared -o $JOSHUA/lib/libken.$SUFFIX $CXXFLAGS $LDFLAGS $RT
