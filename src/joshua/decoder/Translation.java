@@ -30,6 +30,15 @@ public class Translation {
    */
   private String output = null;
 
+  /**
+   * The raw one-best translation.
+   */
+  private String rawTranslation = null;
+  
+  public String rawTranslation() {
+    return rawTranslation;
+  }
+
   public Translation(Sentence source, HyperGraph hypergraph, 
       List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
@@ -49,11 +58,11 @@ public class Translation {
         // without checking
         Decoder.weights.increment("BLEU", 0);
 
-        String best = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
-        best = best.substring(new String("<s>").length() + 1, best.lastIndexOf("</s>"));
+        rawTranslation = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
+        rawTranslation = rawTranslation.substring(new String("<s>").length() + 1, rawTranslation.lastIndexOf("</s>"));
         
         Decoder.LOG(1, String.format("Translation %d: %.3f %s", source.id(), hypergraph.goalNode.getScore(),
-            best));
+            rawTranslation));
         
         if (joshuaConfiguration.topN == 0) {
           
@@ -62,8 +71,8 @@ public class Translation {
            * the output-string, with the understanding that we can only substitute variables for the
            * output string, sentence number, and model score.
            */
-          String translation = joshuaConfiguration.outputFormat.replace("%s", best)
-              .replace("%S", DeNormalize.processSingleLine(best))
+          String translation = joshuaConfiguration.outputFormat.replace("%s", rawTranslation)
+              .replace("%S", DeNormalize.processSingleLine(rawTranslation))
               .replace("%c", String.format("%.3f", hypergraph.goalNode.getScore()))
               .replace("%i", String.format("%d", source.id()));
 

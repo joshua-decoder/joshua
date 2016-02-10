@@ -1,7 +1,7 @@
 package joshua.decoder;
 
 import java.util.LinkedList;
-import joshua.decoder.io.TranslationRequest;
+import joshua.decoder.io.TranslationRequestStream;
 
 /**
  * This class represents a streaming sequence of translations. It is returned by the main entry
@@ -17,7 +17,7 @@ import joshua.decoder.io.TranslationRequest;
 public class Translations {
 
   /* The source sentences to be translated. */
-  private TranslationRequest request = null;
+  private TranslationRequestStream request = null;
 
   /*
    * This records the index of the sentence at the head of the underlying list. The iterator's
@@ -30,7 +30,7 @@ public class Translations {
 
   private boolean spent = false;
 
-  public Translations(TranslationRequest request) {
+  public Translations(TranslationRequestStream request) {
     this.request = request;
     this.translations = new LinkedList<Translation>();
   }

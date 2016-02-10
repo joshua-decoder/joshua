@@ -31,7 +31,7 @@ import joshua.util.Regex;
 public class Sentence {
 
   /* The sentence number. */
-  private int id = -1;
+  public int id = -1;
 
   /*
    * The source and target sides of the input sentence. Target sides are present when doing

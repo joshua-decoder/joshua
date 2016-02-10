@@ -1,13 +1,19 @@
 package joshua.decoder;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
-import joshua.decoder.io.TranslationRequest;
+import com.sun.net.httpserver.HttpServer;
+
+import joshua.decoder.io.TranslationRequestStream;
 import joshua.server.TcpServer;
+import joshua.server.TcpServerThread;
 
 /**
  * Implements decoder initialization, including interaction with <code>JoshuaConfiguration</code>
@@ -52,7 +58,16 @@ public class JoshuaDecoder {
     /* Step-2: Decoding */
     // create a server if requested, which will create TranslationRequest objects
     if (joshuaConfiguration.server_port > 0) {
-      new TcpServer(decoder, joshuaConfiguration.server_port,joshuaConfiguration).start();
+      int port = joshuaConfiguration.server_port;
+      if (joshuaConfiguration.server_type.equals("TCP"))
+        new TcpServer(decoder, port, joshuaConfiguration).start();
+      else {
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        Decoder.LOG(1, String.format("** HTTP Server running and listening on port %d.", port));  
+        server.createContext("/", new TcpServerThread(null, decoder, joshuaConfiguration));
+        server.setExecutor(null); // creates a default executor
+        server.start();
+      }
       return;
     }
     
@@ -65,7 +80,9 @@ public class JoshuaDecoder {
     InputStream input = (joshuaConfiguration.input_file != null) 
       ? new FileInputStream(joshuaConfiguration.input_file)
       : System.in;
-    TranslationRequest fileRequest = new TranslationRequest(input, joshuaConfiguration);
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+    TranslationRequestStream fileRequest = new TranslationRequestStream(reader, joshuaConfiguration);
     Translations translationStream = decoder.decodeAll(fileRequest);
     for (;;) {
       Translation translation = translationStream.next();

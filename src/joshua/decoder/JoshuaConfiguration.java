@@ -163,6 +163,14 @@ public class JoshuaConfiguration {
   /* A list of weights found in the main config file (instead of in a separate weights file) */
   public ArrayList<String> weights = new ArrayList<String>();
 
+  /* Determines whether to expect JSON input or plain lines */
+  public enum INPUT_TYPE { plain, json };
+  public INPUT_TYPE input_type = INPUT_TYPE.plain;
+
+  /* Type of server. Not sure we need to keep the regular TCP one around. */
+  public enum SERVER_TYPE { none, TCP, HTTP };
+  public SERVER_TYPE server_type = SERVER_TYPE.none;
+  
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
   public int server_port = 0;
 
@@ -499,6 +507,25 @@ public class JoshuaConfiguration {
             pop_limit = Integer.valueOf(fds[1]);
             logger.finest(String.format("pop-limit: %s", pop_limit));
 
+          } else if (parameter.equals(normalize_key("input-type"))) {
+            if (fds[1].equals("json"))
+              input_type = INPUT_TYPE.json;
+            else if (fds[1].equals("plain"))
+              input_type = INPUT_TYPE.plain;
+            else {
+              System.err.println(String.format("* FATAL: invalid server type '%s'", fds[1]));
+              System.exit(1);
+            }
+            logger.info(String.format("    input-type: %s", input_type));
+
+          } else if (parameter.equals(normalize_key("server-type"))) {
+            if (fds[1].equals("TCP"))
+              server_type = SERVER_TYPE.TCP;
+            else if (fds[1].equals("HTTP"))
+              server_type = SERVER_TYPE.HTTP;
+
+            logger.info(String.format("    server-type: %s", server_type));
+            
           } else if (parameter.equals(normalize_key("server-port"))) {
             server_port = Integer.parseInt(fds[1]);
             logger.info(String.format("    server-port: %d", server_port));
@@ -560,9 +587,6 @@ public class JoshuaConfiguration {
             
           } else if (parameter.equals(normalize_key("show-weights"))) {
             show_weights_and_quit = true;
-
-          } else if (parameter.equals(normalize_key("input-type"))) {
-            ; // for Moses compatibility; ignore this 
 
           } else if (parameter.equals(normalize_key("n-best-list"))) {
             // for Moses compatibility

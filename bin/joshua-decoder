@@ -27,7 +27,7 @@ set -u
 JOSHUA=$(dirname $0)/..
 
 exec java -Xmx${mem} \
- 	-cp $JOSHUA/class:$JOSHUA/ext/berkeleylm/jar/berkeleylm.jar \
+ 	-cp $JOSHUA/class:$JOSHUA/ext/berkeleylm/jar/berkeleylm.jar:$JOSHUA/lib/gson-2.5.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \

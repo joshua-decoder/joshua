@@ -3,7 +3,6 @@ package joshua.decoder.ff.tm;
 import java.util.Arrays;  
 import java.util.Comparator;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;

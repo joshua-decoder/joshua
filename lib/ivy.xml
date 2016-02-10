@@ -11,5 +11,6 @@
     <dependency org="junit"  name="junit" rev="4.10" />
     <dependency org="net.sourceforge.collections" name="collections-generic" rev="4.01"/>
     <dependency org="args4j" name="args4j" rev="2.0.29" />
+    <dependency org="com.google.code.gson" name="gson" rev="2.5"/>
   </dependencies>
 </ivy-module>

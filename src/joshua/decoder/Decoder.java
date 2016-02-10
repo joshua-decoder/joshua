@@ -21,7 +21,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
-import joshua.decoder.io.TranslationRequest;
+import joshua.decoder.io.TranslationRequestStream;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
 import joshua.util.FileUtility;
@@ -136,12 +136,12 @@ public class Decoder {
    */
   private class RequestHandler extends Thread {
     /* Source of sentences to translate. */
-    private final TranslationRequest request;
+    private final TranslationRequestStream request;
 
     /* Where to put translated sentences. */
     private final Translations response;
 
-    RequestHandler(TranslationRequest request, Translations response) {
+    RequestHandler(TranslationRequestStream request, Translations response) {
       this.request = request;
       this.response = response;
     }
@@ -271,7 +271,7 @@ public class Decoder {
    * @param request
    * @return an iterable set of Translation objects
    */
-  public Translations decodeAll(TranslationRequest request) {
+  public Translations decodeAll(TranslationRequestStream request) {
     Translations translations = new Translations(request);
 
     new RequestHandler(request, translations).start();
@@ -507,9 +507,12 @@ public class Decoder {
    * @throws IOException
    */
   private void initializeTranslationGrammars() throws IOException {
+
+    /* Add the grammar for custom entries */
+//    this.grammars.add(new PhraseTable(null, "private", "phrase", joshuaConfiguration, 0));
     
     if (joshuaConfiguration.tms.size() > 0) {
-      
+
       // collect packedGrammars to check if they use a shared vocabulary
       final List<PackedGrammar> packed_grammars = new ArrayList<>();
 
