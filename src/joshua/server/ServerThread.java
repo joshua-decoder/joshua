@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
@@ -28,7 +29,7 @@ import joshua.decoder.io.TranslationRequestStream;
 /**
  * This class handles a concurrent request for translations from a newly opened socket.
  */
-public class TcpServerThread extends Thread implements HttpHandler {
+public class ServerThread extends Thread implements HttpHandler {
   private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
   
   private final JoshuaConfiguration joshuaConfiguration;
@@ -41,7 +42,7 @@ public class TcpServerThread extends Thread implements HttpHandler {
    * @param socket the socket representing the input/output streams
    * @param decoder the configured decoder that handles performing translations
    */
-  public TcpServerThread(Socket socket, Decoder decoder, JoshuaConfiguration joshuaConfiguration) {
+  public ServerThread(Socket socket, Decoder decoder, JoshuaConfiguration joshuaConfiguration) {
     this.joshuaConfiguration = joshuaConfiguration;
     this.socket = socket;
     this.decoder = decoder;
@@ -110,7 +111,7 @@ public class TcpServerThread extends Thread implements HttpHandler {
   public void handle(HttpExchange client) throws IOException {
 
     System.err.println("Got new client");
-    HashMap<String, String> params = queryToMap(client.getRequestURI().getQuery());
+    HashMap<String, String> params = queryToMap(URLDecoder.decode(client.getRequestURI().getQuery(), "UTF-8"));
     for (String key: params.keySet()) {
       System.err.println(String.format("%s = %s", key, params.get(key)));
     }

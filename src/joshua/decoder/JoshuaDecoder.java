@@ -13,7 +13,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import joshua.decoder.io.TranslationRequestStream;
 import joshua.server.TcpServer;
-import joshua.server.TcpServerThread;
+import joshua.server.ServerThread;
 
 /**
  * Implements decoder initialization, including interaction with <code>JoshuaConfiguration</code>
@@ -64,7 +64,7 @@ public class JoshuaDecoder {
       else {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         Decoder.LOG(1, String.format("** HTTP Server running and listening on port %d.", port));  
-        server.createContext("/", new TcpServerThread(null, decoder, joshuaConfiguration));
+        server.createContext("/", new ServerThread(null, decoder, joshuaConfiguration));
         server.setExecutor(null); // creates a default executor
         server.start();
       }
