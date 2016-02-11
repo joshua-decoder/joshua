@@ -31,11 +31,11 @@ public class TcpServer {
 
     try {
       ServerSocket serverSocket = new ServerSocket(joshuaConfiguration.server_port);
-      System.err.println(String.format("** TCP Server running and listening on port %d.", port));  
+      Decoder.LOG(1, String.format("** TCP Server running and listening on port %d.", port));  
 
       boolean listening = true;
       while (listening)
-        new TcpServerThread(serverSocket.accept(), decoder, joshuaConfiguration).start();
+        new ServerThread(serverSocket.accept(), decoder, joshuaConfiguration).start();
 
       serverSocket.close();
 
