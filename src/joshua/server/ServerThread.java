@@ -110,7 +110,6 @@ public class ServerThread extends Thread implements HttpHandler {
   @Override
   public void handle(HttpExchange client) throws IOException {
 
-    System.err.println("Got new client");
     HashMap<String, String> params = queryToMap(URLDecoder.decode(client.getRequestURI().getQuery(), "UTF-8"));
     for (String key: params.keySet()) {
       System.err.println(String.format("%s = %s", key, params.get(key)));
