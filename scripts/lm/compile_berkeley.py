@@ -11,6 +11,6 @@ parser.add_argument('arpa_file', help='The ARPA file to compile')
 parser.add_argument('output_file', help='The file to write to')
 args = parser.parse_args()
 
-cmd = "java -cp %s/lib/berkeleylm.jar -server -mx%s edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa %s %s" % (os.environ.get('JOSHUA'), args.mem, args.arpa_file, args.output_file)
+cmd = "java -cp %s/ext/berkeleylm/jar/berkeleylm.jar -server -mx%s edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa %s %s" % (os.environ.get('JOSHUA'), args.mem, args.arpa_file, args.output_file)
 print(cmd)
 subprocess.call(cmd, shell=True)

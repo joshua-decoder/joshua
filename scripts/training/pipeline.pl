@@ -1221,7 +1221,7 @@ sub compile_lm($) {
   } elsif ($LM_TYPE eq "berkeleylm") {
     my $berkeleylm_file = basename($lmfile, ".gz") . ".berkeleylm";
     $cachepipe->cmd("compile-berkeleylm",
-                    "java -cp $JOSHUA/lib/berkeleylm.jar -server -mx$BUILDLM_MEM edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa $lmfile $berkeleylm_file",
+                    "$JOSHUA/scripts/lm/compile_berkeley.py -m $BUILDLM_MEM $lmfile $berkeleylm_file",
                     $lmfile, $berkeleylm_file);
     return $berkeleylm_file;
 
@@ -1276,7 +1276,7 @@ if (defined $TRAIN{target} and $DO_BUILD_LM_FROM_CORPUS) {
 										$lmfile);
   } elsif ($LM_GEN eq "berkeleylm") {
 		$cachepipe->cmd("berkeleylm",
-										"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}.uniq",
+				"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/ext/berkeleylm/jar/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}.uniq",
                     "$lm_input",
 										$lmfile);
   } else {
