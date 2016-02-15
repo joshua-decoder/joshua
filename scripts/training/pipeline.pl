@@ -643,11 +643,13 @@ my %PREPPED = (
   TUNE => 0,
   TEST => 0);
 
-if (@CORPORA > 0 && $DO_PREPARE_CORPORA) {
+if (@CORPORA > 0) {
   my $prefixes = prepare_data("train",\@CORPORA,$MAXLEN);
 
   # used for parsing
-  $TRAIN{mixedcase} = "$DATA_DIRS{train}/$prefixes->{shortened}.$TARGET.gz";
+  if (exists $prefixes->{shortened}) {
+    $TRAIN{mixedcase} = "$DATA_DIRS{train}/$prefixes->{shortened}.$TARGET.gz";
+  }
 
   $TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
   $TRAIN{source} = "$DATA_DIRS{train}/corpus.$SOURCE";
@@ -656,7 +658,7 @@ if (@CORPORA > 0 && $DO_PREPARE_CORPORA) {
 }
 
 # prepare the tuning and development data
-if (defined $TUNE and $DO_PREPARE_CORPORA) {
+if (defined $TUNE) {
   my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
   $TUNE{source} = "$DATA_DIRS{tune}/corpus.$SOURCE";
   $TUNE{target} = "$DATA_DIRS{tune}/corpus.$TARGET";
@@ -667,7 +669,7 @@ if (defined $TUNE and $DO_PREPARE_CORPORA) {
   $PREPPED{TUNE} = 1;
 }
 
-if (defined $TEST and $DO_PREPARE_CORPORA) {
+if (defined $TEST) {
   my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
   $TEST{source} = "$DATA_DIRS{test}/corpus.$SOURCE";
   $TEST{target} = "$DATA_DIRS{test}/corpus.$TARGET";
@@ -1179,7 +1181,7 @@ TUNE:
     ;
 
 # prep the tuning data, unless already prepped
-if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
+if (! $PREPPED{TUNE}) {
   my $prefixes = prepare_data("tune",[$TUNE],$MAXLEN_TUNE);
   $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
   $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
@@ -1235,8 +1237,8 @@ sub compile_lm($) {
 if (defined $TRAIN{target} and $DO_BUILD_LM_FROM_CORPUS) {
 
   # make sure the training data is prepped
-  if (! $PREPPED{TRAIN} and $DO_PREPARE_CORPORA) {
-		my $prefixes = prepare_data("train",\@CORPORA,$MAXLEN);
+  if (! $PREPPED{TRAIN}) {
+		my $prefixes = prepare_data("train", \@CORPORA, $MAXLEN);
 
 		$TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
 		foreach my $lang ($SOURCE,$TARGET) {
@@ -1569,8 +1571,8 @@ TEST:
     ;
 
 # prepare the testing data
-if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA and $OPTIMIZER_RUN == 1) {
-  my $prefixes = prepare_data("test",[$TEST],$MAXLEN_TEST);
+if (! $PREPPED{TEST} and $OPTIMIZER_RUN == 1) {
+  my $prefixes = prepare_data("test", [$TEST], $MAXLEN_TEST);
   $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
   $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TEST} = 1;
@@ -1818,7 +1820,7 @@ sub prepare_data {
     } else {
       push(@infiles, $files[0]);
     }
-    push (@outfiles, "$DATA_DIRS{$label}/$label.$ext.gz");
+    push (@outfiles, "$DATA_DIRS{$label}/$label.$ext");
   }
 
   my $infiles =  join(" ", @infiles);
@@ -1835,71 +1837,74 @@ sub prepare_data {
   }
   # Done concatenating and filtering files
 
-  my $prefix = "$label";
+  # record where the concatenated input files were
+  $prefixes{last_step} = $prefixes{input} = "$DATA_DIRS{$label}/$label";
 
-  # tokenize the data
-  foreach my $lang (@exts) {
-		if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
-			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
-				system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
-			} else {
-        my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
-	my $ext = $lang; $ext =~ s/\.\d//;
-				$cachepipe->cmd("$label-tokenize-$lang",
-												"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $ext | $TOKENIZER -l $ext 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
-												"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
-			}
+  if ($DO_PREPARE_CORPORA) {
+    my $prefix = $label;
 
-		}
-  }
-  # extend the prefix
-  $prefix .= ".tok";
-  $prefixes{tokenized} = $prefix;
+    # tokenize the data
+    foreach my $lang (@exts) {
+      if (-e "$DATA_DIRS{$label}/$prefix.$lang") {
+        if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang")) { 
+          system("cp $DATA_DIRS{$label}/$prefix.$lang $DATA_DIRS{$label}/$prefix.tok.$lang");
+        } else {
+          my $TOKENIZER = ($lang eq $SOURCE) ? $TOKENIZER_SOURCE : $TOKENIZER_TARGET;
+          my $ext = $lang; $ext =~ s/\.\d//;
+          $cachepipe->cmd("$label-tokenize-$lang",
+                          "$CAT $DATA_DIRS{$label}/$prefix.$lang | $NORMALIZER $ext | $TOKENIZER -l $ext 2> /dev/null > $DATA_DIRS{$label}/$prefix.tok.$lang",
+                          "$DATA_DIRS{$label}/$prefix.$lang", "$DATA_DIRS{$label}/$prefix.tok.$lang");
+        }
 
-  if ($maxlen > 0) {
-    my (@infiles, @outfiles);
-    foreach my $ext (@exts) {
-      my $infile = "$DATA_DIRS{$label}/$prefix.$ext.gz";
-      my $outfile = "$DATA_DIRS{$label}/$prefix.$maxlen.$ext.gz";
-      if (-e $infile) {
-        push(@infiles, $infile);
-        push(@outfiles, $outfile);
       }
     }
+    # extend the prefix
+    $prefix .= ".tok";
+    $prefixes{tokenized} = $prefix;
 
-    my $infilelist = join(" ", map { "<(gzip -cd $_)" } @infiles);
-    my $outfilelist = join(" ", @outfiles);
+    if ($maxlen > 0) {
+      my (@infiles, @outfiles);
+      foreach my $ext (@exts) {
+        my $infile = "$DATA_DIRS{$label}/$prefix.$ext";
+        my $outfile = "$DATA_DIRS{$label}/$prefix.$maxlen.$ext";
+        if (-e $infile) {
+          push(@infiles, $infile);
+          push(@outfiles, $outfile);
+        }
+      }
 
-		# trim training data
-		$cachepipe->cmd("$label-trim",
-										"$PASTE $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $outfilelist",
-                    @infiles,
-                    @outfiles);
-		$prefix .= ".$maxlen";
-  }
-  # record this whether we shortened or not
-  $prefixes{shortened} = $prefix;
+      my $infilelist = join(" ", @infiles);
+      my $outfilelist = join(" ", @outfiles);
 
-  # lowercase
-  foreach my $lang (@exts) {
-		if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
-			if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
-				system("gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz > $DATA_DIRS{$label}/$prefix.lc.$lang");
-			} else { 
-				$cachepipe->cmd("$label-lowercase-$lang",
-												"gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz | $SCRIPTDIR/lowercase.perl > $DATA_DIRS{$label}/$prefix.lc.$lang",
-												"$DATA_DIRS{$label}/$prefix.$lang.gz",
-												"$DATA_DIRS{$label}/$prefix.lc.$lang");
-			}
-		}
-  }
-  $prefix .= ".lc";
-  $prefixes{lowercased} = $prefix;
-
-  foreach my $lang (@exts) {
-		if (-e "$DATA_DIRS{$label}/$prefixes{lowercased}.$lang") {
-      system("ln -sf $prefixes{lowercased}.$lang $DATA_DIRS{$label}/corpus.$lang");
+      # trim training data
+      $cachepipe->cmd("$label-trim",
+                      "$PASTE $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $outfilelist",
+                      @infiles,
+                      @outfiles);
+      $prefix .= ".$maxlen";
     }
+    # record this whether we shortened or not
+    $prefixes{shortened} = $prefix;
+
+    # lowercase
+    foreach my $lang (@exts) {
+      if (-e "$DATA_DIRS{$label}/$prefix.$lang") {
+        if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang")) { 
+          system("cat $DATA_DIRS{$label}/$prefix.$lang > $DATA_DIRS{$label}/$prefix.lc.$lang");
+        } else { 
+          $cachepipe->cmd("$label-lowercase-$lang",
+                          "cat $DATA_DIRS{$label}/$prefix.$lang | $SCRIPTDIR/lowercase.perl > $DATA_DIRS{$label}/$prefix.lc.$lang",
+                          "$DATA_DIRS{$label}/$prefix.$lang",
+                          "$DATA_DIRS{$label}/$prefix.lc.$lang");
+        }
+      }
+    }
+    $prefix .= ".lc";
+    $prefixes{last_step} = $prefixes{lowercased} = $prefix;
+  }
+
+  foreach my $lang (@exts) {
+    system("ln -sf $prefixes{last_step}.$lang $DATA_DIRS{$label}/corpus.$lang");
   }
 
   # Build a vocabulary
