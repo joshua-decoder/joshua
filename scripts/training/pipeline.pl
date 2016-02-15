@@ -114,7 +114,7 @@ my $FILTERING = "fast";
 # This is the amount of memory made available to Joshua.  You'll need
 # a lot more than this for SAMT decoding (though really it depends
 # mostly on your grammar size)
-my $JOSHUA_MEM = "3100m";
+my $JOSHUA_MEM = "4g";
 
 # the amount of memory available for hadoop processes (passed to
 # Hadoop via -Dmapred.child.java.opts
@@ -199,8 +199,8 @@ my $TUNER = "mert";
 # The metric to update to
 my $METRIC = "BLEU 4 closest";
 
-# The number of iterations of the mira to run
-my $TUNER_ITERATIONS = 15;
+# The number of iterations of the tuner to run
+my $TUNER_ITERATIONS = 10;
 
 # location of already-parsed corpus
 my $PARSED_CORPUS = undef;
