@@ -946,13 +946,17 @@ public class PackedGrammar extends AbstractGrammar {
 
   @Override
   public boolean isRegexpGrammar() {
-    // TODO Auto-generated method stub
     return false;
   }
 
   @Override
   public void addOOVRules(int word, List<FeatureFunction> featureFunctions) {
-    throw new RuntimeException("PackedGrammar: I can't add OOV rules");
+    throw new RuntimeException("PackedGrammar.addOOVRules(): I can't add OOV rules");
+  }
+  
+  @Override
+  public void addRule(Rule rule) {
+    throw new RuntimeException("PackedGrammar.addRule(): I can't add rules");
   }
   
   private void readConfig(String config) throws IOException {
