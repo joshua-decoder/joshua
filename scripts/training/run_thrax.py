@@ -29,6 +29,8 @@ parser = argparse.ArgumentParser(description='Run thrax')
 parser.add_argument('-o', dest='output_file', default='grammar.gz', help='Location of output grammar')
 parser.add_argument('-f', dest='force', default=False, action='store_true', help='Force overwrite')
 parser.add_argument('-T', dest='tmp_dir', default='/tmp', help='Temporary directory')
+parser.add_argument('-v', dest='verbose', default=False, action='store_true', help='Be verbose')
+parser.add_argument('-d', '--debug', dest='debug', default=False, action='store_true', help='Don\'t cleanup')
 parser.add_argument('thrax_config', help='Location of Thrax template to use')
 parser.add_argument('source_corpus', help='The source corpus')
 parser.add_argument('target_corpus', help='The target corpus (parsed if building SAMT)')
@@ -44,7 +46,8 @@ THRAX_JAR = os.path.join(os.environ['JOSHUA'], 'thrax', 'bin', 'thrax.jar')
 THRAXDIR = 'pipeline-%s-%s-%s' % ( source, target, os.getcwd().replace('/','_') )
 
 def run(cmd):
-    print(cmd)
+    if args.verbose:
+        print(cmd)
     subprocess.call(cmd, shell=True)
 
 def utf8open(file, flags='r'):
@@ -83,4 +86,8 @@ conf_file.close()
 run('%s/bin/hadoop jar %s -D mapred.child.java.opts="-Xmx%s" -D hadoop.tmp.dir=%s %s %s > thrax.log 2>&1' % (HADOOP, THRAX_JAR, '4g', args.tmp_dir, conf_file_name, THRAXDIR))
 run('rm -f grammar grammar.gz')
 run('%s/bin/hadoop fs -getmerge %s/final/ %s' % (HADOOP, THRAXDIR, args.output_file))
-#run('%s/bin/hadoop fs -rm -r %s' % (HADOOP, THRAXDIR))
+
+# Cleanup
+if not args.debug:
+    os.remove(thrax_file)
+    run('%s/bin/hadoop fs -rm -r %s' % (HADOOP, THRAXDIR))
