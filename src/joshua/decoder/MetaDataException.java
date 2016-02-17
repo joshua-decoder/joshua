@@ -6,18 +6,28 @@ package joshua.decoder;
  */
 
 public class MetaDataException extends Exception {
-
-  private String[] tokens = null;
+  private String type = null;
+  private String tokenString = null;
   
   public MetaDataException(String message) {
-    tokens = message.split(" ");
+    int firstSpace = message.indexOf(' ');
+    this.type = message.substring(1, firstSpace);
+    this.tokenString = message.substring(firstSpace + 1);
   }
 
   public String type() {
-    return this.tokens[0].substring(1);
+    return this.type;
+  }
+  
+  public String tokenString() {
+    return this.tokenString;
+  }
+  
+  public String[] tokens(String regex) {
+    return this.tokenString.split(regex);
   }
   
   public String[] tokens() {
-    return this.tokens;
+    return this.tokens("\\s+");
   }
 }

@@ -64,6 +64,7 @@ public class Decoder {
    */
   private List<Grammar> grammars;
   private ArrayList<FeatureFunction> featureFunctions;
+  private PhraseTable customPhraseTable;
 
   /* The feature weights. */
   public static FeatureVector weights;
@@ -82,7 +83,6 @@ public class Decoder {
    * @param configFile Name of configuration file.
    */
   public Decoder(JoshuaConfiguration joshuaConfiguration, String configFile) {
-
     this(joshuaConfiguration);
     this.initialize(configFile);
   }
@@ -109,6 +109,7 @@ public class Decoder {
     this.grammars = new ArrayList<Grammar>();
     this.threadPool = new ArrayBlockingQueue<DecoderThread>(
         this.joshuaConfiguration.num_parallel_decoders, true);
+    this.customPhraseTable = null;
   }
 
   /**
@@ -177,7 +178,18 @@ public class Decoder {
             System.err.println(String.format("%s = %f", tokens[1], Decoder.weights.getWeight(tokens[1])));
             
           } else if (meta.type().equals("add_rule")) {
-            // Add a rule to the custom grammar, if present
+            String tokens[] = meta.tokens(" \\|\\|\\| ");
+
+            if (tokens.length != 2) {
+              System.err.println("* INVALID RULE '" + meta.tokenString() + "'");;
+              continue;
+            }
+            
+            Rule rule = new HieroFormatReader().parseLine(
+                String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| custom=1", tokens[0], tokens[1]));
+            Decoder.this.customPhraseTable.addRule(rule);
+            rule.estimateRuleCost(featureFunctions);
+            Decoder.LOG(1, String.format("NEW RULE %s",  rule));
             
           } else if (meta.type().equals("remove_rule")) {
             // Remove a rule from a custom grammar, if present
@@ -444,7 +456,7 @@ public class Decoder {
       }
 
       Decoder.LOG(1, String.format("Read %d weights (%d of them dense)", weights.size(),
-          weights.DENSE_FEATURE_NAMES.size()));
+          FeatureVector.DENSE_FEATURE_NAMES.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -461,8 +473,8 @@ public class Decoder {
 
       // This is mostly for compatibility with the Moses tuning script
       if (joshuaConfiguration.show_weights_and_quit) {
-        for (int i = 0; i < weights.DENSE_FEATURE_NAMES.size(); i++) {
-          String name = weights.DENSE_FEATURE_NAMES.get(i);
+        for (int i = 0; i < FeatureVector.DENSE_FEATURE_NAMES.size(); i++) {
+          String name = FeatureVector.DENSE_FEATURE_NAMES.get(i);
           if (joshuaConfiguration.moses) 
             System.out.println(String.format("%s= %.5f", mosesize(name), weights.getDense(i)));
           else
@@ -508,9 +520,6 @@ public class Decoder {
    */
   private void initializeTranslationGrammars() throws IOException {
 
-    /* Add the grammar for custom entries */
-//    this.grammars.add(new PhraseTable(null, "private", "phrase", joshuaConfiguration, 0));
-    
     if (joshuaConfiguration.tms.size() > 0) {
 
       // collect packedGrammars to check if they use a shared vocabulary
@@ -567,6 +576,10 @@ public class Decoder {
       glueGrammar.addGlueRules(featureFunctions);
       this.grammars.add(glueGrammar);
     }
+    
+    /* Add the grammar for custom entries */
+    this.customPhraseTable = new PhraseTable(null, "custom", "phrase", joshuaConfiguration, 0);
+    this.grammars.add(this.customPhraseTable);
     
     /* Create an epsilon-deleting grammar */
     if (joshuaConfiguration.lattice_decoding) {

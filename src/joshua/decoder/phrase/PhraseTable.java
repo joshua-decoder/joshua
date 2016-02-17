@@ -39,7 +39,7 @@ public class PhraseTable implements Grammar {
     this.config = config;
     int spanLimit = 0;
     
-    if (new File(grammarFile).isDirectory()) {
+    if (grammarFile != null && new File(grammarFile).isDirectory()) {
       this.backend = new PackedGrammar(grammarFile, spanLimit, owner, type, config);
       if (this.backend.getMaxSourcePhraseLength() == -1) {
         System.err.println("FATAL: Using a packed grammar for a phrase table backend requires that you");

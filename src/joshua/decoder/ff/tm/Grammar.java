@@ -112,4 +112,11 @@ public interface Grammar {
    * @param featureFunctions
    */
   void addOOVRules(int word, List<FeatureFunction> featureFunctions);
+  
+  /**
+   * Add a rule to the grammar.
+   *
+   * @param Rule the rule
+   */
+  void addRule(Rule rule);
 }
