@@ -3,6 +3,8 @@ package joshua.decoder.io;
 import java.util.ArrayList;
 import java.util.List;
 
+import joshua.decoder.Translation;
+
 public class JSONMessage {
   public Data data;
   
@@ -46,5 +48,21 @@ public class JSONMessage {
       this.hyp = hyp;
       this.totalScore = score;  
     }
-  }  
+  }
+
+  public static JSONMessage buildMessage(Translation translation) {
+    JSONMessage message = new JSONMessage();
+    String[] results = translation.toString().split("\\n");
+    if (results.length > 0) {
+      JSONMessage.TranslationItem item = message.addTranslation(translation.rawTranslation());
+
+      for (String result: results) {
+        String[] tokens = result.split(" \\|\\|\\| ");
+        String rawResult = tokens[1];
+        float score = Float.parseFloat(tokens[3]);
+        item.addHypothesis(rawResult, score);
+      }
+    }
+    return message;
+  }
 }

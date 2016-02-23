@@ -3,6 +3,7 @@ package joshua.decoder;
 import java.io.BufferedWriter;	
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -12,8 +13,13 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
+import joshua.decoder.JoshuaConfiguration.INPUT_TYPE;
+import joshua.decoder.JoshuaConfiguration.SERVER_TYPE;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
@@ -21,6 +27,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
+import joshua.decoder.io.JSONMessage;
 import joshua.decoder.io.TranslationRequestStream;
 import joshua.decoder.phrase.PhraseTable;
 import joshua.decoder.segment_file.Sentence;
@@ -159,41 +166,9 @@ public class Decoder {
         Sentence sentence = null;
         try {
           sentence = request.next();
+          
         } catch (MetaDataException meta) {
-          if (meta.type().equals("set_weight")) {
-            // Change a decoder weight
-            String[] tokens = meta.tokens();
-            if (tokens.length != 3) {
-              System.err.println("* Error: weight change requires three tokens");
-            } else {
-              float old_weight = Decoder.weights.getWeight(tokens[1]);
-              Decoder.weights.set(tokens[1], Float.parseFloat(tokens[2]));
-              System.err.println(String.format("@set_weight: %s %.3f -> %.3f", 
-                  tokens[1], old_weight,
-                  Decoder.weights.getWeight(tokens[1])));
-            }
-            
-          } else if (meta.type().equals("get_weight")) {
-            String[] tokens = meta.tokens();
-            System.err.println(String.format("%s = %f", tokens[1], Decoder.weights.getWeight(tokens[1])));
-            
-          } else if (meta.type().equals("add_rule")) {
-            String tokens[] = meta.tokens(" \\|\\|\\| ");
-
-            if (tokens.length != 2) {
-              System.err.println("* INVALID RULE '" + meta.tokenString() + "'");;
-              continue;
-            }
-            
-            Rule rule = new HieroFormatReader().parseLine(
-                String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| custom=1", tokens[0], tokens[1]));
-            Decoder.this.customPhraseTable.addRule(rule);
-            rule.estimateRuleCost(featureFunctions);
-            Decoder.LOG(1, String.format("NEW RULE %s",  rule));
-            
-          } else if (meta.type().equals("remove_rule")) {
-            // Remove a rule from a custom grammar, if present
-          }
+          handleMetadata(meta);
 
           continue;
         }
@@ -207,6 +182,45 @@ public class Decoder {
         DecoderThread thread = Decoder.this.getThread();
         new DecoderThreadRunner(thread, sentence, response).start();
       }
+    }
+  }
+  
+  private void handleMetadata(MetaDataException meta) {
+    if (meta.type().equals("set_weight")) {
+      // Change a decoder weight
+      String[] tokens = meta.tokens();
+      if (tokens.length != 3) {
+        System.err.println("* Error: weight change requires three tokens");
+      } else {
+        float old_weight = Decoder.weights.getWeight(tokens[1]);
+        Decoder.weights.set(tokens[1], Float.parseFloat(tokens[2]));
+        System.err.println(String.format("@set_weight: %s %.3f -> %.3f", 
+            tokens[1], old_weight,
+            Decoder.weights.getWeight(tokens[1])));
+      }
+      
+    } else if (meta.type().equals("get_weight")) {
+      String[] tokens = meta.tokens();
+      System.err.println(String.format("%s = %f", tokens[1], Decoder.weights.getWeight(tokens[1])));
+      
+    } else if (meta.type().equals("add_rule")) {
+      String tokens[] = meta.tokens(" \\|\\|\\| ");
+
+      if (tokens.length != 2) {
+        System.err.println("* INVALID RULE '" + meta.tokenString() + "'");;
+        return;
+      }
+      
+      Rule rule = new HieroFormatReader().parseLine(
+          String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| custom=1", tokens[0], tokens[1]));
+      Decoder.this.customPhraseTable.addRule(rule);
+      rule.estimateRuleCost(featureFunctions);
+      Decoder.LOG(1, String.format("NEW RULE %s",  rule));
+      
+    } else if (meta.type().equals("list_rules")) {
+      // TODO: list all the rules
+    } else if (meta.type().equals("remove_rule")) {
+      // Remove a rule from a custom grammar, if present
     }
   }
 
@@ -282,14 +296,53 @@ public class Decoder {
    * 
    * @param request
    * @return an iterable set of Translation objects
+   * @throws IOException 
    */
-  public Translations decodeAll(TranslationRequestStream request) {
+  public void decodeAll(TranslationRequestStream request, OutputStream out) throws IOException {
     Translations translations = new Translations(request);
 
     new RequestHandler(request, translations).start();
+    
+    for (;;) {
+      Translation translation = translations.next();
+      if (translation == null)
+        break;
 
-    return translations;
+      if (joshuaConfiguration.input_type == INPUT_TYPE.json || joshuaConfiguration.server_type == SERVER_TYPE.HTTP) {
+        JSONMessage message = JSONMessage.buildMessage(translation);
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        out.write(gson.toJson(message).getBytes());
+        
+      } else {
+        /**
+         * We need to munge the feature value outputs in order to be compatible with Moses tuners.
+         * Whereas Joshua writes to STDOUT whatever is specified in the `output-format` parameter,
+         * Moses expects the simple translation on STDOUT and the n-best list in a file with a fixed
+         * format.
+         */
+        String text;
+        if (joshuaConfiguration.moses) {
+          text = translation.toString().replaceAll("=", "= ");
+          // Write the complete formatted string to STDOUT
+          if (joshuaConfiguration.n_best_file != null)
+            out.write(text.getBytes());
+          
+          // Extract just the translation and output that to STDOUT
+          text = text.substring(0,  text.indexOf('\n'));
+          String[] fields = text.split(" \\|\\|\\| ");
+          text = fields[1] + "\n";
+          
+        } else {
+          text = translation.toString();
+        }
+
+        out.write(text.getBytes());
+      }
+      out.flush();
+    }
   }
+
 
   /**
    * We can also just decode a single sentence.

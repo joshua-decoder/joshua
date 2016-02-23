@@ -169,7 +169,7 @@ public class JoshuaConfiguration {
 
   /* Type of server. Not sure we need to keep the regular TCP one around. */
   public enum SERVER_TYPE { none, TCP, HTTP };
-  public SERVER_TYPE server_type = SERVER_TYPE.none;
+  public SERVER_TYPE server_type = SERVER_TYPE.TCP;
   
   /* If set, Joshua will start a (multi-threaded, per "threads") TCP/IP server on this port. */
   public int server_port = 0;
@@ -519,9 +519,9 @@ public class JoshuaConfiguration {
             logger.info(String.format("    input-type: %s", input_type));
 
           } else if (parameter.equals(normalize_key("server-type"))) {
-            if (fds[1].equals("TCP"))
+            if (fds[1].toLowerCase().equals("tcp"))
               server_type = SERVER_TYPE.TCP;
-            else if (fds[1].equals("HTTP"))
+            else if (fds[1].toLowerCase().equals("http"))
               server_type = SERVER_TYPE.HTTP;
 
             logger.info(String.format("    server-type: %s", server_type));

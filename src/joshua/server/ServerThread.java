@@ -1,11 +1,9 @@
 package joshua.server;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.Socket;
 import java.net.SocketException;
@@ -13,17 +11,11 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import joshua.decoder.Decoder;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Translation;
-import joshua.decoder.Translations;
-import joshua.decoder.JoshuaConfiguration.INPUT_TYPE;
-import joshua.decoder.io.JSONMessage;
 import joshua.decoder.io.TranslationRequestStream;
 
 /**
@@ -58,36 +50,18 @@ public class ServerThread extends Thread implements HttpHandler {
 
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), FILE_ENCODING));
-      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
       TranslationRequestStream request = new TranslationRequestStream(reader, joshuaConfiguration);
-      Translations translations = decoder.decodeAll(request);
-      
-      for (;;) {
-        Translation translation = translations.next();
-        if (translation == null)
-          break;
 
-        try {
-          
-          if (joshuaConfiguration.input_type == INPUT_TYPE.json) {
-            JSONMessage message = buildMessage(translation);
-              
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            out.write(gson.toJson(message));
-          
-          } else {
-            out.write(translation.toString());
-          }
-          out.flush();
-        } catch (SocketException e) {
-          System.err.println("* WARNING: Socket interrupted");
-          request.shutdown();
-          return;
-        }
+      try {
+        decoder.decodeAll(request, socket.getOutputStream());
+
+      } catch (SocketException e) {
+        System.err.println("* WARNING: Socket interrupted");
+        request.shutdown();
+        return;
       }
       reader.close();
-      out.close();
       socket.close();
     } catch (IOException e) {
       return;
@@ -107,6 +81,30 @@ public class ServerThread extends Thread implements HttpHandler {
     return result;
   } 
 
+  private class HttpWriter extends OutputStream {
+
+    private HttpExchange client = null;
+    private OutputStream out = null;
+    
+    public HttpWriter(HttpExchange client) {
+      this.client = client;
+    }
+    
+    @Override
+    public void write(byte[] response) throws IOException {
+      client.sendResponseHeaders(200, response.length);
+      out = client.getResponseBody();
+      out.write(response);
+      out.close();
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      out.write(b);
+    }
+  }
+      
+      
   @Override
   public void handle(HttpExchange client) throws IOException {
 
@@ -118,32 +116,8 @@ public class ServerThread extends Thread implements HttpHandler {
     
     BufferedReader reader = new BufferedReader(new StringReader(query));
     TranslationRequestStream request = new TranslationRequestStream(reader, joshuaConfiguration);
-    Translation translation = decoder.decodeAll(request).next();
-    reader.close();
     
-    JSONMessage message = buildMessage(translation);
-
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    String response = gson.toJson(message);
-    client.sendResponseHeaders(200, response.length());
-    OutputStream os = client.getResponseBody();
-    os.write(response.getBytes());
-    os.close();
-  }
-
-  private JSONMessage buildMessage(Translation translation) {
-    JSONMessage message = new JSONMessage();
-    String[] results = translation.toString().split("\\n");
-    if (results.length > 0) {
-      JSONMessage.TranslationItem item = message.addTranslation(translation.rawTranslation());
-
-      for (String result: results) {
-        String[] tokens = result.split(" \\|\\|\\| ");
-        String rawResult = tokens[1];
-        float score = Float.parseFloat(tokens[3]);
-        item.addHypothesis(tokens[1], score);
-      }
-    }
-    return message;
+    decoder.decodeAll(request, new HttpWriter(client));
+    reader.close();
   }
 }
