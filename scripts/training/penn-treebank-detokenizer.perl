@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 
+use warnings;
 use strict;
 
 # Sample De-Tokenizer
@@ -8,7 +9,6 @@ use strict;
 
 binmode(STDIN, ":utf8");
 binmode(STDOUT, ":utf8");
-use strict;
 
 my $language = "en";
 my $QUIET = 1;

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 # Sample Tokenizer
 # written by Josh Schroeder, based on code by Philipp Koehn
@@ -6,6 +6,7 @@
 binmode(STDIN, ":encoding(utf8)");
 binmode(STDOUT, ":encoding(utf8)");
 
+use warnings;
 use strict;
 
 my $mydir = "$ENV{JOSHUA}/scripts/training/nonbreaking_prefixes";
