@@ -30,6 +30,9 @@ use POSIX qw[ceil];
 use List::Util qw[max min sum];
 use File::Temp qw[:mktemp tempdir];
 use CachePipe;
+
+# There are some Perl 5.10 Unicode bugs that cause problems, mostly in sub-scripts
+use v5.12;
 # use Thread::Pool;
 
 # Hadoop uses a stupid hacker trick to change directories, but (per Lane Schwartz) if CDPATH
