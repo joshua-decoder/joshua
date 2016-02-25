@@ -427,7 +427,7 @@ public class KBestExtractor {
      */
     private void getCandidates(KBestExtractor kbestExtractor) {
       /* The list of candidates extending from this (virtual) node. */
-      candHeap = new PriorityQueue<DerivationState>(new DerivationStateComparator());
+      candHeap = new PriorityQueue<DerivationState>(11, new DerivationStateComparator());
 
       /*
        * When exploring the cube frontier, there are multiple paths to each candidate. For example,
