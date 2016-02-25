@@ -10,8 +10,8 @@ def penn_treebank_tokenize(lang_short_code, text):
     runner_path = os.path.join(
         os.environ['JOSHUA'],
         'scripts',
-        'training',
-        'penn-treebank-tokenizer.perl'
+        'preparation',
+        'tokenize.pl'
     )
     options = ['-l', lang_short_code]
     p = Popen(

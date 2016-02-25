@@ -73,6 +73,7 @@ my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER_SOURCE = "$SCRIPTDIR/preparation/tokenize.pl";
 my $TOKENIZER_TARGET = "$SCRIPTDIR/preparation/detokenize.pl";
 my $NORMALIZER = "$SCRIPTDIR/preparation/normalize.pl";
+my $LOWERCASER = "$SCRIPTDIR/preparation/lowercase.pl";
 my $GIZA_TRAINER = "$SCRIPTDIR/training/run-giza.pl";
 my $TUNECONFDIR = "$SCRIPTDIR/training/templates/tune";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
@@ -1896,7 +1897,7 @@ sub prepare_data {
           system("cat $DATA_DIRS{$label}/$prefix.$lang > $DATA_DIRS{$label}/$prefix.lc.$lang");
         } else { 
           $cachepipe->cmd("$label-lowercase-$lang",
-                          "cat $DATA_DIRS{$label}/$prefix.$lang | $SCRIPTDIR/lowercase.perl > $DATA_DIRS{$label}/$prefix.lc.$lang",
+                          "cat $DATA_DIRS{$label}/$prefix.$lang | $LOWERCASER > $DATA_DIRS{$label}/$prefix.lc.$lang",
                           "$DATA_DIRS{$label}/$prefix.$lang",
                           "$DATA_DIRS{$label}/$prefix.lc.$lang");
         }

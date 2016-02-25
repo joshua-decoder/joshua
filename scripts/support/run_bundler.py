@@ -103,8 +103,8 @@ options that may be useful during decoding include:
 """
 
 JOSHUA_PATH = os.environ.get('JOSHUA')
-default_normalizer = os.path.join(JOSHUA_PATH, "scripts/training/normalize.pl")
-default_tokenizer = os.path.join(JOSHUA_PATH, "scripts/training/penn-treebank-tokenizer.perl")
+default_normalizer = os.path.join(JOSHUA_PATH, "scripts/preparation/normalize.pl")
+default_tokenizer = os.path.join(JOSHUA_PATH, "scripts/preparation/tokenize.pl")
 FILE_TYPE_TOKENS = ['lm', 'tm']
 FILE_TYPE_OPTIONS = ['-path', '-lm_file']
 
