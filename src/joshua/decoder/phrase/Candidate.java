@@ -16,7 +16,7 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
-public class Candidate implements Comparable<Candidate> {
+public class Candidate {
 
   // the set of hypotheses that can be paired with phrases from this span 
   private List<Hypothesis> hypotheses;
@@ -131,11 +131,6 @@ public class Candidate implements Comparable<Candidate> {
     return null;
   }
   
-  @Override
-  public int compareTo(Candidate other) {
-    return Float.compare(other.score(), score());
-  }
-
   /**
    * Returns the input span from which the phrases for this candidates were gathered.
    * 

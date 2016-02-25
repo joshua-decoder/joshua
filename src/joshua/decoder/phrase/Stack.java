@@ -49,7 +49,7 @@ public class Stack extends ArrayList<Hypothesis> {
     this.sentence = sentence;
     this.config = config;
     
-    this.candidates = new PriorityQueue<Candidate>(1);
+    this.candidates = new PriorityQueue<Candidate>(1, new CandidateComparator());
     this.coverages = new HashMap<Coverage, ArrayList<Hypothesis>>();
     this.visitedStates = new HashSet<Candidate>();
     this.deduper = new HashMap<Hypothesis,Hypothesis>();

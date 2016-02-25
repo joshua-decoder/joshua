@@ -3,6 +3,7 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;	
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +32,7 @@ class Cell {
   private int goalSymbol;
 
   // to maintain uniqueness of nodes
-  private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new HashMap<HGNode.Signature, HGNode>();
+  private HashMap<HGNode.Signature, HGNode> nodesSigTbl = new LinkedHashMap<HGNode.Signature, HGNode>();
 
   // signature by lhs
   private Map<Integer, SuperNode> superNodesTbl = new HashMap<Integer, SuperNode>();
