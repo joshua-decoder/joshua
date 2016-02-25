@@ -1896,7 +1896,7 @@ sub prepare_data {
           system("cat $DATA_DIRS{$label}/$prefix.$lang > $DATA_DIRS{$label}/$prefix.lc.$lang");
         } else { 
           $cachepipe->cmd("$label-lowercase-$lang",
-                          "cat $DATA_DIRS{$label}/$prefix.$lang | $SCRIPTDIR/lowercase.perl > $DATA_DIRS{$label}/$prefix.lc.$lang",
+                          "cat $DATA_DIRS{$label}/$prefix.$lang | $SCRIPTDIR/preparation/lowercase.pl > $DATA_DIRS{$label}/$prefix.lc.$lang",
                           "$DATA_DIRS{$label}/$prefix.$lang",
                           "$DATA_DIRS{$label}/$prefix.lc.$lang");
         }
