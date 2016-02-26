@@ -72,8 +72,7 @@ public class Chart {
   private int sourceLength;
   private List<FeatureFunction> featureFunctions;
   private Grammar[] grammars;
-  private DotChart[] dotcharts; // each grammar should have a dotchart
-                                // associated with it
+  private DotChart[] dotcharts; // each grammar should have a dotchart associated with it
   private Cell goalBin;
   private int goalSymbolID = -1;
   private Lattice<Token> inputLattice;

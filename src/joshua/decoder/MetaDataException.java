@@ -11,8 +11,13 @@ public class MetaDataException extends Exception {
   
   public MetaDataException(String message) {
     int firstSpace = message.indexOf(' ');
-    this.type = message.substring(1, firstSpace);
-    this.tokenString = message.substring(firstSpace + 1);
+    if (firstSpace != -1) {
+      this.type = message.substring(1, firstSpace);
+      this.tokenString = message.substring(firstSpace + 1);
+    } else if (message.length() > 0) {
+      this.type = message.substring(1);
+      this.tokenString = "";
+    }
   }
 
   public String type() {

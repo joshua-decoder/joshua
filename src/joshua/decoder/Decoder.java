@@ -7,14 +7,12 @@ import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureVector;
@@ -24,6 +22,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModel;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.packed.PackedGrammar;
@@ -43,11 +42,13 @@ import joshua.util.io.LineReader;
  * decodeAll(TranslationRequest), which returns a set of Translation objects wrapped in an iterable
  * Translations object. It is important that we support multithreading both (a) across the sentences
  * within a request and (b) across requests, in a round-robin fashion. This is done by maintaining a
- * fixed sized concurrent thread pool. When a new request comes in, a RequestHandler thread is
- * launched. This object reads iterates over the request's sentences, obtaining a thread from the
+ * fixed sized concurrent thread pool. When a new request comes in, a RequestParallelizer thread is
+ * launched. This object iterates over the request's sentences, obtaining a thread from the
  * thread pool, and using that thread to decode the sentence. If a decoding thread is not available,
- * it will block until one is in a fair (FIFO) manner. This maintains fairness across requests so
- * long as each request only requests thread when it has a sentence ready.
+ * it will block until one is in a fair (FIFO) manner. RequestParallelizer thereby permits intra-request
+ * parallelization by separating out reading the input stream from processing the translated sentences,
+ * but also ensures that round-robin parallelization occurs, since RequestParallelizer uses the
+ * thread pool before translating each request.
  * 
  * A decoding thread is handled by DecoderThread and launched from DecoderThreadRunner. The purpose
  * of the runner is to record where to place the translated sentence when it is done (i.e., which
@@ -142,16 +143,22 @@ public class Decoder {
    * @author Matt Post <post@cs.jhu.edu>
    * 
    */
-  private class RequestHandler extends Thread {
+  private class RequestParallelizer extends Thread {
     /* Source of sentences to translate. */
     private final TranslationRequestStream request;
 
     /* Where to put translated sentences. */
     private final Translations response;
-
-    RequestHandler(TranslationRequestStream request, Translations response) {
+    
+    /* Sometimes we need to communicate with the client even when we didn't get a new sentence
+     * (e.g., metadata)
+     */
+    private OutputStream out;
+    
+    RequestParallelizer(TranslationRequestStream request, Translations response, OutputStream out) {
       this.request = request;
       this.response = response;
+      this.out = out;
     }
 
     @Override
@@ -168,7 +175,11 @@ public class Decoder {
           sentence = request.next();
           
         } catch (MetaDataException meta) {
-          handleMetadata(meta);
+          try {
+            handleMetadata(meta);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
 
           continue;
         }
@@ -183,44 +194,148 @@ public class Decoder {
         new DecoderThreadRunner(thread, sentence, response).start();
       }
     }
-  }
-  
-  private void handleMetadata(MetaDataException meta) {
-    if (meta.type().equals("set_weight")) {
-      // Change a decoder weight
-      String[] tokens = meta.tokens();
-      if (tokens.length != 3) {
-        System.err.println("* Error: weight change requires three tokens");
-      } else {
-        float old_weight = Decoder.weights.getWeight(tokens[1]);
-        Decoder.weights.set(tokens[1], Float.parseFloat(tokens[2]));
-        System.err.println(String.format("@set_weight: %s %.3f -> %.3f", 
-            tokens[1], old_weight,
-            Decoder.weights.getWeight(tokens[1])));
-      }
-      
-    } else if (meta.type().equals("get_weight")) {
-      String[] tokens = meta.tokens();
-      System.err.println(String.format("%s = %f", tokens[1], Decoder.weights.getWeight(tokens[1])));
-      
-    } else if (meta.type().equals("add_rule")) {
-      String tokens[] = meta.tokens(" \\|\\|\\| ");
 
-      if (tokens.length != 2) {
-        System.err.println("* INVALID RULE '" + meta.tokenString() + "'");;
-        return;
+    /**
+     * When metadata is found on the input, it needs to be processed. That is done here. Sometimes
+     * this involves returning data to the client.
+     * 
+     * @param meta
+     * @throws IOException
+     */
+    private void handleMetadata(MetaDataException meta) throws IOException {
+      if (meta.type().equals("set_weight")) {
+        // Change a decoder weight
+        String[] tokens = meta.tokens();
+        if (tokens.length != 3) {
+          System.err.println("* Error: weight change requires three tokens");
+        } else {
+          float old_weight = Decoder.weights.getWeight(tokens[1]);
+          Decoder.weights.set(tokens[1], Float.parseFloat(tokens[2]));
+          System.err.println(String.format("@set_weight: %s %.3f -> %.3f", 
+              tokens[1], old_weight,
+              Decoder.weights.getWeight(tokens[1])));
+        }
+        
+        // TODO: return a JSON object with this weight or all weights
+        out.write("".getBytes());
+
+      } else if (meta.type().equals("get_weight")) {
+        // TODO: add to JSON object, send back
+        
+        String[] tokens = meta.tokens();
+        
+        System.err.println(String.format("%s = %f", tokens[1], Decoder.weights.getWeight(tokens[1])));
+
+        out.write("".getBytes());
+                
+      } else if (meta.type().equals("add_rule")) {
+        String tokens[] = meta.tokens(" \\|\\|\\| ");
+
+        if (tokens.length != 2) {
+          System.err.println("* INVALID RULE '" + meta.tokenString() + "'");;
+          out.write("bad rule".getBytes());
+          return;
+        }
+
+        Rule rule = new HieroFormatReader().parseLine(
+            String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| custom=1", tokens[0], tokens[1]));
+        Decoder.this.customPhraseTable.addRule(rule);
+        rule.estimateRuleCost(featureFunctions);
+        Decoder.LOG(1, String.format("Added custom rule %s", formatRule(rule)));
+        
+        String response = String.format("Added rule %s", formatRule(rule));
+        out.write(response.getBytes());
+
+      } else if (meta.type().equals("list_rules")) {
+        
+        JSONMessage message = new JSONMessage();
+        
+        // Walk the the grammar trie
+        ArrayList<Trie> nodes = new ArrayList<Trie>();
+        nodes.add(customPhraseTable.getTrieRoot());
+        
+        while (nodes.size() > 0) {
+          Trie trie = nodes.remove(0);
+          
+          if (trie == null)
+            continue;
+
+          if (trie.hasRules()) {
+            for (Rule rule: trie.getRuleCollection().getRules()) {
+              message.addRule(formatRule(rule));
+            }
+          }
+
+          if (trie.getExtensions() != null)
+            nodes.addAll(trie.getExtensions());
+        }
+        
+        out.write(message.toString().getBytes());
+        
+      } else if (meta.type().equals("remove_rule")) {
+        // Remove a rule from a custom grammar, if present
+        String[] tokens = meta.tokenString().split(" \\|\\|\\| ");
+        if (tokens.length != 2) {
+          out.write(String.format("Invalid delete request: '%s'", meta.tokenString()).getBytes());
+          return;
+        }
+
+        // Search for the rule in the trie
+        int nt_i = Vocabulary.id(joshuaConfiguration.default_non_terminal);
+        Trie trie = customPhraseTable.getTrieRoot().match(nt_i);
+
+        for (String word: tokens[0].split("\\s+")) {
+          int id = Vocabulary.id(word);
+          Trie nextTrie = trie.match(id);
+          if (nextTrie != null)
+            trie = nextTrie;
+        }
+
+        if (trie.hasRules()) {
+          Rule matched = null;
+          for (Rule rule: trie.getRuleCollection().getRules()) {
+            String target = rule.getEnglishWords();
+            target = target.substring(target.indexOf(' ') + 1);
+            
+            if (tokens[1].equals(target)) {
+              matched = rule;
+              break;
+            }
+          }
+          trie.getRuleCollection().getRules().remove(matched);
+          out.write(String.format("Removed rule %s", formatRule(matched)).getBytes());
+          return;
+        }
+        
+        out.write(String.format("No such rule %s", meta.tokenString()).getBytes());
+      }
+    }
+
+    /**
+     * Strips the nonterminals from the lefthand side of the rule.
+     * 
+     * @param rule
+     * @return
+     */
+    private String formatRule(Rule rule) {
+      String ruleString = "";
+      boolean first = true;
+      for (int word: rule.getFrench()) {
+        if (!first)
+          ruleString += " " + Vocabulary.word(word);
+        first = false;
       }
       
-      Rule rule = new HieroFormatReader().parseLine(
-          String.format("[X] ||| [X,1] %s ||| [X,1] %s ||| custom=1", tokens[0], tokens[1]));
-      Decoder.this.customPhraseTable.addRule(rule);
-      rule.estimateRuleCost(featureFunctions);
-      Decoder.LOG(1, String.format("NEW RULE %s",  rule));
-      
-    } else if (meta.type().equals("list_rules")) {
-      // TODO: list all the rules
-    } else if (meta.type().equals("remove_rule")) {
-      // Remove a rule from a custom grammar, if present
+      ruleString += " |||"; // space will get added with first English word
+      first = true;
+      for (int word: rule.getEnglish()) {
+        if (!first)
+          ruleString += " " + Vocabulary.word(word);
+        first = false;
+      }
+
+      // strip of the leading space
+      return ruleString.substring(1);
     }
   }
 
@@ -301,7 +416,8 @@ public class Decoder {
   public void decodeAll(TranslationRequestStream request, OutputStream out) throws IOException {
     Translations translations = new Translations(request);
 
-    new RequestHandler(request, translations).start();
+    /* Start a thread to handle requests on the input stream */
+    new RequestParallelizer(request, translations, out).start();
     
     for (;;) {
       Translation translation = translations.next();
@@ -310,9 +426,7 @@ public class Decoder {
 
       if (joshuaConfiguration.input_type == INPUT_TYPE.json || joshuaConfiguration.server_type == SERVER_TYPE.HTTP) {
         JSONMessage message = JSONMessage.buildMessage(translation);
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        out.write(gson.toJson(message).getBytes());
+        out.write(message.toString().getBytes());
         
       } else {
         /**

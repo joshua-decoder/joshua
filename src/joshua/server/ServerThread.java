@@ -109,9 +109,9 @@ public class ServerThread extends Thread implements HttpHandler {
   public void handle(HttpExchange client) throws IOException {
 
     HashMap<String, String> params = queryToMap(URLDecoder.decode(client.getRequestURI().getQuery(), "UTF-8"));
-    for (String key: params.keySet()) {
-      System.err.println(String.format("%s = %s", key, params.get(key)));
-    }
+//    for (String key: params.keySet()) {
+//      System.err.println(String.format("%s = %s", key, params.get(key)));
+//    }
     String query = params.get("q");
     
     BufferedReader reader = new BufferedReader(new StringReader(query));
