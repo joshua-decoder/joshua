@@ -1,4 +1,0 @@
-0 ||| (ROOT ([0-GOAL-8] <s> ([1-S-7] ([1-NP-3] ([1-DT-2] the) ([2-NN-3] cat)) ([3-VP-7] ([3-VBZ-4] is) ([4-PP-7] ([4-PREP-5] upon) ([5-NP-7] ([5-DT-6] the) ([6-NN-7] rug))))) </s>))
-1 ||| (ROOT ([0-GOAL-8] <s> ([1-S-7] ([1-NP-3] ([1-DT-2] the) ([2-NN-3] dog)) ([3-VP-7] ([3-VBZ-4] is) ([4-PP-7] ([4-PREP-5] upon) ([5-NP-7] ([5-DT-6] the) ([6-NN-7] rug))))) </s>))
-2 ||| 
-3 ||| (ROOT ([0-GOAL-3] <s> ([1-S-2] z) </s>))

@@ -1,4 +1,0 @@
-Tests decoding of lattices (sentence 1) and ensures that lattices are not trimmed
-for length but that sentences are (sentence 2).
-
-Sentence 3 tests scientific notation on arc labels.

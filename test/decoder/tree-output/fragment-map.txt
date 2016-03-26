@@ -1,2 +1,0 @@
-(S (NP (PRP "I")) (VP (VB "am"))) ||| I AM
-

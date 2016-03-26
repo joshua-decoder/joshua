@@ -1,6 +1,0 @@
-[submodule "thrax"]
-	path = thrax
-	url = https://github.com/joshua-decoder/thrax.git
-[submodule "berkeleylm"]
-	path = ext/berkeleylm
-	url = https://github.com/joshua-decoder/berkeleylm.git

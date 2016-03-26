@@ -1,1 +1,0 @@
-../scripts/training/pipeline.pl

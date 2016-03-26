@@ -1,4 +1,0 @@
-0 ||| girl pretty ||| tm_regexp_0=-2.000 tm_regexp_1=-1.000 tm_glue_0=2.000 OOVPenalty=0.000 ||| -5.000
-1 ||| boy pretty ||| tm_regexp_0=-2.000 tm_regexp_1=-1.000 tm_glue_0=2.000 OOVPenalty=0.000 ||| -5.000
-2 ||| really big number ||| tm_regexp_0=-1.000 tm_regexp_1=0.000 tm_glue_0=1.000 OOVPenalty=0.000 ||| -2.000
-3 ||| 192837102_OOV ||| tm_regexp_0=0.000 tm_regexp_1=0.000 tm_glue_0=1.000 OOVPenalty=-100.000 ||| -101.000
