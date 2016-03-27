@@ -1,6 +1,16 @@
 The Joshua decoder has become an official Apache Incubator project.
 The new official repository location has therefore been relocated to
 
+    https://git-wip-us.apache.org/repos/asf/incubator-joshua.git
+
+This is mirrored to Github at the following location:
+
     https://github.com/apache/incubator-joshua
+
+The Joshua website continues to be hosted at
+
+    http://joshua-decoder.org
+
+but will be moved to the Apache incubator domain in the near future.
 
 - March 2016
