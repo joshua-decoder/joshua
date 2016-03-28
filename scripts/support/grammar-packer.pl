@@ -27,6 +27,7 @@ my %opts = (
   v => 0,         # verbose
 );
 getopts("m:T:vg:o:", \%opts) || die usage();
+die usage() if (@ARGV);
 
 my $JOSHUA = $ENV{JOSHUA} or die "you must defined \$JOSHUA";
 my $CAT    = "$JOSHUA/scripts/training/scat";
@@ -40,7 +41,7 @@ my @grammars = split(' ', $opts{g});
 my @outputs = split(' ', $opts{o});
 
 # make sure outputs is same size as inputs, or 0
-die usage() if (scalar(@outputs) != 0 && scalar(@outputs) != scalar(@grammars));
+die usage() if (scalar(@outputs) == 0 || scalar(@grammars) == 0 || scalar(@outputs) != scalar(@grammars));
 
 # if no outputs given, generate default names
 if (scalar(@outputs) < scalar(@grammars)) {
