@@ -46,6 +46,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.BufferUnderflowException;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -487,6 +488,7 @@ public class PackedGrammar extends AbstractGrammar {
 
       feature_position += EncoderConfiguration.ID_SIZE;
       StringBuilder sb = new StringBuilder();
+
       for (int i = 0; i < num_features; i++) {
         int feature_id = encoding.readId(features, feature_position);
         FloatEncoder encoder = encoding.encoder(feature_id);
@@ -505,18 +507,34 @@ public class PackedGrammar extends AbstractGrammar {
       return sb.toString().trim();
     }
 
-    private final byte[] getAlignmentArray(int block_id) {
+    /**
+     * We need to synchronize this method as there is a many to one ratio between
+     * PackedRule/PhrasePair and this class (PackedSlice). This means during concurrent first
+     * getAlignments calls to PackedRule objects they could alter each other's positions within the
+     * buffer before calling read on the buffer.
+     */
+    private synchronized final byte[] getAlignmentArray(int block_id) {
       if (alignments == null)
         throw new RuntimeException("No alignments available.");
       int alignment_position = alignmentLookup[block_id];
       int num_points = (int) alignments.get(alignment_position);
       byte[] alignment = new byte[num_points * 2];
-      
+
       alignments.position(alignment_position + 1);
-      alignments.get(alignment, 0, num_points * 2);
+      try {
+        alignments.get(alignment, 0, num_points * 2);
+      } catch (BufferUnderflowException bue) {
+        Decoder.LOG(4, "Had an exception when accessing alignment mapped byte buffer");
+        Decoder.LOG(4, "Attempting to access alignments at position: " + alignment_position + 1);
+        Decoder.LOG(4, "And to read this many bytes: " + num_points * 2);
+        Decoder.LOG(4, "Buffer capacity is : " + alignments.capacity());
+        Decoder.LOG(4, "Buffer position is : " + alignments.position());
+        Decoder.LOG(4, "Buffer limit is : " + alignments.limit());
+        throw bue;
+      }
       return alignment;
     }
-    
+
     private final PackedTrie root() {
       return getTrie(0);
     }
