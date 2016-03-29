@@ -284,6 +284,7 @@
 
   <target name="test" depends="all" description="--> Run tests">
     <exec dir="test" executable="/bin/bash" failonerror="false">
+      <env key="JOSHUA" path="${JOSHUA}" />
       <arg line="run-all-tests.sh" />
     </exec>
   </target>
