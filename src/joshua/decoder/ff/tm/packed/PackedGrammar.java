@@ -38,15 +38,13 @@ package joshua.decoder.ff.tm.packed;
 
 import static java.util.Collections.sort;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -75,7 +73,6 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
-import joshua.decoder.ff.tm.packed.SliceAggregatingTrie;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 import joshua.util.io.LineReader;
@@ -322,20 +319,15 @@ public class PackedGrammar extends AbstractGrammar {
     private final String name;
 
     private final int[] source;
+    private final IntBuffer target;
+    private final ByteBuffer features;
+    private final ByteBuffer alignments;
 
-    private final int[] target;
     private final int[] targetLookup;
-
-    private MappedByteBuffer features;
     private int featureSize;
     private int[] featureLookup;
-    private RandomAccessFile featureFile;
-
     private float[] estimated;
     private float[] precomputable;
-    
-    private RandomAccessFile alignmentFile;
-    private MappedByteBuffer alignments;
     private int[] alignmentLookup;
 
     /**
@@ -352,81 +344,92 @@ public class PackedGrammar extends AbstractGrammar {
       File feature_file = new File(prefix + ".features");
       File alignment_file = new File(prefix + ".alignments");
 
-      // Get the channels etc.
-      FileInputStream source_fis = new FileInputStream(source_file);
-      FileChannel source_channel = source_fis.getChannel();
-      int source_size = (int) source_channel.size();
+      source = fullyLoadFileToArray(source_file);
+      // First int specifies the size of this file, load from 1st int on
+      targetLookup = fullyLoadFileToArray(target_lookup_file, 1);
 
-      FileInputStream target_fis = new FileInputStream(target_file);
-      FileChannel target_channel = target_fis.getChannel();
-      int target_size = (int) target_channel.size();
+      target = associateMemoryMappedFile(target_file).asIntBuffer();
+      features = associateMemoryMappedFile(feature_file);
+      initializeFeatureStructures();
 
-      featureFile = new RandomAccessFile(feature_file, "r");
-      FileChannel feature_channel = featureFile.getChannel();
-      int feature_size = (int) feature_channel.size();
-
-      IntBuffer source_buffer = source_channel.map(MapMode.READ_ONLY, 0, source_size).asIntBuffer();
-      source = new int[source_size / 4];
-      source_buffer.get(source);
-      source_fis.close();
-
-      IntBuffer target_buffer = target_channel.map(MapMode.READ_ONLY, 0, target_size).asIntBuffer();
-      target = new int[target_size / 4];
-      target_buffer.get(target);
-      target_fis.close();
-
-      features = feature_channel.map(MapMode.READ_ONLY, 0, feature_size);
-      features.load();
-      
       if (alignment_file.exists()) {
-        alignmentFile = new RandomAccessFile(alignment_file, "r");
-        FileChannel alignment_channel = alignmentFile.getChannel();
-        int alignment_size = (int) alignment_channel.size();
-        alignments = alignment_channel.map(MapMode.READ_ONLY, 0, alignment_size);
-        alignments.load();
-        
-        int num_blocks = alignments.getInt(0);
-        alignmentLookup = new int[num_blocks];
-        int header_pos = 8;
-        for (int i = 0; i < num_blocks; i++) {
-          alignmentLookup[i] = alignments.getInt(header_pos);
-          header_pos += 4;
-        }
+        alignments = associateMemoryMappedFile(alignment_file);
+        alignmentLookup = parseLookups(alignments);
       } else {
         alignments = null;
       }
 
-      int num_blocks = features.getInt(0);
-      featureLookup = new int[num_blocks];
-      estimated = new float[num_blocks];
-      precomputable = new float[num_blocks];
-      featureSize = features.getInt(4);
-      int header_pos = 8;
-      for (int i = 0; i < num_blocks; i++) {
-        featureLookup[i] = features.getInt(header_pos);
-        estimated[i] = Float.NEGATIVE_INFINITY;
-        precomputable[i] = Float.NEGATIVE_INFINITY;
-        header_pos += 4;
-      }
-
-      DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
-          new FileInputStream(target_lookup_file)));
-      targetLookup = new int[target_lookup_stream.readInt()];
-      for (int i = 0; i < targetLookup.length; i++)
-        targetLookup[i] = target_lookup_stream.readInt();
-      target_lookup_stream.close();
-
       tries = new HashMap<Integer, PackedTrie>();
     }
 
-    @SuppressWarnings("unused")
-    private final Object guardian = new Object() {
-      @Override
-      // Finalizer object to ensure feature file handle get closed upon slice's dismissal.
-      protected void finalize() throws Throwable {
-        featureFile.close();
+    /**
+     * Helper function to help create all the structures which describe features
+     * in the Slice. Only called during object construction.
+     */
+    private void initializeFeatureStructures(){
+      int num_blocks = features.getInt(0);
+      estimated = new float[num_blocks];
+      precomputable = new float[num_blocks];
+      Arrays.fill(estimated, Float.NEGATIVE_INFINITY);
+      Arrays.fill(precomputable, Float.NEGATIVE_INFINITY);
+      featureLookup = parseLookups(features);
+      featureSize = features.getInt(4);
+    }
+
+    // TOOD: (kellens) see if we can remove these lookups as they're addressed
+    // predictably into already present data structures. Are they redundant?
+    /**
+     * Build lookup arrays for various buffers (features / alignments) Typically
+     * this is copying out some relevant information from a larger byte array
+     *
+     * @param buffer
+     *          the buffer parsed to find sub-elements
+     * @return an int array which can easily be accessed to find lookup values.
+     */
+    private int[] parseLookups(ByteBuffer buffer) {
+      int numBlocks = buffer.getInt(0);
+      int[] result = new int[numBlocks];
+      int headerPosition = 8;
+      for (int i = 0; i < numBlocks; i++) {
+        result[i] = buffer.getInt(headerPosition);
+        headerPosition += 4;
       }
-    };
+      return result;
+    }
+
+    private int[] fullyLoadFileToArray(File file) throws IOException {
+      return fullyLoadFileToArray(file, 0);
+    }
+
+    /**
+     * This function will use a bulk loading method to fully populate a target
+     * array from file.
+     *
+     * @param file
+     *          File that will be read from disk.
+     * @param startIndex
+     *          an offset into the read file.
+     * @return an int array of size length(file) - offset containing ints in the
+     *         file.
+     * @throws IOException
+     */
+    private int[] fullyLoadFileToArray(File file, int startIndex) throws IOException {
+      IntBuffer buffer = associateMemoryMappedFile(file).asIntBuffer();
+      int size = (int) (file.length() - (4 * startIndex))/4;
+      int[] result = new int[size];
+      buffer.position(startIndex);
+      buffer.get(result, 0, size);
+      return result;
+    }
+
+    private ByteBuffer associateMemoryMappedFile(File file) throws IOException {
+      try(FileInputStream fileInputStream = new FileInputStream(file)) {
+        FileChannel fileChannel = fileInputStream.getChannel();
+        int size = (int) fileChannel.size();
+        MappedByteBuffer result = fileChannel.map(MapMode.READ_ONLY, 0, size);
+        return result;
+      }
+    }
 
     private final int[] getTarget(int pointer) {
       // Figure out level.
@@ -437,9 +440,9 @@ public class PackedGrammar extends AbstractGrammar {
       int index = 0;
       int parent;
       do {
-        parent = target[pointer];
+        parent = target.get(pointer);
         if (parent != -1)
-          tgt[index++] = target[pointer + 1];
+          tgt[index++] = target.get(pointer + 1);
         pointer = parent;
       } while (pointer != -1);
       return tgt;
