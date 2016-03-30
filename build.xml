@@ -63,7 +63,10 @@
   </target>
 
   <target name="kenlm" depends="check-joshua-home" description="--> Build KenLM">
-    <exec executable="./build_kenlm.sh" dir="${JOSHUA}/jni" />
+    <exec dir="${JOSHUA}/jni" executable="/bin/bash">
+      <env key="JOSHUA" path="${JOSHUA}" />
+      <arg line="build_kenlm.sh" />
+    </exec>
   </target>
 
   <target name="giza" depends="check-joshua-home" description="--> 'Make' the giza software in scripts/training/giza-pp/">
