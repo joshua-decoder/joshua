@@ -16,7 +16,6 @@ The latest release of Joshua is always linked to directly from the [Home Page](h
 
 ## New in 6.0
 
-
 Joshua 6.0 includes the following new features:
 
  * A fast phrase-based decoder with the ability to read [Moses](http://statmt.org/moses) phrase tables
