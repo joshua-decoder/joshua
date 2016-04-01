@@ -1,9 +1,15 @@
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Arrays;  
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.Decoder;
@@ -37,8 +43,9 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   protected int arity;
 
   // And a string containing the sparse ones
-  protected FeatureVector features = null;
-  protected String sparseFeatureString;
+  //protected final String sparseFeatureString;
+  protected final Supplier<String> sparseFeatureStringSupplier;
+  private final Supplier<FeatureVector> featuresSupplier;
 
   /*
    * a feature function will be fired for this rule only if the owner of the rule matches the owner
@@ -60,13 +67,15 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
 
   // The alignment string, e.g., 0-0 0-1 1-1 2-1
   private String alignmentString;
-  protected byte[] alignment = null;
+  private final Supplier<byte[]> alignmentSupplier;
 
   /**
-   * Constructs a new rule using the provided parameters. The owner and rule id for this rule are
+   * Constructs a new rule using the provided parameters. Rule id for this rule is
    * undefined. Note that some of the sparse features may be unlabeled, but they cannot be mapped to
    * their default names ("tm_OWNER_INDEX") until later, when we know the owner of the rule. This is
    * not known until the rule is actually added to a grammar in Grammar::addRule().
+   * 
+   * Constructor used by other constructors below;
    * 
    * @param lhs Left-hand side of the rule.
    * @param sourceRhs Source language right-hand side of the rule.
@@ -75,33 +84,96 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
    * @param arity Number of nonterminals in the source language right-hand side.
    * @param owner
    */
-  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity,
-      int owner) {
+  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.sparseFeatureString = sparseFeatures;
     this.arity = arity;
     this.owner = owner;
     this.english = targetRhs;
+    this.sparseFeatureStringSupplier = Suppliers.memoize(() -> { return sparseFeatures; });
+    this.featuresSupplier = initializeFeatureSupplierFromString();
+    this.alignmentSupplier = initializeAlignmentSupplier();
   }
-
-  // Sparse feature version
-  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
+  
+  /**
+   * Constructor used by PackedGrammar's sortRules().
+   */
+  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, FeatureVector features, int arity, int owner) {
     this.lhs = lhs;
     this.pFrench = sourceRhs;
-    this.sparseFeatureString = sparseFeatures;
     this.arity = arity;
-    this.owner = -1;
+    this.owner = owner;
     this.english = targetRhs;
+    this.featuresSupplier = Suppliers.memoize(() -> { return features; });
+    this.sparseFeatureStringSupplier = initializeSparseFeaturesStringSupplier();
+    this.alignmentSupplier = initializeAlignmentSupplier();
   }
 
+  /**
+   * Constructor used for SamtFormatReader and GrammarBuilderWalkerFunction's getRuleWithSpans()
+   * Owner set to -1
+   */
+  public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity) {
+    this(lhs, sourceRhs, targetRhs, sparseFeatures, arity, -1);
+  }
+
+  /**
+   * Constructor used for addOOVRules(), HieroFormatReader and PhraseRule.
+   */
   public Rule(int lhs, int[] sourceRhs, int[] targetRhs, String sparseFeatures, int arity, String alignment) {
     this(lhs, sourceRhs, targetRhs, sparseFeatures, arity);
     this.alignmentString = alignment;
   }
   
+  /**
+   * Constructor (implicitly) used by PackedRule
+   */
   public Rule() {
     this.lhs = -1;
+    this.sparseFeatureStringSupplier = initializeSparseFeaturesStringSupplier();
+    this.featuresSupplier = initializeFeatureSupplierFromString();
+    this.alignmentSupplier = initializeAlignmentSupplier();
+  }
+
+  // ==========================================================================
+  // Lazy loading Suppliers for alignments, feature vector, and feature strings
+  // ==========================================================================
+  
+  private Supplier<byte[]> initializeAlignmentSupplier(){
+    return Suppliers.memoize(() ->{
+      byte[] alignment = null;
+      String alignmentString = getAlignmentString();
+      if (alignmentString != null) {
+        String[] tokens = alignmentString.split("[-\\s]+");
+        alignment = new byte[tokens.length];
+        for (int i = 0; i < tokens.length; i++)
+          alignment[i] = (byte) Short.parseShort(tokens[i]);
+      }
+      return alignment;
+    });
+  }
+  
+  /**
+   * If Rule was constructed with sparseFeatures String, we lazily populate the
+   * FeatureSupplier.
+   */
+  private Supplier<FeatureVector> initializeFeatureSupplierFromString(){
+    return Suppliers.memoize(() ->{
+      if (owner != -1) {
+        return new FeatureVector(getFeatureString(), "tm_" + Vocabulary.word(owner) + "_");
+      } else {
+        return new FeatureVector();
+      }
+    });
+  }
+  
+  /**
+   * If Rule was constructed with a FeatureVector, we lazily populate the sparseFeaturesStringSupplier.
+   */
+  private Supplier<String> initializeSparseFeaturesStringSupplier() {
+    return Suppliers.memoize(() -> {
+      return getFeatureVector().toString();
+    });
   }
 
   // ===============================================================
@@ -195,18 +267,7 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
    * specified as labeled features of the form "tm_OWNER_INDEX", but the former format is preferred.
    */
   public FeatureVector getFeatureVector() {
-    /*
-     * Now read the feature scores, which can be any number of dense features and sparse features.
-     * Any unlabeled feature becomes a dense feature. By convention, dense features should precede
-     * sparse (labeled) ones, but it's not required.
-     */
-
-    if (features == null)
-      features = (owner != -1)
-        ? new FeatureVector(getFeatureString(), "tm_" + Vocabulary.word(owner) + "_")
-        : new FeatureVector();
-  
-    return features;
+    return featuresSupplier.get();
   }
 
   /**
@@ -244,20 +305,14 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   
   public void setPrecomputableCost(float[] phrase_weights, FeatureVector weights) {
     float cost = 0.0f;
-
-//    System.err.println(String.format("// Setting precomputable cost for for %s/%s", getEnglishWords(), getFrenchWords()));
     FeatureVector features = getFeatureVector();
     for (int i = 0; i < features.getDenseFeatures().size() && i < phrase_weights.length; i++) {
-//      System.err.println(String.format("    %d -> %.5f", i, features.get(i)));
       cost += phrase_weights[i] * features.getDense(i);
     }
 
     for (String key: features.getSparseFeatures().keySet()) {
-//      System.err.println(String.format("    %s -> %.5f", key, features.get(key)));
       cost += weights.getSparse(key) * features.getSparse(key);
     }
-    
-//    System.err.println(String.format("-> %f", cost));
     
     this.precomputableCost = cost;
   }
@@ -346,25 +401,19 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
   }
 
   public String getFeatureString() {
-    return sparseFeatureString;
+    return sparseFeatureStringSupplier.get();
   }
-  
+
   /**
    * Returns an alignment as a sequence of integers. The integers at positions i and i+1 are paired,
    * with position i indexing the source and i+1 the target.
    */
   public byte[] getAlignment() {
-    if (alignment == null && getAlignmentString() != null) {
-      String[] tokens = getAlignmentString().split("[-\\s]+");
-      alignment = new byte[tokens.length];
-      for (int i = 0; i < tokens.length; i++)
-        alignment[i] = (byte) Short.parseShort(tokens[i]);
-    }
-    return alignment;
+    return this.alignmentSupplier.get();
   }
   
   public String getAlignmentString() {
-    return alignmentString;
+    return this.alignmentString;
   }
 
   /**
@@ -410,6 +459,39 @@ public class Rule implements Comparator<Rule>, Comparable<Rule> {
       if (id < 0)
         nts[index++] = -id;
     return nts;
+  }
+  
+  /**
+   * Returns an array of size getArity() containing the source indeces of non terminals.
+   */
+  public int[] getNonTerminalSourcePositions() {
+    int[] nonTerminalPositions = new int[getArity()];
+    int ntPos = 0;
+    for (int sourceIdx = 0; sourceIdx < getFrench().length; sourceIdx++) {
+      if (getFrench()[sourceIdx] < 0)
+        nonTerminalPositions[ntPos++] = sourceIdx;
+    }
+    return nonTerminalPositions;
+  }
+  
+  /**
+   * Parses the Alignment byte[] into a Map from target to (possibly a list of) source positions.
+   * Used by the WordAlignmentExtractor.
+   */
+  public Map<Integer, List<Integer>> getAlignmentMap() {
+    byte[] alignmentArray = getAlignment();
+    Map<Integer, List<Integer>> alignmentMap = new HashMap<Integer, List<Integer>>();
+    if (alignmentArray != null) {
+      for (int alignmentIdx = 0; alignmentIdx < alignmentArray.length; alignmentIdx += 2 ) {
+        int s = alignmentArray[alignmentIdx];
+        int t = alignmentArray[alignmentIdx + 1];
+        List<Integer> values = alignmentMap.get(t);
+        if (values == null)
+          alignmentMap.put(t, values = new ArrayList<Integer>());
+        values.add(s);
+      }
+    }
+    return alignmentMap;
   }
 
   /**

@@ -29,9 +29,17 @@ import joshua.util.io.LineReader;
  * @author Matt Post <post@cs.jhu.edu>
  */
 public class JoshuaConfiguration {
+  
+  // whether to construct a StructuredTranslation object for each request instead of 
+  // printing to stdout. Used when the Decoder is used from Java directly.
+  public Boolean use_structured_output = false;
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
+
+  // A rule cache for commonly used tries to avoid excess object allocations
+  // Testing shows there's up to ~95% hit rate when cache size is 5000 Trie nodes.
+  public Integer cachedRuleSize = new Integer(5000);
 
   /*
    * The file to read the weights from (part of the sparse features implementation). Weights can
@@ -609,6 +617,9 @@ public class JoshuaConfiguration {
             // Check source sentence
             source_annotations = true;
 
+          } else if (parameter.equals(normalize_key("cached-rules-size"))) {
+              // Check source sentence
+              cachedRuleSize = Integer.parseInt(fds[1]);
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))

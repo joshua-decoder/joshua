@@ -3,6 +3,7 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
@@ -10,6 +11,7 @@ import joshua.decoder.ff.lm.StateMinimizingLanguageModel;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
+import joshua.decoder.hypergraph.WordAlignmentState;
 import joshua.decoder.io.DeNormalize;
 import joshua.decoder.segment_file.Sentence;
 
@@ -39,20 +41,31 @@ public class Translation {
     return rawTranslation;
   }
 
+  private WordAlignmentState alignment = null;
+  private float score = 0;
+  private float translationTime;
+  
   public Translation(Sentence source, HyperGraph hypergraph, 
       List<FeatureFunction> featureFunctions, JoshuaConfiguration joshuaConfiguration) {
     this.source = source;
+    
+    if (joshuaConfiguration.use_structured_output) {
+      
+      // create structured output instead of the String manipulation below.
+      createStructuredOutput(source, hypergraph);
+      
+    } else {
 
-    StringWriter sw = new StringWriter();
-    BufferedWriter out = new BufferedWriter(sw);
+      StringWriter sw = new StringWriter();
+      BufferedWriter out = new BufferedWriter(sw);
 
-    try {
-      if (hypergraph != null) {
-        if (!joshuaConfiguration.hypergraphFilePattern.equals("")) {
-          hypergraph.dump(String.format(joshuaConfiguration.hypergraphFilePattern, source.id()), featureFunctions);
-        }
+      try {
+        if (hypergraph != null) {
+          if (!joshuaConfiguration.hypergraphFilePattern.equals("")) {
+            hypergraph.dump(String.format(joshuaConfiguration.hypergraphFilePattern, source.id()), featureFunctions);
+          }
 
-        long startTime = System.currentTimeMillis();
+          long startTime = System.currentTimeMillis();
 
         // We must put this weight as zero, otherwise we get an error when we try to retrieve it
         // without checking
@@ -75,9 +88,15 @@ public class Translation {
               .replace("%S", DeNormalize.processSingleLine(rawTranslation))
               .replace("%c", String.format("%.3f", hypergraph.goalNode.getScore()))
               .replace("%i", String.format("%d", source.id()));
+          
+          /* %a causes output of word level alignments between input and output hypothesis */
+          if (joshuaConfiguration.outputFormat.contains("%a")) {
+            translation = translation.replace("%a", ViterbiExtractor.extractViterbiAlignment(hypergraph.goalNode));
+          }
 
           out.write(translation);
           out.newLine();
+          
         } else  {
           KBestExtractor kBestExtractor = new KBestExtractor(source, featureFunctions, Decoder.weights, false, joshuaConfiguration);
           kBestExtractor.lazyKBestExtractOnHG(hypergraph, joshuaConfiguration.topN, out);
@@ -91,9 +110,11 @@ public class Translation {
           }
         }
 
-        float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
-        Decoder.LOG(1, String.format("Input %d: %d-best extraction took %.3f seconds", id(),
-            joshuaConfiguration.topN, seconds));
+          float seconds = (float) (System.currentTimeMillis() - startTime) / 1000.0f;
+          Decoder.LOG(1, String.format("Input %d: %d-best extraction took %.3f seconds", id(),
+              joshuaConfiguration.topN, seconds));
+          this.translationTime = seconds;
+          
 
       } else {
         
@@ -113,10 +134,14 @@ public class Translation {
         out.newLine();
       }
 
-      out.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-      System.exit(1);
+        out.flush();
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.exit(1);
+      }
+      
+      this.output = sw.toString();
+      
     }
 
     /*
@@ -129,8 +154,40 @@ public class Translation {
         break;
       }
     }
+    
+  }
 
-    this.output = sw.toString();
+  /**
+   * Instead of returning a single string with output information appended
+   * (if JoshuaConfig.use_structured_output == false),
+   * write Viterbi information (score, translation, word alignment) to member
+   * variables for easier access from outside pipelines.
+   */
+  private void createStructuredOutput(Sentence source, HyperGraph hypergraph) {
+    
+    this.translationTime = 0;
+    
+    long startTime = System.currentTimeMillis();
+
+    if (hypergraph != null) {
+
+      this.output = ViterbiExtractor.extractViterbiString(hypergraph.goalNode).trim();
+      // trims whitespaces (same idiom as in existing Joshua code (65)
+      this.output = this.output.substring(this.output.indexOf(' ') + 1, this.output.lastIndexOf(' ')); 
+      this.alignment = ViterbiExtractor.buildViterbiAlignment(hypergraph.goalNode);
+      this.score = hypergraph.goalNode.getScore();
+
+    } else {
+      
+      this.output = this.source.source();
+      this.alignment = null;
+      
+    }
+    
+    this.translationTime = (System.currentTimeMillis() - startTime) / 1000.0f;
+    
+    Decoder.LOG(1, String.format("Translation %d: %.3f %s (%.3f)", source.id(), hypergraph.goalNode.getScore(), this.output, this.translationTime));
+    
   }
 
   public Sentence getSourceSentence() {
@@ -145,4 +202,33 @@ public class Translation {
   public String toString() {
     return output;
   }
+  
+  public float getTranslationTime() {
+    return translationTime;
+  }
+
+  public String getTranslationString() {
+    return (output == null) ? "" : output.trim();
+  }
+
+  public List<List<Integer>> getWordAlignment() {
+    return alignment.toFinalList();
+  }
+  
+  public String getWordAlignmentString() {
+    return (alignment == null) ? "" : alignment.toFinalString();
+  }
+
+  public float getTranslationScore() {
+    return score;
+  }
+  
+  public List<String> getTranslationTokens() {
+    return Arrays.asList(getTranslationString().split("\\s+"));
+  }
+  
+  public String getDeNormalizedTranslation() {
+    return DeNormalize.processSingleLine(getTranslationString());
+  }
+  
 }

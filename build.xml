@@ -28,6 +28,7 @@
       <include name="collections-generic-4.01.jar" />
       <include name="args4j-2.0.29.jar" />
       <include name="gson-2.5.jar" />
+      <include name="guava-19.0.jar" />
     </fileset>
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />

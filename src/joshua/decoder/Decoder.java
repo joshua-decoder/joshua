@@ -1,5 +1,7 @@
 package joshua.decoder;
 
+import static joshua.decoder.ff.FeatureVector.DENSE_FEATURE_NAMES;
+
 import java.io.BufferedWriter;	
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +65,10 @@ import joshua.util.io.LineReader;
 public class Decoder {
 
   private final JoshuaConfiguration joshuaConfiguration;
+
+  public JoshuaConfiguration getJoshuaConfiguration() {
+    return joshuaConfiguration;
+  }
 
   /*
    * Many of these objects themselves are global objects. We pass them in when constructing other
@@ -623,7 +629,7 @@ public class Decoder {
       }
 
       Decoder.LOG(1, String.format("Read %d weights (%d of them dense)", weights.size(),
-          FeatureVector.DENSE_FEATURE_NAMES.size()));
+      DENSE_FEATURE_NAMES.size()));
 
       // Do this before loading the grammars and the LM.
       this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -640,8 +646,8 @@ public class Decoder {
 
       // This is mostly for compatibility with the Moses tuning script
       if (joshuaConfiguration.show_weights_and_quit) {
-        for (int i = 0; i < FeatureVector.DENSE_FEATURE_NAMES.size(); i++) {
-          String name = FeatureVector.DENSE_FEATURE_NAMES.get(i);
+        for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
+          String name = DENSE_FEATURE_NAMES.get(i);
           if (joshuaConfiguration.moses) 
             System.out.println(String.format("%s= %.5f", mosesize(name), weights.getDense(i)));
           else
