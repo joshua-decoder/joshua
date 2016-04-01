@@ -38,14 +38,13 @@ package joshua.decoder.ff.tm.packed;
 
 import static java.util.Collections.sort;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -74,10 +73,14 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hash_based.ExtensionIterator;
-import joshua.decoder.ff.tm.packed.SliceAggregatingTrie;
 import joshua.util.encoding.EncoderConfiguration;
 import joshua.util.encoding.FloatEncoder;
 import joshua.util.io.LineReader;
+
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 public class PackedGrammar extends AbstractGrammar {
 
@@ -91,6 +94,10 @@ public class PackedGrammar extends AbstractGrammar {
 
   // The grammar specification keyword (e.g., "thrax" or "moses")
   private String type;
+
+  // A rule cache for commonly used tries to avoid excess object allocations
+  // Testing shows there's up to ~95% hit rate when cache size is 5000 Trie nodes.
+  private final Cache<Trie, List<Rule>> cached_rules;
 
   public PackedGrammar(String grammar_dir, int span_limit, String owner, String type,
       JoshuaConfiguration joshuaConfiguration) throws FileNotFoundException, IOException {
@@ -132,6 +139,7 @@ public class PackedGrammar extends AbstractGrammar {
     for (PackedSlice s : slices)
       count += s.estimated.length;
     root = new PackedRoot(slices);
+    cached_rules = CacheBuilder.newBuilder().maximumSize(joshuaConfiguration.cachedRuleSize).build();
 
     Decoder.LOG(1, String.format("Loaded %d rules", count));
   }
@@ -311,20 +319,15 @@ public class PackedGrammar extends AbstractGrammar {
     private final String name;
 
     private final int[] source;
+    private final IntBuffer target;
+    private final ByteBuffer features;
+    private final ByteBuffer alignments;
 
-    private final int[] target;
     private final int[] targetLookup;
-
-    private MappedByteBuffer features;
     private int featureSize;
     private int[] featureLookup;
-    private RandomAccessFile featureFile;
-
     private float[] estimated;
     private float[] precomputable;
-    
-    private RandomAccessFile alignmentFile;
-    private MappedByteBuffer alignments;
     private int[] alignmentLookup;
 
     /**
@@ -341,81 +344,92 @@ public class PackedGrammar extends AbstractGrammar {
       File feature_file = new File(prefix + ".features");
       File alignment_file = new File(prefix + ".alignments");
 
-      // Get the channels etc.
-      FileInputStream source_fis = new FileInputStream(source_file);
-      FileChannel source_channel = source_fis.getChannel();
-      int source_size = (int) source_channel.size();
+      source = fullyLoadFileToArray(source_file);
+      // First int specifies the size of this file, load from 1st int on
+      targetLookup = fullyLoadFileToArray(target_lookup_file, 1);
 
-      FileInputStream target_fis = new FileInputStream(target_file);
-      FileChannel target_channel = target_fis.getChannel();
-      int target_size = (int) target_channel.size();
+      target = associateMemoryMappedFile(target_file).asIntBuffer();
+      features = associateMemoryMappedFile(feature_file);
+      initializeFeatureStructures();
 
-      featureFile = new RandomAccessFile(feature_file, "r");
-      FileChannel feature_channel = featureFile.getChannel();
-      int feature_size = (int) feature_channel.size();
-
-      IntBuffer source_buffer = source_channel.map(MapMode.READ_ONLY, 0, source_size).asIntBuffer();
-      source = new int[source_size / 4];
-      source_buffer.get(source);
-      source_fis.close();
-
-      IntBuffer target_buffer = target_channel.map(MapMode.READ_ONLY, 0, target_size).asIntBuffer();
-      target = new int[target_size / 4];
-      target_buffer.get(target);
-      target_fis.close();
-
-      features = feature_channel.map(MapMode.READ_ONLY, 0, feature_size);
-      features.load();
-      
       if (alignment_file.exists()) {
-        alignmentFile = new RandomAccessFile(alignment_file, "r");
-        FileChannel alignment_channel = alignmentFile.getChannel();
-        int alignment_size = (int) alignment_channel.size();
-        alignments = alignment_channel.map(MapMode.READ_ONLY, 0, alignment_size);
-        alignments.load();
-        
-        int num_blocks = alignments.getInt(0);
-        alignmentLookup = new int[num_blocks];
-        int header_pos = 8;
-        for (int i = 0; i < num_blocks; i++) {
-          alignmentLookup[i] = alignments.getInt(header_pos);
-          header_pos += 4;
-        }
+        alignments = associateMemoryMappedFile(alignment_file);
+        alignmentLookup = parseLookups(alignments);
       } else {
         alignments = null;
       }
 
-      int num_blocks = features.getInt(0);
-      featureLookup = new int[num_blocks];
-      estimated = new float[num_blocks];
-      precomputable = new float[num_blocks];
-      featureSize = features.getInt(4);
-      int header_pos = 8;
-      for (int i = 0; i < num_blocks; i++) {
-        featureLookup[i] = features.getInt(header_pos);
-        estimated[i] = Float.NEGATIVE_INFINITY;
-        precomputable[i] = Float.NEGATIVE_INFINITY;
-        header_pos += 4;
-      }
-
-      DataInputStream target_lookup_stream = new DataInputStream(new BufferedInputStream(
-          new FileInputStream(target_lookup_file)));
-      targetLookup = new int[target_lookup_stream.readInt()];
-      for (int i = 0; i < targetLookup.length; i++)
-        targetLookup[i] = target_lookup_stream.readInt();
-      target_lookup_stream.close();
-
       tries = new HashMap<Integer, PackedTrie>();
     }
 
-    @SuppressWarnings("unused")
-    private final Object guardian = new Object() {
-      @Override
-      // Finalizer object to ensure feature file handle get closed upon slice's dismissal.
-      protected void finalize() throws Throwable {
-        featureFile.close();
+    /**
+     * Helper function to help create all the structures which describe features
+     * in the Slice. Only called during object construction.
+     */
+    private void initializeFeatureStructures(){
+      int num_blocks = features.getInt(0);
+      estimated = new float[num_blocks];
+      precomputable = new float[num_blocks];
+      Arrays.fill(estimated, Float.NEGATIVE_INFINITY);
+      Arrays.fill(precomputable, Float.NEGATIVE_INFINITY);
+      featureLookup = parseLookups(features);
+      featureSize = features.getInt(4);
+    }
+
+    // TOOD: (kellens) see if we can remove these lookups as they're addressed
+    // predictably into already present data structures. Are they redundant?
+    /**
+     * Build lookup arrays for various buffers (features / alignments) Typically
+     * this is copying out some relevant information from a larger byte array
+     *
+     * @param buffer
+     *          the buffer parsed to find sub-elements
+     * @return an int array which can easily be accessed to find lookup values.
+     */
+    private int[] parseLookups(ByteBuffer buffer) {
+      int numBlocks = buffer.getInt(0);
+      int[] result = new int[numBlocks];
+      int headerPosition = 8;
+      for (int i = 0; i < numBlocks; i++) {
+        result[i] = buffer.getInt(headerPosition);
+        headerPosition += 4;
       }
-    };
+      return result;
+    }
+
+    private int[] fullyLoadFileToArray(File file) throws IOException {
+      return fullyLoadFileToArray(file, 0);
+    }
+
+    /**
+     * This function will use a bulk loading method to fully populate a target
+     * array from file.
+     *
+     * @param file
+     *          File that will be read from disk.
+     * @param startIndex
+     *          an offset into the read file.
+     * @return an int array of size length(file) - offset containing ints in the
+     *         file.
+     * @throws IOException
+     */
+    private int[] fullyLoadFileToArray(File file, int startIndex) throws IOException {
+      IntBuffer buffer = associateMemoryMappedFile(file).asIntBuffer();
+      int size = (int) (file.length() - (4 * startIndex))/4;
+      int[] result = new int[size];
+      buffer.position(startIndex);
+      buffer.get(result, 0, size);
+      return result;
+    }
+
+    private ByteBuffer associateMemoryMappedFile(File file) throws IOException {
+      try(FileInputStream fileInputStream = new FileInputStream(file)) {
+        FileChannel fileChannel = fileInputStream.getChannel();
+        int size = (int) fileChannel.size();
+        MappedByteBuffer result = fileChannel.map(MapMode.READ_ONLY, 0, size);
+        return result;
+      }
+    }
 
     private final int[] getTarget(int pointer) {
       // Figure out level.
@@ -426,9 +440,9 @@ public class PackedGrammar extends AbstractGrammar {
       int index = 0;
       int parent;
       do {
-        parent = target[pointer];
+        parent = target.get(pointer);
         if (parent != -1)
-          tgt[index++] = target[pointer + 1];
+          tgt[index++] = target.get(pointer + 1);
         pointer = parent;
       } while (pointer != -1);
       return tgt;
@@ -454,59 +468,69 @@ public class PackedGrammar extends AbstractGrammar {
     }
 
     /**
-     * NEW VERSION
-     * 
-     * Returns a string version of the features associated with a rule (represented as a block ID).
+     * Returns the FeatureVector associated with a rule (represented as a block ID).
      * These features are in the form "feature1=value feature2=value...". By default, unlabeled
-     * features are named using the pattern
-     * 
-     * tm_OWNER_INDEX
-     * 
-     * where OWNER is the grammar's owner (Vocabulary.word(this.owner)) and INDEX is a 0-based index
-     * of the feature found in the grammar.
-     * 
+     * features are named using the pattern.
      * @param block_id
-     * @return
+     * @return feature vector
      */
 
-    private final String getFeatures(int block_id) {
-      int feature_position = featureLookup[block_id];
+    private final FeatureVector loadFeatureVector(int block_id) {
+      int featurePosition = featureLookup[block_id];
+      final int numFeatures = encoding.readId(features, featurePosition);
 
-      // The number of non-zero features stored with the rule.
-      int num_features = encoding.readId(features, feature_position);
+      featurePosition += EncoderConfiguration.ID_SIZE;
+      final FeatureVector featureVector = new FeatureVector();
+      FloatEncoder encoder;
+      String featureName;
 
-      feature_position += EncoderConfiguration.ID_SIZE;
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < num_features; i++) {
-        int feature_id = encoding.readId(features, feature_position);
-        FloatEncoder encoder = encoding.encoder(feature_id);
-
-        String feature_name = Vocabulary.word(encoding.outerId(feature_id));
+      for (int i = 0; i < numFeatures; i++) {
+        final int innerId = encoding.readId(features, featurePosition);
+        final int outerId = encoding.outerId(innerId);
+        encoder = encoding.encoder(innerId);
+        // TODO (fhieber): why on earth are dense feature ids (ints) encoded in the vocabulary?
+        featureName = Vocabulary.word(outerId);
+        final float value = encoder.read(features, featurePosition);
         try {
-          int index = Integer.parseInt(feature_name);
-          sb.append(String.format(" tm_%s_%d=%.5f", Vocabulary.word(owner), index,
-              -encoder.read(features, feature_position)));
+          int index = Integer.parseInt(featureName);
+          featureVector.increment(index, -value);
         } catch (NumberFormatException e) {
-          sb.append(String.format(" %s=%.5f", feature_name, encoder.read(features, feature_position)));
+          featureVector.increment(featureName, value);
         }
-
-        feature_position += EncoderConfiguration.ID_SIZE + encoder.size();
+        featurePosition += EncoderConfiguration.ID_SIZE + encoder.size();
       }
-      return sb.toString().trim();
+      
+      return featureVector;
     }
 
-    private final byte[] getAlignmentArray(int block_id) {
+    /**
+     * We need to synchronize this method as there is a many to one ratio between
+     * PackedRule/PhrasePair and this class (PackedSlice). This means during concurrent first
+     * getAlignments calls to PackedRule objects they could alter each other's positions within the
+     * buffer before calling read on the buffer.
+     */
+    private synchronized final byte[] getAlignmentArray(int block_id) {
       if (alignments == null)
         throw new RuntimeException("No alignments available.");
       int alignment_position = alignmentLookup[block_id];
       int num_points = (int) alignments.get(alignment_position);
       byte[] alignment = new byte[num_points * 2];
-      
+
       alignments.position(alignment_position + 1);
-      alignments.get(alignment, 0, num_points * 2);
+      try {
+        alignments.get(alignment, 0, num_points * 2);
+      } catch (BufferUnderflowException bue) {
+        Decoder.LOG(4, "Had an exception when accessing alignment mapped byte buffer");
+        Decoder.LOG(4, "Attempting to access alignments at position: " + alignment_position + 1);
+        Decoder.LOG(4, "And to read this many bytes: " + num_points * 2);
+        Decoder.LOG(4, "Buffer capacity is : " + alignments.capacity());
+        Decoder.LOG(4, "Buffer position is : " + alignments.position());
+        Decoder.LOG(4, "Buffer limit is : " + alignments.limit());
+        throw bue;
+      }
       return alignment;
     }
-    
+
     private final PackedTrie root() {
       return getTrie(0);
     }
@@ -618,17 +642,24 @@ public class PackedGrammar extends AbstractGrammar {
 
       @Override
       public List<Rule> getRules() {
+        List<Rule> rules = cached_rules.getIfPresent(this);
+        if (rules != null) {
+          return rules;
+        }
+
         int num_children = source[position];
         int rule_position = position + 2 * (num_children + 1);
         int num_rules = source[rule_position - 1];
 
-        ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
+        rules = new ArrayList<Rule>(num_rules);
         for (int i = 0; i < num_rules; i++) {
           if (type.equals("moses") || type.equals("phrase"))
             rules.add(new PackedPhrasePair(rule_position + 3 * i));
           else
             rules.add(new PackedRule(rule_position + 3 * i));
         }
+
+        cached_rules.put(this, rules);
         return rules;
       }
 
@@ -659,7 +690,7 @@ public class PackedGrammar extends AbstractGrammar {
           block_id = source[rules[i]];
 
           Rule rule = new Rule(source[rule_position + 3 * i], src,
-              getTarget(target_address), getFeatures(block_id), arity, owner);
+              getTarget(target_address), loadFeatureVector(block_id), arity, owner);
           estimated[block_id] = rule.estimateRuleCost(models);
           precomputable[block_id] = rule.getPrecomputableCost();
         }
@@ -684,6 +715,9 @@ public class PackedGrammar extends AbstractGrammar {
         }
         for (int i = 0; i < sorted.length; i++)
           source[rule_position + i] = sorted[i];
+
+        // Replace rules in cache with their sorted values on next getRules()
+        cached_rules.invalidate(this);
         this.sorted = true;
       }
 
@@ -772,15 +806,54 @@ public class PackedGrammar extends AbstractGrammar {
        *
        */
       public final class PackedPhrasePair extends PackedRule {
+
+        private final Supplier<int[]> englishSupplier;
+        private final Supplier<byte[]> alignmentSupplier;
+
         public PackedPhrasePair(int address) {
           super(address);
+          englishSupplier = initializeEnglishSupplier();
+          alignmentSupplier = initializeAlignmentSupplier();
         }
 
         @Override
         public int getArity() {
           return PackedTrie.this.getArity() + 1;
         }
-        
+
+        /**
+         * Initialize a number of suppliers which get evaluated when their respective getters
+         * are called.
+         * Inner lambda functions are guaranteed to only be called once, because of this underlying
+         * structures are accessed in a threadsafe way.
+         * Guava's implementation makes sure only one read of a volatile variable occurs per get.
+         * This means this implementation should be as thread-safe and performant as possible.
+         */
+
+        private Supplier<int[]> initializeEnglishSupplier(){
+          Supplier<int[]> result = Suppliers.memoize(() ->{
+            int[] phrase = getTarget(source[address + 1]);
+            int[] tgt = new int[phrase.length + 1];
+            tgt[0] = -1;
+            for (int i = 0; i < phrase.length; i++)
+              tgt[i+1] = phrase[i];
+            return tgt;
+          });
+          return result;
+        }
+
+        private Supplier<byte[]> initializeAlignmentSupplier(){
+          Supplier<byte[]> result = Suppliers.memoize(() ->{
+            byte[] raw_alignment = getAlignmentArray(source[address + 2]);
+            byte[] points = new byte[raw_alignment.length + 2];
+            points[0] = points[1] = 0;
+            for (int i = 0; i < raw_alignment.length; i++)
+              points[i + 2] = (byte) (raw_alignment[i] + 1);
+            return points;
+          });
+          return result;
+        }
+
         /**
          * Take the English phrase of the underlying rule and prepend an [X].
          * 
@@ -788,16 +861,8 @@ public class PackedGrammar extends AbstractGrammar {
          */
         @Override
         public int[] getEnglish() {
-          if (tgt == null) {
-            int[] phrase = getTarget(source[address + 1]);
-            tgt = new int[phrase.length + 1];
-            tgt[0] = -1;
-            for (int i = 0; i < phrase.length; i++)
-              tgt[i+1] = phrase[i];
-          }
-          return tgt;
+          return this.englishSupplier.get();
         }
-
         
         /**
          * Take the French phrase of the underlying rule and prepend an [X].
@@ -820,27 +885,51 @@ public class PackedGrammar extends AbstractGrammar {
          */
         @Override
         public byte[] getAlignment() {
-          // alignments is the underlying raw alignment data
-          if (alignments != null) {
-            byte[] a = getAlignmentArray(source[address + 2]);
-            byte[] points = new byte[a.length + 2];
-            points[0] = points[1] = 0;
-            for (int i = 0; i < a.length; i++)
-              points[i + 2] = (byte) (a[i] + 1);
-            return points;
+          // if no alignments in grammar do not fail
+          if (alignments == null) {
+            return null;
           }
-          return null;
+
+          return this.alignmentSupplier.get();
         }
       }
 
       public class PackedRule extends Rule {
         protected final int address;
-
-        protected int[] tgt = null;
-        private FeatureVector features = null;
+        private final Supplier<int[]> englishSupplier;
+        private final Supplier<FeatureVector> featureVectorSupplier;
+        private final Supplier<byte[]> alignmentsSupplier;
 
         public PackedRule(int address) {
           this.address = address;
+          this.englishSupplier = intializeEnglishSupplier();
+          this.featureVectorSupplier = initializeFeatureVectorSupplier();
+          this.alignmentsSupplier = initializeAlignmentsSupplier();
+        }
+
+        private Supplier<int[]> intializeEnglishSupplier(){
+          Supplier<int[]> result = Suppliers.memoize(() ->{
+            return getTarget(source[address + 1]);
+          });
+          return result;
+        }
+
+        private Supplier<FeatureVector> initializeFeatureVectorSupplier(){
+          Supplier<FeatureVector> result = Suppliers.memoize(() ->{
+            return loadFeatureVector(source[address + 2]);
+         });
+          return result;
+        }
+
+        private Supplier<byte[]> initializeAlignmentsSupplier(){
+          Supplier<byte[]> result = Suppliers.memoize(()->{
+            // if no alignments in grammar do not fail
+            if (alignments == null){
+              return null;
+            }
+            return getAlignmentArray(source[address + 2]);
+          });
+          return result;
         }
 
         @Override
@@ -876,10 +965,7 @@ public class PackedGrammar extends AbstractGrammar {
 
         @Override
         public int[] getEnglish() {
-          if (tgt == null) {
-            tgt = getTarget(source[address + 1]);
-          }
-          return tgt;
+          return this.englishSupplier.get();
         }
 
         @Override
@@ -893,18 +979,17 @@ public class PackedGrammar extends AbstractGrammar {
 
         @Override
         public FeatureVector getFeatureVector() {
-          if (features == null) {
-            features = new FeatureVector(getFeatures(source[address + 2]), "tm_" + Vocabulary.word(owner) + "_");
-          }
-
-          return features;
+          return this.featureVectorSupplier.get();
         }
         
         @Override
         public byte[] getAlignment() {
-          if (alignments != null)
-            return getAlignmentArray(source[address + 2]);
-          return null;
+          return this.alignmentsSupplier.get();
+        }
+        
+        @Override
+        public String getAlignmentString() {
+            throw new RuntimeException("AlignmentString not implemented for PackedRule!");
         }
 
         @Override

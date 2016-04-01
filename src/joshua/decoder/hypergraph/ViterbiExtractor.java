@@ -39,6 +39,36 @@ public class ViterbiExtractor {
     }
     return res.toString();
   }
+  
+  public static String extractViterbiAlignment(HGNode node) {
+    WordAlignmentState viterbiAlignment = buildViterbiAlignment(node);
+    return viterbiAlignment.toFinalString();
+  }
+  
+  // get one-best alignment for Viterbi string
+  public static WordAlignmentState buildViterbiAlignment(HGNode node) {
+    HyperEdge edge = node.bestHyperedge;
+    Rule rl = edge.getRule();  
+    if (rl == null) { // deductions under "goal item" does not have rule
+      if (edge.getTailNodes().size() != 1)
+        throw new RuntimeException("deduction under goal item have not equal one item");
+      return buildViterbiAlignment(edge.getTailNodes().get(0));
+    }
+    WordAlignmentState waState = new WordAlignmentState(rl, node.i);
+    if (edge.getTailNodes() != null) {
+      int[] english = rl.getEnglish();
+      for (int c = 0; c < english.length; c++) {
+        if (Vocabulary.nt(english[c])) {
+          // determines the index in the tail node array by
+          // the index of the nonterminal in the source [english[c] gives a negative
+          // int]
+          int index = -(english[c] + 1);
+          waState.substituteIn(buildViterbiAlignment(edge.getTailNodes().get(index)));
+        }
+      }
+    }
+    return waState;
+  }
 
   // ######## find 1best hypergraph#############
   public static HyperGraph getViterbiTreeHG(HyperGraph hg_in) {
