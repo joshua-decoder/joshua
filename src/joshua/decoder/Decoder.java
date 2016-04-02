@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -425,6 +426,11 @@ public class Decoder {
     /* Start a thread to handle requests on the input stream */
     new RequestParallelizer(request, translations, out).start();
     
+    // Create the n-best output stream
+    FileWriter nbest_out = null;
+    if (joshuaConfiguration.n_best_file != null)
+      nbest_out = new FileWriter(joshuaConfiguration.n_best_file);
+    
     for (;;) {
       Translation translation = translations.next();
       if (translation == null)
@@ -446,7 +452,7 @@ public class Decoder {
           text = translation.toString().replaceAll("=", "= ");
           // Write the complete formatted string to STDOUT
           if (joshuaConfiguration.n_best_file != null)
-            out.write(text.getBytes());
+            nbest_out.write(text);
           
           // Extract just the translation and output that to STDOUT
           text = text.substring(0,  text.indexOf('\n'));
@@ -461,6 +467,9 @@ public class Decoder {
       }
       out.flush();
     }
+    
+    if (joshuaConfiguration.n_best_file != null)
+      nbest_out.close();
   }
 
 
