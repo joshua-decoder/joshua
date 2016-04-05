@@ -233,11 +233,11 @@ public class LanguageModelFF extends StatefulFF {
         if (tokens[i] > 0) { // skip nonterminals
           for (int j = 0; j < alignments.length; j += 2) {
             if (alignments[j] == i) {
-              int annotation = sentence.getAnnotation((int)alignments[i] + begin);
-              if (annotation != -1) {
+              String annotation = sentence.getAnnotation((int)alignments[i] + begin, "class");
+              if (annotation != null) {
 //                System.err.println(String.format("  word %d source %d abs %d annotation %d/%s", 
 //                    i, alignments[i], alignments[i] + begin, annotation, Vocabulary.word(annotation)));
-                tokens[i] = annotation;
+                tokens[i] = Vocabulary.id(annotation);
                 break;
               }
             }

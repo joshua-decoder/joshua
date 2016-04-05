@@ -88,11 +88,6 @@ public class Sentence {
       }
       this.id = id;
     }
-    
-    // Mask strings that cause problems for the decoder
-    source = source.replaceAll("\\[",  "-lsb-")
-        .replaceAll("\\]",  "-rsb-")
-        .replaceAll("\\|",  "-pipe-");
   
     // Only trim strings
     if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
@@ -127,11 +122,13 @@ public class Sentence {
   /**
    * Returns the annotations for a specific word (specified by an index) in the 
    * sentence
+   * 
    * @param index The location of the word in the sentence
+   * @param key The annotation identity
    * @return The annotations associated with this word
    */
-  public int getAnnotation(int index) {
-    return getTokens().get(index).getAnnotation();
+  public String getAnnotation(int index, String key) {
+    return getTokens().get(index).getAnnotation(key);
   }
 
   /**

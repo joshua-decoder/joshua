@@ -1,1 +1,1 @@
-$mattpost_(mis) amigos me llaman
+mis[tag=ADJ;num=PL;class=OOV] amigos me llaman
