@@ -1,5 +1,9 @@
 # Helper functions used across the CMake build system
 
+
+#message("Project binary dir:" ${PROJECT_BINARY_DIR})
+
+
 include(CMakeParseArguments)
 
 # Adds a bunch of executables to the build, each depending on the specified
@@ -41,8 +45,21 @@ function(KenLMAddTest)
                  ${KenLMAddTest_TEST}.cc
                  ${KenLMAddTest_DEPENDS})
 
+
+
+
+if(USE_STATIC_BOOST)
   # Require the following compile flag
+  message("Info: Using static boost and therefore not adding the -DBOOST_TEST_DYN_LINK compile flag")
+else(USE_STATIC_BOOST)
+   # Require the following compile flag
   set_target_properties(${KenLMAddTest_TEST} PROPERTIES COMPILE_FLAGS -DBOOST_TEST_DYN_LINK)
+endif(USE_STATIC_BOOST)
+
+
+  # Require the following compile flag  
+ # set_target_properties(${KenLMAddTest_TEST} PROPERTIES COMPILE_FLAGS -DBOOST_TEST_DYN_LINK)
+
 
   if(KenLMAddTest_LIBRARIES)
     target_link_libraries(${KenLMAddTest_TEST} ${KenLMAddTest_LIBRARIES})
