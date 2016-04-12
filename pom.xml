@@ -8,10 +8,10 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>joshua</groupId>
+  <groupId>org.apache.joshua</groupId>
   <artifactId>joshua</artifactId>
   <packaging>jar</packaging>
-  <version>6.0.4</version>
+  <version>6.0.5-SNAPSHOT</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
