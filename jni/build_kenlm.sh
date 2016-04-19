@@ -4,7 +4,7 @@ set -u
 
 export KENLM_MAX_ORDER=10
 export CXXFLAGS+=" -O3 -fPIC -DHAVE_ZLIB"
-export LDFLAGS+=" -lz"
+export LDFLAGS+=" -lz -lbz2 -llzma"
 export CXX=${CXX:-g++}
 
 cd $JOSHUA/ext/kenlm

@@ -4,3 +4,7 @@
 [submodule "berkeleylm"]
 	path = ext/berkeleylm
 	url = https://github.com/joshua-decoder/berkeleylm.git
+[submodule "ext/kenlm"]
+	path = ext/kenlm
+	url = https://github.com/kpu/kenlm.git
+	branch = 56fdb5c44fca34d5a2e07d96139c28fb163983c5

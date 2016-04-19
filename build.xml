@@ -63,7 +63,7 @@
     <!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX -->
   </target>
 
-  <target name="kenlm" depends="check-joshua-home" description="--> Build KenLM">
+  <target name="kenlm" depends="check-joshua-home,download-submodules" description="--> Build KenLM">
     <exec dir="${JOSHUA}/jni" executable="/bin/bash">
       <env key="JOSHUA" path="${JOSHUA}" />
       <arg line="build_kenlm.sh" />
