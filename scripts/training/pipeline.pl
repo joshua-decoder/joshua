@@ -174,7 +174,7 @@ my $DO_BUILD_LM_FROM_CORPUS = 1;
 my $DO_BUILD_CLASS_LM = 0;
 my $CLASS_LM_CORPUS = undef;
 my $CLASS_MAP = undef;
-my $CLASS_LM_ORDER = 5;
+my $CLASS_LM_ORDER = 9;
 
 # whether to tokenize and lowercase training, tuning, and test data
 my $DO_PREPARE_CORPORA = 1;
@@ -296,6 +296,7 @@ my $retval = GetOptions(
   "class-lm!"     => \$DO_BUILD_CLASS_LM,
   "class-lm-corpus=s"   => \$CLASS_LM_CORPUS,
   "class-map=s"     => \$CLASS_MAP,
+  "class-lm-order=s"     => \$CLASS_LM_ORDER,
   "optimizer-run=i" => \$OPTIMIZER_RUN,
 );
 
@@ -656,7 +657,7 @@ if (@CORPORA > 0) {
 
   # used for parsing
   if (exists $prefixes->{shortened}) {
-    $TRAIN{mixedcase} = "$DATA_DIRS{train}/$prefixes->{shortened}.$TARGET.gz";
+    $TRAIN{mixedcase} = "$DATA_DIRS{train}/$prefixes->{shortened}.$TARGET";
   }
 
   $TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
@@ -1420,7 +1421,7 @@ for my $i (0..$#LMFILES) {
 }
 
 if ($DO_BUILD_CLASS_LM) {
-  push(@feature_functions, "LanguageModel -lm_type kenlm -lm_order 9 -lm_file $RUNDIR/class_lm.gz -class_map $CLASS_MAP");
+  push(@feature_functions, "LanguageModel -lm_type kenlm -lm_order $CLASS_LM_ORDER -lm_file $RUNDIR/class_lm.gz -class_map $CLASS_MAP");
   $weightstr .= "lm_$lm_index 1 ";
 }
 
