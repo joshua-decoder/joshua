@@ -323,7 +323,9 @@ if (! -x $NORMALIZER) {
   exit 1;
 }
 
-my $ALIGNER_CONF = get_absolute_path($ALIGNER_CONF);
+# Absolutize paths
+$ALIGNER_CONF = get_absolute_path($ALIGNER_CONF);
+$ALIGNMENT = get_absolute_path($ALIGNMENT);
 
 # capitalize these to offset a common error:
 $FIRST_STEP = uc($FIRST_STEP);
@@ -1181,6 +1183,7 @@ if (! defined $GRAMMAR_FILE) {
 
 maybe_quit("THRAX");
 maybe_quit("GRAMMAR");
+maybe_quit("MODEL");
 
 ## TUNING ##############################################################
 TUNE:
