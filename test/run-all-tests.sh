@@ -7,6 +7,8 @@
 # Important!  Do not rename this script to match the pattern test*.sh, or it will execute
 # recursively.
 
+trap exit INT
+
 GREEN='\033[01;32m'
 RED='\033[01;31;31m'
 NONE='\033[00m'
@@ -20,7 +22,7 @@ for file in $tests; do
   if [[ ! -x $file ]]; then
     continue;
   fi
-  dir=$(dirname $file)
+  dir=$(dirname $file | sed 's/^\.\///')
   name=$(basename $file)
   echo -n "Running test '$name' in test/$dir..."
   pushd $dir > /dev/null
