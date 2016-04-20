@@ -13,5 +13,7 @@
     <dependency org="args4j" name="args4j" rev="2.0.29" />
     <dependency org="com.google.code.gson" name="gson" rev="2.5"/>
     <dependency org="com.google.guava" name="guava" rev="19.0"/>
+    <dependency org="cc.mallet" name="mallet" rev="2.0.7"/>
+    <dependency org="net.sf.trove4j" name="trove4j" rev="2.0.2"/>
   </dependencies>
 </ivy-module>
