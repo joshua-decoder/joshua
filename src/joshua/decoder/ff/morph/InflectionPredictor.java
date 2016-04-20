@@ -1,19 +1,24 @@
 package joshua.decoder.ff.morph;
 
+/*
+ * Format of training file:
+ * 
+ * source_word target_word feature:value feature:value feature:value ...
+ * 
+ * Invocation:
+ * 
+ * java -cp /Users/post/code/joshua/lib/mallet-2.0.7.jar:/Users/post/code/joshua/lib/trove4j-2.0.2.jar:$JOSHUA/class joshua.decoder.ff.morph.InflectionPredictor /path/to/training/data 
+ */
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import cc.mallet.classify.Classifier;
-import cc.mallet.classify.ClassifierTrainer;
-import cc.mallet.classify.MaxEntTrainer;
-import cc.mallet.classify.NaiveBayesTrainer;
+import cc.mallet.classify.*;
 import cc.mallet.pipe.*;
 import cc.mallet.pipe.iterator.CsvIterator;
-import cc.mallet.pipe.iterator.FileIterator;
-import cc.mallet.pipe.iterator.LineIterator;
 import cc.mallet.types.InstanceList;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.SourcePath;
