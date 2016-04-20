@@ -121,7 +121,7 @@ public class LanguageModelFF extends StatefulFF {
         lineno++;
         String[] lineComp = line.trim().split("\\s+");
         try {
-          this.classMap.put(Vocabulary.id(lineComp[0]), Integer.parseInt(lineComp[1]));
+          this.classMap.put(Vocabulary.id(lineComp[0]), Vocabulary.id(lineComp[1]));
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
           System.err.println(String.format("* WARNING: bad vocab line #%d '%s'", lineno, line));
         }
