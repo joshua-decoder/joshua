@@ -36,6 +36,7 @@ public class Token {
   private int tokenID;
 
   private HashMap<String,String> annotations = null;
+  private String annotationString;
 
   /**
    * Constructor : Creates a Token object from a raw word
@@ -69,9 +70,9 @@ public class Token {
     if (tag.find()) {
       // Annotation match found
       token = tag.group(1);
-      String tagStr = tag.group(2);
+      annotationString = tag.group(2);
 
-      for (String annotation: tagStr.split(";")) {
+      for (String annotation: annotationString.split(";")) {
         int where = annotation.indexOf("=");
         if (where != -1) {
           annotations.put(annotation.substring(0, where), annotation.substring(where + 1));
@@ -120,5 +121,12 @@ public class Token {
     }
     
     return null;
+  }
+  
+  /**
+   * Returns the raw annotation string
+   */
+  public String getAnnotationString() {
+    return annotationString;
   }
 }
