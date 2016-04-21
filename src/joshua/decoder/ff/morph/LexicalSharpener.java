@@ -45,12 +45,12 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.segment_file.Sentence;
 import joshua.decoder.segment_file.Token;
 
-public class InflectionPredictor extends StatelessFF {
+public class LexicalSharpener extends StatelessFF {
 
   private Classifier classifier = null;
   private SerialPipes pipes = null;
   
-  public InflectionPredictor(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
+  public LexicalSharpener(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "LexicalSharpener", args, config);
     
     ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
@@ -213,7 +213,7 @@ public class InflectionPredictor extends StatelessFF {
   }
 
   public static void main(String[] args) throws IOException, ClassNotFoundException {
-    InflectionPredictor ts = new InflectionPredictor(null, args, null);
+    LexicalSharpener ts = new LexicalSharpener(null, args, null);
     
     String modelFile = "model";
 
