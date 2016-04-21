@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -290,7 +291,7 @@ public class LexicalSharpener extends StatelessFF {
     return anchoredSource;
   }
   
-  public class CustomLineProcessor extends Pipe {
+  public static class CustomLineProcessor extends Pipe {
 
     private static final long serialVersionUID = 1L;
 
@@ -338,6 +339,35 @@ public class LexicalSharpener extends StatelessFF {
     }
   }
 
+  public static void example(String[] args) throws IOException, ClassNotFoundException {
+
+    ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
+
+    Alphabet dataAlphabet = new Alphabet();
+    LabelAlphabet labelAlphabet = new LabelAlphabet();
+    
+    pipeList.add(new Target2Label(dataAlphabet, labelAlphabet));
+    // Basically, SvmLight but with a custom (fixed) alphabet)
+    pipeList.add(new CustomLineProcessor(dataAlphabet, labelAlphabet));
+
+    FileReader reader1 = new FileReader("data.1");
+    FileReader reader2 = new FileReader("data.2");
+
+    SerialPipes pipes = new SerialPipes(pipeList);
+    InstanceList instances = new InstanceList(dataAlphabet, labelAlphabet);
+    instances.setPipe(pipes);
+    instances.addThruPipe(new CsvIterator(reader1, "(\\S+)\\s+(\\S+)\\s+(.*)", 3, 2, 1));
+    ClassifierTrainer trainer1 = new MaxEntTrainer();
+    Classifier classifier1 = trainer1.train(instances);
+    
+    pipes = new SerialPipes(pipeList);
+    instances = new InstanceList(dataAlphabet, labelAlphabet);
+    instances.setPipe(pipes);
+    instances.addThruPipe(new CsvIterator(reader2, "(\\S+)\\s+(\\S+)\\s+(.*)", 3, 2, 1));
+    ClassifierTrainer trainer2 = new MaxEntTrainer();
+    Classifier classifier2 = trainer2.train(instances);
+  }
+  
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     LexicalSharpener ts = new LexicalSharpener(null, args, null);
     
