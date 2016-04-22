@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,17 +88,18 @@ public class LexicalSharpener extends StatelessFF {
     }
   
     String lastSourceWord = null;
-    String examples = "";
+    ArrayList<String> examples = new ArrayList<String>();
     int linesRead = 0;
     for (String line : lineReader) {
       String sourceWord = line.substring(0, line.indexOf(' '));
+
       if (lastSourceWord != null && ! sourceWord.equals(lastSourceWord)) {
         classifiers.put(lastSourceWord, new MalletPredictor(lastSourceWord, examples));
-        //        System.err.println(String.format("WORD %s:\n%s\n", lastOutcome, buffer));
-        examples = "";
+//                System.err.println(String.format("WORD %s:\n%s\n", lastSourceWord, examples));
+        examples = new ArrayList<String>();
       }
   
-      examples += line + "\n";
+      examples.add(line);
       lastSourceWord = sourceWord;
       linesRead++;
     }

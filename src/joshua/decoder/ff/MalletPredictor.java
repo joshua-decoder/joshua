@@ -24,28 +24,12 @@ public class MalletPredictor implements Serializable {
     private SerialPipes pipes = null;
     private InstanceList instances = null;
     private String sourceWord = null;
-    private String examples = null;
+    private ArrayList<String> examples = null;
     private Classifier classifier = null;
     
-    public MalletPredictor(String word, String examples) {
+    public MalletPredictor(String word, ArrayList<String> examples) {
       this.sourceWord = word;
       this.examples = examples;
-      ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
-
-      // I don't know if this is needed
-      pipeList.add(new Target2Label());
-      // Convert custom lines to Instance objects (svmLight2FeatureVectorAndLabel not versatile enough)
-      pipeList.add(new SvmLight2FeatureVectorAndLabel());
-      // Validation
-//      pipeList.add(new PrintInputAndTarget());
-      
-      // name: english word
-      // data: features (FeatureVector)
-      // target: foreign inflection
-      // source: null
-
-      pipes = new SerialPipes(pipeList);
-      instances = new InstanceList(pipes);
     }
 
     /**
@@ -70,9 +54,30 @@ public class MalletPredictor implements Serializable {
 
     public void train() {
       Decoder.LOG(2, String.format("Word %s: training model from %d examples", 
-          sourceWord, examples.split("\\n").length));
+          sourceWord, examples.size()));
       
-      StringReader reader = new StringReader(examples);
+      ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
+
+      // I don't know if this is needed
+      pipeList.add(new Target2Label());
+      // Convert custom lines to Instance objects (svmLight2FeatureVectorAndLabel not versatile enough)
+      pipeList.add(new SvmLight2FeatureVectorAndLabel());
+      // Validation
+//      pipeList.add(new PrintInputAndTarget());
+      
+      // name: english word
+      // data: features (FeatureVector)
+      // target: foreign inflection
+      // source: null
+
+      pipes = new SerialPipes(pipeList);
+      instances = new InstanceList(pipes);
+      
+      /* I know, this is *terrible*, but I need it to work *now* */
+      String exampleList = "";
+      for (String example: examples)
+        exampleList += example + "\n";
+      StringReader reader = new StringReader(exampleList);
 
       // Constructs an instance with everything shoved into the data field
       instances.addThruPipe(new CsvIterator(reader, "(\\S+)\\s+(.*)", 2, -1, 1));
