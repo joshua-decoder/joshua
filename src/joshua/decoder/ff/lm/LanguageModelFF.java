@@ -92,7 +92,7 @@ public class LanguageModelFF extends StatefulFF {
   
   protected class ClassMap {
 
-    private final int OOV_id = 10;
+    private final int OOV_id = Vocabulary.getUnknownId();
     private HashMap<Integer, Integer> classMap;
 
     public ClassMap(String file_name) throws IOException {
@@ -101,11 +101,7 @@ public class LanguageModelFF extends StatefulFF {
     }
 
     public int getClassID(int wordID) {
-      if (this.classMap.containsKey(wordID)) {
-        return this.classMap.get(wordID);
-      } else {
-        return OOV_id;
-      }
+      return this.classMap.getOrDefault(wordID, OOV_id);
     }
 
     /**
