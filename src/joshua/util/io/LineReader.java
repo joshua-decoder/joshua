@@ -274,7 +274,7 @@ public class LineReader implements Reader<String> {
 //        System.err.println(String.format("OLD %d NEW %d", progress, newProgress));
         
         if (newProgress > progress) {
-          for (int i = progress + 1; i <= newProgress; i++)
+          for (int i = progress + 1; i <= newProgress; i++) {
             if (i == 97) {
               System.err.print("1");
             } else if (i == 98) {
@@ -285,13 +285,13 @@ public class LineReader implements Reader<String> {
               System.err.println("%");
             } else if (i % 10 == 0) {
               System.err.print(String.format("%d", i));
-              System.err.flush();
             } else if ((i - 1) % 10 == 0)
               ; // skip at 11 since 10, 20, etc take two digits
             else {
               System.err.print(".");
-              System.err.flush();
             }
+          }
+          System.err.flush();
           progress = newProgress;
         }
       }
