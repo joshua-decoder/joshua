@@ -1,4 +1,4 @@
-package joshua.decoder.ff.morph;
+package joshua.decoder.ff;
 
 /***
  * This feature function scores a rule application by predicting, for each target word aligned with
@@ -16,7 +16,6 @@ package joshua.decoder.ff.morph;
  * java -cp /Users/post/code/joshua/lib/mallet-2.0.7.jar:/Users/post/code/joshua/lib/trove4j-2.0.2.jar:$JOSHUA/class joshua.decoder.ff.morph.LexicalSharpener /path/to/training/data 
  */
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
