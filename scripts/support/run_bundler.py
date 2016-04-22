@@ -326,6 +326,7 @@ def recursive_copy(src, dest, symlink = False):
 
 def run_grammar_packer(src_path, dest_path):
     cmd = [os.path.join(JOSHUA_PATH, "scripts/support/grammar-packer.pl"),
+           "-a",
            "-T", opts.tmpdir,
            "-g", src_path, "-o", dest_path]
     logging.info(
