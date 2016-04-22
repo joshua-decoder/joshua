@@ -27,7 +27,7 @@ set -u
 JOSHUA=$(dirname $0)/..
 
 exec java -Xmx${mem} \
- 	-cp $JOSHUA/class:$JOSHUA/ext/berkeleylm/jar/berkeleylm.jar:$JOSHUA/lib/gson-2.5.jar:$JOSHUA/lib/guava-19.0.jar \
+ 	-cp $JOSHUA/class:$JOSHUA/ext/berkeleylm/jar/berkeleylm.jar:$JOSHUA/lib/gson-2.5.jar:$JOSHUA/lib/guava-19.0.jar:$JOSHUA/lib/mallet-2.0.7.jar:$JOSHUA/lib/trove4j-2.0.2.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
