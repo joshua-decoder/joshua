@@ -62,6 +62,7 @@ public class Token {
   public Token(String rawWord) {
     
     annotations = new HashMap<String,String>();
+    annotationString = "";
     
     // Matches a word with an annotation
     // Check guidelines in constructor description
