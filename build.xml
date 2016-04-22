@@ -29,6 +29,8 @@
       <include name="args4j-2.0.29.jar" />
       <include name="gson-2.5.jar" />
       <include name="guava-19.0.jar" />
+      <include name="mallet-2.0.7.jar" />
+      <include name="trove4j-2.0.2" />
     </fileset>
     <fileset dir="${thraxlib}">
       <include name="thrax.jar" />
