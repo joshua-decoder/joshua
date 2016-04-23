@@ -24,9 +24,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import cc.mallet.classify.*;
 import cc.mallet.types.Labeling;
@@ -89,17 +91,22 @@ public class LexicalSharpener extends StatelessFF {
   
     String lastSourceWord = null;
     ArrayList<String> examples = new ArrayList<String>();
+    HashMap<String,Integer> targets = new HashMap<String,Integer>();
     int linesRead = 0;
     for (String line : lineReader) {
-      String sourceWord = line.substring(0, line.indexOf(' '));
+      String[] tokens = line.split("\\s+", 3);
+      String sourceWord = tokens[0];
+      String targetWord = tokens[1];
 
       if (lastSourceWord != null && ! sourceWord.equals(lastSourceWord)) {
-        classifiers.put(lastSourceWord, new MalletPredictor(lastSourceWord, examples));
+        classifiers.put(lastSourceWord, createClassifier(lastSourceWord, targets, examples));
 //                System.err.println(String.format("WORD %s:\n%s\n", lastSourceWord, examples));
         examples = new ArrayList<String>();
+        targets = new HashMap<String,Integer>();
       }
   
       examples.add(line);
+      targets.put(targetWord, targets.getOrDefault(targetWord, 0));
       lastSourceWord = sourceWord;
       linesRead++;
     }
@@ -108,15 +115,23 @@ public class LexicalSharpener extends StatelessFF {
     System.err.println(String.format("Read %d lines from training file", linesRead));
   }
 
+  private MalletPredictor createClassifier(String lastSourceWord, HashMap<String, Integer> counts,
+      ArrayList<String> examples) {
+    
+    int numExamples = examples.size();
+    
+    if (examples.size() < 75)
+      return new MalletPredictor(lastSourceWord, examples);
+    
+    return null;
+  }
+
   public void loadClassifiers(String modelFile) throws ClassNotFoundException, IOException {
     ObjectInputStream ois = new ObjectInputStream(new FileInputStream(modelFile));
     classifiers = (HashMap<String,MalletPredictor>) ois.readObject();
     ois.close();
     
     System.err.println(String.format("Loaded model with %d keys", classifiers.keySet().size()));
-    for (String key: classifiers.keySet()) {
-      System.err.println("  " + key);
-    }
   }
 
   public void saveClassifiers(String modelFile) throws FileNotFoundException, IOException {
