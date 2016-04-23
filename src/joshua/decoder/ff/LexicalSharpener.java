@@ -112,7 +112,7 @@ public class LexicalSharpener extends StatelessFF {
     }
     classifiers.put(lastSourceWord, new MalletPredictor(lastSourceWord, examples));
   
-    System.err.println(String.format("Read %d lines from training file", linesRead));
+    Decoder.LOG(1, String.format("Read %d lines from training file", linesRead));
   }
 
   private MalletPredictor createClassifier(String lastSourceWord, HashMap<String, Integer> counts,
@@ -131,7 +131,8 @@ public class LexicalSharpener extends StatelessFF {
     classifiers = (HashMap<String,MalletPredictor>) ois.readObject();
     ois.close();
     
-    System.err.println(String.format("Loaded model with %d keys", classifiers.keySet().size()));
+    System.err.println(String.format("%s: Loaded model with %d keys", 
+        name, classifiers.keySet().size()));
   }
 
   public void saveClassifiers(String modelFile) throws FileNotFoundException, IOException {
@@ -161,6 +162,7 @@ public class LexicalSharpener extends StatelessFF {
       Token sourceToken = sentence.getTokens().get(s);
       String featureString = sourceToken.getAnnotationString().replace('|', ' ');
       
+      System.err.println(String.format("%s: %s -> %s?",  name, sourceToken, Vocabulary.word(targetID)));
       Classification result = predict(sourceToken.getWord(), targetID, featureString);
       if (result != null) {
         Labeling labeling = result.getLabeling();
