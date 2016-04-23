@@ -166,7 +166,7 @@ public class LexicalSharpener extends StatelessFF {
       String sourceWord = Vocabulary.word(sourceToken.getWord());
       String featureString = sourceToken.getAnnotationString().replace('|', ' ');
       
-      System.err.println(String.format("%s: %s -> %s?",  name, sourceWord, targetWord));
+//      System.err.println(String.format("%s: %s -> %s?",  name, sourceWord, targetWord));
       Classification result = predict(sourceWord, targetWord, featureString);
       if (result != null) {
         Labeling labeling = result.getLabeling();
