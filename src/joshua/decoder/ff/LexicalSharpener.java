@@ -151,6 +151,8 @@ public class LexicalSharpener extends StatelessFF {
   public DPState compute(Rule rule, List<HGNode> tailNodes, int i, int j, SourcePath sourcePath,
       Sentence sentence, Accumulator acc) {
     
+    int[] resolved = anchorRuleSourceToSentence(rule, tailNodes, i);
+    
     Map<Integer, List<Integer>> points = rule.getAlignmentMap();
     for (int t: points.keySet()) {
       List<Integer> source_indices = points.get(t);
@@ -158,12 +160,14 @@ public class LexicalSharpener extends StatelessFF {
         continue;
       
       int targetID = rule.getEnglish()[t];
-      int s = i + source_indices.get(0);
-      Token sourceToken = sentence.getTokens().get(s);
+      String targetWord = Vocabulary.word(targetID);
+      int sourceIndex = resolved[source_indices.get(0)];
+      Token sourceToken = sentence.getTokens().get(sourceIndex);
+      String sourceWord = Vocabulary.word(sourceToken.getWord());
       String featureString = sourceToken.getAnnotationString().replace('|', ' ');
       
-      System.err.println(String.format("%s: %s -> %s?",  name, sourceToken, Vocabulary.word(targetID)));
-      Classification result = predict(sourceToken.getWord(), targetID, featureString);
+      System.err.println(String.format("%s: %s -> %s?",  name, sourceWord, targetWord));
+      Classification result = predict(sourceWord, targetWord, featureString);
       if (result != null) {
         Labeling labeling = result.getLabeling();
         int num = labeling.numLocations();
@@ -193,12 +197,11 @@ public class LexicalSharpener extends StatelessFF {
       return "21+";
   }
   
-  public Classification predict(int sourceID, int targetID, String featureString) {
-    String word = Vocabulary.word(sourceID);
-    if (classifiers.containsKey(word)) {
-      MalletPredictor predictor = classifiers.get(word);
+  public Classification predict(String sourceWord, String targetWord, String featureString) {
+    if (classifiers.containsKey(sourceWord)) {
+      MalletPredictor predictor = classifiers.get(sourceWord);
       if (predictor != null)
-        return predictor.predict(word, featureString);
+        return predictor.predict(targetWord, featureString);
     }
 
     return null;
@@ -273,7 +276,7 @@ public class LexicalSharpener extends StatelessFF {
       String sourceWord = tokens[0];
       String targetWord = tokens[1];
       String features = tokens[2];
-      Classification result = ts.predict(Vocabulary.id(sourceWord), Vocabulary.id(targetWord), features);
+      Classification result = ts.predict(sourceWord, targetWord, features);
       if (result != null)
         System.out.println(String.format("%s %f", result.getLabelVector().getBestLabel(), result.getLabelVector().getBestValue()));
       else 
