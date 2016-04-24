@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.segment_file.Token;
 import joshua.util.ChartSpan;
 
@@ -61,6 +62,8 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
   /** Logger for this class. */
   private static final Logger logger = Logger.getLogger(Lattice.class.getName());
+  
+  JoshuaConfiguration config = null;
 
   /**
    * Constructs a new lattice from an existing list of (connected) nodes.
@@ -70,13 +73,13 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * 
    * @param nodes A list of nodes which must be in topological order.
    */
-  public Lattice(List<Node<Value>> nodes) {
+  public Lattice(List<Node<Value>> nodes, JoshuaConfiguration config) {
     this.nodes = nodes;
 //    this.distances = calculateAllPairsShortestPath();
     this.latticeHasAmbiguity = true;
   }
 
-  public Lattice(List<Node<Value>> nodes, boolean isAmbiguous) {
+  public Lattice(List<Node<Value>> nodes, boolean isAmbiguous, JoshuaConfiguration config) {
     // Node<Value> sink = new Node<Value>(nodes.size());
     // nodes.add(sink);
     this.nodes = nodes;
@@ -89,7 +92,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * 
    * @param linearChain a sequence of Value objects
    */
-  public Lattice(Value[] linearChain) {
+  public Lattice(Value[] linearChain, JoshuaConfiguration config) {
     this.latticeHasAmbiguity = false;
     this.nodes = new ArrayList<Node<Value>>();
 
@@ -140,17 +143,17 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param linearChain
    * @return Lattice representation of the linear chain.
    */
-  public static Lattice<Token> createTokenLatticeFromString(String source) {
+  public static Lattice<Token> createTokenLatticeFromString(String source, JoshuaConfiguration config) {
     String[] tokens = source.split("\\s+");
     Token[] integerSentence = new Token[tokens.length];
     for (int i = 0; i < tokens.length; i++) {
-      integerSentence[i] = new Token(tokens[i]);
+      integerSentence[i] = new Token(tokens[i], config);
     }
 
-    return new Lattice<Token>(integerSentence);
+    return new Lattice<Token>(integerSentence, config);
   }
 
-  public static Lattice<Token> createTokenLatticeFromPLF(String data) {
+  public static Lattice<Token> createTokenLatticeFromPLF(String data, JoshuaConfiguration config) {
     ArrayList<Node<Token>> nodes = new ArrayList<Node<Token>>();
     
     // This matches a sequence of tuples, which describe arcs leaving this node
@@ -211,7 +214,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
         String remainingArcs = arcMatcher.group(4);
 
-        Token arcToken = new Token(arcLabel);
+        Token arcToken = new Token(arcLabel, config);
         currentNode.addArc(destinationNode, arcWeight, arcToken);
 
         arcMatcher = arcPattern.matcher(remainingArcs);
@@ -225,16 +228,16 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     /* Add <s> to the start of the lattice. */
     if (nodes.size() > 1 && nodes.get(1) != null) {
       Node<Token> firstNode = nodes.get(1);
-      startNode.addArc(firstNode, 0.0f, new Token(Vocabulary.START_SYM));
+      startNode.addArc(firstNode, 0.0f, new Token(Vocabulary.START_SYM, config));
     }
 
     /* Add </s> as a final state, connect it to the previous end-state */
     nodeID = nodes.get(nodes.size()-1).getNumber() + 1;
     Node<Token> endNode = new Node<Token>(nodeID);
-    nodes.get(nodes.size()-1).addArc(endNode, 0.0f, new Token(Vocabulary.STOP_SYM));
+    nodes.get(nodes.size()-1).addArc(endNode, 0.0f, new Token(Vocabulary.STOP_SYM, config));
     nodes.add(endNode);
 
-    return new Lattice<Token>(nodes, latticeIsAmbiguous);
+    return new Lattice<Token>(nodes, latticeIsAmbiguous, config);
   }
 
   /**
@@ -243,7 +246,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
    * @param data String representation of a lattice.
    * @return A lattice that corresponds to the given string.
    */
-  public static Lattice<String> createStringLatticeFromString(String data) {
+  public static Lattice<String> createStringLatticeFromString(String data, JoshuaConfiguration config) {
 
     Map<Integer, Node<String>> nodes = new HashMap<Integer, Node<String>>();
 
@@ -303,7 +306,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 
     logger.fine(nodeList.toString());
 
-    return new Lattice<String>(nodeList);
+    return new Lattice<String>(nodeList, config);
   }
 
   /**
@@ -431,7 +434,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
     nodes.get(2).addArc(nodes.get(3), 3.0f, "b");
     nodes.get(2).addArc(nodes.get(3), 5.0f, "c");
 
-    Lattice<String> graph = new Lattice<String>(nodes);
+    Lattice<String> graph = new Lattice<String>(nodes, null);
 
     System.out.println("Shortest path from 0 to 3: " + graph.getShortestPath(0, 3));
   }

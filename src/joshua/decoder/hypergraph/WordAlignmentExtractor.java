@@ -2,8 +2,6 @@ package joshua.decoder.hypergraph;
 
 import java.util.Stack;
 
-import joshua.corpus.Vocabulary;
-import joshua.decoder.Decoder;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.KBestExtractor.DerivationState;
 import joshua.decoder.hypergraph.KBestExtractor.DerivationVisitor;

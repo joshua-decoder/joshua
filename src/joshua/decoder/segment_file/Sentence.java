@@ -191,7 +191,7 @@ public class Sentence {
             for (int i = 0; i <= chars.length - width; i++) {
               int j = i + width;
               if (width != chars.length) {
-                Token token = new Token(word.substring(i, j));
+                Token token = new Token(word.substring(i, j), config);
                 if (vocabulary.contains(id)) {
                   nodes.get(i).addArc(nodes.get(j), 0.0f, token);
                   wordChart.set(i, j, true);
@@ -386,7 +386,7 @@ public class Sentence {
    */
   public Lattice<String> stringLattice() {
     assert isLinearChain();
-    return Lattice.createStringLatticeFromString(source());
+    return Lattice.createStringLatticeFromString(source(), config);
   }
 
   public List<ConstraintSpan> constraints() {
@@ -400,10 +400,10 @@ public class Sentence {
           System.err.println("* FATAL: lattice decoding currently not supported for stack-based search algorithm.");
           System.exit(12);
         }
-        this.sourceLattice = Lattice.createTokenLatticeFromPLF(rawSource());
+        this.sourceLattice = Lattice.createTokenLatticeFromPLF(rawSource(), config);
       } else
         this.sourceLattice = Lattice.createTokenLatticeFromString(String.format("%s %s %s", Vocabulary.START_SYM,
-            rawSource(), Vocabulary.STOP_SYM));
+            rawSource(), Vocabulary.STOP_SYM), config);
     }
     return this.sourceLattice;
   }

@@ -170,4 +170,23 @@ public class FormatUtils {
       return false;
     }
   }
+  
+  /**
+   * Determines if a string contains ALL CAPS
+   * 
+   * @param token
+   * @return true if the string is all in uppercase, false otherwise
+   */
+  public static boolean ISALLUPPERCASE(String token) {
+    for (int i = 0; i < token.length(); i++)
+      if (! Character.isUpperCase(token.charAt(i)))
+        return false;
+    return true;
+  }
+
+  public static String capitalize(String word) {
+    if (word == null || word.length() == 0)
+      return word;
+    return word.substring(0, 1).toUpperCase() + word.substring(1);
+  }
 }
