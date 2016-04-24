@@ -264,6 +264,7 @@ my $retval = GetOptions(
   "tokenizer-source=s"      => \$TOKENIZER_SOURCE,
   "tokenizer-target=s"      => \$TOKENIZER_TARGET,
   "normalizer=s"      => \$NORMALIZER,
+  "lowercaser=s"      => \$LOWERCASER,
   "joshua-config=s"   => \$_JOSHUA_CONFIG,
   "joshua-args=s"      => \$_JOSHUA_ARGS,
   "joshua-mem=s"      => \$JOSHUA_MEM,
