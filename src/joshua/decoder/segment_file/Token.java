@@ -18,6 +18,8 @@
  */
 package joshua.decoder.segment_file;
 
+import static joshua.util.FormatUtils.escapeSpecialSymbols;
+
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,10 +92,9 @@ public class Token {
       token = rawWord;
     }
 
-    // Mask strings that cause problems for the decoder
-    token = token.replaceAll("\\[",  "-lsb-")
-        .replaceAll("\\]",  "-rsb-")
-        .replaceAll("\\|",  "-pipe-");
+    // Mask strings that cause problems for the decoder. This has to be done *after* parsing for
+    // annotations.
+    token = escapeSpecialSymbols(token);
 
     if (joshuaConfiguration != null && joshuaConfiguration.lowercase) {
       if (FormatUtils.ISALLUPPERCASE(token))

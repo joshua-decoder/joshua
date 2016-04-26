@@ -113,9 +113,6 @@ public class Sentence {
       this.id = id;
     }
     
-    // Mask strings that cause problems for the decoder
-    source = escapeSpecialSymbols(source);
-  
     // Only trim strings
     if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
       adjustForLength(joshuaConfiguration.maxlen);
