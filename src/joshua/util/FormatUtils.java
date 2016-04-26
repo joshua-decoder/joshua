@@ -22,6 +22,8 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.regex.Pattern;
 
+import joshua.corpus.Vocabulary;
+
 /**
  * Utility class for format issues.
  * 
@@ -94,7 +96,37 @@ public class FormatUtils {
   }
 
   public static String markup(String nt, int index) {
+    if (isNonterminal(nt)) {
+      return markup(cleanNonTerminal(nt), index);
+    }
     return "[" + nt + INDEX_SEPARATOR + index + "]";
+  }
+  
+  public static String escapeSpecialSymbols(String s) {
+    return s.replaceAll("\\[",  "-lsb-")
+            .replaceAll("\\]",  "-rsb-")
+            .replaceAll("\\|",  "-pipe-");
+  }
+  
+  public static String unescapeSpecialSymbols(String s) {
+    return s.replaceAll("-lsb-", "[")
+            .replaceAll("-rsb-", "]")
+            .replaceAll("-pipe-", "|");
+  }
+  
+  /**
+   * wrap sentence with sentence start/stop markers 
+   * as defined by Vocabulary; separated by a single whitespace.
+   */
+  public static String addSentenceMarkers(String s) {
+    return Vocabulary.START_SYM + " " + s + " " + Vocabulary.STOP_SYM;
+  }
+  
+  /**
+   * strip sentence markers (and whitespaces) from string
+   */
+  public static String removeSentenceMarkers(String s) {
+    return s.replaceAll("<s> ", "").replace(" </s>", "");
   }
 
   /**

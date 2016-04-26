@@ -41,6 +41,8 @@ import joshua.decoder.JoshuaConfiguration.INPUT_TYPE;
 import joshua.decoder.JoshuaConfiguration.SERVER_TYPE;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModel;
+import joshua.decoder.ff.StatefulFF;
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.Trie;
@@ -514,15 +516,26 @@ public class Decoder {
     return null;
   }
 
+  /**
+   * Clean shutdown of Decoder, resetting all
+   * static variables, such that any other instance of Decoder
+   * afterwards gets a fresh start.
+   */
   public void cleanUp() {
+    // shut down DecoderThreads
     for (DecoderThread thread : threadPool) {
       try {
         thread.join();
       } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
     }
+    // clear/reset static variables
+    DENSE_FEATURE_NAMES.clear();
+    Vocabulary.clear();
+    Vocabulary.unregisterLanguageModels();
+    LanguageModelFF.resetLmIndex();
+    StatefulFF.resetGlobalStateIndex();
   }
 
   public static void writeConfigFile(double[] newWeights, String template, String outputFile,

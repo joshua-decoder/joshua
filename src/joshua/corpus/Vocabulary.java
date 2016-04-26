@@ -46,7 +46,7 @@ import joshua.util.FormatUtils;
 
 public class Vocabulary {
 
-  private final static ArrayList<NGramLanguageModel> lms = new ArrayList<NGramLanguageModel>();
+  private final static ArrayList<NGramLanguageModel> LMs = new ArrayList<NGramLanguageModel>();
 
   private static List<String> idToString;
   private static Map<String, Integer> stringToId;
@@ -68,7 +68,7 @@ public class Vocabulary {
   public static boolean registerLanguageModel(NGramLanguageModel lm) {
     synchronized (lock) {
       // Store the language model.
-      lms.add(lm);
+      LMs.add(lm);
       // Notify it of all the existing words.
       boolean collision = false;
       for (int i = idToString.size() - 1; i > 0; i--)
@@ -141,7 +141,7 @@ public class Vocabulary {
         // register this (token,id) mapping with each language
         // model, so that they can map it to their own private
         // vocabularies
-        for (NGramLanguageModel lm : lms)
+        for (NGramLanguageModel lm : LMs)
           lm.registerWord(token, Math.abs(id));
 
         idToString.add(token);
@@ -267,6 +267,10 @@ public class Vocabulary {
       idToString.add(UNKNOWN_ID, UNKNOWN_WORD);
       stringToId.put(UNKNOWN_WORD, UNKNOWN_ID);
     }
+  }
+  
+  public static void unregisterLanguageModels() {
+    LMs.clear();
   }
   
 }

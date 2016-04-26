@@ -18,6 +18,9 @@
  */
 package joshua.decoder.segment_file;
 
+import static joshua.util.FormatUtils.addSentenceMarkers;
+import static joshua.util.FormatUtils.escapeSpecialSymbols;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,7 +59,10 @@ public class Sentence {
    * alignment or forced decoding.
    */
   protected String source = null;
+  protected String fullSource = null;
+  
   protected String target = null;
+  protected String fullTarget = null;
   protected String[] references = null;
 
   /* Lattice representation of the source sentence. */
@@ -106,7 +112,7 @@ public class Sentence {
       }
       this.id = id;
     }
-  
+    
     // Only trim strings
     if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
       adjustForLength(joshuaConfiguration.maxlen);
@@ -311,7 +317,10 @@ public class Sentence {
    * @return String The input sentence with start and stop symbols
    */
   public String fullSource() {
-    return String.format("%s %s %s", Vocabulary.START_SYM , source(), Vocabulary.STOP_SYM); 
+    if (fullSource == null) {
+      fullSource = addSentenceMarkers(source());
+    }
+    return fullSource;  
   }
 
   /**
@@ -329,7 +338,10 @@ public class Sentence {
   }
 
   public String fullTarget() {
-    return String.format("<s> %s </s>", target());
+    if (fullTarget == null) {
+      fullTarget = addSentenceMarkers(target());
+    }
+    return fullTarget; 
   }
 
   public String source(int i, int j) {
