@@ -1,5 +1,5 @@
-# Welcome to Joshua
-<img src="http://joshua-decoder.org/images/joshua-logo-small.png" align="right" width="300" />
+# Welcome to Apache Joshua (Incubating)
+<img src="https://s.apache.org/joshua_logo" align="right" width="300" />
 
 Joshua is a statistical machine translation toolkit for both
 phrase-based (new in version 6.0) and syntax-based decoding. It can be
@@ -9,10 +9,10 @@ Joshua are:
 
  * Support for both phrase-based and syntax-based decoding models
  * Translation of weighted input lattices
- * [Thrax](http://joshua-decoder.org/6.0/thrax.html): a Hadoop-based, scalable grammar extractor
+ * [Thrax](http://joshua.incubator.apache.org/6.0/thrax.html): a Hadoop-based, scalable grammar extractor
  * A [sparse feature architecture](http://cs.jhu.edu/~post/joshua-docs/md_sparse_features.html) supporting an arbitrary number of features
 
-The latest release of Joshua is always linked to directly from the [Home Page](http://joshua-decoder.org/)
+The latest release of Joshua is always linked to directly from the [Home Page](http://joshua.incubator.apache.org)
 
 ## New in 6.0
 
@@ -28,14 +28,14 @@ Joshua 6.0 includes the following new features:
 Joshua includes a number of "language packs", which are pre-built models that
 allow you to use the translation system as a black box, without worrying too
 much about how machine translation works. You can browse the models available
-for download on the [Joshua website](http://joshua-decoder.org/language-packs/).
+for download on the [Joshua website](http://joshua.incubator.apache.org/language-packs/).
 
 ## Building new models
 
 Joshua includes a pipeline script that allows you to build new models, provided
 you have training data.  This pipeline can be run (more or less) by invoking a
 single command, which handles data preparation, alignment, phrase-table or
-grammar construction, and tuning of the model parameters. See [the documentation](http://joshua-decoder.org/pipeline.html)
+grammar construction, and tuning of the model parameters. See [the documentation](http://joshua.incubator.apache.org/pipeline.html)
 for a walkthrough and more information about the many available options.
 
 ## Quick start
@@ -60,4 +60,4 @@ The basic method for invoking the decoder looks like this:
 
     cat SOURCE | $JOSHUA/bin/joshua-decoder -m MEM -c CONFIG OPTIONS > OUTPUT
 
-Some example usage scenarios and scripts can be found in the [examples/](https://github.com/joshua-decoder/joshua/tree/master/examples) directory.
+Some example usage scenarios and scripts can be found in the [examples/](https://github.com/apache/incubator-joshua/tree/master/examples) directory.
