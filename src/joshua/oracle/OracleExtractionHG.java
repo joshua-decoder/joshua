@@ -18,6 +18,9 @@
  */
 package joshua.oracle;
 
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiString;
+import static joshua.util.FormatUtils.removeSentenceMarkers;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +34,6 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-import joshua.decoder.hypergraph.ViterbiExtractor;
 import joshua.util.FileUtility;
 import joshua.util.io.LineReader;
 
@@ -175,7 +177,7 @@ public class OracleExtractionHG extends SplitHg {
         orc_bleu = (Double) res[1];
       } else {
         HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sentLen(), lm_order, ref_sent);
-        orc_sent = ViterbiExtractor.extractViterbiString(hg_oracle.goalNode);
+        orc_sent = removeSentenceMarkers(getViterbiString(hg_oracle));
         orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
 
         time_on_orc_extract += System.currentTimeMillis() - start_time;

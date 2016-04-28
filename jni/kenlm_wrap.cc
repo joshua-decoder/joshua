@@ -12,7 +12,7 @@
 #include <jni.h>
 #include <pthread.h>
 
-// Grr.  Everybody's compiler is slightly different and I'm trying to not depend on boost.   
+// Grr.  Everybody's compiler is slightly different and I'm trying to not depend on boost.
 #include <unordered_map>
 
 // Verify that jint and lm::ngram::WordIndex are the same size. If this breaks
@@ -55,7 +55,7 @@ struct Chart {
 
   lm::ngram::ChartState* put(const lm::ngram::ChartState& state) {
     uint64_t hashValue = lm::ngram::hash_value(state);
-  
+
     if (poolHash->find(hashValue) == poolHash->end()) {
       lm::ngram::ChartState* pointer = (lm::ngram::ChartState *)pool->Allocate(sizeof(lm::ngram::ChartState));
       *pointer = state;
@@ -67,7 +67,7 @@ struct Chart {
 };
 
 // Vocab ids above what the vocabulary knows about are unknown and should
-// be mapped to that. 
+// be mapped to that.
 void MapArray(const std::vector<lm::WordIndex>& map, jint *begin, jint *end) {
   for (jint *i = begin; i < end; ++i) {
     *i = map[*i];
@@ -88,7 +88,16 @@ public:
   virtual ~VirtualBase() {
   }
 
+  // compute/return n-gram probability for array of Joshua word ids
   virtual float Prob(jint *begin, jint *end) const = 0;
+
+  // Compute/return n-gram probability for array of lm:WordIndexes
+  virtual float ProbForWordIndexArray(jint *begin, jint *end) const = 0;
+
+  // Returns the internal lm::WordIndex for a string
+  virtual uint GetLmId(const StringPiece& word) const = 0;
+
+  virtual bool IsKnownWordIndex(const lm::WordIndex& id) const = 0;
 
   virtual float ProbRule(jlong *begin, jlong *end, lm::ngram::ChartState& state) const = 0;
 
@@ -131,14 +140,26 @@ public:
   }
 
   float Prob(jint * const begin, jint * const end) const {
+    // map Joshua word ids to lm::WordIndexes
     MapArray(map_, begin, end);
+    return ProbForWordIndexArray(begin, end);
+  }
 
+  float ProbForWordIndexArray(jint * const begin, jint * const end) const {
     std::reverse(begin, end - 1);
     lm::ngram::State ignored;
     return m_.FullScoreForgotState(
         reinterpret_cast<const lm::WordIndex*>(begin),
         reinterpret_cast<const lm::WordIndex*>(end - 1), *(end - 1),
         ignored).prob;
+  }
+
+  uint GetLmId(const StringPiece& word) const {
+    return m_.GetVocabulary().Index(word);
+  }
+
+  bool IsKnownWordIndex(const lm::WordIndex& id) const {
+      return id != m_.GetVocabulary().NotFound();
   }
 
   float ProbRule(jlong * const begin, jlong * const end, lm::ngram::ChartState& state) const {
@@ -351,6 +372,36 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_KenLM_prob(
 
   return reinterpret_cast<const VirtualBase*>(pointer)->Prob(values,
       values + length);
+}
+
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_KenLM_probForString(
+    JNIEnv *env, jclass, jlong pointer, jobjectArray arr) {
+  jint length = env->GetArrayLength(arr);
+  if (length <= 0)
+    return 0.0;
+  jint values[length];
+  const VirtualBase* lm_base = reinterpret_cast<const VirtualBase*>(pointer);
+  for (int i=0; i<length; i++) {
+      jstring word = (jstring) env->GetObjectArrayElement(arr, i);
+      const char *str = env->GetStringUTFChars(word, 0);
+      values[i] = lm_base->GetLmId(str);
+      env->ReleaseStringUTFChars(word, str);
+  }
+  return lm_base->ProbForWordIndexArray(values,
+      values + length);
+}
+
+JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_KenLM_isKnownWord(
+    JNIEnv *env, jclass, jlong pointer, jstring word) {
+    const char *str = env->GetStringUTFChars(word, 0);
+    if (!str)
+      return false;
+    bool ret;
+    const VirtualBase* lm_base = reinterpret_cast<const VirtualBase*>(pointer);
+    lm::WordIndex id = lm_base->GetLmId(str);
+    ret = lm_base->IsKnownWordIndex(id);
+    env->ReleaseStringUTFChars(word, str);
+    return ret;
 }
 
 JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_KenLM_probString(

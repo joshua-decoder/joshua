@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package joshua.decoder.hypergraph;
 
 import static java.util.Collections.emptyList;
@@ -29,9 +47,11 @@ public class WordAlignmentExtractor implements WalkerFunction, DerivationVisitor
     // if alignment state has no NTs left AND stack is not empty
     // and parent state on stack still needs something to substitute
     if (!stack.isEmpty()
-        && state.isComplete()
-        && !stack.peek().isComplete()) {
+        && state.isComplete()) {
       final WordAlignmentState parentState = stack.pop();
+      if (parentState.isComplete()) {
+          throw new IllegalStateException("Parent state already complete");
+      }
       parentState.substituteIn(state);
       merge(parentState);
     } else {
@@ -44,7 +64,7 @@ public class WordAlignmentExtractor implements WalkerFunction, DerivationVisitor
    */
   private void extract(final Rule rule, final int spanStart) {
     if (rule != null) {
-      merge (new WordAlignmentState(rule, spanStart));
+      merge(new WordAlignmentState(rule, spanStart));
     }
   }
   
@@ -53,7 +73,7 @@ public class WordAlignmentExtractor implements WalkerFunction, DerivationVisitor
    * for best hyperedge from given node.
    */
   @Override
-  public void apply(HGNode node) {
+  public void apply(HGNode node, int nodeIndex) {
     extract(node.bestHyperedge.getRule(), node.i);
   }
   
@@ -63,7 +83,7 @@ public class WordAlignmentExtractor implements WalkerFunction, DerivationVisitor
    * the Derivation state.
    */
   @Override
-  public void before(final DerivationState state, final int level) {
+  public void before(final DerivationState state, final int level, int tailNodeIndex) {
     extract(state.edge.getRule(), state.parentNode.i);
   }
 
@@ -71,7 +91,7 @@ public class WordAlignmentExtractor implements WalkerFunction, DerivationVisitor
    * Nothing to do after visiting a node.
    */
   @Override
-  public void after(final DerivationState state, final int level) {}
+  public void after(final DerivationState state, final int level, int tailNodeIndex) {}
   
   /**
    * Final word alignment without sentence markers

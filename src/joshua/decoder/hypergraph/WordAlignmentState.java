@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
@@ -125,7 +143,7 @@ public class WordAlignmentState {
    * substitutes a child WorldAlignmentState into this instance at the first
    * NT it finds. Also shifts the indeces in this instance by the span/width of the
    * child that is to be substituted.
-   * Substitution order is determined by the architecture of Joshua's hypergraph.
+   * Substitution order is determined by the source-first traversal through the hypergraph.
    */
   void substituteIn(WordAlignmentState child) {
     // update existing indexes by length of child (has no effect on NULL and
