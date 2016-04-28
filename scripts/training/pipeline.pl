@@ -66,7 +66,7 @@ my $MAXLEN_TEST = 0;
 # when doing phrase-based decoding, the maximum length of a phrase (source side)
 my $MAX_PHRASE_LEN = 5;
 
-my $DO_FILTER_TM = 1;
+my $DO_FILTER_TM = 0;
 my $DO_SUBSAMPLE = 0;
 my $DO_PACK_GRAMMARS = 1;
 my $SCRIPTDIR = "$JOSHUA/scripts";
@@ -1739,14 +1739,17 @@ $cachepipe->cmd("test-bleu-${OPTIMIZER_RUN}",
                 "$testdir/bleu");
 
 # Update the BLEU summary.
-compute_bleu_summary("test/*/bleu", "test/final-bleu");
+# Sometimes the target side for test doesn't exist (e.g., WMT)
+if (-e $TEST{target}) {
+  compute_bleu_summary("test/*/bleu", "test/final-bleu");
 
-if (defined $METEOR) {
-  $cachepipe->cmd("test-meteor-${OPTIMIZER_RUN}",
-                  "$JOSHUA/bin/meteor $output $TEST{target} $TARGET > $testdir/meteor",
-                  $bestoutput,
-                  "$testdir/meteor");
-  compute_meteor_summary("test/*/meteor", "test/final-meteor");
+  if (defined $METEOR) {
+    $cachepipe->cmd("test-meteor-${OPTIMIZER_RUN}",
+                    "$JOSHUA/bin/meteor $output $TEST{target} $TARGET > $testdir/meteor",
+                    $bestoutput,
+                    "$testdir/meteor");
+    compute_meteor_summary("test/*/meteor", "test/final-meteor");
+  }
 }
 
 if ($DO_MBR) {
@@ -1759,12 +1762,14 @@ if ($DO_MBR) {
                   $nbestoutput,
                   $mbr_output);
 
-  $cachepipe->cmd("test-bleu-mbr-${OPTIMIZER_RUN}",
-                  "$JOSHUA/bin/bleu output $TEST{target} $numrefs > $testdir/bleu.mbr",
-                  $mbr_output,
-                  "$testdir/bleu.mbr");
+  if (-e $TEST{target}) {
+    $cachepipe->cmd("test-bleu-mbr-${OPTIMIZER_RUN}",
+                    "$JOSHUA/bin/bleu output $TEST{target} $numrefs > $testdir/bleu.mbr",
+                    $mbr_output,
+                    "$testdir/bleu.mbr");
 
-  compute_bleu_summary("test/*/bleu.mbr", "test/final-bleu-mbr");
+    compute_bleu_summary("test/*/bleu.mbr", "test/final-bleu-mbr");
+  }
 }
 
 compute_time_summary("test/*/joshua.log", "test/final-times");
@@ -2093,25 +2098,27 @@ sub analyze_testrun {
   my ($output,$source,$reference) = @_;
   my $dir = dirname($output);
 
-  mkdir("$dir/analysis") unless -d "$dir/analysis";
+  if (-e $reference) {
+    mkdir("$dir/analysis") unless -d "$dir/analysis";
 
-  my @references;
-  if (-e "$reference.0") {
-    my $num = 0;
-    while (-e "$reference.$num") {
-      push(@references, "$reference.$num");
-      $num++;
+    my @references;
+    if (-e "$reference.0") {
+      my $num = 0;
+      while (-e "$reference.$num") {
+        push(@references, "$reference.$num");
+        $num++;
+      }
+    } else {
+      push(@references, $reference);
     }
-  } else {
-    push(@references, $reference);
+
+    my $references = join(" -r ", @references);
+
+    $cachepipe->cmd("analyze-test-${OPTIMIZER_RUN}",
+                    "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $output > $dir/analysis/sentence-by-sentence.html",
+                    $output,
+                    "$dir/analysis/sentence-by-sentence.html");
   }
-
-  my $references = join(" -r ", @references);
-
-  $cachepipe->cmd("analyze-test-${OPTIMIZER_RUN}",
-                  "$SCRIPTDIR/analysis/sentence-by-sentence.pl -s $source -r $references $output > $dir/analysis/sentence-by-sentence.html",
-                  $output,
-                  "$dir/analysis/sentence-by-sentence.html");
 }
 
 sub compute_meteor_summary {
