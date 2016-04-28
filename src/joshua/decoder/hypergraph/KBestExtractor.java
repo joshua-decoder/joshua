@@ -42,6 +42,8 @@ import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.io.DeNormalize;
 import joshua.decoder.segment_file.Sentence;
+import joshua.decoder.segment_file.Token;
+import joshua.util.FormatUtils;
 
 /**
  * This class implements lazy k-best extraction on a hyper-graph.
@@ -185,12 +187,12 @@ public class KBestExtractor {
           .replaceAll("-lsb-", "[")
           .replaceAll("-rsb-", "]")
           .replaceAll("-pipe-", "|");
-
+      
 
       outputString = joshuaConfiguration.outputFormat
           .replace("%k", Integer.toString(k))
-          .replace("%s", hypothesis)
-          .replace("%S", DeNormalize.processSingleLine(hypothesis))
+          .replace("%s", recapitalize(hypothesis, node))
+          .replace("%S", DeNormalize.processSingleLine(recapitalize(hypothesis, node)))
           .replace("%i", Integer.toString(sentence.id()))
           .replace("%f", joshuaConfiguration.moses ? features.mosesString() : features.toString())
           .replace("%c", String.format("%.3f", derivationState.cost));
@@ -282,6 +284,35 @@ public class KBestExtractor {
       virtualNodesTable.put(hgnode, virtualNode);
     }
     return virtualNode;
+  }
+  
+  private String recapitalize(String input, HGNode goalNode) {
+    WordAlignmentState alignment = ViterbiExtractor.buildViterbiAlignment(goalNode);
+
+    String[] tokens = input.split("\\s+");
+    
+    List<List<Integer>> points = alignment.toFinalList();
+    for (int i = 0; i < points.size(); i++) {
+      List<Integer> target = points.get(i);
+      for (int source: target) {
+        Token token = sentence.getTokens().get(source + 1); // skip <s>
+        String annotation = "";
+        if (token != null && token.getAnnotation("lettercase") != null)
+          annotation = token.getAnnotation("lettercase");
+        if (source != 0 && annotation.equals("upper"))
+          tokens[i] = FormatUtils.capitalize(tokens[i]);
+        else if (annotation.equals("all-upper"))
+          tokens[i] = tokens[i].toUpperCase();
+      }
+    }
+
+    String cap = new String();
+    for (int i = 0; i < tokens.length; i++) {
+      if (i > 0)
+        cap += " ";
+      cap += tokens[i];
+    }
+    return cap; 
   }
 
 

@@ -343,10 +343,10 @@ public class PackedGrammar extends AbstractGrammar {
 
     private final int[] targetLookup;
     private int featureSize;
-    private int[] featureLookup;
     private float[] estimated;
     private float[] precomputable;
-    private int[] alignmentLookup;
+
+    private final static int BUFFER_HEADER_POSITION = 8;
 
     /**
      * Provides a cache of packedTrie nodes to be used in getTrie.
@@ -372,7 +372,6 @@ public class PackedGrammar extends AbstractGrammar {
 
       if (alignment_file.exists()) {
         alignments = associateMemoryMappedFile(alignment_file);
-        alignmentLookup = parseLookups(alignments);
       } else {
         alignments = null;
       }
@@ -384,35 +383,17 @@ public class PackedGrammar extends AbstractGrammar {
      * Helper function to help create all the structures which describe features
      * in the Slice. Only called during object construction.
      */
-    private void initializeFeatureStructures(){
+    private void initializeFeatureStructures() {
       int num_blocks = features.getInt(0);
       estimated = new float[num_blocks];
       precomputable = new float[num_blocks];
       Arrays.fill(estimated, Float.NEGATIVE_INFINITY);
       Arrays.fill(precomputable, Float.NEGATIVE_INFINITY);
-      featureLookup = parseLookups(features);
       featureSize = features.getInt(4);
     }
 
-    // TOOD: (kellens) see if we can remove these lookups as they're addressed
-    // predictably into already present data structures. Are they redundant?
-    /**
-     * Build lookup arrays for various buffers (features / alignments) Typically
-     * this is copying out some relevant information from a larger byte array
-     *
-     * @param buffer
-     *          the buffer parsed to find sub-elements
-     * @return an int array which can easily be accessed to find lookup values.
-     */
-    private int[] parseLookups(ByteBuffer buffer) {
-      int numBlocks = buffer.getInt(0);
-      int[] result = new int[numBlocks];
-      int headerPosition = 8;
-      for (int i = 0; i < numBlocks; i++) {
-        result[i] = buffer.getInt(headerPosition);
-        headerPosition += 4;
-      }
-      return result;
+    private int getIntFromByteBuffer(int position, ByteBuffer buffer) {
+      return buffer.getInt(BUFFER_HEADER_POSITION + (4 * position));
     }
 
     private int[] fullyLoadFileToArray(File file) throws IOException {
@@ -494,7 +475,7 @@ public class PackedGrammar extends AbstractGrammar {
      */
 
     private final FeatureVector loadFeatureVector(int block_id) {
-      int featurePosition = featureLookup[block_id];
+      int featurePosition = getIntFromByteBuffer(block_id, features);
       final int numFeatures = encoding.readId(features, featurePosition);
 
       featurePosition += EncoderConfiguration.ID_SIZE;
@@ -530,7 +511,7 @@ public class PackedGrammar extends AbstractGrammar {
     private synchronized final byte[] getAlignmentArray(int block_id) {
       if (alignments == null)
         throw new RuntimeException("No alignments available.");
-      int alignment_position = alignmentLookup[block_id];
+      int alignment_position = getIntFromByteBuffer(block_id, alignments);
       int num_points = (int) alignments.get(alignment_position);
       byte[] alignment = new byte[num_points * 2];
 

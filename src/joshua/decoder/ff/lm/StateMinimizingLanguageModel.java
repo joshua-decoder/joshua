@@ -80,8 +80,6 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
     Vocabulary.registerLanguageModel(this.languageModel);
     Vocabulary.id(config.default_non_terminal);
     
-    LanguageModelFF.START_SYM_ID = Vocabulary.id(Vocabulary.START_SYM);
-    LanguageModelFF.STOP_SYM_ID = Vocabulary.id(Vocabulary.STOP_SYM);
   }
   
   /**

@@ -18,11 +18,16 @@
  */
 package joshua.decoder.segment_file;
 
+import static joshua.util.FormatUtils.escapeSpecialSymbols;
+
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
+import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.util.FormatUtils;
 
 /**
  * Stores the identity of a word and its annotations in a sentence.
@@ -37,6 +42,7 @@ public class Token {
 
   private HashMap<String,String> annotations = null;
   private String annotationString;
+  private JoshuaConfiguration joshuaConfiguration;
 
   /**
    * Constructor : Creates a Token object from a raw word
@@ -59,7 +65,9 @@ public class Token {
    * @param rawWord A word with annotation information (possibly)
    *  
    */
-  public Token(String rawWord) {
+  public Token(String rawWord, JoshuaConfiguration config) {
+    
+    this.joshuaConfiguration = config;
     
     annotations = new HashMap<String,String>();
     annotationString = "";
@@ -86,14 +94,25 @@ public class Token {
       token = rawWord;
     }
 
-    // Mask strings that cause problems for the decoder
-    token = token.replaceAll("\\[",  "-lsb-")
-        .replaceAll("\\]",  "-rsb-")
-        .replaceAll("\\|",  "-pipe-");
+    // Mask strings that cause problems for the decoder. This has to be done *after* parsing for
+    // annotations.
+    token = escapeSpecialSymbols(token);
 
+    if (joshuaConfiguration != null && joshuaConfiguration.lowercase) {
+      if (FormatUtils.ISALLUPPERCASE(token))
+        annotations.put("lettercase", "all-upper");
+      else if (Character.isUpperCase(token.charAt(0)))
+        annotations.put("lettercase",  "upper");
+      else
+        annotations.put("lettercase",  "lower");
+      
+      Decoder.LOG(2, String.format("TOKEN: %s -> %s (%s)", token, token.toLowerCase(), annotations.get("lettercase")));
+      token = token.toLowerCase(); 
+    }
+    
     tokenID = Vocabulary.id(token);
   }
-
+  
   /**
    * Returns the word ID (vocab ID) for this token
    * 
@@ -108,6 +127,10 @@ public class Token {
    * @return String A word
    */
   public String getWordIdentity() {
+    return token;
+  }
+  
+  public String toString() {
     return token;
   }
 

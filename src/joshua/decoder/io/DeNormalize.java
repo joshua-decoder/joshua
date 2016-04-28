@@ -101,6 +101,8 @@ public class DeNormalize {
   public static String joinPunctuationMarks(String line) {
     String result = line;
     result = result.replace(" ,", ",");
+    result = result.replace(" ;", ";");
+    result = result.replace(" :", ":");
     result = result.replace(" .", ".");
     result = result.replace(" !", "!");
     result = result.replace("¡ ", "¡");

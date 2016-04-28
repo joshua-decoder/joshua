@@ -51,6 +51,10 @@ public class JoshuaConfiguration {
   // whether to construct a StructuredTranslation object for each request instead of 
   // printing to stdout. Used when the Decoder is used from Java directly.
   public Boolean use_structured_output = false;
+  
+  // If set to true, Joshua will lowercase the input, creating an annotation that marks the
+  // original case
+  public boolean lowercase = false;
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
@@ -638,6 +642,9 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("cached-rules-size"))) {
               // Check source sentence
               cachedRuleSize = Integer.parseInt(fds[1]);
+          } else if (parameter.equals(normalize_key("lowercase"))) {
+            lowercase = true;
+            
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
