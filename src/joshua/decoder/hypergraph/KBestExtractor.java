@@ -166,17 +166,18 @@ public class KBestExtractor {
   public String getKthHyp(HGNode node, int k) {
 
     String outputString = null;
-
+    
     // Determine the k-best hypotheses at each HGNode
     VirtualNode virtualNode = getVirtualNode(node);
     DerivationState derivationState = virtualNode.lazyKBestExtractOnNode(this, k);
 //    DerivationState derivationState = getKthDerivation(node, k);
     if (derivationState != null) {
       // ==== read the kbest from each hgnode and convert to output format
-      String hypothesis = formatForOutput(
+      String hypothesis = maybeProjectCase(
                             unescapeSpecialSymbols(
                               removeSentenceMarkers(
                                 derivationState.getHypothesis())), derivationState);
+      
       
       /*
        * To save space, the decoder only stores the model cost,
@@ -190,8 +191,8 @@ public class KBestExtractor {
 
       outputString = outputFormat
           .replace("%k", Integer.toString(k))
-          .replace("%s", formatForOutput(hypothesis, derivationState))
-          .replace("%S", DeNormalize.processSingleLine(formatForOutput(hypothesis, derivationState)))
+          .replace("%s", hypothesis)
+          .replace("%S", DeNormalize.processSingleLine(hypothesis))
           // TODO (kellens): Fix the recapitalization here
           .replace("%i", Integer.toString(sentence.id()))
           .replace("%f", joshuaConfiguration.moses ? features.mosesString() : features.toString())
@@ -230,9 +231,9 @@ public class KBestExtractor {
    * @param state
    * @return
    */
-  private String formatForOutput(String hypothesis, DerivationState state) {
+  private String maybeProjectCase(String hypothesis, DerivationState state) {
     String output = hypothesis;
-    
+
     if (joshuaConfiguration.project_case) {
       String[] tokens = hypothesis.split("\\s+");
       List<List<Integer>> points = state.getWordAlignment();
@@ -250,18 +251,6 @@ public class KBestExtractor {
         }
       }
 
-      output = String.join(" ",  tokens);
-    }
-
-    if (joshuaConfiguration.include_align_index) {
-      String[] tokens = hypothesis.split("\\s+");
-      List<List<Integer>> points = state.getWordAlignment();
-      for (int i = 0; i < tokens.length; i++) {
-        if (i < points.size()) {
-          tokens[i] += String.format(" %d-%d",  points.get(i).get(0), 
-              points.get(i).get(points.get(i).size()-1));
-        }
-      }
       output = String.join(" ",  tokens);
     }
 
