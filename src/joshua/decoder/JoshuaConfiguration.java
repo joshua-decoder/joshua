@@ -55,6 +55,10 @@ public class JoshuaConfiguration {
   // If set to true, Joshua will lowercase the input, creating an annotation that marks the
   // original case
   public boolean lowercase = false;
+  
+  // If set to true, Joshua will recapitalize the output by projecting the case from aligned
+  // source-side words
+  public boolean project_case = false;
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
@@ -650,6 +654,9 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("lowercase"))) {
             lowercase = true;
             
+          } else if (parameter.equals(normalize_key("project-case"))) {
+            project_case = true;
+
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))
