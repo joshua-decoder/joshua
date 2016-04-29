@@ -8,8 +8,9 @@ top-n = 5
 
 output-format = %i ||| %s ||| %f ||| %c
 
-include-align-index = true
+include-align-index = false
 reordering-limit = 10
+use-unique-nbest = false
 
 # And these are the feature functions to activate.
 feature-function = OOVPenalty

@@ -31,8 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Stack;
-import java.util.regex.Matcher;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.BLEU;
@@ -95,7 +93,6 @@ import joshua.util.FormatUtils;
 public class KBestExtractor {
   private final JoshuaConfiguration joshuaConfiguration;
   private final String outputFormat;
-  private final boolean stackDecoding;
   private final HashMap<HGNode, VirtualNode> virtualNodesTable = new HashMap<HGNode, VirtualNode>();
 
   // static final String rootSym = JoshuaConfiguration.goal_symbol;
@@ -135,7 +132,6 @@ public class KBestExtractor {
 
     this.joshuaConfiguration = joshuaConfiguration;
     this.outputFormat = this.joshuaConfiguration.outputFormat;
-    this.stackDecoding = this.joshuaConfiguration.search_algorithm.equals("stack");
     this.extractUniqueNbest = joshuaConfiguration.use_unique_nbest;
 
     this.weights = weights;
@@ -177,9 +173,10 @@ public class KBestExtractor {
 //    DerivationState derivationState = getKthDerivation(node, k);
     if (derivationState != null) {
       // ==== read the kbest from each hgnode and convert to output format
-      String hypothesis = unescapeSpecialSymbols(
-                            removeSentenceMarkers(
-                                derivationState.getHypothesis()));
+      String hypothesis = formatForOutput(
+                            unescapeSpecialSymbols(
+                              removeSentenceMarkers(
+                                derivationState.getHypothesis())), derivationState);
       
       /*
        * To save space, the decoder only stores the model cost,
@@ -193,8 +190,8 @@ public class KBestExtractor {
 
       outputString = outputFormat
           .replace("%k", Integer.toString(k))
-          .replace("%s", hypothesis)
-          .replace("%S", DeNormalize.processSingleLine(hypothesis))
+          .replace("%s", formatForOutput(hypothesis, derivationState))
+          .replace("%S", DeNormalize.processSingleLine(formatForOutput(hypothesis, derivationState)))
           // TODO (kellens): Fix the recapitalization here
           .replace("%i", Integer.toString(sentence.id()))
           .replace("%f", joshuaConfiguration.moses ? features.mosesString() : features.toString())
@@ -215,7 +212,7 @@ public class KBestExtractor {
       
       /* %a causes output of word level alignments between input and output hypothesis */
       if (outputFormat.contains("%a")) {
-        outputString = outputString.replace("%a",  derivationState.getWordAlignment());
+        outputString = outputString.replace("%a",  derivationState.getWordAlignmentString());
       }
       
     }
@@ -224,6 +221,52 @@ public class KBestExtractor {
   }
 
   // =========================== end kbestHypergraph
+
+  /**
+   * If requested, projects source-side lettercase to target, and appends the alignment from
+   * to the source-side sentence in ||s.
+   * 
+   * @param hypothesis
+   * @param state
+   * @return
+   */
+  private String formatForOutput(String hypothesis, DerivationState state) {
+    String output = hypothesis;
+    
+    if (joshuaConfiguration.project_case) {
+      String[] tokens = hypothesis.split("\\s+");
+      List<List<Integer>> points = state.getWordAlignment();
+      for (int i = 0; i < points.size(); i++) {
+        List<Integer> target = points.get(i);
+        for (int source: target) {
+          Token token = sentence.getTokens().get(source + 1); // skip <s>
+          String annotation = "";
+          if (token != null && token.getAnnotation("lettercase") != null)
+            annotation = token.getAnnotation("lettercase");
+          if (source != 0 && annotation.equals("upper"))
+            tokens[i] = FormatUtils.capitalize(tokens[i]);
+          else if (annotation.equals("all-upper"))
+            tokens[i] = tokens[i].toUpperCase();
+        }
+      }
+
+      output = String.join(" ",  tokens);
+    }
+
+    if (joshuaConfiguration.include_align_index) {
+      String[] tokens = hypothesis.split("\\s+");
+      List<List<Integer>> points = state.getWordAlignment();
+      for (int i = 0; i < tokens.length; i++) {
+        if (i < points.size()) {
+          tokens[i] += String.format(" %d-%d",  points.get(i).get(0), 
+              points.get(i).get(points.get(i).size()-1));
+        }
+      }
+      output = String.join(" ",  tokens);
+    }
+
+    return output;
+  }
 
   /**
    * Convenience function for k-best extraction that prints to STDOUT.
@@ -732,8 +775,14 @@ public class KBestExtractor {
       return visitor;
     }
 
-    private String getWordAlignment() {
+    private String getWordAlignmentString() {
       return visit(new WordAlignmentExtractor()).toString();
+    }
+    
+    private List<List<Integer>> getWordAlignment() {
+      WordAlignmentExtractor extractor = new WordAlignmentExtractor();
+      visit(extractor);
+      return extractor.getFinalWordAlignments();
     }
 
     private String getTree() {
@@ -751,11 +800,7 @@ public class KBestExtractor {
      * that is correct also for Side.SOURCE cases.
      */
     private String getHypothesis(final Side side) {
-      if (stackDecoding) {
-        return visit(new HypothesisExtractor(side)).toString();
-      } else {
-        return visit(new OutputStringExtractor(side.equals(Side.SOURCE))).toString();
-      }
+      return visit(new OutputStringExtractor(side.equals(Side.SOURCE))).toString();
     }
 
     private FeatureVector getFeatures() {
@@ -827,72 +872,6 @@ public class KBestExtractor {
     void after(DerivationState state, int level, int tailNodeIndex);
   }
   
-  /**
-   * String-based HypothesisExtractor that works with Joshua's Phrase decoder.
-   * It is slower than an int[]-based extraction due to many String operations.
-   * It also contains a bug for Hiero KBest with NT-reordering rules when
-   * the source side is extracted (due to its dependency on target-side ordered
-   * hypergraph traversal.
-   */
-  public class HypothesisExtractor implements DerivationVisitor {
-
-    private Side side;
-    private Stack<String> outputs;
-
-    public HypothesisExtractor(Side side) {
-      this.side = side;
-      outputs = new Stack<String>();
-    }
-
-    String ntMatcher = ".*" + Rule.NT_REGEX + ".*";
-
-    void merge(String words) {
-      if (!words.matches(ntMatcher) && outputs.size() > 0 && outputs.peek().matches(ntMatcher)) {
-        String parentWords = outputs.pop();
-        String replaced = parentWords.replaceFirst(Rule.NT_REGEX, Matcher.quoteReplacement(words));
-
-        merge(replaced);
-      } else {
-        outputs.add(words);
-      }
-    }
-
-    @Override
-    /**
-     * Whenever we reach a rule in the depth-first derivaiton, we add it to the stack
-     * via a call to the merge() function.
-     */
-    public void before(DerivationState state, int level, int tailNodeIndex) {
-      Rule rule = state.edge.getRule();
-      if (rule != null)
-        if (side == Side.TARGET) {
-          // Output the alignment Moses-style, skipping <s> and </s>, and converting to indices
-          // in original sentence
-          String alignment = "";
-          if (joshuaConfiguration.include_align_index 
-              && state.parentNode.j != sentence.length() && state.parentNode.j != 1) {
-            int i = state.parentNode.j - 1 - state.edge.getRule().getFrench().length + state.edge.getRule().getArity();
-            alignment = String.format(" |%d-%d|", i, state.parentNode.j-2);
-          }
-          merge(String.format("%s%s", state.edge.getRule().getEnglishWords(), alignment));
-        } else
-          merge(state.edge.getRule().getFrenchWords());
-
-    }
-
-    @Override
-    public void after(DerivationState state, int level, int tailNodeIndex) {
-    }
-
-    /**
-     * After all rules in the grammar have been merged, there should be one item on the stack, which
-     * is the complete target (or source) string.
-     */
-    public String toString() {
-      return outputs.pop().replaceAll("<s> ", "").replace(" </s>", "");
-    }
-  }
-
   /**
    * Assembles a Penn treebank format tree for a given derivation.
    */
