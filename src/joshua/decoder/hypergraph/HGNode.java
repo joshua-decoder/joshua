@@ -54,8 +54,6 @@ public class HGNode {
   private Signature signature = null;
 //  private int hash = 0;
 
-  // For pruning purposes.
-  public boolean isDead = false;
   protected float score = 0.0f;
 
   // ===============================================================

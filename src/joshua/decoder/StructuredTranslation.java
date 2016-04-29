@@ -1,20 +1,35 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package joshua.decoder;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
-import static joshua.decoder.hypergraph.ViterbiExtractor.walk;
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiFeatures;
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiString;
+import static joshua.decoder.hypergraph.ViterbiExtractor.getViterbiWordAlignmentList;
+import static joshua.util.FormatUtils.removeSentenceMarkers;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.ViterbiFeatureVectorWalkerFunction;
-import joshua.decoder.hypergraph.ViterbiOutputStringWalkerFunction;
-import joshua.decoder.hypergraph.WalkerFunction;
-import joshua.decoder.hypergraph.WordAlignmentExtractor;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -30,13 +45,11 @@ import joshua.decoder.segment_file.Sentence;
 public class StructuredTranslation {
   
   private final Sentence sourceSentence;
-  private final List<FeatureFunction> featureFunctions;
-  
   private final String translationString;
   private final List<String> translationTokens;
   private final float translationScore;
-  private List<List<Integer>> translationWordAlignments;
-  private Map<String,Float> translationFeatures;
+  private final List<List<Integer>> translationWordAlignments;
+  private final Map<String,Float> translationFeatures;
   private final float extractionTime;
   
   public StructuredTranslation(final Sentence sourceSentence,
@@ -46,33 +59,12 @@ public class StructuredTranslation {
       final long startTime = System.currentTimeMillis();
       
       this.sourceSentence = sourceSentence;
-      this.featureFunctions = featureFunctions;
-      this.translationString = extractViterbiString(hypergraph);
+      this.translationString = removeSentenceMarkers(getViterbiString(hypergraph));
       this.translationTokens = extractTranslationTokens();
       this.translationScore = extractTranslationScore(hypergraph);
-      this.translationFeatures = extractViterbiFeatures(hypergraph);
-      this.translationWordAlignments = extractViterbiWordAlignment(hypergraph);
+      this.translationFeatures = getViterbiFeatures(hypergraph, featureFunctions, sourceSentence).getMap();
+      this.translationWordAlignments = getViterbiWordAlignmentList(hypergraph);
       this.extractionTime = (System.currentTimeMillis() - startTime) / 1000.0f;
-  }
-  
-  private Map<String,Float> extractViterbiFeatures(final HyperGraph hypergraph) {
-    if (hypergraph == null) {
-      return emptyMap(); 
-    } else {
-      ViterbiFeatureVectorWalkerFunction viterbiFeatureVectorWalker = new ViterbiFeatureVectorWalkerFunction(featureFunctions, sourceSentence);
-      walk(hypergraph.goalNode, viterbiFeatureVectorWalker);
-      return new HashMap<String,Float>(viterbiFeatureVectorWalker.getFeaturesMap());
-    }
-  }
-
-  private List<List<Integer>> extractViterbiWordAlignment(final HyperGraph hypergraph) {
-    if (hypergraph == null) {
-      return emptyList();
-    } else {
-      final WordAlignmentExtractor wordAlignmentWalker = new WordAlignmentExtractor();
-      walk(hypergraph.goalNode, wordAlignmentWalker);
-      return wordAlignmentWalker.getFinalWordAlignments();
-    }
   }
   
   private float extractTranslationScore(final HyperGraph hypergraph) {
@@ -80,16 +72,6 @@ public class StructuredTranslation {
       return 0;
     } else {
       return hypergraph.goalNode.getScore();
-    }
-  }
-  
-  private String extractViterbiString(final HyperGraph hypergraph) {
-    if (hypergraph == null) {
-      return sourceSentence.source();
-    } else {
-      final WalkerFunction viterbiOutputStringWalker = new ViterbiOutputStringWalkerFunction();
-      walk(hypergraph.goalNode, viterbiOutputStringWalker);
-      return viterbiOutputStringWalker.toString();
     }
   }
   

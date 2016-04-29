@@ -55,6 +55,10 @@ public class JoshuaConfiguration {
   // If set to true, Joshua will lowercase the input, creating an annotation that marks the
   // original case
   public boolean lowercase = false;
+  
+  // If set to true, Joshua will recapitalize the output by projecting the case from aligned
+  // source-side words
+  public boolean project_case = false;
 
   // List of grammar files to read
   public ArrayList<String> tms = new ArrayList<String>();
@@ -598,9 +602,14 @@ public class JoshuaConfiguration {
             search_algorithm = fds[1];
             
             if (!search_algorithm.equals("cky") && !search_algorithm.equals("stack")) {
-              System.err.println("* FATAL: -search must be one of 'stack' (for phrase-based decoding)");
-              System.err.println("*   or 'cky' (for hierarchical / syntactic decoding)");
-              System.exit(1);
+              throw new RuntimeException(
+                  "-search must be one of 'stack' (for phrase-based decoding) " +
+                  "or 'cky' (for hierarchical / syntactic decoding)");
+            }
+            
+            if (search_algorithm.equals("cky") && include_align_index) {
+              throw new RuntimeException(
+                  "include_align_index is currently not supported with cky search");
             }
 
           } else if (parameter.equals(normalize_key("reordering-limit"))) {
@@ -645,6 +654,9 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("lowercase"))) {
             lowercase = true;
             
+          } else if (parameter.equals(normalize_key("project-case"))) {
+            project_case = true;
+
           } else {
 
             if (parameter.equals(normalize_key("use-sent-specific-tm"))

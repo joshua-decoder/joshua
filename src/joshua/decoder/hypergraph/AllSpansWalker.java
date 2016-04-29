@@ -48,11 +48,11 @@ public class AllSpansWalker {
   public void walk(HGNode node, final WalkerFunction walker) {
     new ForestWalker().walk(node, new joshua.decoder.hypergraph.WalkerFunction() {
       @Override
-      public void apply(HGNode node) {
+      public void apply(HGNode node, int index) {
         if (node != null) {
           Span span = new Span(node.i, node.j);
           if (!visitedSpans.contains(span)) {
-            walker.apply(node);
+            walker.apply(node, 0);
             visitedSpans.add(span);
           }
         }

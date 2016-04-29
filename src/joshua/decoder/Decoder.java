@@ -530,6 +530,10 @@ public class Decoder {
         e.printStackTrace();
       }
     }
+    resetGlobalState();
+  }
+  
+  public static void resetGlobalState() {
     // clear/reset static variables
     DENSE_FEATURE_NAMES.clear();
     Vocabulary.clear();

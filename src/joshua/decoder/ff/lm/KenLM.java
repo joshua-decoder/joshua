@@ -18,6 +18,7 @@
  */
 package joshua.decoder.ff.lm;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.state_maintenance.KenLMState;
 
@@ -66,6 +67,10 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
 
   private final static native float prob(long ptr, int words[]);
 
+  private final static native float probForString(long ptr, String[] words);
+
+  private final static native boolean isKnownWord(long ptr, String word);
+
   private final static native StateProbPair probRule(long ptr, long pool, long words[]);
   
   private final static native float estimateRule(long ptr, long words[]);
@@ -82,6 +87,16 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     N = order(pointer);
   }
 
+  /**
+   * Constructor if order is not known.
+   * Order will be inferred from the model.
+   */
+  public KenLM(String file_name) {
+    pointer = construct(file_name);
+    N = order(pointer);
+    ngramOrder = N;
+  }
+
   public void destroy() {
     destroy(pointer);
   }
@@ -94,8 +109,15 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     return registerWord(pointer, word, id);
   }
 
-  public float prob(int words[]) {
+  public float prob(int[] words) {
     return prob(pointer, words);
+  }
+
+  /**
+   * Query for n-gram probability using strings.
+   */
+  public float prob(String[] words) {
+    return probForString(pointer, words);
   }
 
   // Apparently Zhifei starts some array indices at 1. Change to 0-indexing.
@@ -144,6 +166,17 @@ public class KenLM implements NGramLanguageModel, Comparable<KenLM> {
     }
     
     return estimate;
+  }
+
+  /**
+   * The start symbol for a KenLM is the Vocabulary.START_SYM.
+   */
+  public String getStartSymbol() {
+    return Vocabulary.START_SYM;
+  }
+
+  public boolean isKnownWord(String word) {
+    return isKnownWord(pointer, word);
   }
 
 

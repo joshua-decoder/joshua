@@ -18,10 +18,17 @@
 set -u
 
 (
+# no match to phrase table, outputs ELLA
 echo -e "ELLA" | $JOSHUA/bin/joshua-decoder -config config
-echo -e "Ella" | $JOSHUA/bin/joshua-decoder -config config -lowercase
+# matches phrase table, outputs she
 echo -e "ELLA" | $JOSHUA/bin/joshua-decoder -config config -lowercase
-) > output 2> .log
+# matches phrase table, not capitalized because projected from first word of sentence, outputs she
+echo -e "Ella" | $JOSHUA/bin/joshua-decoder -config config -lowercase -project-case
+# matches phrase table, capitalized because of output-format
+echo -e "Ella" | $JOSHUA/bin/joshua-decoder -config config -lowercase -project-case -output-format %S
+# matches phrase table, projected case because all caps, outputs SHE
+echo -e "ELLA" | $JOSHUA/bin/joshua-decoder -config config -lowercase -project-case
+) > output 2> log
 
 diff -u output output.gold > diff
 

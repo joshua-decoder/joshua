@@ -1,4 +1,4 @@
-tm = moses -owner pt -maxspan 0 -path rules.packed -max-source-len 5
+tm = moses -owner pt -maxspan 0 -path rules.1.gz -max-source-len 5
 feature-function = StateMinimizingLanguageModel -lm_order 5 -lm_file lm.1.gz
 
 search = stack
@@ -9,7 +9,7 @@ top-n = 1
 
 output-format = %i ||| %s ||| %f ||| %c
 
-include-align-index = false
+include-align-index = true
 reordering-limit = 6
 
 # And these are the feature functions to activate.
