@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.common.primitives.Ints;
+
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
@@ -341,18 +343,12 @@ public class LanguageModelFF extends StatefulFF {
     int[] leftContext = state.getLeftLMStateWords();
 
     if (null != leftContext) {
-      List<Integer> words = new ArrayList<Integer>();
-      for (int w : leftContext)
-        words.add(w);
-
-      boolean considerIncompleteNgrams = true;
       boolean skipStart = true;
-      if (words.get(0) != startSymbolId) {
+      if (leftContext[0] != startSymbolId) {
         skipStart = false;
       }
-      estimate += scoreChunkLogP(words, considerIncompleteNgrams, skipStart);
+      estimate += scoreChunkLogP(leftContext, true, skipStart);
     }
-
     return weight * estimate;
   }
 
@@ -476,6 +472,15 @@ public class LanguageModelFF extends StatefulFF {
     return new NgramDPState(leftContext, rightContext);
   }
 
+  
+  /**
+   * Compatibility method for {@link #scoreChunkLogP(int[], boolean, boolean)}
+   */
+  private float scoreChunkLogP(List<Integer> words, boolean considerIncompleteNgrams,
+      boolean skipStart) {
+    return scoreChunkLogP(Ints.toArray(words), considerIncompleteNgrams, skipStart);
+  }
+  
   /**
    * This function is basically a wrapper for NGramLanguageModel::sentenceLogProbability(). It
    * computes the probability of a phrase ("chunk"), using lower-order n-grams for the first n-1
@@ -486,11 +491,11 @@ public class LanguageModelFF extends StatefulFF {
    * @param skipStart
    * @return the phrase log probability
    */
-  private float scoreChunkLogP(List<Integer> words, boolean considerIncompleteNgrams,
+  private float scoreChunkLogP(int[] words, boolean considerIncompleteNgrams,
       boolean skipStart) {
 
     float score = 0.0f;
-    if (words.size() > 0) {
+    if (words.length > 0) {
       int startIndex;
       if (!considerIncompleteNgrams) {
         startIndex = this.ngramOrder;
@@ -499,8 +504,7 @@ public class LanguageModelFF extends StatefulFF {
       } else {
         startIndex = 1;
       }
-      score = this.languageModel.sentenceLogProbability(
-          Support.subIntArray(words, 0, words.size()), this.ngramOrder, startIndex);
+      score = this.languageModel.sentenceLogProbability(words, this.ngramOrder, startIndex);
     }
 
     return score;

@@ -1,0 +1,50 @@
+Parameters read from configuration file:
+    tm = 'moses -owner pt -maxspan 0 -path rules.1.gz -max-source-len 5'
+    featurefunction = 'StateMinimizingLanguageModel -lm_order 5 -lm_file lm.1.gz'
+    search = 'stack'
+    markoovs = 'false'
+    poplimit = '10'
+    topn = '1'
+    outputformat = '%i ||| %s ||| %f ||| %c'
+    includealignindex = 'true'
+    reorderinglimit = '6'
+    featurefunction = 'OOVPenalty'
+    featurefunction = 'WordPenalty'
+    featurefunction = 'Distortion'
+    featurefunction = 'PhrasePenalty -owner pt'
+Parameters overridden from the command line:
+    threads = '1'
+    c = 'config'
+Read 9 weights (0 of them dense)
+Reading grammar from file rules.1.gz...
+........10........20........30........40........50........60........70........80........90.....100%
+MemoryBasedBatchGrammar: Read 165161 rules with 18 distinct source sides from 'rules.1.gz'
+Couldn't create a GrammarReader for file null with format phrase
+MemoryBasedBatchGrammar: Read 0 rules with 0 distinct source sides from 'null'
+Memory used 219.6 MB
+Grammar loading took: 0 seconds.
+Stateful object with state index 0
+Loading the LM will be faster if you build a binary file.
+Reading lm.1.gz
+----5---10---15---20---25---30---35---40---45---50---55---60---65---70---75---80---85---90---95--100
+****************************************************************************************************
+FEATURE: tm_pt (weight 0.000)
+FEATURE: tm_custom (weight 0.000)
+FEATURE: lm_0, order 5 (weight 0.204)
+FEATURE: OOVPenalty (weight 1.000)
+FEATURE: WordPenalty (weight -0.202)
+FEATURE: Distortion (weight 0.115)
+FEATURE: PhrasePenalty (weight -0.237)
+Grammar sorting happening lazily on-demand.
+Model loading took 0 seconds
+Memory used 219.6 MB
+Input 0: <s> una estrategia republicana para obstaculizar la reelección de Obama </s>
+Input 0: Collecting options took 0.000 seconds
+Input 0: Search took 0.013 seconds
+Input 0: Translation took 1.532 seconds
+Input 0: Memory used is 392.5 MB
+Translation 0: -7.496 a strategy republican to hinder reelection Obama 
+Input 0: 1-best extraction took 0.026 seconds
+Decoding completed.
+Memory used 401.6 MB
+Total running time: 2 seconds
