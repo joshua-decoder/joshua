@@ -118,8 +118,8 @@ public class Chart {
    */
 
   public Chart(Sentence sentence, List<FeatureFunction> featureFunctions, Grammar[] grammars,
-      String goalSymbol, JoshuaConfiguration config2) {
-    this.config = config2;
+      String goalSymbol, JoshuaConfiguration config) {
+    this.config = config;
     this.inputLattice = sentence.getLattice();
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
@@ -142,9 +142,9 @@ public class Chart {
     for (int i = 0; i < grammars.length; i++)
       this.grammars[i + 1] = grammars[i];
 
-    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", config2);
+    MemoryBasedBatchGrammar oovGrammar = new MemoryBasedBatchGrammar("oov", this.config);
     AbstractGrammar.addOOVRules(oovGrammar, sentence.getLattice(), featureFunctions,
-        config.true_oovs_only);
+        this.config.true_oovs_only);
     this.grammars[0] = oovGrammar;
 
     // each grammar will have a dot chart

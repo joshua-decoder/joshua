@@ -18,13 +18,16 @@
  */
 package joshua.decoder.chart_parser;
 
-import java.util.ArrayList;	
-import java.util.Arrays;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
@@ -254,51 +257,34 @@ class Cell {
    */
   private void ensureSorted() {
     if (null == this.sortedNodes) {
-      // Get sortedNodes.
-      HGNode[] nodesArray = new HGNode[this.nodesSigTbl.size()];
-      int i = 0;
-      for (HGNode node : this.nodesSigTbl.values())
-        nodesArray[i++] = node;
-
-      /**
-       * sort the node in an decreasing-LogP order
-       * */
-      Arrays.sort(nodesArray, HGNode.inverseLogPComparator);
-
-      this.sortedNodes = new ArrayList<HGNode>();
-      for (HGNode node : nodesArray) {
+      
+      // get sortedNodes.
+      this.sortedNodes = new ArrayList<>(this.nodesSigTbl.size());
+      for (HGNode node : this.nodesSigTbl.values()) {
         this.sortedNodes.add(node);
       }
 
-      // TODO: we cannot create new SuperItem here because the DotItem link to them
+      // sort the node in an decreasing-LogP order 
+      this.sortedNodes.sort(HGNode.inverseLogPComparator);
 
-      // Update superNodesTbl
-      List<SuperNode> tem_list = new ArrayList<SuperNode>(this.superNodesTbl.values());
-      for (SuperNode t_si : tem_list) {
-        t_si.nodes.clear();
+      // TODO: we cannot create new SuperItem here because the DotItem link to them.
+      // Thus, we clear nodes from existing SuperNodes
+      for (SuperNode superNode : this.superNodesTbl.values()) {
+        superNode.nodes.clear();
       }
 
-      for (HGNode it : this.sortedNodes) {
-        SuperNode si = this.superNodesTbl.get(it.lhs);
-        if (null == si) { // sanity check
-          throw new RuntimeException("Does not have super Item, have to exist");
+      for (HGNode node : this.sortedNodes) {
+        SuperNode superNode = this.superNodesTbl.get(node.lhs);
+        checkNotNull(superNode, "Does not have super Item, have to exist");
+        superNode.nodes.add(node);
+      }
+
+      // Remove SuperNodes who may not contain any nodes anymore due to pruning
+      for (Iterator<Entry<Integer, SuperNode>> it = this.superNodesTbl.entrySet().iterator(); it.hasNext(); ) {
+        Entry<Integer, SuperNode> entry = it.next();
+        if (entry.getValue().nodes.isEmpty()) {
+          it.remove();
         }
-        si.nodes.add(it);
-      }
-
-      // Remove SuperNodes who may not contain any node any more due to pruning
-      List<Integer> toRemove = new ArrayList<Integer>();
-      for (Integer k : this.superNodesTbl.keySet()) {
-        if (this.superNodesTbl.get(k).nodes.size() <= 0) {
-          // note that: we cannot directly do the remove, because it will throw
-          // ConcurrentModificationException
-          toRemove.add(k);
-          // System.out.println("have zero items in superitem " + k);
-          // this.tableSuperItems.remove(k);
-        }
-      }
-      for (Integer t : toRemove) {
-        this.superNodesTbl.remove(t);
       }
     }
   }
