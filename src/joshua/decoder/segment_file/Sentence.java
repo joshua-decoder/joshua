@@ -114,7 +114,7 @@ public class Sentence {
     }
     
     // Only trim strings
-    if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
+    if (! (joshuaConfiguration.lattice_decoding && source.startsWith("(((")))
       adjustForLength(joshuaConfiguration.maxlen);
   }
   
