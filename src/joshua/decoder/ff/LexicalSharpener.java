@@ -24,11 +24,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 import cc.mallet.classify.*;
 import cc.mallet.types.Labeling;
@@ -121,7 +119,7 @@ public class LexicalSharpener extends StatelessFF {
     int numExamples = examples.size();
     
     if (examples.size() < 75)
-      return new MalletPredictor(lastSourceWord, examples);
+      return new MalletPredictor(lastSourceWord, examples, true);
     
     return null;
   }

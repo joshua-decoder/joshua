@@ -27,9 +27,16 @@ public class MalletPredictor implements Serializable {
     private ArrayList<String> examples = null;
     private Classifier classifier = null;
     
-    public MalletPredictor(String word, ArrayList<String> examples) {
+    public MalletPredictor(String word, ArrayList<String> examples, boolean preTrain) {
       this.sourceWord = word;
       this.examples = examples;
+      
+      if (preTrain)
+        train();
+    }
+    
+    public MalletPredictor(String word, ArrayList<String> examples) {
+      this(word, examples, true);
     }
 
     /**
