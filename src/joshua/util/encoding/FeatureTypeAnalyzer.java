@@ -206,17 +206,11 @@ public class FeatureTypeAnalyzer {
     }
 
     FeatureType(String key) {
+      // either throws or returns non-null
       FloatEncoder e = EncoderFactory.getFloatEncoder(key);
-      if (e != null) {
-        encoder = e;
-        analyzer = null;
-        bits = -1;
-      } else if ("8bit".equals(key)) {
-        encoder = null;
-        analyzer = new Analyzer();
-        bits = 8;
-      } else
-        throw new RuntimeException("Unsupported encoder type: " + key);
+      encoder = e;
+      analyzer = null;
+      bits = -1;
     }
 
     void inferUncompressedType() {

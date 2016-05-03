@@ -20,6 +20,7 @@ package joshua.metrics;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import joshua.util.Algorithms;
@@ -122,11 +123,9 @@ public class Precis extends BLEU {
           maxNgramCounts[i] = getNgramCountsAll(refSentences[i][r]);
         } else {
           HashMap<String, Integer> nextNgramCounts = getNgramCountsAll(refSentences[i][r]);
-          Iterator<String> it = (nextNgramCounts.keySet()).iterator();
-
-          while (it.hasNext()) {
-            gram = it.next();
-            nextCount = nextNgramCounts.get(gram);
+          for ( Map.Entry<String, Integer> entry : nextNgramCounts.entrySet() ) {
+            gram = entry.getKey();
+            nextCount = entry.getValue();
 
             if (maxNgramCounts[i].containsKey(gram)) {
               oldCount = maxNgramCounts[i].get(gram);

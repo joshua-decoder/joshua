@@ -115,12 +115,11 @@ public class JoshuaEval {
     String[] topCand_str = new String[numSentences];
 
     // BUG: all of this needs to be replaced with the SegmentFileParser and related interfaces.
-    try {
+    try (InputStream inStream = new FileInputStream(new File(inFileName));
+        BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"))) {
 
       // read the candidates
 
-      InputStream inStream = new FileInputStream(new File(inFileName));
-      BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
       String line, candidate_str;
 
       if (inFileFormat.equals("plain")) {

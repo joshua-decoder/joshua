@@ -25,7 +25,10 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import com.google.common.base.Throwables;
 
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
@@ -195,8 +198,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
     try {
       return new EdgePhraseSimilarityFF(this.weights, args, config);
     } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+      throw Throwables.propagate(e);
     }
   }
 
@@ -229,7 +231,7 @@ public class EdgePhraseSimilarityFF extends StatefulFF implements SourceDependen
       int[] source = batch.get(i);
       int[] target = batch.get(i + 1);
 
-      if (source.equals(target)) {
+      if (Arrays.equals(source, target)) {
         similarity += 1;
         count++;
       } else {

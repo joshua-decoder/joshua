@@ -912,12 +912,12 @@ public class KBestExtractor {
      * @return
      */
     private String quoteTerminals(String words) {
-      String quotedWords = "";
+      StringBuilder quotedWords = new StringBuilder();
       for (String word: words.split("\\s+"))
         if (word.startsWith("[") && word.endsWith("]"))
-          quotedWords += String.format("%s ", word);
+          quotedWords.append(String.format("%s ", word));
         else
-        quotedWords += String.format("\"%s\" ", word);
+        quotedWords.append(String.format("\"%s\" ", word));
 
       return quotedWords.substring(0, quotedWords.length() - 1);
     }

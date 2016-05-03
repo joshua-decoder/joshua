@@ -20,6 +20,7 @@ package joshua.metrics;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class BLEU extends EvaluationMetric {
@@ -115,11 +116,9 @@ public class BLEU extends EvaluationMetric {
       // ...and update as necessary from the other reference translations
       for (int r = 1; r < refsPerSen; ++r) {
         HashMap<String, Integer> nextNgramCounts = getNgramCountsAll(refSentences[i][r]);
-        Iterator<String> it = (nextNgramCounts.keySet()).iterator();
-
-        while (it.hasNext()) {
-          gram = it.next();
-          nextCount = nextNgramCounts.get(gram);
+        for (Map.Entry<String, Integer> entry : nextNgramCounts.entrySet()) { 
+          gram = entry.getKey();
+          nextCount = entry.getValue();
 
           if (maxNgramCounts[i].containsKey(gram)) { // update if necessary
             oldCount = maxNgramCounts[i].get(gram);

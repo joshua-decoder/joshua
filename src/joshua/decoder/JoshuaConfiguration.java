@@ -538,7 +538,7 @@ public class JoshuaConfiguration {
             logger.finest(String.format("mark_oovs: %s", mark_oovs));
 
           } else if (parameter.equals(normalize_key("pop-limit"))) {
-            pop_limit = Integer.valueOf(fds[1]);
+            pop_limit = Integer.parseInt(fds[1]);
             logger.finest(String.format("pop-limit: %s", pop_limit));
 
           } else if (parameter.equals(normalize_key("input-type"))) {
