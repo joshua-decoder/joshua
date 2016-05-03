@@ -20,24 +20,16 @@
 
 set -u
 
-export VERSION=2.5.2
+if [[ -z $HADOOP ]]; then
+  exit 0
+fi
 
-rm -rf thrax.log grammar.gz .grammar.crc thrax
-
-[[ ! -d hadoop-$VERSION ]] && tar xzf $JOSHUA/lib/hadoop-$VERSION.tar.gz
-
-unset HADOOP HADOOP_HOME HADOOP_CONF_DIR
-export HADOOP=$(pwd)/hadoop-$VERSION
-
-# run hadoop
-$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar input/thrax.conf thrax > thrax.log 2>&1 
-$HADOOP/bin/hadoop fs -getmerge thrax/final grammar.gz
+$JOSHUA/scripts/training/run_thrax.py -f input/thrax.conf input/train.{ps,en,a} 2> thrax.log
 
 size=$(perl -e "print +(stat('grammar.gz'))[7] . $/")
 
-rm -rf hadoop-$VERSION
-if [[ $size -eq 1004401 ]]; then
-  rm -rf thrax.log grammar.gz .grammar.crc thrax
+if [[ $size -eq 106851 ]]; then
+  rm -rf thrax.log grammar.gz
   exit 0
 else
   exit 1
