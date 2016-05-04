@@ -1,42 +1,44 @@
 #!/usr/bin/env python
 
-"""Takes the output of the Stanford dependency parser and converts it to a one-line format."""
+"""Takes the output of the Stanford dependency parser and converts it to a one-line format.
+
+Expects input of the form
+
+    (valid balanced PTB parse)
+    label(head-I, tail-J)
+    label(head-I, tail-J)
+    ...
+    [blank line]
+
+And converts it into
+
+    (valid parse) TAB label(...) label(...) ...
+"""
 
 import re
 import sys
 import argparse
 
 import argparse
-parser = argparse.ArgumentParser('Munge the multi-line output from the Stanford dependency parser')
-parser.add_argument('-ptb_output', default=None, help='Where to write PTB output (if found)')
-parser.add_argument('-dep_output', default=None, help='Where to write dependency output (expected)')
+parser = argparse.ArgumentParser(description = 'Combine multi-line output from the Stanford dependency parser into a single line')
 args = parser.parse_args()
         
-if args.ptb_output:
-    ptb_output = open(args.ptb_output, 'w')
-            
-if args.dep_output:
-    dep_output = open(args.dep_output, 'w')
-
+buffer = ''
 for line in sys.stdin:
     # failed parses
     if line.startswith('(('):
-        if args.ptb_output:
-            ptb_output.write('\n')
-        if args.dep_output:
-            dep_output.write('\n')
-
+        print
         continue
 
     if line.startswith('('):
-        if args.ptb_output:
-            ptb_output.write(line)
+        buffer = line.rstrip() + '\t'
 
-    elif args.dep_output and line == '\n':
-        dep_output.write('\n')
+    elif line == '\n':
+        print buffer
+        buffer = ''
 
-    elif args.dep_output and re.match(r'^[a-zA-Z:]+\(.*,.*\)', line):
-        dep_output.write(line.rstrip().replace(', ', ',') + ' ')
+    elif re.match(r'^[a-zA-Z:]+\(.*,.*\)', line):
+        buffer += line.rstrip().replace(', ', ',') + ' '
 
 
     

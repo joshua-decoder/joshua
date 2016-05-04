@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# Runs the English PCFG parser on one or more files, printing trees only
+# Runs the Stanford dependency parser on one or more files, printing out the trees and the
+# dependency links
 
 if [ ! $# -ge 1 ]; then
   echo Usage: `basename $0` 'file(s)'

@@ -6,17 +6,23 @@ The resulting file can then be used (a) with an alignment and target side for le
 or (b) to annotate tuning and test data for use in a translation system
 """
 
+import os
 import re
 import sys
 import argparse
-from itertools import izip
+
+# import codecs
+# reload(sys)
+# sys.setdefaultencoding('utf-8')
+# sys.stdin = codecs.getreader('utf-8')(sys.stdin)
+# sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+# sys.stdout.encoding = 'utf-8'
+
+sys.path.append("%s/scripts/morph" % (os.environ['JOSHUA']))
 from ptb import ptb
 
 import argparse
 parser = argparse.ArgumentParser(description='Add features to source corpus words')
-parser.add_argument('source_file', help='Location of the source language corpus')
-parser.add_argument('parses_file', help='Location of PTB parses')
-parser.add_argument('dep_parses_file', help='Location of dependency parses')
 parser.add_argument('--vocab_file', type=file, help='Location of vocabulary file (for thresholding)')
 parser.add_argument('-t', type=int, default=0, help='Map words with frequency < t to UNK')
 parser.add_argument('-chain', default=5, type=int, help='Add parent chain')
@@ -33,6 +39,8 @@ parser.add_argument('-distance', dest='distance_to_root', default=True, action='
 parser.add_argument('-word', default=True, action='store_true', help='output the word itself')
 parser.add_argument('-context', default=2, type=int, help='Context words (both sides)')
 args = parser.parse_args()
+
+from itertools import izip
                     
 vocab = {}
 if args.vocab_file:
@@ -51,22 +59,17 @@ def parent_chain(node, height=1000):
             parent = parent.parent()
         return '_'.join(chain)
 
-for sentno, (source_line, parse_line, dep_parse_line) in enumerate(izip(open(args.source_file), open(args.parses_file), open(args.dep_parses_file))):
+for sentno, line in enumerate(sys.stdin):
 
-    if parse_line.rstrip() == '':
+    parse_line, dep_parse_line = line.rstrip().split('\t')
+
+    if parse_line == '':
         continue
 
-    words = source_line.split()
     tree = ptb.parse(parse_line).next()
-    tree_words = ptb.leaves(tree)
+    words = ptb.leaves(tree)
 
-#    print '\n*', 'SENTNO', sentno, ' '.join([x.leaf().word for x in tree_words])
-
-    if len(words) != len(tree_words):
-        print "** Whoa: mismatch on line", sentno, len(words), len(tree_words)
-        print source_line, parse_line
-        print
-        sys.exit(1)
+    # print '\n*', 'SENTNO', sentno, 'HAS', len(words), 'WORDS'
 
     class DepArc:
         def __init__(self, label, from_index, to_index):
@@ -104,7 +107,7 @@ for sentno, (source_line, parse_line, dep_parse_line) in enumerate(izip(open(arg
         except AttributeError:
             # sys.stderr.write("* WARNING: bad token '%s' on %s/line %d\n" % (token, args.dep_parses_file, i + 1))
             continue
-#        print "{}[{}] -> {} -> {}[{}]".format(child, cindex, label, parent, pindex)
+#        print "** {}[{}] -> {} -> {}[{}]".format(child, cindex, label, parent, pindex)
         if ':' in label:
             continue
 
@@ -118,11 +121,11 @@ for sentno, (source_line, parse_line, dep_parse_line) in enumerate(izip(open(arg
         if depnode is not None:
             word = depnode.word
             # make sure the annotated word in the annotations file is that word
-            if word is not None and not words[i] == word:
-                print "* FATAL: mismatch between words in parse and input", words[i], word
+            if word is not None and not words[i].leaf().word == word:
+                sys.stderr.write("* FATAL: mismatch between words in parse and input: %s / %s\n" % (words[i], word))
                 sys.exit(1)
 
-    for wordno, leaf in enumerate(tree_words):
+    for wordno, leaf in enumerate(words):
         word = leaf.leaf().word
 
         features = []
@@ -170,7 +173,7 @@ for sentno, (source_line, parse_line, dep_parse_line) in enumerate(izip(open(arg
 
         if args.head_pos:
             if depnode.parent_arc is not None and depnode.parent_arc.parent_index > 0:
-                parent_leaf = tree_words[depnode.parent_arc.parent_index - 1]
+                parent_leaf = words[depnode.parent_arc.parent_index - 1]
                 features.append(text_feature('dep-head-pos=%s' % (parent_leaf.leaf().pos)))
 
         if args.determiners:
@@ -210,10 +213,10 @@ for sentno, (source_line, parse_line, dep_parse_line) in enumerate(izip(open(arg
                         continue
                     if i < 0:
                         neighbors.append('<s>')
-                    elif i >= len(tree_words):
+                    elif i >= len(words):
                         neighbors.append('</s>')
                     else:
-                        neighbors.append(tree_words[i].leaf().pos)
+                        neighbors.append(words[i].leaf().pos)
                 features.append(text_feature('context-pos%d=%s' % (width, '_'.join(neighbors))))
 
         def mask_word(word):
@@ -230,18 +233,18 @@ for sentno, (source_line, parse_line, dep_parse_line) in enumerate(izip(open(arg
         if args.context > 0:
             width = args.context
             for i in range(wordno - width, wordno + width + 1):
-                if i < -1 or i == wordno or i > len(tree_words) + 1:
+                if i < -1 or i == wordno or i > len(words) + 1:
                     continue
 
                 if i == -1:
                     features.append(text_feature('LEX^context-left%d=%s' % (wordno - i, "<s>")))
                 elif i < wordno:
-                    features.append(text_feature('LEX^context-left%d=%s' % (wordno - i, mask_word(tree_words[i].leaf().word))))
-                elif i == len(tree_words):
+                    features.append(text_feature('LEX^context-left%d=%s' % (wordno - i, mask_word(words[i].leaf().word))))
+                elif i == len(words):
                     features.append(text_feature('LEX^context-right%d=%s' % (i - wordno, "</s>")))
                     break
                 else:
-                    features.append(text_feature('LEX^context-right%d=%s' % (i - wordno, mask_word(tree_words[i].leaf().word))))
+                    features.append(text_feature('LEX^context-right%d=%s' % (i - wordno, mask_word(words[i].leaf().word))))
         
         print '%s[%s]' % (word, '|'.join(features)),
 
