@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -302,18 +303,19 @@ class DotChart {
    */
 
   private ArrayList<Trie> matchAll(DotNode dotNode, int wordID) {
-    ArrayList<Trie> trieList = new ArrayList<Trie>();
+    ArrayList<Trie> trieList = new ArrayList<>();
     HashMap<Integer, ? extends Trie> childrenTbl = dotNode.trieNode.getChildren();
 
     if (childrenTbl != null && wordID >= 0) {
       // get all the extensions, map to string, check for *, build regexp
-      for (Integer arcID : childrenTbl.keySet()) {
+      for (Map.Entry<Integer, ? extends Trie> entry : childrenTbl.entrySet()) {
+        Integer arcID = entry.getKey();
         if (arcID == wordID) {
-          trieList.add(childrenTbl.get(arcID));
+          trieList.add(entry.getValue());
         } else {
           String arcWord = Vocabulary.word(arcID);
           if (Vocabulary.word(wordID).matches(arcWord)) {
-            trieList.add(childrenTbl.get(arcID));
+            trieList.add(entry.getValue());
           }
         }
       }

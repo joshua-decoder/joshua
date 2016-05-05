@@ -284,12 +284,12 @@ public abstract class EvaluationMetric {
 
         int[][] SS = suffStats(cand_strings, cand_indices);
         for (int d = 0; d < size; ++d) {
-          String stats_str = "";
+          StringBuilder stats_str = new StringBuilder();
 
           for (int s = 0; s < suffStatsCount - 1; ++s) {
-            stats_str += SS[d][s] + " ";
+            stats_str.append(SS[d][s]).append(" ");
           }
-          stats_str += SS[d][suffStatsCount - 1];
+          stats_str.append(SS[d][suffStatsCount - 1]);
 
           outFile.println(stats_str);
         }

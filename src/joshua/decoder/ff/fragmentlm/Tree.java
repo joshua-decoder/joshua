@@ -115,14 +115,14 @@ public class Tree implements Serializable {
    * @return
    */
   public String getRule() {
-    String ruleString = null;
-    if (!isLeaf()) {
-      ruleString = "(" + Vocabulary.word(getLabel());
-      for (Tree child : getChildren())
-        ruleString += " " + Vocabulary.word(child.getLabel());
+    if (isLeaf()) {
+      return null;
     }
-
-    return ruleString;
+    StringBuilder ruleString = new StringBuilder("(" + Vocabulary.word(getLabel()));
+    for (Tree child : getChildren()) {
+      ruleString.append(" ").append(Vocabulary.word(child.getLabel()));
+    }
+    return ruleString.toString();
   }
 
   /*
@@ -537,7 +537,7 @@ public class Tree implements Serializable {
    * 
    * @param rule
    * @param tailNodes
-   * @param derivation
+   * @param derivation - should not be null
    * @param maxDepth
    * @return
    */
@@ -551,10 +551,8 @@ public class Tree implements Serializable {
     tree = tree.shallowClone();
     
     System.err.println(String.format("buildTree(%s)", tree));
-    if (derivationStates != null) {
-      for (int i = 0; i < derivationStates.length; i++) {
-        System.err.println(String.format("  -> %d: %s", i, derivationStates[i]));
-      }
+    for (int i = 0; i < derivationStates.length; i++) {
+      System.err.println(String.format("  -> %d: %s", i, derivationStates[i]));
     }
 
     List<Tree> frontier = tree.getNonterminalYield();

@@ -145,9 +145,10 @@ public class BLEU {
     float resBleu = 0.0f;
 
     int[] numNgramMatch = new int[bleuOrder];
-    for (String ngram : hypNgramTbl.keySet()) {// each ngram in hyp
+    for (Map.Entry<String, Integer> entry : hypNgramTbl.entrySet()) {// each ngram in hyp
+      String ngram = entry.getKey();
       if (maxRefCountTbl.containsKey(ngram)) {
-        int hypNgramCount = hypNgramTbl.get(ngram);
+        int hypNgramCount = entry.getValue();
 
         int effectiveNumMatch = hypNgramCount;
 
@@ -187,14 +188,14 @@ public class BLEU {
     float resBleu = 0;
 
     int[] numNgramMatch = new int[bleuOrder];
-    for (Iterator<String> it = hypNgramTbl.keySet().iterator(); it.hasNext();) {
-      String ngram = it.next();
+    for (Map.Entry<String, Integer> entry : hypNgramTbl.entrySet()) {
+      String ngram = entry.getKey();
       if (refNgramTbl.containsKey(ngram)) {
         if (doNgramClip) {
           numNgramMatch[Regex.spaces.split(ngram).length - 1] += Support.findMin(
-              refNgramTbl.get(ngram), hypNgramTbl.get(ngram)); // ngram clip
+              refNgramTbl.get(ngram), entry.getValue()); // ngram clip
         } else {
-          numNgramMatch[Regex.spaces.split(ngram).length - 1] += hypNgramTbl.get(ngram);// without
+          numNgramMatch[Regex.spaces.split(ngram).length - 1] += entry.getValue();// without
                                                                                         // ngram
                                                                                         // count
                                                                                         // clipping

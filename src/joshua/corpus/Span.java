@@ -21,6 +21,7 @@ package joshua.corpus;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Represents a span with an inclusive starting index and an exclusive ending index.
@@ -113,14 +114,13 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
       int next = start;
 
       public boolean hasNext() {
-        if (next < end) {
-          return true;
-        } else {
-          return false;
-        }
+        return next < end;
       }
 
       public Integer next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
         return next++;
       }
 

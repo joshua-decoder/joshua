@@ -15,22 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-# Tests that Hadoop works, in standalone mode.
-
 set -u
 
-if [[ -z $HADOOP ]]; then
-  exit 0
-fi
+# Ensures that the decoder trims inputs when and only when it should
 
-$JOSHUA/scripts/training/run_thrax.py -f input/thrax.conf input/train.{ps,en,a} 2> thrax.log
+(
+echo as kingfishers draw fire | joshua -maxlen 2
+echo dragonflies draw flame | joshua -maxlen 1 -lattice-decoding
+echo "(((as tumbled over rim in roundy wells stones ring" | joshua -maxlen 8
+echo "(((like each tucked string tells" | joshua -maxlen 3 -lattice-decoding
+) > output 2> log
 
-size=$(perl -e "print +(stat('grammar.gz'))[7] . $/")
+diff -u output output.gold > diff
 
-if [[ $size -eq 106851 ]]; then
-  rm -rf thrax.log grammar.gz
-  exit 0
+if [ $? -eq 0 ]; then
+    rm -f log output diff
+    exit 0
 else
-  exit 1
+    exit 1
 fi

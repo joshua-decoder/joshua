@@ -144,8 +144,10 @@ public class StateMinimizingLanguageModel extends LanguageModelFF {
     }
     
     int sentID = sentence.id();
-    if (!poolMap.containsKey(sentID))
+    // Since sentId is unique across threads, next operations are safe, but not atomic!
+    if (!poolMap.containsKey(sentID)) {
       poolMap.put(sentID, KenLM.createPool());
+    }
 
     // Get the probability of applying the rule and the new state
     StateProbPair pair = ((KenLM) languageModel).probRule(words, poolMap.get(sentID));

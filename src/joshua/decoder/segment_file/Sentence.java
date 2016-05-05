@@ -114,7 +114,7 @@ public class Sentence {
     }
     
     // Only trim strings
-    if (joshuaConfiguration.lattice_decoding && ! source.startsWith("((("))
+    if (! (joshuaConfiguration.lattice_decoding && source.startsWith("(((")))
       adjustForLength(joshuaConfiguration.maxlen);
   }
   
@@ -303,11 +303,12 @@ public class Sentence {
    * @return
    */
   public String source() {
-    String str = "";
+    StringBuilder str = new StringBuilder();
     int[] ids = getWordIDs();
-    for (int i = 1; i < ids.length - 1; i++)
-      str += Vocabulary.word(ids[i]) + " ";
-    return str.trim();
+    for (int i = 1; i < ids.length - 1; i++) {
+      str.append(Vocabulary.word(ids[i])).append(" ");
+    }
+    return str.toString().trim();
   }
 
   /**
@@ -347,16 +348,16 @@ public class Sentence {
   public String source(int i, int j) {
     StringTokenizer st = new StringTokenizer(fullSource());
     int index = 0;
-    String substring = "";
+    StringBuilder substring = new StringBuilder();
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
       if (index >= j)
         break;
       if (index >= i)
-        substring += token + " ";
+        substring.append(token).append(" ");
       index++;
     }
-    return substring.trim();
+    return substring.toString().trim();
   }
 
   public String[] references() {

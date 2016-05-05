@@ -42,13 +42,13 @@ public class LabelCombinationFF extends StatelessFF {
   }
 
   private final String computeRuleLabelCombinationDescriptor(Rule rule) {
-    String result = getLowerCasedFeatureName() + "_";
-    result += RulePropertiesQuerying.getLHSAsString(rule);
+    StringBuilder result = new StringBuilder(getLowerCasedFeatureName() + "_");
+    result.append(RulePropertiesQuerying.getLHSAsString(rule));
     // System.out.println("Rule: " + rule);
     for (String foreignNonterminalString : RulePropertiesQuerying.getRuleSourceNonterminalStrings(rule)) {
-      result += "_" + foreignNonterminalString;
+      result.append("_").append(foreignNonterminalString);
     }
-    return result;
+    return result.toString();
   }
 
   @Override
