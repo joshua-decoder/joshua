@@ -67,6 +67,9 @@ public class Lists {
           }
 
           public Integer next() {
+            if (!hasNext()) {
+              throw new NoSuchElementException();
+            }
             int result = next;
             next += 1;
             return result;

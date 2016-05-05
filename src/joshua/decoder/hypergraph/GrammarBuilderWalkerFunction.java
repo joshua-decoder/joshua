@@ -90,11 +90,6 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction {
 
   private Rule getRuleWithSpans(HyperEdge edge, HGNode head) {
     Rule edgeRule = edge.getRule();
-    // System.err.printf("EdgeRule: %s\n", edgeRule);
-    if (!(edgeRule instanceof Rule)) {
-      // System.err.println("edge rule is not a bilingual rule");
-      return null;
-    }
     int headLabel = getLabelWithSpan(head);
     // System.err.printf("Head label: %s\n", headLabel);
     // if (edge.getAntNodes() != null) {

@@ -315,13 +315,13 @@ public class FeatureVector {
    * to be compatible with their tuners.
    */
   public String mosesString() {
-    String outputString = "";
+    StringBuilder outputString = new StringBuilder();
     
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
     for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
-      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i).replaceAll("_", "-"), getDense(i));
+      outputString.append(String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i).replaceAll("_", "-"), getDense(i)));
       printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     
@@ -334,10 +334,10 @@ public class FeatureVector {
         if (key.equals("OOVPenalty"))
           // force moses to see it as sparse
           key = "OOV_Penalty";
-        outputString += String.format("%s=%.3f ", key, value);
+        outputString.append(String.format("%s=%.3f ", key, value));
       }
     }
-    return outputString.trim();
+    return outputString.toString().trim();
   }
     
   /***
@@ -346,13 +346,13 @@ public class FeatureVector {
    */
   @Override
   public String toString() {
-    String outputString = "";
+    StringBuilder outputString = new StringBuilder();
     
     HashSet<String> printed_keys = new HashSet<String>();
     
     // First print all the dense feature names in order
     for (int i = 0; i < DENSE_FEATURE_NAMES.size(); i++) {
-      outputString += String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i), getDense(i));
+      outputString.append(String.format("%s=%.3f ", DENSE_FEATURE_NAMES.get(i), getDense(i)));
       printed_keys.add(DENSE_FEATURE_NAMES.get(i));
     }
     
@@ -361,8 +361,8 @@ public class FeatureVector {
     Collections.sort(keys);
     for (String key: keys)
       if (! printed_keys.contains(key))
-        outputString += String.format("%s=%.3f ", key, sparseFeatures.get(key));
+        outputString.append(String.format("%s=%.3f ", key, sparseFeatures.get(key)));
 
-    return outputString.trim();
+    return outputString.toString().trim();
   }
 }

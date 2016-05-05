@@ -144,19 +144,15 @@ public class HyperGraph {
    * @param fileName
    */
   public void dump(String fileName, List<FeatureFunction> model) {
-    PrintWriter out = null;
-    try {
-      out = new PrintWriter(fileName, "UTF-8");
+    try ( PrintWriter out = new PrintWriter(fileName, "UTF-8") ) {
+      count();
+      out.println("# target ||| features");
+      out.println(String.format("%d %d", numNodes, numEdges));
+      new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, model));
     } catch (IOException e) {
       System.err.println("* Can't dump hypergraph to file '" + fileName + "'");
       e.printStackTrace();
     }
-    
-    count();
-    out.println("# target ||| features");
-    out.println(String.format("%d %d", numNodes, numEdges));
-    new ForestWalker(TRAVERSAL.POSTORDER).walk(this.goalNode, new HyperGraphDumper(out, model));
-    out.close();
   }
 
   public float bestScore() {
