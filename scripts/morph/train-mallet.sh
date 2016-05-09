@@ -5,9 +5,11 @@
 # source_word target_word feat:val feat:val feat:val
 
 if [[ -z $2 ]]; then
-  echo "Usage: train-mallet.sh DATA_FILE MODEL_FILE"
-  echo "This will read data from DATA_FILE and serialize the models to MODEL_FILE"
+  echo "Usage: train-mallet.sh [-d train_data] [-m model] [-t test_data]"
+  echo "If -d is given, a model will be trained, and written out if -m is given."
+  echo "If -m is given without -t, the model will be loaded."
+  echo "Use -t to specify a test file"
   exit
 fi
 
-java -mx16g -cp $JOSHUA/lib/mallet-2.0.7.jar:$JOSHUA/lib/trove4j-2.0.2.jar:$JOSHUA/class joshua.decoder.ff.LexicalSharpener $1 $2
+java -mx16g -cp $JOSHUA/lib/mallet-2.0.7.jar:$JOSHUA/lib/trove4j-2.0.2.jar:$JOSHUA/lib/args4j-2.0.29.jar:$JOSHUA/class joshua.decoder.ff.LexicalSharpener "$@"
