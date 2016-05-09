@@ -63,6 +63,9 @@ my $MAXSPAN = 20;
 my $MAXLEN_TUNE = 0;
 my $MAXLEN_TEST = 0;
 
+# Maximum number of lines from any single corpus
+my $MAXLINES = 0;
+
 # when doing phrase-based decoding, the maximum length of a phrase (source side)
 my $MAX_PHRASE_LEN = 5;
 
@@ -261,6 +264,7 @@ my $retval = GetOptions(
   "maxlen=i"        => \$MAXLEN,
   "maxlen-tune=i"        => \$MAXLEN_TUNE,
   "maxlen-test=i"        => \$MAXLEN_TEST,
+  "maxlines=i"        => \$MAXLINES,
   "tokenizer-source=s"      => \$TOKENIZER_SOURCE,
   "tokenizer-target=s"      => \$TOKENIZER_TARGET,
   "normalizer=s"      => \$NORMALIZER,
@@ -1831,10 +1835,10 @@ sub prepare_data {
   foreach my $ext (@exts) {
     my @files =  map { "$_.$ext" } @$corpora;
     push(@indeps, @files);
-    if (@files > 1) {
-      push(@infiles, "<(cat " . join(" ", @files) . ")");
+    if ($MAXLINES != 0) {
+      push(@infiles, "<(head -n $MAXLINES " . join(" ", @files) . ")");
     } else {
-      push(@infiles, $files[0]);
+      push(@infiles, "<(cat " . join(" ", @files) . ")");
     }
     push (@outfiles, "$DATA_DIRS{$label}/$label.$ext");
   }
