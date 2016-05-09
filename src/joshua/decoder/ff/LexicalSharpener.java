@@ -43,9 +43,17 @@ import joshua.decoder.segment_file.Sentence;
 import joshua.decoder.segment_file.Token;
 import joshua.util.io.LineReader;
 
+import static org.kohsuke.args4j.ExampleMode.ALL;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.BooleanOptionHandler;
+
 public class LexicalSharpener extends StatelessFF {
 
   private HashMap<String,MalletPredictor> classifiers = null;
+  private boolean hasModel = false;
 
   public LexicalSharpener(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "LexicalSharpener", args, config);
@@ -111,6 +119,7 @@ public class LexicalSharpener extends StatelessFF {
     classifiers.put(lastSourceWord, new MalletPredictor(lastSourceWord, examples));
   
     Decoder.LOG(1, String.format("Read %d lines from training file", linesRead));
+    hasModel = true;
   }
 
   private MalletPredictor createClassifier(String lastSourceWord, HashMap<String, Integer> counts,
@@ -131,6 +140,7 @@ public class LexicalSharpener extends StatelessFF {
     
     System.err.println(String.format("%s: Loaded model with %d keys", 
         name, classifiers.keySet().size()));
+    hasModel = true;
   }
 
   public void saveClassifiers(String modelFile) throws FileNotFoundException, IOException {
@@ -250,37 +260,70 @@ public class LexicalSharpener extends StatelessFF {
     
     return anchoredSource;
   }
-  
+
+  @Option(name="-model", required=false, usage="the model to load / save")
+    String _modelFile;
+
+  @Option(name="-data", required=false, usage="data to train from (triggers training)")
+    String _dataFile;
+
+  @Option(name="-test", required=false, usage="test data")
+    String _testFile;
+
   public static void main(String[] args) throws IOException, ClassNotFoundException {
-    LexicalSharpener ts = new LexicalSharpener(null, args, null);
-    
-    String modelFile = "model";
+    new LexicalSharpener(null, args, null).main();
+  }
 
-    if (args.length > 0) {
-      String dataFile = args[0];
+  public void main() throws IOException, ClassNotFoundException {
 
-      System.err.println("Training model from file " + dataFile);
-      ts.trainAll(dataFile);
-    
-      if (args.length > 1)
-        modelFile = args[1];
-      
-      System.err.println("Writing model to file " + modelFile); 
-      ts.saveClassifiers(modelFile);
+    CmdLineParser parser = new CmdLineParser(this);
+
+    parser.setUsageWidth(80);
+
+    try {
+      parser.parseArgument(args);
+
+    } catch( CmdLineException e ) {
+      System.err.println(e.getMessage());
+      parser.printUsage(System.err);
+      System.err.println();
+
+      System.err.println("  Example: java LexicalSharpener" + parser.printExample(ALL));
+
+      return;
     }
-    
-    Scanner stdin = new Scanner(System.in);
-    while(stdin.hasNextLine()) {
-      String line = stdin.nextLine();
-      String[] tokens = line.split(" ", 3);
-      String sourceWord = tokens[0];
-      String targetWord = tokens[1];
-      String features = tokens[2];
-      Classification result = ts.predict(sourceWord, targetWord, features);
-      if (result != null)
-        System.out.println(String.format("%s %f", result.getLabelVector().getBestLabel(), result.getLabelVector().getBestValue()));
-      else 
-        System.out.println("i got nothing");
+
+    if (_dataFile != null) {
+      System.err.println("Training from data in " + _modelFile);
+      trainAll(_dataFile);
+
+      if (_modelFile != null) {
+        System.err.println("Saving model to " + _modelFile);
+        saveClassifiers(_modelFile);
+      }
+
+    } else if (_modelFile != null) {
+      System.err.println("Loading model from " + _modelFile);
+      loadClassifiers(_modelFile);
+
+    } else {
+      System.err.println("No training data or model specified, not much to do, quitting...");
+    }
+
+    if (_testFile != null) {
+
+      LineReader reader = new LineReader(_testFile);
+      for (String line: reader) {
+        String[] tokens = line.split(" ", 3);
+        String sourceWord = tokens[0];
+        String targetWord = tokens[1];
+        String features = tokens[2];
+        Classification result = predict(sourceWord, targetWord, features);
+        if (result != null)
+          System.out.println(String.format("%s %f", result.getLabelVector().getBestLabel(), result.getLabelVector().getBestValue()));
+        else 
+          System.out.println("i got nothing");
+      }
     }
   }
 }
