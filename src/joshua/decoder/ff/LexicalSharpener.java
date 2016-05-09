@@ -199,7 +199,9 @@ public class LexicalSharpener extends StatelessFF {
     if (classifiers.containsKey(sourceWord)) {
       MalletPredictor predictor = classifiers.get(sourceWord);
       if (predictor != null)
-        return predictor.predict(targetWord, featureString);
+        synchronized(predictor) {
+          return predictor.predict(targetWord, featureString);
+        }
     }
 
     return null;
