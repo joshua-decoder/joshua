@@ -1645,22 +1645,8 @@ if ($OPTIMIZER_RUN == 1) {
 
 $tm_switch = "";
 $tm_copy_config_args = "";
-if ($DO_PACK_GRAMMARS) {
-  my $packed_dir = "$DATA_DIRS{test}/grammar.packed";
-  if ($OPTIMIZER_RUN == 1 and ! is_packed($TEST_GRAMMAR)) {
-    $cachepipe->cmd("test-pack",
-                    "$SCRIPTDIR/support/grammar-packer.pl -a -T $TMPDIR -m $PACKER_MEM -g $TEST_GRAMMAR -o $packed_dir",
-                    $TEST_GRAMMAR,
-                    "$packed_dir/vocabulary",
-                    "$packed_dir/encoding",
-                    "$packed_dir/slice_00000.source");
-  }
-  $TEST_GRAMMAR = $packed_dir;
-
-  $tm_switch .= " --pack-tm $TEST_GRAMMAR";
-} else {
-  $tm_switch .= " --tm $TEST_GRAMMAR";
-}
+$tm_switch .= ($DO_PACK_GRAMMARS) ? "--pack-tm" : "--tm";
+$tm_switch .= " $TEST_GRAMMAR";
 
 # Add in the glue grammar
 if (defined $GLUE_GRAMMAR_FILE) {
