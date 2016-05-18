@@ -20,7 +20,7 @@ use File::Temp qw/tempfile/;
 use File::Basename qw/basename/;
 
 my %opts = (
-  a => 0,         # whether alignments are included in the grammar(s)
+  a => 1,         # whether alignments are included in the grammar(s)
   g => '',        # comma-separated list of grammars to pack
   o => '',        # comma-separated list of grammar output directories
   m => '8g',      # amount of memory to give the packer

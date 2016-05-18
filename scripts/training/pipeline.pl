@@ -1031,7 +1031,7 @@ if (! defined $GRAMMAR_FILE) {
   if ($GRAMMAR_TYPE eq "ghkm") {
     if ($GHKM_EXTRACTOR eq "galley") {
       $cachepipe->cmd("ghkm-extract",
-                      "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/splittabs.pl ghkm-mapping.gz grammar.gz",
+                      "java -Xmx4g -Xms4g -cp $JOSHUA/lib/ghkm-modified.jar:$JOSHUA/lib/fastutil.jar -XX:+UseCompressedOops edu.stanford.nlp.mt.syntax.ghkm.RuleExtractor -fCorpus $TRAIN{source} -eParsedCorpus $target_file -align $ALIGNMENT -threads $NUM_THREADS -joshuaFormat true -maxCompositions 1 -reversedAlignment false | $SCRIPTDIR/support/split2files ghkm-mapping.gz grammar.gz",
                       $ALIGNMENT,
                       "grammar.gz");
     } elsif ($GHKM_EXTRACTOR eq "moses") {
@@ -1834,11 +1834,11 @@ sub prepare_data {
   # only skip blank lines for training data
   if ($label eq "train") {
     $cachepipe->cmd("$label-copy-and-filter",
-                    "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/training/split2files.pl $outfiles",
+                    "$PASTE $infiles | $SCRIPTDIR/training/filter-empty-lines.pl | $SCRIPTDIR/support/split2files $outfiles",
                     @indeps, @outfiles);
   } else {
     $cachepipe->cmd("$label-copy-and-filter",
-                    "$PASTE $infiles | $SCRIPTDIR/training/split2files.pl $outfiles",
+                    "$PASTE $infiles | $SCRIPTDIR/support/split2files $outfiles",
                     @indeps, @outfiles);
   }
   # Done concatenating and filtering files
@@ -1884,7 +1884,7 @@ sub prepare_data {
 
       # trim training data
       $cachepipe->cmd("$label-trim",
-                      "$PASTE $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $outfilelist",
+                      "$PASTE $infilelist | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/support/split2files $outfilelist",
                       @infiles,
                       @outfiles);
       $prefix .= ".$maxlen";

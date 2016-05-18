@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+
+# Reads any number of file names from the command line, then split()s
+# STDIN on tabs and writes them to those files. Example usage:
+#
+# paste file1 file2 file3 ... | split2files file1.new file2.new file3.new.gz ...
+#
+# If there are more fields on STDIN that files on the command-line, the extra
+# fields are silently discarded.
+#
+# A common usage scenario is to paste together parallel lines and do some filtering,
+# then write out to a new set of files (thus retaining parallelization).
+
+use FileHandle;
+
+my @fh;
+$| = 1;   # don't buffer output
+
+if (@ARGV < 0) {
+  print "Usage: cat tabbed-file | split2files file1 [file2 [file3 ...]]\n";
+  exit;
+}
+
+my @fh = map { get_filehandle($_) } @ARGV;
+@ARGV = ();
+
+while (my $line = <>) {
+  chomp($line);
+  my (@fields) = split(/\t/, $line);
+  
+  map { print {$fh[$_]} "$fields[$_]\n" } (0..$#fh);
+}
+
+sub get_filehandle {
+    my $file = shift;
+
+    if ($file eq "-") {
+	return *STDOUT;
+    } else {
+	local *FH;
+	open FH, ">$file" or die "can't open '$file' for writing";
+	return *FH;
+    }
+}
