@@ -5,7 +5,7 @@
 # the first two fields has mroe than N tokens, the line is skipped.
 
 # e.g.,
-# paste corpus.en corpus.fr | trim_parallel_corpus.pl 40 | splittabs en.trimmed.40 fr.trimmed.40
+# paste corpus.en corpus.fr | trim_parallel_corpus.pl 40 | split2files en.trimmed.40 fr.trimmed.40
 
 my $thresh = shift || 100;
 

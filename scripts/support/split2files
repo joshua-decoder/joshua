@@ -3,7 +3,7 @@
 # Reads any number of file names from the command line, then split()s
 # STDIN on tabs and writes them to those files. Example usage:
 #
-# paste file1 file2 file3 ... | splittabs file1.new file2.new file3.new.gz ...
+# paste file1 file2 file3 ... | split2files file1.new file2.new file3.new.gz ...
 #
 # If there are more fields on STDIN that files on the command-line, the extra
 # fields are silently discarded.
@@ -17,7 +17,7 @@ my @fh;
 $| = 1;   # don't buffer output
 
 if (@ARGV < 0) {
-  print "Usage: cat tabbed-file | splittabs file1 [file2 [file3 ...]]\n";
+  print "Usage: cat tabbed-file | split2files file1 [file2 [file3 ...]]\n";
   exit;
 }
 
