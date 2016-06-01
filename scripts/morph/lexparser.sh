@@ -21,7 +21,8 @@ java -mx64g -cp "$scriptdir/*:" edu.stanford.nlp.parser.lexparser.LexicalizedPar
   -sentences newline -tokenized \
   -outputFormat "oneline,typedDependencies" \
   -maxLength 141 \
-  -nthreads 16 edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz $filename | tee raw_parse.$filename 2> log.raw_parse.$filename \
+  -nthreads 16 edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz $filename 2> log.raw_parse.$filename \
+  | tee raw_parse.$filename \
   | $JOSHUA/scripts/morph/raw_parse_to_oneline.py
 
 #java -mx2g -cp "$scriptdir/*:" edu.stanford.nlp.parser.nndep.DependencyParser \
