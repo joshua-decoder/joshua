@@ -13,7 +13,7 @@ package joshua.decoder.ff;
  * 
  * Invocation:
  * 
- * java -cp /Users/post/code/joshua/lib/mallet-2.0.7.jar:/Users/post/code/joshua/lib/trove4j-2.0.2.jar:$JOSHUA/class joshua.decoder.ff.morph.LexicalSharpener /path/to/training/data 
+ * java -cp $JOSHUA/lib/mallet-2.0.7.jar:$JOSHUA/lib/trove4j-2.0.2.jar:$JOSHUA/class joshua.decoder.ff.morph.LexicalSharpener /path/to/training/data 
  */
 
 import java.io.FileInputStream;
@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -58,14 +59,7 @@ public class LexicalSharpener extends StatelessFF {
   public LexicalSharpener(final FeatureVector weights, String[] args, JoshuaConfiguration config) {
     super(weights, "LexicalSharpener", args, config);
 
-    if (parsedArgs.getOrDefault("training-data", null) != null) {
-      try {
-        trainAll(parsedArgs.get("training-data"));
-      } catch (FileNotFoundException e) {
-        System.err.println(String.format("* FATAL[LexicalSharpener]: can't load %s", parsedArgs.get("training-data")));
-        System.exit(1);
-      }
-    } else if (parsedArgs.containsKey("model")) {
+    if (parsedArgs.containsKey("model")) {
       try {
         loadClassifiers(parsedArgs.get("model"));
       } catch (ClassNotFoundException | IOException e) {
@@ -110,9 +104,12 @@ public class LexicalSharpener extends StatelessFF {
         examples = new ArrayList<String>();
         targets = new HashMap<String,Integer>();
       }
-  
-      examples.add(line);
-      targets.put(targetWord, targets.getOrDefault(targetWord, 0));
+
+      if (sourceWord.length() > 2) {
+        examples.add(line);
+        targets.put(targetWord, targets.getOrDefault(targetWord, 0) + 1);
+      }
+
       lastSourceWord = sourceWord;
       linesRead++;
     }
@@ -122,13 +119,11 @@ public class LexicalSharpener extends StatelessFF {
     hasModel = true;
   }
 
-  private MalletPredictor createClassifier(String lastSourceWord, HashMap<String, Integer> counts,
+  private MalletPredictor createClassifier(String sourceWord, HashMap<String, Integer> outcomes,
       ArrayList<String> examples) {
     
-    int numExamples = examples.size();
-    
-    if (examples.size() < 75)
-      return new MalletPredictor(lastSourceWord, examples, true);
+    if (outcomes.size() < 75)
+      return new MalletPredictor(sourceWord, examples, true);
     
     return null;
   }
@@ -270,6 +265,9 @@ public class LexicalSharpener extends StatelessFF {
   @Option(name="-test", required=false, usage="test data")
     String _testFile;
 
+  @Option(name="-v", required=false, usage="verbosity level")
+    int _verbosity = 0;
+    
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     new LexicalSharpener(null, args, null).main();
   }
@@ -293,6 +291,8 @@ public class LexicalSharpener extends StatelessFF {
       return;
     }
 
+    Decoder.VERBOSE = _verbosity;
+
     if (_dataFile != null) {
       System.err.println("Training from data in " + _modelFile);
       trainAll(_dataFile);
@@ -312,6 +312,8 @@ public class LexicalSharpener extends StatelessFF {
 
     if (_testFile != null) {
 
+      int numCorrect = 0;
+      int totalRecords = 0;
       LineReader reader = new LineReader(_testFile);
       for (String line: reader) {
         String[] tokens = line.split(" ", 3);
@@ -319,11 +321,23 @@ public class LexicalSharpener extends StatelessFF {
         String targetWord = tokens[1];
         String features = tokens[2];
         Classification result = predict(sourceWord, targetWord, features);
-        if (result != null)
-          System.out.println(String.format("%s %f", result.getLabelVector().getBestLabel(), result.getLabelVector().getBestValue()));
-        else 
-          System.out.println("i got nothing");
+        
+        if (result != null) {
+          totalRecords++;
+
+          System.out.println(String.format("%s correct: %s chose: %s (%f)", 
+              sourceWord, targetWord, 
+              result.getLabelVector().getBestLabel(), result.getLabelVector().getBestValue()));
+
+          if (targetWord.equals(result.getLabelVector().getBestLabel().toString()))
+            numCorrect++;
+
+        } 
+        // else 
+        //   System.out.println("i got nothing");
       }
+
+      System.out.println(String.format("Accuracy: %d / %d = %.2f", numCorrect, totalRecords, numCorrect * 100.0f / totalRecords));
     }
   }
 }

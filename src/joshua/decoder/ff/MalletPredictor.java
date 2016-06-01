@@ -60,9 +60,6 @@ public class MalletPredictor implements Serializable {
     }
 
     public void train() {
-      Decoder.LOG(2, String.format("Word %s: training model from %d examples", 
-          sourceWord, examples.size()));
-      
       ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
 
       // I don't know if this is needed
@@ -89,11 +86,23 @@ public class MalletPredictor implements Serializable {
       // Constructs an instance with everything shoved into the data field
       instances.addThruPipe(new CsvIterator(reader, "(\\S+)\\s+(.*)", 2, -1, 1));
 
+      long startTime = System.currentTimeMillis();
+      Decoder.LOG(1, String.format("MalletPredictor: Training a model for '%s' from %d examples",
+          sourceWord, examples.size()));
+      System.err.flush();
+
       ClassifierTrainer trainer = new MaxEntTrainer();
       classifier = trainer.train(instances);
       
-//      Decoder.LOG(1, String.format("%s: Trained a model for %s with %d outcomes", 
-//          name, sourceWord, pipes.getTargetAlphabet().size()));
+      String outcomes = "";
+      for (Object outcome: pipes.getTargetAlphabet().toArray()) {
+        outcomes += outcome.toString() + " ";
+      }
+      Decoder.LOG(1, String.format("-> %d outcomes in %.1fs: ", getNumOutcomes(),(System.currentTimeMillis() - startTime) / 1000.0, outcomes ));
+      System.err.flush();
+
+      // Decoder.LOG(1, String.format("MalletPredictor: Trained model for '%s' over %d outcomes from %d examples in %.1fs", 
+      //     sourceWord, getNumOutcomes(), examples.size(), (System.currentTimeMillis() - startTime) / 1000.0 ));
     }
 
     /**
@@ -107,3 +116,4 @@ public class MalletPredictor implements Serializable {
       return pipes.getTargetAlphabet().size();
     }
   }
+
