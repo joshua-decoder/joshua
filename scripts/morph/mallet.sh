@@ -12,4 +12,6 @@ if [[ -z $2 ]]; then
   exit
 fi
 
-java -mx16g -cp $JOSHUA/lib/mallet-2.0.7.jar:$JOSHUA/lib/trove4j-2.0.2.jar:$JOSHUA/lib/args4j-2.0.29.jar:$JOSHUA/class joshua.decoder.ff.LexicalSharpener "$@"
+LOG_PROPERTIES=$JOSHUA/lib/mallet.properties
+
+java -mx16g -cp $JOSHUA/lib/mallet-2.0.7.jar:$JOSHUA/lib/trove4j-2.0.2.jar:$JOSHUA/lib/args4j-2.0.29.jar:$JOSHUA/class -Djava.util.logging.config.file=$LOG_PROPERTIES joshua.decoder.ff.LexicalSharpener "$@"
